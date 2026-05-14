@@ -1,0 +1,33 @@
+
+<!-----------_footer.html----------------------------------->
+<link rel="stylesheet" href="{{ site.baseurl }}/assets/css/cssFooter.css">
+
+<footer class="footer-custom mt-auto py-5">
+  <div class="nav-separator mx-auto mb-4"></div>
+  
+  <div class="container text-center">
+    <span class="thanks-text glow-trigger">¡Gracias por elegir nuestros servicios!</span><span class="main-text glow-trigger"> — Casa Nacho — Telas & Accesorios </span>
+    <p class="credits-text">
+      Esta página ha sido creada por: <strong>Global LexTech Solution © 2026</strong> — Bs. As. — Argentina — Todos los Derechos Reservados
+    </p>
+  </div>
+
+  <script>
+  const observerOptions = {
+    root: null,
+    threshold: 0.5
+  };
+  const footerObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active-neon');
+      }
+    });
+  }, observerOptions);
+  const glowTexts = document.querySelectorAll('.glow-trigger');
+
+  glowTexts.forEach(text => {
+    footerObserver.observe(text);
+  });
+</script>
+</footer>

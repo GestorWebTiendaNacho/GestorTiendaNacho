@@ -1,0 +1,55 @@
+<style>
+@import 'https://fonts.googleapis.com/css?family=Lily+Script+One';
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap");
+:root {
+    /* Paleta Neón Lex-Tech */
+    --lex-gold: #c2902e;
+    --lex-gold-glow: rgba(194, 144, 46, 0.3);
+    --lex-gold-dark: #926a1f;
+    --neon-blue: #00f2ff;
+    --neon-green: #00ff9d;
+    --neon-purple: #bc13fe;
+    --neon-red: #ff3131;
+    --neon-orange: #ff6b00;
+    --neon-orange-glow: rgba(255, 107, 0, 0.4);
+    
+    /* Fondos Profundos */
+    --bg-dark: #020617;
+    --card-dark: #0f172a;
+    --terminal-black: #000000;
+    
+    /* Sombras Neón */
+    --glow-blue: 0 0 15px rgba(0, 242, 255, 0.3);
+    --glow-green: 0 0 20px rgba(0, 255, 157, 0.2);
+}
+
+body { 
+    background-color: var(--bg-dark);
+    background-image: 
+        linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+    background-size: 4px 4px; 
+    color: #e2e8f0;
+    min-height: 100vh;
+}
+
+.text-gold {
+    color: var(--lex-gold);
+    background: linear-gradient(135deg, #fde68a 0%, #c2902e 50%, #926a1f 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+/* Bordes Neón Dorado Oscuro */
+.border-gold {
+    border-color: var(--lex-gold-dark) !important;
+}
+
+.fixed-top {
+    background: linear-gradient(to bottom, var(--bg-dark) 80%, rgba(2, 6, 23, 0.9)) !important;
+    border-bottom: 1px solid rgba(194, 144, 46, 0.1);
+    /*height: 75px !important;*/
+}
+
+</style>

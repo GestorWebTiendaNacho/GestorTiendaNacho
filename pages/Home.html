@@ -1,0 +1,59 @@
+---
+layout: default
+title: Panel de Control - NICO
+custom_css: cssHome
+---
+
+<!-----página -Home.html------>
+
+<div class="container-viewport">
+  <div class="row justify-content-center g-5">
+    
+    <div class="col-md-4 d-flex justify-content-center">
+      <div class="malewicz-card-compact orange-glow">
+        <div class="card-content">
+          <div class="icon-box-compact">
+            <i class="bi bi-box-seam"></i>
+          </div>
+          <h3 class="card-title-compact">STOCK</h3>
+          <p class="card-description-compact">Control de inventario maestro.</p>
+          <button onclick="navegar('-Stock')" class="btn-morphic-compact">
+            ABRIR
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 d-flex justify-content-center">
+      <div class="malewicz-card-compact blue-glow">
+        <div class="card-content">
+          <div class="icon-box-compact">
+            <i class="bi bi-truck"></i>
+          </div>
+          <h3 class="card-title-compact">DEPÓSITO</h3>
+          <p class="card-description-compact">Logística y Gestión de Depósito.</p>
+          <button onclick="navegar('-Proveedores')" class="btn-morphic-compact">
+            ABRIR
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 d-flex justify-content-center">
+      <div class="malewicz-card-compact gold-glow">
+        <div class="card-content">
+          <div class="icon-box-compact">
+            <i class="bi bi-database-fill-gear"></i>
+          </div>
+          <h3 class="card-title-compact">DATOS</h3>
+          <p class="card-description-compact">Configuración de tablas.</p>
+          <button onclick="navegar('-dataBase')" class="btn-morphic-compact">
+            ABRIR
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
