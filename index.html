@@ -1,26 +1,7 @@
 
 ---
-layout: null
+layout: default
+title: Inicio - Casa Nacho
 ---
 <!----index.html------------->
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    {% include head.html %}
-    {% include CSS.html %}
-</head>
-
-<body class="bg-slate-950 font-sans antialiased text-slate-200">
-
-  <div class="fixed-top w-full shadow-2xl" style="z-index: 2000; background: var(--bg-dark); display: flex; flex-direction: column;">
-    {% include Header.html %}
-    {% include NavBar.html %}
-  </div> 
-
-  <main id="content" class="container mx-auto px-4 md:px-10" style="padding-top: 220px;">
-    {% include Home.html %}
-  </main>
-
-  {% include footer.html %}
-</body>
-</html>
+{% include Home.html %}
