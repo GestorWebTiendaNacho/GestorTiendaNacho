@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    {% include head.html %}
+</head>
+<body class="bg-slate-950 font-sans antialiased text-slate-200">
+
+    <div class="fixed-top w-full shadow-2xl" style="z-index: 2000; background: #020617; display: flex; flex-direction: column;">
+        {% include header.html %}
+        {% include navbar.html %}
+    </div>
+
+    <main id="content" class="container mx-auto px-4 md:px-10" style="padding-top: 220px;">
+        {{ content }}
+    </main>
+
+    {% include footer.html %}
+    
+    <script src="/assets/js/NicoController.js"></script>
+</body>
+</html>
