@@ -24,7 +24,6 @@
 <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-thin-chubby/css/uicons-thin-chubby.css'>
 <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-chubby/css/uicons-regular-chubby.css'>
 
-<link rel="shortcut icon" type="image/x-icon" href="{{ site.baseurl }}/favicon.ico">
 <!-- 3. jQuery y Core de DataTables (Versión 1.13.6 para mayor estabilidad con Buttons) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
@@ -45,9 +44,11 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
  {% include CSS.html %}
 <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/cssNavBar.css">
 <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/cssHeader.css">
+
 {% if page.custom_css %}
   <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/{{ page.custom_css }}.css">
 {% endif %}
