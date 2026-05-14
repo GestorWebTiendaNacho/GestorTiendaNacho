@@ -4,5 +4,5 @@ description: Sistema de Gestión de Tienda Inteligente
 baseurl: "/GestorTiendaNacho"
 url: "https://gestorwebtiendanacho.github.io"
 markdown: kramdown
-theme: jekyll-theme-minimal # Opcional, pero ayuda a que GitHub reconozca el motor
+theme: jekyll-theme-minimal
 exclude: [node_modules, package.json, package-lock.json]
