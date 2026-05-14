@@ -1,8 +1,8 @@
 title: Gestor Tienda Nacho
 email: cn.apistock@gmail.com
 description: Sistema de Gestión de Tienda Inteligente
-baseurl: "/GestorTiendaNacho" # Déjalo vacío si es el dominio principal
-url: "https://gestorwebtiendanacho.github.io/GestorTiendaNacho/"
+baseurl: "/GestorTiendaNacho"
+url: "https://gestorwebtiendanacho.github.io"
 markdown: kramdown
 theme: jekyll-theme-minimal # Opcional, pero ayuda a que GitHub reconozca el motor
 exclude: [node_modules, package.json, package-lock.json]
