@@ -1,0 +1,23 @@
+<!----index.html------------->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+     {%include('-Head'); %}
+     {% include('CSS'); %}
+</head>
+
+<body class="bg-slate-950 font-sans antialiased text-slate-200">
+
+  <div class="fixed-top w-full shadow-2xl" style="z-index: 2000; background: var(--bg-dark); display: flex; flex-direction: column;">
+    {%include('-Header'); %}
+
+
+    {% include('-NavBar'); %}
+    
+  </div> <main id="content" class="container mx-auto px-4 md:px-10" style="padding-top: 220px;">
+    {% include('-Home'); %}
+  </main>
+
+  {% include('-Footer'); %}
+</body>
+</html>
