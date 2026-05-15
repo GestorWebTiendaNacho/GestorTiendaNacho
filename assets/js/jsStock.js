@@ -281,48 +281,46 @@ window.crearBackupCSV = async function() {
     try {
         const data = await callGoogleScript('descargar_stock_masivo');
         
-        // Validamos la estructura de la respuesta
         if (data.status === "success" && data.reply && data.reply.urls) {
             const urls = data.reply.urls;
-
             log(`✅ PROCESO EXITOSO. PREPARANDO ARCHIVOS...`, "success");
 
-            const dispararDescarga = (url, nombre) => {
-                // Si la URL no es un link real, imprimimos el error en la terminal y abortamos
-                if (!url || typeof url !== 'string' || !url.includes('drive.google.com')) {
+            // Función interna para ejecutar la descarga física
+            const ejecutarDescargaReal = (url, nombre) => {
+                if (!url || !url.includes('drive.google.com')) {
                     log(`❌ ERROR EN ${nombre}: ${url}`, "error");
-                    console.error("Error capturado para evitar 404:", url);
-                    return; // IMPORTANTE: Esto detiene la redirección
+                    return;
                 }
-
                 const a = document.createElement('a');
                 a.href = url;
-                a.target = '_self';
+                // Forzamos target blank solo para la descarga si el delay falla
+                a.target = '_blank'; 
                 document.body.appendChild(a);
                 a.click();
-                
-                setTimeout(() => {
-                    if (document.body.contains(a)) document.body.removeChild(a);
-                }, 500);
+                setTimeout(() => document.body.removeChild(a), 1000);
             };
 
-            // Ejecutamos las descargas
-            dispararDescarga(urls.cb, "DEPOSITO CB");
+            // --- SISTEMA DE COLA CON DELAY ---
             
+            // 1. Primera descarga (Depósito CB)
+            log("💾 Descargando Stock CB...", "info");
+            ejecutarDescargaReal(urls.cb, "STOCK CB");
+
+            // 2. Segunda descarga (Depósito TN) con un delay de 3 segundos
             setTimeout(() => {
-                dispararDescarga(urls.tn, "DEPOSITO TN");
-                log(`📦 DESCARGAS INICIADAS. Revisa tu carpeta de descargas en Linux.`, "success");
-            }, 1500);
+                log("💾 Descargando Stock TN...", "info");
+                ejecutarDescargaReal(urls.tn, "STOCK TN");
+                log(`📦 PROCESO FINALIZADO. Revisa tu carpeta de descargas.`, "success");
+            }, 3000); // 3000ms = 3 segundos de espera
 
         } else {
-            const mensajeError = data.reply ? data.reply.msj : "Respuesta inválida del servidor";
-            log(`❌ ERROR: ${mensajeError}`, "error");
+            const msj = data.reply ? data.reply.msj : "Error desconocido";
+            log(`❌ ERROR: ${msj}`, "error");
         }
 
     } catch (err) {
-        log("❌ FALLO CRÍTICO DE CONEXIÓN: " + err, "error");
+        log("❌ FALLO CRÍTICO: " + err, "error");
     } finally {
-        // Restauramos el botón pase lo que pase
         if(btn) { 
             btn.disabled = false; 
             btn.style.opacity = "1"; 
