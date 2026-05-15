@@ -5,7 +5,7 @@
     }
     window.mainJsCargado = true;
 
-    const URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbyuWQCaHNNZQ566SZbaYf_HKrzdEYirQfhaPrxQP9uKcK0v0OLa2OnRglV2UR1ln-Y/exec";
+    const URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbxmyR-eKLuisek9vnb_yUOhN_UjzeXeOjliBhnBIc5ALtHWRZ_3wE86SK9ZQHLBFlQ/exec";
 
     /**
      * Función global para comunicarse con Google Apps Script

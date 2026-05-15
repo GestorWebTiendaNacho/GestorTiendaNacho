@@ -290,11 +290,11 @@ window.crearBackupCSV = async function() {
             const dispararDescarga = (url, nombreDefault) => {
                 if(!url || url === "null") {
                     console.error("URL de descarga inválida para " + nombreDefault);
+                    log(`⚠️ No se pudo descargar ${nombreDefault}: ${url}`, "warn");
                     return;
                 }
                 const a = document.createElement('a');
                 a.href = url;
-                a.target = '_self'; // Importante para que no intente navegar
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
