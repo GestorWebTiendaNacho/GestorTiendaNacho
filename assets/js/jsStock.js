@@ -70,8 +70,11 @@ window.actualizarReloj = function(id, valor, titulo) {
 
 /* LÓGICA DE CARGA INICIAL */
 document.addEventListener('DOMContentLoaded', () => {
-    $('.logo-placeholder').show();
-    $('#cvs_descarga, #cvs_impacto').hide(); 
+    if (document.getElementById('cvs_descarga')) {
+        $('.logo-placeholder').show();
+        $('#cvs_descarga, #cvs_impacto').hide();
+        setTimeout(window.forzarRenderInicial, 500);
+    }
 });
 
 window.forzarRenderInicial = function() {
