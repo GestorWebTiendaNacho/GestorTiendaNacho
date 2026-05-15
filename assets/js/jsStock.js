@@ -281,41 +281,54 @@ window.crearBackupCSV = async function() {
     try {
         const data = await callGoogleScript('descargar_stock_masivo');
         
-        // REVISIÓN CRÍTICA: Accedemos a data.reply que es donde GAS mete el retorno
-        const respuestaGAS = data.reply; 
+        // Validamos la estructura de la respuesta
+        if (data.status === "success" && data.reply && data.reply.urls) {
+            const urls = data.reply.urls;
 
-        if (data.status === "success" && respuestaGAS && respuestaGAS.urls) {
-            log(`✅ CSVs GENERADOS. INICIANDO DESCARGA...`, "success");
+            log(`✅ PROCESO EXITOSO. PREPARANDO ARCHIVOS...`, "success");
 
-            const dispararDescarga = (url, nombreDefault) => {
-                if(!url || url === "null") {
-                    console.error("URL de descarga inválida para " + nombreDefault);
-                    log(`⚠️ No se pudo descargar ${nombreDefault}: ${url}`, "warn");
+            const dispararDescarga = (url, nombre) => {
+                // VALIDACIÓN CRÍTICA: Si la URL no es un link real de Google, no hacer nada
+                if (!url || typeof url !== 'string' || !url.startsWith('https://drive.google.com')) {
+                    log(`⚠️ Error en link de ${nombre}: ${url}`, "error");
                     return;
                 }
+
+                // Creamos el link de descarga
                 const a = document.createElement('a');
                 a.href = url;
+                a.download = ""; // Sugiere descarga en lugar de navegación
+                a.style.display = 'none';
                 document.body.appendChild(a);
                 a.click();
-                document.body.removeChild(a);
+                
+                // Limpieza inmediata
+                setTimeout(() => {
+                    if (document.body.contains(a)) document.body.removeChild(a);
+                }, 100);
             };
 
-            // Disparamos las descargas usando las claves correctas del objeto
-            dispararDescarga(respuestaGAS.urls.cb, "STOCK-CB");
+            // Ejecutamos las descargas
+            dispararDescarga(urls.cb, "DEPOSITO CB");
             
             setTimeout(() => {
-                dispararDescarga(respuestaGAS.urls.tn, "STOCK-TN");
-                log(`📦 ARCHIVOS CB Y TN ENVIADOS AL NAVEGADOR`, "success");
+                dispararDescarga(urls.tn, "DEPOSITO TN");
+                log(`📦 DESCARGAS INICIADAS. Revisa tu carpeta de descargas en Linux.`, "success");
             }, 1500);
 
         } else {
-            throw new Error("El servidor no devolvió las URLs de descarga.");
+            const mensajeError = data.reply ? data.reply.msj : "Respuesta inválida del servidor";
+            log(`❌ ERROR: ${mensajeError}`, "error");
         }
 
     } catch (err) {
-        log("❌ FALLO CRÍTICO: " + err, "error");
+        log("❌ FALLO CRÍTICO DE CONEXIÓN: " + err, "error");
     } finally {
-        if(btn) { btn.disabled = false; btn.style.opacity = "1"; }
+        // Restauramos el botón pase lo que pase
+        if(btn) { 
+            btn.disabled = false; 
+            btn.style.opacity = "1"; 
+        }
     }
 };
 
