@@ -116,6 +116,7 @@
     color: var(--lex-gold);
     background: linear-gradient(135deg, #fde68a 0%, #c2902e 50%, #926a1f 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }

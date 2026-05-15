@@ -1,0 +1,303 @@
+<link rel="stylesheet" href="assets/css/cssProv.css">
+<link rel="stylesheet" href="assets/css/cssMenuProv.css">
+<div class="h-screen w-full bg-slate-950 text-slate-200 overflow-hidden font-mono flex flex-col">
+
+    <!-- HEADER (NAVBAR) -->
+    <header class="h-20 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md flex justify-between items-center px-6 z-40 shrink-0">
+        <div class="flex items-center gap-4">
+            <button type="button" onclick="toggleSidebar()" class="btn-accion-nico rounded border transition-all shadow-lg active:scale-95 flex items-center justify-center">
+                <i class="fas fa-bars text-lg"></i>
+            </button>
+            <div class="flex flex-col">
+                <h2 class="text-lg font-black text-slate-100 uppercase tracking-tighter leading-none">Análisis Cuantitativo</h2>
+                <p class="text-[9px] text-slate-500 font-sans uppercase tracking-[2px] mt-1">Terminal Inteligente de Compras y Operaciones</p>
+            </div>
+        </div>
+        <div id="reloj-terminal" class="text-cyan-500 text-xs font-mono"></div>
+    </header>
+
+    <!-- CUERPO DE LA APP -->
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <!-- OVERLAY -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 z-[45] hidden backdrop-blur-sm"></div>
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar-nico" class="absolute top-4 left-4 z-[50] w-64 bg-slate-900/95 border border-slate-800 flex flex-col transition-all duration-300 transform -translate-x-[120%] shadow-[0_0_50px_rgba(0,0,0,0.8)] h-fit max-h-[85%] rounded-2xl overflow-hidden backdrop-blur-xl">
+            
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                <span class="font-bold text-slate-100 text-[10px] tracking-widest uppercase flex items-center gap-2">
+                    <div class="w-2 h-2 bg-lex-gold rounded-full animate-pulse"></div>
+                    MENU PROVEEDORES
+                </span>
+                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <nav class="p-8 space-y-3 flex flex-col">
+                <a class="nav-link-custom" href="#" onclick="abrirModalSemanal(); return false;">
+                    <i class="fi fi-rs-daily-calendar icon-pedi"></i> <span class="link-text"> SEMANAL </span>
+                </a>
+                <a class="nav-link-custom" href="#" onclick="abrirModal('PEDIDOS'); return false;">
+                    <i class="bi bi-truck icon-pedi"></i> <span class="link-text"> PEDIDOS </span>
+                </a>
+                <a class="nav-link-custom" href="#" onclick="verEstadoPedidos(); return false;">
+                    <i class="fi fi-rs-package icon-pedi"></i> <span class="link-text"> RECEPCIÓN </span>
+                </a>
+                <a class="nav-link-custom" href="#" onclick="abrirModal('PROVEEDORES'); return false;">
+                    <i class="fi fi-rs-supplier-alt icon-prov"></i> <span class="link-text"> PROVEEDORES </span>
+                </a>
+                <a class="nav-link-custom" href="#" onclick="abrirModal('HISTORIAL'); return false;">
+                    <i class="fi fi-ts-task-calendar icon-hist"></i> <span class="link-text"> HISTORIAL </span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 overflow-hidden p-6 bg-slate-950 relative flex flex-col items-center">
+            <div class="container-deposito"><h1 class="mb-4">GESTOR CENTRAL DE DEPÓSITO</h1></div>
+            <div class="menu-radial" id="mainMenu">
+                <div class="icons-wrapper">
+                    <!-- STOCK -->
+                    <div class="rotater">
+                        <button onclick="abrirModalSemanal()" class="btn-radial btn-icon blue-glow">
+                            <i class="fi fi-rs-daily-calendar"></i>
+                            <span class="label-radial">SEMANAL</span>
+                        </button>
+                    </div>
+                    <!-- PEDIDOS -->
+                    <div class="rotater">
+                        <button onclick="abrirModal('PEDIDOS')" class="btn-radial btn-icon gold-glow">
+                            <i class="fi fi-rr-quick-box"></i>
+                            <span class="label-radial">PEDIDOS</span>
+                        </button>
+                    </div>
+                    <!-- RECEPCIÓN -->
+                    <div class="rotater">
+                        <button onclick="verEstadoPedidos()" class="btn-radial btn-icon purple-glow">
+                            <i class="fi fi-rs-package"></i>
+                            <span class="label-radial">RECEPCIÓN</span>
+                        </button>
+                    </div>
+                    <!-- BASE -->
+                    <div class="rotater">
+                        <button onclick="abrirModal('PROVEEDORES')" class="btn-radial btn-icon orange-glow">
+                            <i class="fi fi-ts-holding-hand-delivery"></i>
+                            <span class="label-radial">PROVEEDORES</span>
+                        </button>
+                    </div>
+                    <!-- HISTORIAL -->
+                    <div class="rotater">
+                        <button onclick="abrirModal('HISTORIAL')" class="btn-radial btn-icon green-glow">
+                             <i class="fi fi-rs-time-past"></i>
+                             <span class="label-radial">HISTORIAL</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="btn-radial trigger" id="btn-trigger-main" onclick="toggleMenu()">
+                    <div class="line-container">
+                        <span class="line"></span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ASIDE CHAT NICO -->
+        <aside class="w-80 lg:w-96 bg-slate-900 border-l border-slate-800 flex flex-col z-30 relative h-full">
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900"></div>
+            <div class="contenedor-nico-flotante"><canvas id="canvas-nico"></canvas></div>
+            <div class="p-4 bg-slate-950 border-t border-slate-800 z-40">
+                <div class="flex bg-slate-900 border border-slate-700 rounded-md p-1 focus-within:border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                    <button id="btn-nico-voz" 
+                            class="px-3 text-slate-500 hover:text-red-400 transition-colors"
+                            title="Mantén para hablar">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <input type="text" id="user-input" placeholder="Comando de sistema..." class="flex-1 bg-transparent py-2 px-3 text-xs text-cyan-100 focus:outline-none">
+                    <button onclick="enviarPrompt()" class="px-3 text-cyan-600 hover:text-cyan-400"><i class="fas fa-terminal"></i></button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+        <div id="visor-contenedor-fijo" 
+            style="display: none !important; position: fixed; inset: 0; z-index: 99999; background: rgba(15, 23, 42, 0.98); flex-direction: column;">
+            
+            <div style="padding: 12px 20px; background: #1e293b; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; box-shadow: 0 0 10px #22d3ee;"></div>
+                    <span style="color: #22d3ee; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 1px;">VISTA PREVIA DE DOCUMENTO</span>
+                </div>
+                <button onclick="cerrarVisorFijo()" 
+                        style="background: #ef4444; color: white; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.2s;">
+                    CERRAR (ESC)
+                </button>
+            </div>
+
+            <div style="flex-grow: 1; width: 100%; background: #334155; position: relative;">
+                <iframe id="pdf-embed" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+</div>
+
+
+
+
+
+<!-- MODAL MAESTRO -->
+<div id="modal-maestro" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[9999] hidden items-center justify-center p-2 lg:p-6">
+    <div id="contenedor-estilo-malevich" class="w-full h-full max-w-[98vw] max-h-[96vh] flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.7)] relative overflow-hidden">
+        
+            <div class="p-5 border-b-4 border-lex-gold bg-slate-950 flex justify-between items-center relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-1 h-8 bg-lex-gold"></div> 
+                    <h3 id="modal-titulo" class="text-slate-100 text-sm font-black tracking-[4px] uppercase italic"></h3>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <div class="bg-slate-900 border-2 border-slate-700 px-4 py-1 flex items-center gap-3">
+                        <i class="fas fa-search text-lex-gold text-xs"></i>
+                        <input type="text" id="filtro-tabla-global" onkeyup="filtrarTabla()" placeholder="FILTRAR..." class="bg-transparent border-none text-[10px] text-cyan-400 focus:outline-none uppercase w-48">
+                    </div>
+
+                    <button onclick="cerrarModalYRegresar()" class="group flex items-center gap-2 px-3 py-1 border border-red-500/30 bg-red-500/10 hover:bg-red-500 hover:border-red-400 transition-all duration-300 rounded-lg ml-4">
+                        <span class="text-[9px] font-black text-red-500 group-hover:text-white tracking-widest">CERRAR TERMINAL</span>
+                        <i class="fas fa-times text-red-500 group-hover:text-white text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="modal-contenido" class="flex-1 overflow-auto px-4 py-6 bg-slate-950/40 custom-scroll relative"></div>
+            
+            <div class="absolute bottom-0 right-0 w-24 h-1 bg-lex-gold"></div>
+            <div class="absolute bottom-0 right-0 w-1 h-24 bg-lex-gold"></div>
+    </div>
+</div>
+
+
+<!-- MODAL RECEPCIÓN -->
+<div id="modalRecepcion" class="modal-recep-overlay">
+  <div class="modal-recep-content">
+    
+    <div class="modal-header-recep">
+      <h3 id="recepcionTitulo" tabindex="-1">GESTIÓN DE RECEPCIÓN</h3> <button onclick="cerrarModalRecepcion()" class="btn-closeRecep">&times;</button>
+    </div>
+    
+    <div class="modal-body-recep">
+      
+      <div id="resumenPedido" class="mb-6"></div>
+
+      <div class="flex gap-4 mb-6">
+        <button type="button" onclick="cambiarModoGestion('RECIBIDO')" id="tab-RECIBIDO" class="btn-gestion btn-tipo-recibir">Recibir</button>
+        <button type="button" onclick="cambiarModoGestion('REPROGRAMADO')" id="tab-REPROGRAMADO" class="btn-gestion btn-tipo-reprogramar">Reprogramar</button>
+        <button type="button" onclick="cambiarModoGestion('CANCELADO')" id="tab-CANCELADO" class="btn-gestion btn-tipo-cancelar">Cancelar</button>
+      </div>
+
+      <form id="formRecepcion">
+        <input type="hidden" id="recepcionFila">
+        <input type="hidden" id="recepcionID">
+        <input type="hidden" id="accionActual" value="RECIBIDO">
+
+        <div id="section-RECIBIDO" class="gestion-section">
+          <div class="bg-slate-900/50 p-4 border border-slate-800 rounded mb-6">
+             <div id="contenedorItemsRecepcion"></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 border-t border-slate-800 pt-4">
+            <div>
+              <label class="block text-[10px] uppercase text-cyan-500 mb-2 font-bold italic">Cumplimiento: <span id="valorPorcentaje">0%</span></label>
+              <input type="range" id="inputPorcentaje" class="w-full accent-cyan-500" min="0" max="100" value="0" oninput="actualizarValorPorcentaje(this.value)">
+            </div>
+            <div class="text-center">
+              <label class="block text-[10px] uppercase text-cyan-500 mb-2 font-bold italic">Calidad / Precio</label>
+              <div class="flex justify-center gap-2">
+                <button type="button" class="btn-star" onclick="setCalidad(1)">★</button>
+                <button type="button" class="btn-star" onclick="setCalidad(2)">★</button>
+                <button type="button" class="btn-star" onclick="setCalidad(3)">★</button>
+                <button type="button" class="btn-star" onclick="setCalidad(4)">★</button>
+                <button type="button" class="btn-star" onclick="setCalidad(5)">★</button>
+                <input type="hidden" id="inputCalidad" value="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="section-OBS" class="mb-6">
+          
+          <div id="wrapper-reprogramacion" class="hidden mb-4">
+            <div class="flex items-center justify-between bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg">
+                <div class="flex flex-col">
+                    <span class="text-[9px] text-yellow-500 uppercase font-bold">Nueva Fecha de Arribo</span>
+                    <span id="display-fecha-reprogramada" class="text-white font-mono text-xs">Sin seleccionar</span>
+                </div>
+                <button type="button" onclick="solicitarFechaReprogramacion()" 
+                        class="bg-yellow-600 hover:bg-yellow-500 text-slate-950 text-[10px] font-bold px-3 py-1.5 rounded transition-all active:scale-95">
+                    CAMBIAR FECHA
+                </button>
+            </div>
+          </div>
+
+          <div id="wrapper-causa-cancelacion" class="hidden mb-3">
+            <label class="block text-[10px] uppercase text-red-500 mb-2 font-bold italic">Responsable de Cancelación</label>
+            <select id="inputCausa" class="w-full bg-slate-950 border border-slate-800 p-2 rounded text-white text-sm outline-none focus:border-red-500">
+              <option value="cliente">RESPONSABILIDAD DEL CLIENTE (SIN PENA)</option>
+              <option value="proveedor">RESPONSABILIDAD DEL PROVEEDOR (APLICAR PENA)</option>
+            </select>
+          </div>
+
+          <label class="block text-[10px] uppercase text-slate-500 mb-2 font-bold italic">Observaciones Finales</label>
+          <textarea id="inputObservaciones" class="w-full bg-slate-950 border border-slate-800 p-2 rounded text-white text-sm h-24 outline-none focus:border-cyan-500" placeholder="Escriba aquí las observaciones..."></textarea>
+        </div>
+
+      </form>
+      
+      <div class="h-24"></div> 
+      
+    </div> <div id="section-footer" class="sect-footer">
+      <button type="button" id="btnConfirmarGestion" onclick="confirmarGestionFinal()" class="btn-accion-pedido">
+        CONFIRMAR GESTIÓN <i class="fi fi-sc-check-double"></i>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- MODAL historial -->
+<div id="modalDetalleHistorial" class="modal-recep-overlay" style="display: none;">
+  <div class="modal-recep-content !max-w-3xl"> 
+    <div class="modal-header-recep !border-cyan-500/50">
+      <div class="flex flex-col">
+        <h3 id="historialTitulo" class="text-cyan-500">DETALLE DE PEDIDO</h3>
+        <span id="historialSubtitulo" class="text-[9px] text-slate-500 font-mono">ID: ---</span>
+      </div>
+      <button onclick="cerrarModalHistorial()" class="btn-closeRecep">&times;</button>
+    </div>
+    
+    <div class="modal-body-recep custom-scroll">
+      <div id="infoGeneralHistorial" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-slate-900/50 border border-slate-800 rounded-lg"></div>
+
+      <div class="mb-4">
+        <label class="block text-[10px] uppercase text-cyan-500 mb-2 font-bold italic tracking-widest">Desglose de Productos</label>
+        <div id="contenedorItemsHistorial" class="bg-slate-950 border border-slate-800 rounded overflow-hidden"></div>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-[10px] uppercase text-slate-500 mb-2 font-bold italic tracking-widest">Notas del Registro</label>
+        <div id="obsHistorial" class="w-full bg-slate-900/30 border border-slate-800 p-3 rounded text-slate-400 text-xs italic min-h-[60px]">
+            Sin observaciones registradas.
+        </div>
+      </div>
+    </div>
+
+    <div class="sect-footer !justify-end">
+      <button type="button" onclick="cerrarModalHistorial()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded text-[10px] font-bold uppercase border border-slate-700">
+        Cerrar Consulta
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@rive-app/canvas@latest"></script>
+<script src="assets/js/jsProv.js"></script>
