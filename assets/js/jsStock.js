@@ -217,63 +217,105 @@
     };
 
     /*------- PROTOCOLO DE RESCATE -------*/
-    window.ejecutarProtocoloRescate = function() {
-        if (typeof Swal === 'undefined') {
-            alert("Protocolo de rescate activado. Revisar consola.");
-            return;
-        }
-        
-        Swal.fire({
-            title: '⚠️ ¿ACTIVAR PROTOCOLO DE RESCATE?',
-            text: "Se extraerá la base completa de Contabilium.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'INICIAR EXTRACCIÓN',
-            confirmButtonColor: '#ff3131',
-            background: '#020617',
-            color: '#fff'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                const btn = document.getElementById('btn-panic');
-                if(btn) btn.disabled = true;
-                log("☢️ PROTOCOLO DE RESCATE INICIADO...", "error");
+window.ejecutarProtocoloRescate = function() {
+    if (typeof Swal === 'undefined') {
+        alert("Protocolo de rescate activado. Revisar consola.");
+        return;
+    }
+    
+    Swal.fire({
+        title: '⚠️ ¿ACTIVAR PROTOCOLO DE RESCATE?',
+        text: "Se extraerá la base completa de Contabilium y se generará un Excel unificado.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'INICIAR EXTRACCIÓN',
+        confirmButtonColor: '#ff3131',
+        background: '#020617',
+        color: '#fff'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            const btn = document.getElementById('btn-panic');
+            if(btn) btn.disabled = true;
+            log("☢️ PROTOCOLO DE RESCATE INICIADO...", "error");
+            
+            try {
+                const data = await callGoogleScript('rescate_integral');
                 
-                try {
-                    const data = await callGoogleScript('rescate_integral');
-                    if(btn) btn.disabled = false;
-                    log("✅ EXTRACCIÓN EXITOSA", "success");
-                    Swal.fire({
-                        title: '¡RESCATE COMPLETADO!',
-                        html: `<a href="${data.reply}" target="_blank" style="color:#c2902e;">[ ABRIR EXCEL ]</a>`,
-                        icon: 'success',
-                        background: '#020617',
-                        color: '#c2902e'
-                    });
-                } catch (err) {
-                    if(btn) btn.disabled = false;
-                    log("❌ FALLO EN EL RESCATE: " + err, "error");
-                }
+                // Extraemos la URL (recordá que en GAS pusimos: res = { url: ejecutarRescate() })
+                const urlDescarga = data.reply.url;
+
+                if(btn) btn.disabled = false;
+                log("✅ EXTRACCIÓN EXITOSA", "success");
+
+                // 1. Forzamos la descarga automática
+                const tempLink = document.createElement('a');
+                tempLink.href = urlDescarga;
+                tempLink.target = '_blank';
+                document.body.appendChild(tempLink);
+                tempLink.click();
+                document.body.removeChild(tempLink);
+
+                // 2. Avisamos al usuario
+                Swal.fire({
+                    title: '¡RESCATE COMPLETADO!',
+                    html: `El archivo se está descargando.<br><br><a href="${urlDescarga}" target="_blank" style="color:#c2902e; font-weight:bold;">[ SI NO DESCARGÓ, CLIC AQUÍ ]</a>`,
+                    icon: 'success',
+                    background: '#020617',
+                    color: '#c2902e'
+                });
+            } catch (err) {
+                if(btn) btn.disabled = false;
+                log("❌ FALLO EN EL RESCATE: " + err, "error");
             }
-        });
-    };
+        }
+    });
+};
 
     /*----- BACKUP CSV MASIVO -----------*/
-    window.crearBackupCSV = async function() {
-        const btn = document.getElementById('btn-backup-emergencia');
-        if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; }
-        
-        log(">>> 🚨 INICIANDO PROTOCOLO DE EMERGENCIA", "warn");
-        
-        try {
-            await callGoogleScript('descargar_stock_masivo');
-            log(`✅ PROCESO EXITOSO`, "success");
+window.crearBackupCSV = async function() {
+    const btn = document.getElementById('btn-backup-emergencia');
+    if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; }
+    
+    log(">>> 🚨 INICIANDO GENERACIÓN DE CSVs MASIVOS", "warn");
+    
+    try {
+        const data = await callGoogleScript('descargar_stock_masivo');
+        const urls = data.reply.urls; // Traemos el objeto con cb y tn
+
+        if (data.status === "success" && urls) {
+            log(`✅ CSVs GENERADOS. INICIANDO DESCARGA...`, "success");
+
+            // Función interna para disparar descargas
+            const dispararDescarga = (url) => {
+                const a = document.createElement('a');
+                a.href = url;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+
+            // Disparamos ambas (el navegador puede pedir permiso para "múltiples descargas")
+            dispararDescarga(urls.cb);
+            
+            // Pequeño delay para no saturar al navegador
             setTimeout(() => {
-                if(btn) { btn.disabled = false; btn.style.opacity = "1"; }
-            }, 2000);
-        } catch (err) {
-            log("❌ FALLO CRÍTICO: " + err, "error");
-            if(btn) { btn.disabled = false; btn.style.opacity = "1"; }
+                dispararDescarga(urls.tn);
+                log(`📦 ARCHIVOS CB Y TN ENVIADOS AL NAVEGADOR`, "success");
+            }, 1000);
+
+        } else {
+            throw new Error(data.msj || "Error desconocido en el servidor");
         }
-    };
+
+        setTimeout(() => {
+            if(btn) { btn.disabled = false; btn.style.opacity = "1"; }
+        }, 2000);
+
+    } catch (err) {
+        log("❌ FALLO CRÍTICO: " + err, "error");
+        if(btn) { btn.disabled = false; btn.style.opacity = "1"; }
+    }
+};
 
 })();
