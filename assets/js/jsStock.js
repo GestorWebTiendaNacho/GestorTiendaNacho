@@ -276,44 +276,45 @@ window.crearBackupCSV = async function() {
     const btn = document.getElementById('btn-backup-emergencia');
     if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; }
     
-    log(">>> 🚨 INICIANDO GENERACIÓN DE CSVs MASIVOS", "warn");
+    log(">>> 🚨 INICIANDO PROTOCOLO DE EMERGENCIA", "warn");
     
     try {
         const data = await callGoogleScript('descargar_stock_masivo');
-        const urls = data.reply.urls; // Traemos el objeto con cb y tn
+        
+        // REVISIÓN CRÍTICA: Accedemos a data.reply que es donde GAS mete el retorno
+        const respuestaGAS = data.reply; 
 
-        if (data.status === "success" && urls) {
+        if (data.status === "success" && respuestaGAS && respuestaGAS.urls) {
             log(`✅ CSVs GENERADOS. INICIANDO DESCARGA...`, "success");
 
-            // Función interna para disparar descargas
-            const dispararDescarga = (url) => {
+            const dispararDescarga = (url, nombreDefault) => {
+                if(!url || url === "null") {
+                    console.error("URL de descarga inválida para " + nombreDefault);
+                    return;
+                }
                 const a = document.createElement('a');
                 a.href = url;
-                a.style.display = 'none';
+                a.target = '_self'; // Importante para que no intente navegar
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
             };
 
-            // Disparamos ambas (el navegador puede pedir permiso para "múltiples descargas")
-            dispararDescarga(urls.cb);
+            // Disparamos las descargas usando las claves correctas del objeto
+            dispararDescarga(respuestaGAS.urls.cb, "STOCK-CB");
             
-            // Pequeño delay para no saturar al navegador
             setTimeout(() => {
-                dispararDescarga(urls.tn);
+                dispararDescarga(respuestaGAS.urls.tn, "STOCK-TN");
                 log(`📦 ARCHIVOS CB Y TN ENVIADOS AL NAVEGADOR`, "success");
-            }, 1000);
+            }, 1500);
 
         } else {
-            throw new Error(data.msj || "Error desconocido en el servidor");
+            throw new Error("El servidor no devolvió las URLs de descarga.");
         }
-
-        setTimeout(() => {
-            if(btn) { btn.disabled = false; btn.style.opacity = "1"; }
-        }, 2000);
 
     } catch (err) {
         log("❌ FALLO CRÍTICO: " + err, "error");
+    } finally {
         if(btn) { btn.disabled = false; btn.style.opacity = "1"; }
     }
 };
