@@ -16,7 +16,7 @@
         console.log(`%c[API] Solicitando: ${accion}`, 'color: #c2902e; font-weight: bold;', datos);
         
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 segundos de espera
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 60 segundos de espera
 
         try {
             const response = await fetch(URL_GAS_GLOBAL, {

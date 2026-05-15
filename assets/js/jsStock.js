@@ -237,7 +237,7 @@ window.ejecutarProtocoloRescate = function() {
             const btn = document.getElementById('btn-panic');
             if(btn) btn.disabled = true;
             log("☢️ PROTOCOLO DE RESCATE INICIADO...", "error");
-            
+            log("⏳ La extracción puede tardar unos 3-4 minutos debido al volumen de datos...", "info");
             try {
                 const data = await callGoogleScript('rescate_integral');
                 
