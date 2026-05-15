@@ -288,24 +288,22 @@ window.crearBackupCSV = async function() {
             log(`✅ PROCESO EXITOSO. PREPARANDO ARCHIVOS...`, "success");
 
             const dispararDescarga = (url, nombre) => {
-                // VALIDACIÓN CRÍTICA: Si la URL no es un link real de Google, no hacer nada
-                if (!url || typeof url !== 'string' || !url.startsWith('https://drive.google.com')) {
-                    log(`⚠️ Error en link de ${nombre}: ${url}`, "error");
-                    return;
+                // Si la URL no es un link real, imprimimos el error en la terminal y abortamos
+                if (!url || typeof url !== 'string' || !url.includes('drive.google.com')) {
+                    log(`❌ ERROR EN ${nombre}: ${url}`, "error");
+                    console.error("Error capturado para evitar 404:", url);
+                    return; // IMPORTANTE: Esto detiene la redirección
                 }
 
-                // Creamos el link de descarga
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = ""; // Sugiere descarga en lugar de navegación
-                a.style.display = 'none';
+                a.target = '_self';
                 document.body.appendChild(a);
                 a.click();
                 
-                // Limpieza inmediata
                 setTimeout(() => {
                     if (document.body.contains(a)) document.body.removeChild(a);
-                }, 100);
+                }, 500);
             };
 
             // Ejecutamos las descargas
