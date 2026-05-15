@@ -4,13 +4,11 @@
     if (window.jsHomeCargado) return;
     window.jsHomeCargado = true;
 
-
     const getBasePath = () => {
         const path = window.location.pathname;
         if (path.includes('GestorTiendaNacho')) return '/GestorTiendaNacho/';
         return '/';
     };
-
 
     window.navegar = async function(pagina) {
         const content = document.getElementById('content');
@@ -68,7 +66,7 @@
 
                 // Si el script tiene contenido interno
                 if (oldScript.textContent) {
-                    newScript.textContent = oldScript.textContent;
+                    newScript.textContent = `{\n${oldScript.textContent}\n}`;
                 }
 
                 // Si es un script externo (tiene src), esperamos a que cargue
