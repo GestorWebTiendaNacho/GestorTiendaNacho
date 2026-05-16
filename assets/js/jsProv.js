@@ -1,5 +1,10 @@
 console.log("🚀 N.I.C.O. Terminal: Iniciando carga de scripts...");
 //-------------------jsProv---
+let estadoEdicion = {
+    hoja: "",
+    fila: 0
+};
+
 function cerrarModalYRegresar() {
     // 1. Localizamos los elementos del DOM
     const modal = document.getElementById('modal-maestro');
@@ -19,7 +24,7 @@ function cerrarModalYRegresar() {
     // 4. Ejecutamos la navegación global a proveedores
     // Esta instrucción asume que tu función navegar() ya está disponible globalmente
     if (typeof navegar === "function") {
-        navegar('-Proveedores');
+        navegar('proveedores');
     } else {
         console.warn("La función 'navegar' no está definida.");
     }
@@ -185,9 +190,9 @@ window.avatarPensar = () => window.NicoController && NicoController.cambiarA("PE
 window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ESPERANDO");
 window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
 
-const btnVoz = document.getElementById('btn-nico-voz');
+/*const btnVoz = document.getElementById('btn-nico-voz');*/
 
-btnVoz.onclick = () => {
+/*btnVoz.onclick = () => {
     const input = document.getElementById("user-input");
     input.value = "";
     input.placeholder = "ESCUCHANDO... (Usa Super+S o habla)";
@@ -203,7 +208,7 @@ btnVoz.onclick = () => {
            input.placeholder = "Comando de sistema...";
         }
     };
-};
+};*/
 
 
 
@@ -315,40 +320,58 @@ var MAPA_HOJAS = {
     'RECEPCIÓN': 'Estado_Pedidos'
 };
 
- function cargarTablaGenerica(tipo) {
+async function cargarTablaGenerica(tipo) {
     const contenido = document.getElementById('modal-contenido');
     if (!contenido) return;
 
     const tipoNormalizado = tipo.toString().toUpperCase().trim();
     const nombreHojaReal = MAPA_HOJAS[tipoNormalizado] || tipoNormalizado;
 
+    // Loader con estética Terminal N.I.C.O.
     contenido.innerHTML = `
     <div class="flex flex-col items-center justify-center py-20">
         <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p class="text-cyan-500 text-xs font-bold animate-pulse tracking-widest uppercase">CONSULTANDO TERMINAL: ${tipoNormalizado}...</p>
+        <p class="text-cyan-500 text-xs font-bold animate-pulse tracking-widest uppercase">EXTRAYENDO DATOS DE NUCLEO: ${nombreHojaReal}...</p>
     </div>`;
 
-    google.script.run
-        .withSuccessHandler(html => {
-            contenido.innerHTML = html;
-            if (typeof ejecutarScriptsInyectados === "function") {
-                ejecutarScriptsInyectados(contenido);
+    try {
+        // Llamada al nuevo backend en GitHub/GAS
+        const res = await callGoogleScript('get_datos_deposito', { nombreSheet: nombreHojaReal });
+
+        if (res && res.status === "success") {
+            const data = res.reply;
+            if (data.success) {
+                // Inyectamos la estructura de la tabla
+                contenido.innerHTML = `
+                    <div class="table-responsive custom-scroll">
+                        <table id="tabla-maestra-generica" class="table table-dark table-hover border-slate-800 text-[11px]">
+                            <thead class="bg-slate-900 text-cyan-500 uppercase tracking-wider"></thead>
+                            <tbody class="text-slate-300"></tbody>
+                        </table>
+                    </div>`;
+                
+                renderTableNico('#tabla-maestra-generica', data.headers, data.data);
+            } else {
+                throw new Error(data.error || "Error al leer registros");
             }
-        })
-        .withFailureHandler(err => {
-            contenido.innerHTML = `
+        } else {
+            throw new Error(res.message || "Error de comunicación");
+        }
+    } catch (err) {
+        contenido.innerHTML = `
             <div class="p-6 bg-red-900/20 border border-red-500/50 rounded-lg text-red-400 font-mono text-[10px]">
-                <p class="font-bold mb-1 uppercase">ERROR DE ENLACE:</p>
-                <p>${err}</p>
+                <p class="font-bold mb-1 uppercase">🚫 ERROR DE ACCESO A TERMINAL:</p>
+                <p>${err.message}</p>
             </div>`;
-        })
-        .obtenerTablaGenerica(nombreHojaReal);
+    }
 }
+
+
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 13.");
 
 
-function abrirModal(tipo) {
-    console.log("Abriendo modal:", tipo);
+async function abrirModal(tipo) {
+    console.log("N.I.C.O. Dashboard - Iniciando modal:", tipo);
     const modal = document.getElementById('modal-maestro');
     const contenido = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
@@ -356,7 +379,6 @@ function abrirModal(tipo) {
     if (!modal || !contenido || !titulo) return;
     
     contenido.innerHTML = "";
-    window.carritoPedidos = []; 
     titulo.innerText = tipo;
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -364,54 +386,145 @@ function abrirModal(tipo) {
     if (tipo === 'PEDIDOS') {
         contenido.innerHTML = `
             <div class="p-6 text-center">
-                <h3 class="text-cyan-400 mb-4 font-bold uppercase tracking-widest text-[10px]">Seleccione un Proveedor</h3>
+                <h3 class="text-cyan-400 mb-4 font-bold uppercase tracking-widest text-[10px]">Identificar Proveedor para Pedido</h3>
                 <div id="selector-proveedor-container" class="flex flex-col items-center gap-4">
                     <div class="w-8 h-8 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
                 </div>
             </div>`;
 
-        google.script.run
-            .withSuccessHandler(lista => {
-                const container = document.getElementById('selector-proveedor-container');
-                if (!container) return;
+        try {
+            // Reutilizamos get_datos_deposito pero solo para obtener la columna de nombres
+            const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'baseProveedores' });
+            
+            if (res.status === "success") {
+                const filas = res.reply.data;
+                // Asumiendo que el nombre del proveedor está en la columna 1 (según tu lógica previa)
+                const listaUnicos = [...new Set(filas.map(f => f[1]))].sort();
                 
-                let options = (lista || []).map(p => {
-                    const nombre = p ? String(p).trim() : "";
-                    const nombreEscapado = nombre.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                    return `<option value="${nombreEscapado}">${nombreEscapado}</option>`;
-                }).join('');
+                const container = document.getElementById('selector-proveedor-container');
+                let options = listaUnicos.map(p => `<option value="${escapingForOption(p)}">${p}</option>`).join('');
 
                 container.innerHTML = `
-                    <select id="prov-seleccionado" class="bg-slate-900 border border-cyan-500/50 text-white p-2 rounded w-64 focus:border-cyan-400 outline-none text-xs">
+                    <select id="prov-seleccionado" class="bg-slate-900 border border-cyan-500/50 text-white p-2 rounded w-64 focus:border-cyan-400 outline-none text-xs font-mono">
                         <option value="">-- SELECCIONAR PROVEEDOR --</option>
                         ${options}
                     </select>
                     <div class="flex gap-3 mt-4">
-                        <button onclick="cargarProductosPorProveedor()" class="btn-accion-nico h-10 px-6 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-[10px]">
-                            CARGAR CATÁLOGO
+                        <button onclick="cargarProductosPorProveedor()" class="btn-accion-nico h-10 px-6 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-[10px] tracking-widest">
+                            SINCRONIZAR CATÁLOGO
                         </button>
                     </div>`;
-            })
-            .obtenerListaProveedoresUnicos();
+            }
+        } catch (err) {
+            console.error("Error cargando proveedores:", err);
+        }
     } else {
         cargarTablaGenerica(tipo); 
     }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 14.");
+
+/**
+ * Renderiza DataTables
+ * @param {string} selector - El ID de la tabla (ej: '#tabla-maestra-generica')
+ * @param {Array} headers - Array de strings con los títulos
+ * @param {Array} data - Array de arrays con los registros
+ */
+function renderTableNico(selector, headers, data) {
+    if (!$.fn.DataTable) return console.error("❌ DataTables no cargado.");
+
+    const nombreHoja = document.getElementById('modal-titulo')?.innerText || "";
+    const nombreHojaReal = MAPA_HOJAS[nombreHoja] || nombreHoja;
+
+    // Configurar Columnas
+    const columnasDataTable = headers.map((titulo, index) => ({
+        title: titulo,
+        render: function(val) {
+            if (val === null || val === undefined) return '';
+            if (val.toString().toUpperCase() === 'OK') {
+                return `<span class="text-emerald-400 font-bold">● ${val}</span>`;
+            }
+            return val;
+        }
+    }));
+
+    // AGREGAR COLUMNA DE ACCIONES DINÁMICA
+    columnasDataTable.push({
+        title: "ACCIONES",
+        render: function(val, type, row, meta) {
+            const filaIndex = meta.row + 2; 
+            const rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
+            const headersJson = JSON.stringify(headers).replace(/"/g, '&quot;');
+
+            // Lógica de botones según la hoja
+            if (nombreHojaReal === "Historial_Compras") {
+                return `<button onclick='verDetalleHistorial("${row[0]}")' 
+                        class='bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded text-[10px] font-bold uppercase active:scale-95'>
+                        DETALLE</button>`;
+            } 
+            
+            if (nombreHojaReal === "Estado_Pedidos") {
+                return `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' 
+                        class='bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 rounded text-[10px] font-bold uppercase shadow-lg shadow-cyan-900/20'>
+                        GESTIONAR</button>`;
+            }
+
+            if (nombreHojaReal !== "baseProductos") {
+                return `<button onclick='abrirEditorGenerico("${nombreHojaReal}", ${filaIndex}, "${rowJson}", "${headersJson}")' 
+                        class='bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase'>
+                        EDITAR</button>`;
+            }
+            
+            return "";
+        }
+    });
+
+    // Inicialización
+    try {
+        if ($.fn.DataTable.isDataTable(selector)) {
+            $(selector).DataTable().destroy();
+            $(selector).empty(); 
+        }
+
+        $(selector).DataTable({
+            data: data,
+            columns: columnasDataTable,
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
+            pageLength: 15,
+            responsive: true,
+            dom: 'rtip',
+            order: [],
+            drawCallback: function() {
+                console.log("⚡ Terminal N.I.C.O.: Datos renderizados.");
+            }
+        });
+    } catch (err) {
+        console.error("❌ Error DataTables:", err);
+    }
+}
+
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 14.");
 
 
 function getTipoByHoja(hoja) {
-    if(hoja === "baseProveedores") return 'PROVEEDORES';
-    if(hoja === "Historial_Compras") return 'HISTORIAL';
-    return 'ESTADO';
+    const nombres = {
+        'baseProveedores': 'PROVEEDORES',
+        'Historial_Compras': 'HISTORIAL',
+        'baseProductos': 'PRODUCTOS',
+        'Estado_Pedidos': 'ESTADO'
+    };
+    
+    return nombres[hoja] || 'SISTEMA';
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 15.");
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 15.");
 
 function escapingForOption(str) {
-    return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    if (!str) return "";
+    return str.toString().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 16.");
 
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 16.");
 
 
 function cerrarModal() {
@@ -427,147 +540,43 @@ function cerrarModal() {
 }
     
 
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 17.");
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 17.");
 
-function cargarProductosPorProveedor() {
+
+async function cargarProductosPorProveedor() {
     const selector = document.getElementById('prov-seleccionado');
-    if (!selector) return;
-    
-    const prov = selector.value;
-    if (!prov) {
-        Swal.fire({
-            title: 'SELECCIÓN VACÍA',
-            text: 'Por favor, elige un proveedor para cargar su catálogo.',
-            icon: 'info',
-            background: '#0f172a',
-            color: '#fff',
-            confirmButtonColor: '#0891b2'
-        });
-        return;
-    }
+    const prov = selector?.value;
+    if (!prov) return Swal.fire('Error', 'Seleccione un proveedor', 'info');
 
     const contenido = document.getElementById('modal-contenido');
-    if (!contenido) return;
-
-    contenido.innerHTML = `
-    <div class="flex flex-col items-center justify-center py-24">
-        <div class="relative">
-            <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-            <div class="absolute inset-0 w-12 h-12 border-4 border-transparent border-b-cyan-300/30 rounded-full animate-pulse"></div>
-        </div>
-        <p class="text-cyan-500 text-[10px] font-bold mt-6 uppercase tracking-[0.3em] animate-pulse">
-            Sincronizando Catálogo: ${prov}
-        </p>
-    </div>`;
-
-    google.script.run
-        .withSuccessHandler(html => {
-            contenido.innerHTML = html;
-            setTimeout(() => {
-                const tableId = '#tabla-maestra-pedidos';
-                const $tableElement = $(tableId);
-                
-                if ($tableElement.length === 0) return;
-
-                // Destruir si ya existía una instancia (prevención)
-                if ($.fn.DataTable.isDataTable(tableId)) {
-                    $tableElement.DataTable().destroy();
-                }
-
-                // Inicialización de DataTable
-                const table = $tableElement.DataTable({
-                    "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
-                    "pageLength": 10,
-                    "order": [[2, "asc"]], 
-                    "responsive": true,
-                    "dom": 'rtip', 
-                    "drawCallback": function() {
-                        console.log("N.I.C.O. Terminal: Tabla Renderizada");
-                    }
-                });
-
-                table.columns().every(function () {
-                    const column = this;
-                    const header = $(column.header());
-                    const title = header.text().trim();
-
-                    if (title !== "SEL.") {
-                        if (header.find('input').length === 0) {
-                            $('<input type="text" placeholder="filtrar..." class="w-full bg-slate-800 text-[9px] border border-slate-700 p-1 rounded mt-1 outline-none focus:border-cyan-500 text-slate-300 font-normal uppercase" />')
-                                .appendTo(header)
-                                .on('keyup change clear', function (e) {
-                                    e.stopPropagation();
-                                    if (column.search() !== this.value) {
-                                        column.search(this.value).draw();
-                                    }
-                                });
-                        }
-                    }
-                });
-            }, 50);
-        })
-        .withFailureHandler(err => {
-            contenido.innerHTML = `
-            <div class="p-6 bg-red-900/10 border border-red-500/50 rounded text-red-500 text-xs">
-                <b>ERROR DE COMUNICACIÓN:</b> ${err}
-            </div>`;
-        })
-        .obtenerTablaFiltrada("baseProductos", prov);
-}
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 18.");
-
-
-window.addEventListener("click", function(e) {
-    const btn = e.target.closest(".btn-editar");
-    if (!btn) return;
+    
+    // 1. Mostrar Loader
+    contenido.innerHTML = `<p class="animate-pulse">Sincronizando Catálogo: ${prov}...</p>`;
 
     try {
-        const hoja = btn.dataset.hoja;
-        const fila = btn.dataset.fila;
-        const prov = btn.dataset.prov ? decodeURIComponent(btn.dataset.prov) : "";
-
-        const limpiarYParsear = (str) => {
-            if (!str) return [];
-            const decodificado = decodeURIComponent(str).replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-            return JSON.parse(decodificado);
-        };
-
-        const datos = limpiarYParsear(btn.dataset.datos);
-        const encabezados = limpiarYParsear(btn.dataset.encabezados);
-
-        abrirEditorGenerico(
-            hoja,
-            fila,
-            JSON.stringify(datos),
-            JSON.stringify(encabezados),
-            prov
-        );
-    } catch (err) {
-        console.error("N.I.C.O. Error crítico en el parseo de datos:", err);
-        Swal.fire({
-            title: 'ERROR DE LECTURA',
-            text: 'Los datos de esta fila contienen caracteres que el sistema no puede procesar.',
-            icon: 'error',
-            background: '#0f172a',
-            color: '#fff'
+        // 2. Pedir datos (Usamos una nueva acción 'get_productos_proveedor')
+        const res = await callGoogleScript('get_datos_deposito', { 
+            nombreSheet: "baseProductos",
+            filtroProveedor: prov // Deberemos preparar el servidor para esto
         });
+
+        if (res.status === "success") {
+            // 3. Renderizar directamente con la nueva función
+            contenido.innerHTML = `<table id="tabla-maestra-pedidos" class="w-full"></table>`;
+            renderTableNico('#tabla-maestra-pedidos', res.reply.headers, res.reply.data);
+        }
+    } catch (err) {
+        console.error(err);
     }
-});
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 19.");
-
-
-function escaparHTML(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 20.");
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 18.");
 
 
+
+/* ---SECCION DE EDICION DE TABLA PROVEEDORES--- */
 function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov) {
+    // 1. Persistencia del estado (Asegúrate de tener definido 'estadoEdicion' al inicio del archivo)
     estadoEdicion.hoja = nombreHoja;
     estadoEdicion.fila = numFila;
     
@@ -575,47 +584,51 @@ function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov
     let encabezados = [];
     
     try {
-        datos = (datosRaw && datosRaw !== "undefined") ? JSON.parse(datosRaw) : [];
-        encabezados = (encabezadosRaw && encabezadosRaw !== "undefined") ? JSON.parse(encabezadosRaw) : [];
+        // AJUSTE: Ahora los datos pueden venir como objeto (desde DataTables) o como string
+        datos = (typeof datosRaw === 'string') ? JSON.parse(datosRaw) : (datosRaw || []);
+        encabezados = (typeof encabezadosRaw === 'string') ? JSON.parse(encabezadosRaw) : (encabezadosRaw || []);
     } catch (e) {
-        console.error("Fallo en parseo de editor:", e);
+        console.error("❌ N.I.C.O. Error en parseo de editor:", e);
         return;
     }
 
-    const tituloDisplay = (prov && prov !== "undefined") ? prov : nombreHoja;
+    // AJUSTE: Título dinámico más limpio
+    const tituloDisplay = prov || nombreHoja;
     
     // Construcción del formulario
     let htmlForm = `
-    <div class="bg-slate-800 p-6 rounded border border-cyan-500/30">
-        <h3 class="text-cyan-400 mb-6 text-xs font-bold uppercase tracking-widest">
-            MODIFICAR REGISTRO: <span class="text-white">${escaparHTML(tituloDisplay)}</span>
+    <div class="bg-slate-800 p-6 rounded border border-cyan-500/30 shadow-2xl">
+        <h3 class="text-cyan-400 mb-6 text-xs font-bold uppercase tracking-widest flex justify-between">
+            <span>MODIFICAR REGISTRO: <span class="text-white">${tituloDisplay}</span></span>
+            <span class="text-slate-500 font-mono italic">FILA #${numFila}</span>
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="inputs-dinamicos">`;
 
-    datos.forEach((valor, i) => {
-        const nombreColumna = encabezados[i] || `Columna ${i + 1}`;
+    encabezados.forEach((nombreColumna, i) => {
+        const valor = datos[i] !== undefined ? datos[i] : ""; // Evita que aparezca 'undefined' en los inputs
         const nombreLower = nombreColumna.toLowerCase().trim();
-        const esBloqueado = ["id", "codigo", "sku"].includes(nombreLower);
+        
+        // Bloqueo de campos críticos (ID, Códigos, etc.)
+        const esBloqueado = ["id", "codigo", "sku", "proveedor"].includes(nombreLower);
         
         const inputAttr = esBloqueado ? `readonly tabindex="-1"` : "";
         const labelClass = esBloqueado ? "text-cyan-600/50" : "text-slate-500";
-        const valorSeguro = escaparHTML(valor);
 
         htmlForm += `
-        <div>
-            <label class="text-[9px] uppercase font-semibold ${labelClass}">${escaparHTML(nombreColumna)}</label>
+        <div class="space-y-1">
+            <label class="text-[9px] uppercase font-semibold ${labelClass}">${nombreColumna}</label>
             <input type="text" 
-                   value="${valorSeguro}" 
+                   value="${valor}" 
                    ${inputAttr}
-                   class="input-edicion w-full bg-slate-950 border border-slate-700 p-2 text-xs text-white rounded focus:border-cyan-500 outline-none transition-all ${esBloqueado ? 'opacity-50 cursor-not-allowed' : ''}">
+                   class="input-edicion w-full bg-slate-950 border border-slate-700 p-2 text-xs text-white rounded focus:border-cyan-500 outline-none transition-all ${esBloqueado ? 'opacity-50 cursor-not-allowed bg-slate-900' : 'hover:border-slate-600'}">
         </div>`;
     });
 
     htmlForm += `
         </div>
-        <div class="flex justify-end gap-4 mt-8">
-            <button onclick="cerrarModal()" class="text-slate-500 text-xs hover:text-white transition-colors">CANCELAR</button>
-            <button onclick="ejecutarGuardado()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded text-xs font-bold shadow-lg shadow-cyan-900/20 transition-transform active:scale-95">
+        <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-700/50">
+            <button onclick="cerrarModal()" class="text-slate-500 text-[10px] font-bold hover:text-white transition-colors tracking-widest">CANCELAR</button>
+            <button onclick="ejecutarGuardado()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded text-[10px] font-bold shadow-lg shadow-cyan-900/20 transition-transform active:scale-95 tracking-widest">
                 CONFIRMAR CAMBIOS
             </button>
         </div>
@@ -626,39 +639,57 @@ function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov
         contenedor.innerHTML = htmlForm;
     }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 21.");
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 21.");
 
 
-function ejecutarGuardado() {
+async function ejecutarGuardado() {
     const inputs = document.querySelectorAll('.input-edicion');
     const nuevosDatos = Array.from(inputs).map(input => input.value);
     const modalContenido = document.getElementById('modal-contenido');
     
+    // Guardamos el estado previo por si hay que volver atrás ante un error
     const contenidoOriginal = modalContenido.innerHTML;
     
+    // UI: Loader con estética Terminal N.I.C.O.
     modalContenido.innerHTML = `
     <div class="flex flex-col items-center justify-center h-full py-10 space-y-4">
         <div class="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-cyan-500 font-bold animate-pulse text-[10px] uppercase">Sincronizando con Base de Datos...</p>
+        <p class="text-cyan-500 font-bold animate-pulse text-[10px] uppercase tracking-widest">
+            Sincronizando con Base de Datos...
+        </p>
     </div>`;
 
-    google.script.run
-    .withSuccessHandler(res => {
-        if(res && res.success) {
-            abrirModal(getTipoByHoja(estadoEdicion.hoja));
-        } else {
-            alert("Error al guardar: " + (res ? res.mensaje : "Unknown"));
-            modalContenido.innerHTML = contenidoOriginal;
-        }
-    })
-    .withFailureHandler(err => {
-        alert("Fallo crítico de conexión: " + err);
-        modalContenido.innerHTML = contenidoOriginal;
-    })
-    .guardarCambioServidor(estadoEdicion.hoja, estadoEdicion.fila, nuevosDatos);
+    try {
+        // --- MIGRACIÓN A FETCH API ---
+        // Llamamos a 'guardarCambioServidor' a través de nuestro puente callGoogleScript
+        const res = await callGoogleScript('guardarCambioServidor', {
+            nombreSheet: estadoEdicion.hoja,
+            numFila: estadoEdicion.fila,
+            valores: nuevosDatos
+        });
 
+        // Verificamos la respuesta (res.reply es lo que devuelve la función de GAS)
+        if (res && res.status === "success" && res.reply.success) {
+            console.log("✅ Cambio impactado con éxito.");
+            
+            // Refrescamos el modal con la tabla actualizada
+            abrirModal(getTipoByHoja(estadoEdicion.hoja));
+            
+        } else {
+            const mensajeError = res.reply ? res.reply.mensaje : "Error desconocido";
+            throw new Error(mensajeError);
+        }
+
+    } catch (err) {
+        console.error("❌ Fallo en el guardado:", err);
+        
+        alert("Fallo de conexión o servidor: " + err.message);
+        modalContenido.innerHTML = contenidoOriginal;
+    }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 22.");
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 22.");
 
 
 
