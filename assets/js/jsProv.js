@@ -340,6 +340,7 @@ async function cargarTablaGenerica(tipo) {
 
         if (res && res.status === "success") {
             const data = res.reply;
+            
             if (data.success) {
                 // Inyectamos la estructura de la tabla
                 contenido.innerHTML = `
