@@ -2,7 +2,6 @@
 
 console.log("🚀 Iniciando servicio: Optimizando reportes...");
 
-// Variable global para controlar la instancia de la tabla y evitar duplicidad
 let tablaInstancia = null;
 
 window.seleccionarDeposito = function(n) {
@@ -26,14 +25,12 @@ window.seleccionarDeposito = function(n) {
     });
 
     $('#modalBienvenida').fadeOut(300, function() {
-        // Mantenemos el estilo original de visibilidad
         $('#panelStock').attr('style', 'display: block !important; opacity: 1 !important;');
         $('#btnBackContainer').addClass('active').show();
         
         var label = document.getElementById('labelDeposito');
         if(label) label.innerText = 'PANEL: ' + tituloPortal;
         
-        // Llamada a la carga de datos
         cargarDatos(n);
     });
 };
@@ -42,7 +39,7 @@ async function cargarDatos(nombreHoja) {
     console.log("📡 Conectando con servidor para hoja: " + nombreHoja);
     
     try {
-        // Enviamos 'nombreSheet' dentro del objeto data
+        // Se envía el objeto que el doPost recibirá como 'data'
         const res = await callGoogleScript('get_datos_deposito', { nombreSheet: nombreHoja });
         
         console.log("🔍 Respuesta recibida:", res);
@@ -50,19 +47,24 @@ async function cargarDatos(nombreHoja) {
         if (res && res.status === "success") {
             const respuestaServidor = res.reply;
             
+            // Validamos que la respuesta del servidor exista y sea exitosa
             if (respuestaServidor && respuestaServidor.success) {
+                console.log("✅ Datos recibidos:", respuestaServidor.data.length, "filas");
                 renderDepositosTable(respuestaServidor.headers, respuestaServidor.data);
                 Swal.close();
             } else {
-                const errorMsg = respuestaServidor?.error || "Error en la lógica del servidor";
-                Swal.fire('Error', errorMsg, 'error');
+                // El error viene de la lógica interna de getDatosDeposito (ej. hoja no encontrada)
+                const errorMsg = respuestaServidor?.error || "La hoja no contiene datos válidos.";
+                console.error("❌ Error en lógica de servidor:", errorMsg);
+                Swal.fire('Error de Datos', errorMsg, 'error');
             }
         } else {
-            throw new Error(res.message || "Error en la comunicación");
+            // El error viene del bloque catch del doPost o de la comunicación
+            throw new Error(res.message || "Error en la estructura de comunicación");
         }
     } catch (err) {
         console.error("🚫 Fallo crítico:", err);
-        Swal.fire('Fallo de conexión', err.toString(), 'error');
+        Swal.fire('Fallo de conexión', 'No se pudo contactar con el servidor: ' + err.message, 'error');
     }
 }
 
@@ -70,7 +72,7 @@ function renderDepositosTable(h, d) {
     const container = $('#DepositosTableContainer');
     container.attr('style', 'display: block !important; opacity: 1 !important;');
     
-    // IMPORTANTE: Destruir instancia previa si existe para evitar errores de re-inicialización
+    // Destruir instancia previa para evitar errores de reinicialización
     if (tablaInstancia) {
         tablaInstancia.destroy();
         $('#tableDepositos').empty(); 
@@ -91,10 +93,8 @@ function renderDepositosTable(h, d) {
     
     container.empty().html(htmlEstructura);
 
-    // Renderizado de filtros select
+    // Filtros Select (Solo para STATUS - Índice 3)
     if (d && d.length > 0) {
-      // Optimizamos: Solo generamos filtro select para la columna STATUS (Índice 3)
-      // para evitar que el navegador se cuelgue procesando miles de SKUs en un select.
       [3].forEach((index) => {
         let uniqueValues = [...new Set(d.map(row => row[index]))].filter(v => v).sort();
         let selectHtml = `
@@ -109,15 +109,15 @@ function renderDepositosTable(h, d) {
       });
     }
 
-    // Inicialización de DataTable con tus estilos originales
+    // Inicialización de DataTable
     tablaInstancia = $('#tableDepositos').DataTable({
       data: d,
       columns: [
-        { title: h[0] }, // ID
-        { title: h[1] }, // SKU
-        { title: h[2] }, // CANTIDAD
+        { title: h[0] }, 
+        { title: h[1] }, 
+        { title: h[2] }, 
         { 
-          title: h[3], // STATUS
+          title: h[3], 
           render: function(data) {
             let val = data ? data.toString().toUpperCase() : "PENDIENTE";
             let color = (val === "OK" || val === "SINCRO") ? "#10b981" : "#ef4444";
@@ -139,19 +139,16 @@ function renderDepositosTable(h, d) {
       pageLength: 20
     });
 
-    // --- LÓGICA DE BÚSQUEDA GLOBAL ---
     $('#globalSearch').on('keyup', function() {
       tablaInstancia.search(this.value).draw();
     });
 
-    // --- LÓGICA DE FILTROS POR COLUMNA ---
     $('.custom-filter').on('change', function() {
       const colIndex = $(this).data('column');
       const val = $(this).val();
       tablaInstancia.column(colIndex).search(val ? '^' + val + '$' : '', true, false).draw();
     });
 
-    // Vinculación de botones al contenedor original
     $('#btnExportContainer').empty();
     tablaInstancia.buttons().container().appendTo('#btnExportContainer');
 }
@@ -160,7 +157,6 @@ window.regresarASeleccion = function() {
     $('#panelStock').fadeOut(300, function() {
         $('#modalBienvenida').fadeIn(300);
         $('#btnBackContainer').hide();
-        // Opcional: limpiar la tabla al salir para liberar memoria
         if (tablaInstancia) {
             tablaInstancia.destroy();
             $('#tableDepositos').empty();
