@@ -42,20 +42,27 @@ async function cargarDatos(nombreHoja) {
     console.log("📡 Conectando con servidor para hoja: " + nombreHoja);
     
     try {
-        // REEMPLAZO: google.script.run por callGoogleScript para entorno GitHub
+        // Enviamos 'nombreSheet' dentro del objeto data
         const res = await callGoogleScript('get_datos_deposito', { nombreSheet: nombreHoja });
         
-        if (res.status === "success" && res.reply.success) {
-          console.log("✅ Datos recibidos:", res.reply.data.length, "filas");
-          renderDepositosTable(res.reply.headers, res.reply.data);
-          Swal.close();
+        console.log("🔍 Respuesta recibida:", res);
+
+        if (res && res.status === "success") {
+            const respuestaServidor = res.reply;
+            
+            if (respuestaServidor && respuestaServidor.success) {
+                renderDepositosTable(respuestaServidor.headers, respuestaServidor.data);
+                Swal.close();
+            } else {
+                const errorMsg = respuestaServidor?.error || "Error en la lógica del servidor";
+                Swal.fire('Error', errorMsg, 'error');
+            }
         } else {
-          console.error("❌ Error en servidor:", res.reply ? res.reply.error : "Error desconocido");
-          Swal.fire('Error', res.reply ? res.reply.error : "Error en servidor", 'error');
+            throw new Error(res.message || "Error en la comunicación");
         }
     } catch (err) {
-        console.error("🚫 Fallo crítico de red:", err);
-        Swal.fire('Fallo de conexión', 'No se pudo contactar con el script del servidor.', 'error');
+        console.error("🚫 Fallo crítico:", err);
+        Swal.fire('Fallo de conexión', err.toString(), 'error');
     }
 }
 
