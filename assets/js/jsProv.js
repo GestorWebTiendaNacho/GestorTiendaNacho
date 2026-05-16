@@ -322,13 +322,11 @@ var MAPA_HOJAS = {
 
 async function cargarTablaGenerica(nombreHoja) {
     const contenedor = document.getElementById('modal-contenido');
-    const originalHTML = contenedor.innerHTML;
-
-    // Loader N.I.C.O.
+    
     contenedor.innerHTML = `
     <div class="flex flex-col items-center justify-center h-64 space-y-4">
         <div class="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-cyan-500 font-bold animate-pulse text-[10px] uppercase tracking-[0.2em]">Accediendo a terminal de datos...</p>
+        <p class="text-cyan-500 font-bold animate-pulse text-[10px] uppercase tracking-[0.2em]">Sincronizando terminal...</p>
     </div>`;
 
     try {
@@ -337,20 +335,18 @@ async function cargarTablaGenerica(nombreHoja) {
         if (res && res.status === "success" && res.reply.success) {
             const data = res.reply;
             
-            // Inyectamos Estructura con Fecha en M1 arriba a la derecha
             contenedor.innerHTML = `
-                <div class="w-full flex justify-between items-end mb-4 px-2">
+                <div class="w-full flex justify-between items-end mb-6 px-4">
                     <div class="flex flex-col">
-                        <span class="text-[9px] text-cyan-500/50 font-mono">STATUS: DATABASE_CONNECTED</span>
-                        <span class="text-[9px] text-cyan-500/50 font-mono">RANGE: A1:H${data.info.total + 1}</span>
+                        <span class="text-[9px] text-cyan-500/40 font-mono italic">TERMINAL_ID: NICO_PROV_v2.6</span>
+                        <span class="text-[10px] text-cyan-500 font-bold tracking-widest uppercase">Base de Datos: ${data.info.hoja}</span>
                     </div>
-                    <div class="bg-slate-900/80 border border-slate-700 px-3 py-2 rounded shadow-lg shadow-black/50">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
-                            Última actualización: <span class="text-cyan-400 font-mono">${data.ultimaActualizacion}</span>
-                        </p>
+                    <div class="bg-slate-950/90 border border-cyan-900/50 px-4 py-2 rounded-sm shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                        <p class="text-[9px] text-slate-500 uppercase tracking-tighter mb-1">Última Sincronización</p>
+                        <p class="text-[11px] text-cyan-400 font-mono font-bold">${data.ultimaActualizacion}</p>
                     </div>
                 </div>
-                <div class="table-responsive w-full custom-scroll">
+                <div class="table-responsive w-full custom-scroll" id="contenedor-estilo-malevich">
                     <table id="tabla-maestra-generica" class="tabla-premium">
                         <thead></thead>
                         <tbody></tbody>
@@ -360,16 +356,10 @@ async function cargarTablaGenerica(nombreHoja) {
             renderTableNico('#tabla-maestra-generica', data.headers, data.data);
 
         } else {
-            throw new Error(res.reply?.error || "Error de respuesta");
+            throw new Error(res.reply?.error || "Fallo en la respuesta del servidor");
         }
     } catch (err) {
-        console.error("❌ Error N.I.C.O.:", err);
-        contenedor.innerHTML = `
-            <div class="p-6 border border-red-900/50 bg-red-900/10 rounded text-center">
-                <p class="text-red-500 font-bold text-sm">FALLO CRÍTICO DE SISTEMA</p>
-                <p class="text-white text-[10px] mt-2">${err.message}</p>
-                <button onclick="cargarTablaGenerica('${nombreHoja}')" class="btn-accion-nico mt-4">REINTENTAR</button>
-            </div>`;
+        contenedor.innerHTML = `<div class="p-8 text-center border border-red-900/30 bg-red-950/20"><p class="text-red-500 font-black">ERROR_DE_ENLACE: ${err.message}</p></div>`;
     }
 }
 
@@ -437,64 +427,66 @@ async function abrirModal(tipo) {
  */
 
 function renderTableNico(selector, headers, data) {
-    if (!$.fn.DataTable) return console.error("❌ DataTables no cargado.");
+    if (!$.fn.DataTable) return;
 
     const nombreHoja = document.getElementById('modal-titulo')?.innerText || "";
     const nombreHojaReal = MAPA_HOJAS[nombreHoja] || nombreHoja;
 
-    // 1. Columnas de Datos Puros (A:H)
+    // Mapeo de columnas con anchos mínimos para evitar el colapso visual
     const columnasDataTable = headers.map((titulo) => ({
         title: titulo,
-        className: "p-2",
+        className: "p-3", // Más padding para airear el texto
+        targets: "_all"
     }));
 
-    // 2. Columna de Acciones (Solo botones)
     if (nombreHojaReal !== "baseProductos") {
         columnasDataTable.push({
             title: "ACCIONES",
             orderable: false,
+            className: "text-center align-middle",
             render: function(val, type, row, meta) {
                 const filaIndex = meta.row + 2;
                 const rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
                 const headersJson = JSON.stringify(headers).replace(/"/g, '&quot;');
 
+                let btnHtml = "";
                 if (nombreHojaReal === "Historial_Compras") {
-                    return `<button onclick='verDetalleHistorial("${row[0]}")' class='btn-accion-nico'>DETALLE</button>`;
-                } 
-                if (nombreHojaReal === "Estado_Pedidos") {
-                    return `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' class='btn-accion-nico'>GESTIONAR</button>`;
+                    btnHtml = `<button onclick='verDetalleHistorial("${row[0]}")' class='btn-accion-nico'>DETALLE</button>`;
+                } else if (nombreHojaReal === "Estado_Pedidos") {
+                    btnHtml = `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' class='btn-accion-nico'>GESTIONAR</button>`;
+                } else {
+                    btnHtml = `<button onclick='abrirEditorGenerico("${nombreHojaReal}", ${filaIndex}, "${rowJson}", "${headersJson}")' class='btn-accion-nico'>EDITAR</button>`;
                 }
-                return `<button onclick='abrirEditorGenerico("${nombreHojaReal}", ${filaIndex}, "${rowJson}", "${headersJson}")' class='btn-accion-nico'>EDITAR</button>`;
+                return btnHtml;
             }
         });
     }
 
-    try {
-        if ($.fn.DataTable.isDataTable(selector)) {
-            $(selector).DataTable().destroy();
-            $(selector).empty();
+    if ($.fn.DataTable.isDataTable(selector)) {
+        $(selector).DataTable().destroy();
+        $(selector).empty();
+    }
+
+    $(selector).DataTable({
+        data: data,
+        columns: columnasDataTable,
+        dom: 'rtip',
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
+        pageLength: 15,
+        scrollX: true,
+        autoWidth: true, // Volvemos a true para que respete el contenido
+        order: [],
+        columnDefs: [
+            { targets: "_all", className: "dt-nowrap" } // Evita que los textos se rompan en múltiples líneas
+        ],
+        headerCallback: function(thead) {
+            $(thead).find('th').addClass('p-3 text-cyan-500 font-black uppercase tracking-widest text-[11px]');
+        },
+        drawCallback: function() {
+            // Re-aplicar la clase de tabla premium tras cada dibujo
+            $(selector).addClass('tabla-premium');
         }
-
-        $(selector).DataTable({
-            data: data,
-            columns: columnasDataTable,
-            dom: 'rtip', 
-            language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
-            pageLength: 15,
-            scrollX: true,
-            autoWidth: false, // Optimización x86
-            order: [],
-            headerCallback: function(thead) {
-                $(thead).find('th').addClass('p-2 text-cyan-500 font-bold uppercase');
-            }
-        });
-
-        // Inyectamos el ID de estilo Malevich al contenedor
-        $(selector).closest('.table-responsive').attr('id', 'contenedor-estilo-malevich').addClass('custom-scroll');
-
-    } catch (err) {
-        console.error("❌ Error en renderizado:", err);
-    }
+    });
 }
 
 
