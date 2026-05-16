@@ -143,9 +143,12 @@ height: calc(100vh - 90px) !important;
 /* Cuerpo de la tabla con transparencia total */
 .tabla-premium tbody tr {
     background-color: transparent !important;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                background-color 0.3s ease !important;
     cursor: pointer;
     position: relative;
+    transform: translateZ(0);
+    will-change: transform, background-color;
 }
 
 .tabla-premium tbody tr td {
@@ -156,9 +159,7 @@ height: calc(100vh - 90px) !important;
     padding: 10px 8px !important;
     vertical-align: middle;
     backface-visibility: hidden;
-    overflow: visible !important;
     white-space: nowrap;
-    text-overflow: ellipsis;
 }
 
 /* Bordes laterales para cerrar la forma de la "card" */
@@ -178,26 +179,37 @@ height: calc(100vh - 90px) !important;
 .tabla-premium tbody tr:hover td {
     background-color: rgba(30, 41, 59, 0.8) !important; 
     color: #ffffff !important;
-    box-shadow: 
-        0 10px 20px -10px rgba(194, 144, 46, 0.4), 
-        inset 0 -15px 20px -15px rgba(194, 144, 46, 0.5) !important; 
     border-bottom: 2px solid var(--lex-gold) !important;
-    transition: all 0.3s ease-in-out !important;
 }
 
 /*indicador lateral de oro al hacer hover */
 .tabla-premium tbody tr:hover td:first-child {
     box-shadow: 
-        -10px 10px 25px -10px rgba(194, 144, 46, 0.6), 
-        inset 15px -15px 30px -15px rgba(194, 144, 46, 0.5) !important; 
-    
+        -10px 0px 20px -10px rgba(194, 144, 46, 0.6) !important; 
     border-left: 7px solid var(--lex-gold) !important;
-    position: relative;
-    z-index: 1;
+    transition: border-left 0.2s ease-out !important;
 }
 .tabla-premium tbody tr:hover td:not(:first-child) {
     border-left: none !important;
 }
+
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_asc:after {
+    display: none !important;
+}
+
+/* Evita que DataTables añada padding extra para esas flechas inexistentes */
+table.dataTable thead th {
+    padding-right: 8px !important; 
+}
+
+/* Elimina el borde doble que a veces inyecta la librería */
+table.dataTable.no-footer {
+    border-bottom: none !important;
+}
+
 
 #contenedor-estilo-malevich > div:first-child {
     z-index: 100 !important;
