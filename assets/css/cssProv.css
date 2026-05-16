@@ -152,6 +152,10 @@ height: calc(100vh - 90px) !important;
     will-change: transform, background-color;
 }
 
+.tabla-premium tbody td {
+    font-size: 10px !important;
+}
+
 .tabla-premium tbody tr td {
     background-color: rgba(30, 41, 59, 0.4) !important;
     color: #e2e8f0 !important;
@@ -161,7 +165,7 @@ height: calc(100vh - 90px) !important;
     vertical-align: middle;
     backface-visibility: hidden;
     white-space: nowrap;
-    font-size: 11px !important;
+
 }
 
 /* Bordes laterales para cerrar la forma de la "card" */
