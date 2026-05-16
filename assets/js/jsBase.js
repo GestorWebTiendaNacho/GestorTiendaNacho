@@ -72,6 +72,17 @@ function renderDepositosTable(h, d) {
     const container = $('#DepositosTableContainer');
     container.attr('style', 'display: block !important; opacity: 1 !important;');
     
+    if (!$.fn.DataTable) {
+        console.warn("⚠️ DataTables no detectado en el $ local. Intentando recuperar del global...");
+        if (window.jQuery && window.jQuery.fn.DataTable) {
+            $.fn.DataTable = window.jQuery.fn.DataTable;
+        } else {
+            Swal.fire('Error de Sistema', 'Las librerías de tablas no están disponibles. Recarga con Ctrl+F5.', 'error');
+            return;
+        }
+    }
+
+
     // Destruir instancia previa para evitar errores de reinicialización
     if (tablaInstancia) {
         tablaInstancia.destroy();
