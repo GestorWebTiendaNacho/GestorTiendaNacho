@@ -340,7 +340,7 @@ async function cargarTablaGenerica(tipo) {
 
         if (res && res.status === "success") {
             const data = res.reply;
-            
+
             if (data.success) {
                 // Inyectamos la estructura de la tabla
                 contenido.innerHTML = `
@@ -430,74 +430,70 @@ async function abrirModal(tipo) {
  * @param {Array} headers - Array de strings con los títulos
  * @param {Array} data - Array de arrays con los registros
  */
+
 function renderTableNico(selector, headers, data) {
     if (!$.fn.DataTable) return console.error("❌ DataTables no cargado.");
 
     const nombreHoja = document.getElementById('modal-titulo')?.innerText || "";
     const nombreHojaReal = MAPA_HOJAS[nombreHoja] || nombreHoja;
 
-    // Configurar Columnas
-    const columnasDataTable = headers.map((titulo, index) => ({
+    // 1. Preparar Columnas (Agregando Acciones)
+    const columnasDataTable = headers.map((titulo) => ({
         title: titulo,
-        render: function(val) {
-            if (val === null || val === undefined) return '';
-            if (val.toString().toUpperCase() === 'OK') {
-                return `<span class="text-emerald-400 font-bold">● ${val}</span>`;
-            }
-            return val;
-        }
+        className: "p-2", // Clase base para celdas
     }));
 
-    // AGREGAR COLUMNA DE ACCIONES DINÁMICA
-    columnasDataTable.push({
-        title: "ACCIONES",
-        render: function(val, type, row, meta) {
-            const filaIndex = meta.row + 2; 
-            const rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
-            const headersJson = JSON.stringify(headers).replace(/"/g, '&quot;');
+    // Añadir columna de Acciones si no es baseProductos
+    if (nombreHojaReal !== "baseProductos") {
+        columnasDataTable.push({
+            title: "ACCIONES",
+            orderable: false, // Evita flechas de ordenamiento en acciones
+            render: function(val, type, row, meta) {
+                const filaIndex = meta.row + 2;
+                const rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
+                const headersJson = JSON.stringify(headers).replace(/"/g, '&quot;');
 
-            // Lógica de botones según la hoja
-            if (nombreHojaReal === "Historial_Compras") {
-                return `<button onclick='verDetalleHistorial("${row[0]}")' 
-                        class='bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded text-[10px] font-bold uppercase active:scale-95'>
-                        DETALLE</button>`;
-            } 
-            
-            if (nombreHojaReal === "Estado_Pedidos") {
-                return `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' 
-                        class='bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 rounded text-[10px] font-bold uppercase shadow-lg shadow-cyan-900/20'>
-                        GESTIONAR</button>`;
+                if (nombreHojaReal === "Historial_Compras") {
+                    return `<button onclick='verDetalleHistorial("${row[0]}")' class='btn-accion-nico'>DETALLE</button>`;
+                } 
+                if (nombreHojaReal === "Estado_Pedidos") {
+                    return `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' class='btn-accion-nico'>GESTIONAR</button>`;
+                }
+                return `<button onclick='abrirEditorGenerico("${nombreHojaReal}", ${filaIndex}, "${rowJson}", "${headersJson}")' class='btn-accion-nico'>EDITAR</button>`;
             }
+        });
+    }
 
-            if (nombreHojaReal !== "baseProductos") {
-                return `<button onclick='abrirEditorGenerico("${nombreHojaReal}", ${filaIndex}, "${rowJson}", "${headersJson}")' 
-                        class='bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase'>
-                        EDITAR</button>`;
-            }
-            
-            return "";
-        }
-    });
-
-    // Inicialización
     try {
+        // Destruir instancia previa si existe
         if ($.fn.DataTable.isDataTable(selector)) {
             $(selector).DataTable().destroy();
-            $(selector).empty(); 
+            $(selector).empty();
         }
 
+        // 2. Inicializar con tus clases específicas
         $(selector).DataTable({
             data: data,
             columns: columnasDataTable,
+            // 'dom' controla qué elementos aparecen. 
+            // Quitamos 'f' (filtro default), 'l' (length) para evitar los "fantasmas"
+            dom: 'rtip', 
             language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
             pageLength: 15,
-            responsive: true,
-            dom: 'rtip',
+            responsive: false, // Desactivamos esto para que no oculte columnas y rompa tu diseño
+            scrollX: true,    // Activamos el scroll horizontal interno
             order: [],
-            drawCallback: function() {
-                console.log("⚡ Terminal N.I.C.O.: Datos renderizados.");
+            // Aquí es donde recuperamos tus clases de CSS
+            headerCallback: function(thead) {
+                $(thead).find('th').addClass('p-2 text-cyan-500 font-bold uppercase');
             }
         });
+
+        // Aplicamos tus clases de Malevich manualmente al contenedor generado
+        const $tablaElement = $(selector);
+        $tablaElement.addClass('tabla-premium'); 
+        $tablaElement.closest('.table-responsive').attr('id', 'contenedor-estilo-malevich').addClass('custom-scroll');
+
     } catch (err) {
         console.error("❌ Error DataTables:", err);
     }
