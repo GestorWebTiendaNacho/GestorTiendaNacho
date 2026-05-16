@@ -320,49 +320,55 @@ var MAPA_HOJAS = {
     'RECEPCIÓN': 'Estado_Pedidos'
 };
 
-async function cargarTablaGenerica(tipo) {
-    const contenido = document.getElementById('modal-contenido');
-    if (!contenido) return;
+async function cargarTablaGenerica(nombreHoja) {
+    const contenedor = document.getElementById('modal-contenido');
+    const originalHTML = contenedor.innerHTML;
 
-    const tipoNormalizado = tipo.toString().toUpperCase().trim();
-    const nombreHojaReal = MAPA_HOJAS[tipoNormalizado] || tipoNormalizado;
-
-    // Loader con estética Terminal N.I.C.O.
-    contenido.innerHTML = `
-    <div class="flex flex-col items-center justify-center py-20">
-        <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p class="text-cyan-500 text-xs font-bold animate-pulse tracking-widest uppercase">EXTRAYENDO DATOS DE NUCLEO: ${nombreHojaReal}...</p>
+    // Loader N.I.C.O.
+    contenedor.innerHTML = `
+    <div class="flex flex-col items-center justify-center h-64 space-y-4">
+        <div class="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-cyan-500 font-bold animate-pulse text-[10px] uppercase tracking-[0.2em]">Accediendo a terminal de datos...</p>
     </div>`;
 
     try {
-        // Llamada al nuevo backend en GitHub/GAS
-        const res = await callGoogleScript('get_datos_deposito', { nombreSheet: nombreHojaReal });
+        const res = await callGoogleScript('get_datos_deposito', { nombreSheet: nombreHoja });
 
-        if (res && res.status === "success") {
+        if (res && res.status === "success" && res.reply.success) {
             const data = res.reply;
+            
+            // Inyectamos Estructura con Fecha en M1 arriba a la derecha
+            contenedor.innerHTML = `
+                <div class="w-full flex justify-between items-end mb-4 px-2">
+                    <div class="flex flex-col">
+                        <span class="text-[9px] text-cyan-500/50 font-mono">STATUS: DATABASE_CONNECTED</span>
+                        <span class="text-[9px] text-cyan-500/50 font-mono">RANGE: A1:H${data.info.total + 1}</span>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-700 px-3 py-2 rounded shadow-lg shadow-black/50">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                            Última actualización: <span class="text-cyan-400 font-mono">${data.ultimaActualizacion}</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="table-responsive w-full custom-scroll">
+                    <table id="tabla-maestra-generica" class="tabla-premium">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>`;
 
-            if (data.success) {
-                // Inyectamos la estructura de la tabla
-                contenido.innerHTML = `
-                    <div class="table-responsive custom-scroll">
-                        <table id="tabla-maestra-generica" class="table table-dark table-hover border-slate-800 text-[11px]">
-                            <thead class="bg-slate-900 text-cyan-500 uppercase tracking-wider"></thead>
-                            <tbody class="text-slate-300"></tbody>
-                        </table>
-                    </div>`;
-                
-                renderTableNico('#tabla-maestra-generica', data.headers, data.data);
-            } else {
-                throw new Error(data.error || "Error al leer registros");
-            }
+            renderTableNico('#tabla-maestra-generica', data.headers, data.data);
+
         } else {
-            throw new Error(res.message || "Error de comunicación");
+            throw new Error(res.reply?.error || "Error de respuesta");
         }
     } catch (err) {
-        contenido.innerHTML = `
-            <div class="p-6 bg-red-900/20 border border-red-500/50 rounded-lg text-red-400 font-mono text-[10px]">
-                <p class="font-bold mb-1 uppercase">🚫 ERROR DE ACCESO A TERMINAL:</p>
-                <p>${err.message}</p>
+        console.error("❌ Error N.I.C.O.:", err);
+        contenedor.innerHTML = `
+            <div class="p-6 border border-red-900/50 bg-red-900/10 rounded text-center">
+                <p class="text-red-500 font-bold text-sm">FALLO CRÍTICO DE SISTEMA</p>
+                <p class="text-white text-[10px] mt-2">${err.message}</p>
+                <button onclick="cargarTablaGenerica('${nombreHoja}')" class="btn-accion-nico mt-4">REINTENTAR</button>
             </div>`;
     }
 }
@@ -399,7 +405,6 @@ async function abrirModal(tipo) {
             
             if (res.status === "success") {
                 const filas = res.reply.data;
-                // Asumiendo que el nombre del proveedor está en la columna 1 (según tu lógica previa)
                 const listaUnicos = [...new Set(filas.map(f => f[1]))].sort();
                 
                 const container = document.getElementById('selector-proveedor-container');
@@ -437,17 +442,17 @@ function renderTableNico(selector, headers, data) {
     const nombreHoja = document.getElementById('modal-titulo')?.innerText || "";
     const nombreHojaReal = MAPA_HOJAS[nombreHoja] || nombreHoja;
 
-    // 1. Preparar Columnas (Agregando Acciones)
+    // 1. Columnas de Datos Puros (A:H)
     const columnasDataTable = headers.map((titulo) => ({
         title: titulo,
-        className: "p-2", // Clase base para celdas
+        className: "p-2",
     }));
 
-    // Añadir columna de Acciones si no es baseProductos
+    // 2. Columna de Acciones (Solo botones)
     if (nombreHojaReal !== "baseProductos") {
         columnasDataTable.push({
             title: "ACCIONES",
-            orderable: false, // Evita flechas de ordenamiento en acciones
+            orderable: false,
             render: function(val, type, row, meta) {
                 const filaIndex = meta.row + 2;
                 const rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
@@ -465,37 +470,30 @@ function renderTableNico(selector, headers, data) {
     }
 
     try {
-        // Destruir instancia previa si existe
         if ($.fn.DataTable.isDataTable(selector)) {
             $(selector).DataTable().destroy();
             $(selector).empty();
         }
 
-        // 2. Inicializar con tus clases específicas
         $(selector).DataTable({
             data: data,
             columns: columnasDataTable,
-            // 'dom' controla qué elementos aparecen. 
-            // Quitamos 'f' (filtro default), 'l' (length) para evitar los "fantasmas"
             dom: 'rtip', 
             language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
             pageLength: 15,
-            responsive: false, // Desactivamos esto para que no oculte columnas y rompa tu diseño
-            scrollX: true,    // Activamos el scroll horizontal interno
+            scrollX: true,
+            autoWidth: false, // Optimización x86
             order: [],
-            // Aquí es donde recuperamos tus clases de CSS
             headerCallback: function(thead) {
                 $(thead).find('th').addClass('p-2 text-cyan-500 font-bold uppercase');
             }
         });
 
-        // Aplicamos tus clases de Malevich manualmente al contenedor generado
-        const $tablaElement = $(selector);
-        $tablaElement.addClass('tabla-premium'); 
-        $tablaElement.closest('.table-responsive').attr('id', 'contenedor-estilo-malevich').addClass('custom-scroll');
+        // Inyectamos el ID de estilo Malevich al contenedor
+        $(selector).closest('.table-responsive').attr('id', 'contenedor-estilo-malevich').addClass('custom-scroll');
 
     } catch (err) {
-        console.error("❌ Error DataTables:", err);
+        console.error("❌ Error en renderizado:", err);
     }
 }
 
