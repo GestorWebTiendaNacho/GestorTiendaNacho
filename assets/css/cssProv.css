@@ -120,6 +120,7 @@ height: calc(100vh - 90px) !important;
     background: transparent !important;
     table-layout: auto !important;
     min-width: 600px;
+    font-size: 11px !important;
 }
 
 .tabla-premium thead th {
@@ -160,6 +161,7 @@ height: calc(100vh - 90px) !important;
     vertical-align: middle;
     backface-visibility: hidden;
     white-space: nowrap;
+    font-size: 11px !important;
 }
 
 /* Bordes laterales para cerrar la forma de la "card" */

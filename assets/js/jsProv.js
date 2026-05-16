@@ -435,7 +435,7 @@ function renderTableNico(selector, headers, data) {
     // Mapeo de columnas con anchos mínimos para evitar el colapso visual
     const columnasDataTable = headers.map((titulo) => ({
         title: titulo,
-        className: "p-3", // Más padding para airear el texto
+        className: "p-2", // Más padding para airear el texto
         targets: "_all"
     }));
 
@@ -480,7 +480,7 @@ function renderTableNico(selector, headers, data) {
             { targets: "_all", className: "dt-nowrap" } // Evita que los textos se rompan en múltiples líneas
         ],
         headerCallback: function(thead) {
-            $(thead).find('th').addClass('p-3 text-cyan-500 font-black uppercase tracking-widest text-[11px]');
+            $(thead).find('th').addClass('p-2 text-cyan-500 font-black uppercase tracking-widest text-[11px]');
         },
         drawCallback: function() {
             // Re-aplicar la clase de tabla premium tras cada dibujo
