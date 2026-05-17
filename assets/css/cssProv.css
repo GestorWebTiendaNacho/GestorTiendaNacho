@@ -100,27 +100,27 @@ height: calc(100vh - 90px) !important;
 div#contenedor-estilo-malevich {
     display: flex !important;
     flex-direction: column !important;
-    width: 95vw !important; /* Un poco más angosto para evitar scroll horizontal */
+    width: 90vw !important; 
     height: 85vh !important; /* Bajamos a 85 para que nunca toque los bordes físicos */
     max-height: 85vh !important;
     overflow: hidden !important; 
     background-color: #020617 !important;
     position: relative !important;
-    margin: auto; /* Centrado absoluto */
+    margin: auto; 
 }
 
 div#modal-contenido {
     display: block !important;
     flex: 1 !important;
-    width: 100% !important;
+    width: 90% !important;
     overflow-y: auto !important; 
     overflow-x: hidden !important; 
-    padding: 10px 20px 40px 20px !important;
+    padding: 10px 20px 20px 20px !important;
     box-sizing: border-box !important;
 }
 
 #modal-contenido table {
-    width: 100% !important;
+    width: 90% !important;
     table-layout: fixed !important; 
     word-wrap: break-word !important;
 }
