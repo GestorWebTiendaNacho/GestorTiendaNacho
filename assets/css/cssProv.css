@@ -108,12 +108,7 @@ height: calc(100vh - 90px) !important;
     overflow-y: auto !important;    
 }
 
-.custom-scroll {
-    overflow-x: auto !important;
-    width: 100%;
-    scrollbar-width: auto !important;
-    scrollbar-color: var(--lex-gold) var(--bg-dark);
-}
+
 #contenedor-estilo-malevich::-webkit-scrollbar {
     width: 10px !important;  
     height: 10px !important; 
@@ -139,10 +134,10 @@ height: calc(100vh - 90px) !important;
 }
 
 
-#contenedor-estilo-malevich {
+/* #contenedor-estilo-malevich {
     scrollbar-width: auto !important; 
     scrollbar-color: #06b6d4 #0f172a !important;
-}
+} */
 
 .tabla-premium {
     width: 100% !important;
