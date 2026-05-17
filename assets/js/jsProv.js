@@ -442,9 +442,8 @@ function renderTableNico(selector, data, nombreHojaReal) {
     if (!$.fn.DataTable) return;
 
     const columnas = ENCABEZADOS_SISTEMA[nombreHojaReal];
-    const indexAcciones = columnas.length - 1; // La última columna siempre es Acciones
+    const indexAcciones = columnas.length - 1;
 
-    // Configuración dinámica de columnas
     const configDefs = columnas.map((titulo, i) => {
         if (i === indexAcciones) {
             return {
@@ -454,13 +453,8 @@ function renderTableNico(selector, data, nombreHojaReal) {
                 render: function(val, type, row, meta) {
                     const filaIndex = meta.row + 2;
                     const rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
-                    
-                    if (nombreHojaReal === "Historial_Compras") {
-                        return `<button onclick='verDetalleHistorial("${row[0]}")' class='btn-accion-nico'>DETALLE</button>`;
-                    }
-                    if (nombreHojaReal === "Estado_Pedidos") {
-                        return `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' class='btn-accion-nico'>GESTIONAR</button>`;
-                    }
+                    if (nombreHojaReal === "Historial_Compras") return `<button onclick='verDetalleHistorial("${row[0]}")' class='btn-accion-nico'>DETALLE</button>`;
+                    if (nombreHojaReal === "Estado_Pedidos") return `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' class='btn-accion-nico'>GESTIONAR</button>`;
                     return `<button onclick='abrirEditorGenerico("${nombreHojaReal}", ${filaIndex}, "${rowJson}")' class='btn-accion-nico'>EDITAR</button>`;
                 }
             };
@@ -477,13 +471,21 @@ function renderTableNico(selector, data, nombreHojaReal) {
         dom: 'rtip',
         language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
         pageLength: 15,
-        scrollX: true, 
+        scrollX: false, 
         autoWidth: false,
+        
         columnDefs: configDefs,
         headerCallback: function(thead) {
             $(thead).find('th').addClass('text-cyan-500 font-black uppercase tracking-widest text-[11px] p-4');
         }
     });
+
+    const contenedor = document.getElementById('contenedor-estilo-malevich');
+    if (contenedor) {
+        contenedor.style.overflowX = "auto";
+        contenedor.style.width = "100%";
+        contenedor.style.display = "block";
+    }
 }
 
 
