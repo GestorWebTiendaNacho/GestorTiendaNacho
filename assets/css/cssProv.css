@@ -298,20 +298,13 @@ table.dataTable.no-footer {
 }
 
 #modal-contenido {
-    padding: 10px 20px !important; 
+    padding: 5px 10px !important; 
     display: flex;
     flex-direction: column;
     align-items: center;
     overflow-y: visible !important;
-    overflow-x: visible !important;
 }
-#modal-contenido::-webkit-scrollbar {
-    width: 6px;
-}
-#modal-contenido::-webkit-scrollbar-thumb {
-    background: var(--lex-gold);
-    border-radius: 10px;
-}
+
 
 
 /* ----SECCION SIDEBAR CABECERA---*/
