@@ -26,7 +26,9 @@
                 },
                 body: JSON.stringify({
                     action: accion,
-                    payload: datos
+                    function: accion,
+                    payload: datos,
+                    params: datos
                 }),
                 signal: controller.signal
             });
