@@ -102,34 +102,20 @@ height: calc(100vh - 90px) !important;
     display: flex;
     flex-direction: column;
     align-items: center;
-   /*  overflow-y: visible !important;
-   overflow-y: visible !important; */
     height: 950 !important;
     max-height: 950px !important;
-   /* scrollbar-width: auto !important; 
-    scrollbar-color: rgba(194, 144, 46, 0.3) #0f172a !important; */
-
-}
-
-
-
-
-
-
-/* Estilo de la Tabla dentro del Modal */
-/*  #contenedor-estilo-malevich {
-    background: var(--bg-dark) !important;
-    border: 1px solid rgba(194, 144, 46, 0.3);
-    width: 100%;
-    max-height: 950px !important;
-    overflow-x: hidden;
-    height: 900px !important;
-    
 }
 #contenedor-estilo-malevich {
-    scrollbar-width: auto !important; 
-    scrollbar-color: #06b6d4 #0f172a !important;
-}*/
+    display: flex;
+    flex-direction: column;
+    width: 98vw;
+    max-height: 90vh;
+    overflow: hidden;
+
+}
+
+/* Estilo de la Tabla dentro del Modal */
+
 
 .modal-contenedor-tableMalevich {
     background: var(--bg-dark) !important;

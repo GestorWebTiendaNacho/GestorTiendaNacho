@@ -149,7 +149,7 @@
 <!-- MODAL MAESTRO -->
 <div id="modal-maestro" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[9999] hidden items-center justify-center p-2 lg:p-6">
 
-    <div id="contenedor-estilo-malevich" class="modal-contenedor-tableMalevich flex flex-col relative shadow-[0_0_60px_rgba(0,0,0,0.7)]">
+    <div id="contenedor-estilo-malevich" class="flex flex-col relative shadow-[0_0_60px_rgba(0,0,0,0.7)]">
         
             <div class="p-5 border-b-4 border-lex-gold bg-slate-950 flex justify-between items-center relative z-10">
                 <div class="flex items-center gap-4">
@@ -170,7 +170,9 @@
                 </div>
             </div>
 
-            <div id="modal-contenido" class="flex-1 overflow-auto px-2 py-4 bg-slate-950/40 custom-scroll relative"></div>
+            <div id="modal-contenido" class="modal-contenedor-tableMalevich flex-1 overflow-auto px-2 py-4 bg-slate-950/40 custom-scroll relative">
+                <!----Aqupi se inserta la tabla---->
+            </div>
             
             <div class="absolute bottom-0 right-0 w-24 h-1 bg-lex-gold"></div>
             <div class="absolute bottom-0 right-0 w-1 h-24 bg-lex-gold"></div>
