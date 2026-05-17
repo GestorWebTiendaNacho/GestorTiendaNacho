@@ -529,37 +529,6 @@ function cerrarModal() {
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 17.");
 
 
-async function cargarProductosPorProveedor() {
-    const selector = document.getElementById('prov-seleccionado');
-    const prov = selector?.value;
-    if (!prov) return Swal.fire('Error', 'Seleccione un proveedor', 'info');
-
-    const contenido = document.getElementById('modal-contenido');
-    
-    // 1. Mostrar Loader
-    contenido.innerHTML = `<p class="animate-pulse">Sincronizando Catálogo: ${prov}...</p>`;
-
-    try {
-        // 2. Pedir datos (Usamos una nueva acción 'get_productos_proveedor')
-        const res = await callGoogleScript('get_datos_deposito', { 
-            nombreSheet: "baseProductos",
-            filtroProveedor: prov // Deberemos preparar el servidor para esto
-        });
-
-        if (res.status === "success") {
-            // 3. Renderizar directamente con la nueva función
-            contenido.innerHTML = `<table id="tabla-maestra-pedidos" class="w-full"></table>`;
-            renderTableNico('#tabla-maestra-pedidos', res.reply.headers, res.reply.data);
-        }
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 18.");
-
-
-
 /* ---SECCION DE EDICION DE TABLA PROVEEDORES--- */
 function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov) {
     // 1. Persistencia del estado (Asegúrate de tener definido 'estadoEdicion' al inicio del archivo)
@@ -626,7 +595,7 @@ function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 21.");
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 18.");
 
 
 async function ejecutarGuardado() {
@@ -675,11 +644,39 @@ async function ejecutarGuardado() {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 22.");
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 19.");
 
 
 
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
+async function cargarProductosPorProveedor() {
+    const selector = document.getElementById('prov-seleccionado');
+    const prov = selector?.value;
+    if (!prov) return Swal.fire('Error', 'Seleccione un proveedor', 'info');
+
+    const contenido = document.getElementById('modal-contenido');
+    
+    // 1. Mostrar Loader
+    contenido.innerHTML = `<p class="animate-pulse">Sincronizando Catálogo: ${prov}...</p>`;
+
+    try {
+        // 2. Pedir datos (Usamos una nueva acción 'get_productos_proveedor')
+        const res = await callGoogleScript('get_datos_deposito', { 
+            nombreSheet: "baseProductos",
+            filtroProveedor: prov // Deberemos preparar el servidor para esto
+        });
+
+        if (res.status === "success") {
+            // 3. Renderizar directamente con la nueva función
+            contenido.innerHTML = `<table id="tabla-maestra-pedidos" class="w-full"></table>`;
+            renderTableNico('#tabla-maestra-pedidos', res.reply.headers, res.reply.data);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 20.");
 
 function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, stockMinimo) {
     const precioNum = parseFloat(precio) || 0;
@@ -705,7 +702,7 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
     }
     actualizarContadorVisual();
 }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 23.");
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 21.");
 
 
 function actualizarContadorVisual() {
@@ -714,7 +711,7 @@ function actualizarContadorVisual() {
         contador.innerHTML = `Items seleccionados: <span class="text-cyan-400 font-bold">${carritoPedidos.length}</span>`;
     }
 }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 24.");
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 22.");
 
 
 function filtrarProductosMain() {
@@ -736,7 +733,7 @@ function filtrarProductosMain() {
 	filas[i].style.display = visible ? "" : "none";
     }
 }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 25.");
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 23.");
 
 
 /*--- INTEGRACIÓN CON DATATABLES---*/
@@ -781,7 +778,7 @@ function cargarProductosPorProveedor() {
         })
         .obtenerTablaFiltrada("baseProductos", prov);
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 26.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 24.");
 
 
 
@@ -894,7 +891,7 @@ function revisarPedido() {
     contenido.innerHTML = html;
     calcularTotalConfirmacion();
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 27-fin.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 25-fin.");
 
 
 
@@ -933,7 +930,7 @@ function eliminarDelPedido(index) {
         }
     });
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 28.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 26.");
 
 
 function prepararEnvioPedido(idPedido) {
@@ -946,7 +943,7 @@ function prepararEnvioPedido(idPedido) {
     
     ejecutarGeneracionPedido(idPedido, dias);
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 29.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 27.");
 
 
 function actualizarCantidadCarrito(index, valor) {
@@ -961,7 +958,7 @@ function actualizarCantidadCarrito(index, valor) {
         calcularTotalConfirmacion();
     }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 30.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 28.");
 
 
 function calcularTotalConfirmacion() {
@@ -973,7 +970,7 @@ function calcularTotalConfirmacion() {
         setTimeout(() => display.classList.remove('animate-pulse'), 500);
     }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 31.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 29.");
 
 
 function ejecutarGeneracionPedido(idPedido, dias) {
@@ -1004,14 +1001,14 @@ function ejecutarGeneracionPedido(idPedido, dias) {
         })
         .procesarPedidoFinal(carritoPedidos, idPedido, dias);
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 32.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 30.");
 
 
 
 function volverAListaProductos() {
     cargarProductosPorProveedor();
 }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 33.");
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 31.");
 
 
 /*----------------------------------- FUNCIONES DEL MODAL RECEPCIÓN---------------------------------*/
@@ -1061,7 +1058,7 @@ function abrirRecepcion(datos, fila) {
     
     console.log("✅ N.I.C.O. Terminal: Modal recepción abierto para orden " + idPedido);
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 34.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 32.");
 
 
 function renderizarItemsDesgloseEspecial(items, idContenedor) {
@@ -1095,7 +1092,7 @@ function renderizarItemsDesgloseEspecial(items, idContenedor) {
     html += `</tbody></table>`;
     contenedor.innerHTML = html;
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 35.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 33.");
 
 
 function recalcularPorcentajeDesdeItems() {
@@ -1119,7 +1116,7 @@ function recalcularPorcentajeDesdeItems() {
         actualizarValorPorcentaje(porcentaje);
     }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 36.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 34.");
 
 
 function confirmarGestionFinal() {
@@ -1169,7 +1166,7 @@ function confirmarGestionFinal() {
         })
         .gestionarEstadoPedidoServidor(config);
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 37.");
+    console.log("✅ N.I.C.O. Terminal: Carga finalizada 35.");
 
 
 
@@ -1224,7 +1221,7 @@ function verEstadoPedidos() {
         })
         .obtenerTablaGenerica("RECEPCION"); 
 }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 38.");
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 36.");
 
 function cambiarModoGestion(modo) {
     document.getElementById('accionActual').value = modo;
