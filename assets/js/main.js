@@ -5,7 +5,7 @@
     }
     window.mainJsCargado = true;
 
-    const URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbxjRW__BJi98UjHMi5wLcd_ldWF1ZHgepXfiLXUMi2RxVRWTqfRiGxnJd2ZZ4B6Iwc/exec";
+    const URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbzt822wCLVY-bP9Blql0TGuRsoY6rKSZDx-2XkOCvu7f4iLl4AFA4HmEPzIT2SbIok/exec";
     /**
      * Función global para comunicarse con Google Apps Script
      * @param {string} accion - El nombre de la acción a ejecutar (sync_stock, get_progress, etc)
