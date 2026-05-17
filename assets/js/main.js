@@ -5,7 +5,7 @@
     }
     window.mainJsCargado = true;
 
-    const URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbxG74ckjXpoMk9xxd10hav2edMm7NnVQPKY35NalXtusGBP-oNjqiC2vQTaS50oCVg/exec";
+    const URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbxjRW__BJi98UjHMi5wLcd_ldWF1ZHgepXfiLXUMi2RxVRWTqfRiGxnJd2ZZ4B6Iwc/exec";
     /**
      * Función global para comunicarse con Google Apps Script
      * @param {string} accion - El nombre de la acción a ejecutar (sync_stock, get_progress, etc)
@@ -40,7 +40,7 @@
             const resultado = await response.json();
             
             // Log de éxito discreto
-            console.log(`%c[API] Respuesta de ${accion} recibida`, 'color: #00ff9d;');
+            console.log(`%c[API] Respuesta de ${accion} recibida`, 'color: #ebbd48;');
             return resultado;
 
         } catch (error) {

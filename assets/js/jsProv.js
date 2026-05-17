@@ -756,12 +756,6 @@ function filtrarProductosMain() {
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 23.");
 
 
-/*--- INTEGRACIÓN CON DATATABLES---*/
-
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 24.");
-
-
-
 /*------ ARMADO Y CONFIRMACION DEL PEDIDO ----*/
 
 async function revisarPedido() {
