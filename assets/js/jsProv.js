@@ -332,48 +332,54 @@ async function cargarTablaGenerica(nombreHoja) {
     const nombreHojaReal = MAPA_HOJAS[nombreHoja] || nombreHoja;
     const columnasCabecera = ENCABEZADOS_SISTEMA[nombreHojaReal] || [];
 
-    // Protocolo de carga visual (Mantenemos tu estética)
+    // Protocolo de carga visual N.I.C.O.
     contenedor.innerHTML = `
     <div class="flex flex-col items-center justify-center h-64 space-y-4">
         <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
         <p class="text-cyan-500 font-mono text-[12px] tracking-[0.4em] uppercase">Sincronizando: ${nombreHojaReal}</p>
     </div>`;
 
-    // CAMBIO CLAVE: Usamos google.script.run para evitar el error de CORS de callGoogleScript
-    google.script.run
-        .withSuccessHandler(function(reply) {
-            if (reply && reply.success) {
-                // Construcción del Frame N.I.C.O.
-                contenedor.innerHTML = `
-                    <div class="w-full flex justify-between items-end mb-6 px-4">
-                        <div class="flex flex-col">
-                            <span class="text-[9px] text-cyan-500/40 font-mono italic">DATA_SOURCE: ${nombreHojaReal}</span>
-                            <span class="text-[11px] text-cyan-500 font-black tracking-widest uppercase">TERMINAL DE CONTROL</span>
-                        </div>
-                        <div class="bg-slate-950/80 border border-cyan-900/40 px-4 py-2 rounded-sm">
-                            <p class="text-[10px] text-slate-400 font-bold">ACTUALIZACIÓN: <span class="text-cyan-400 font-mono">${reply.ultimaActualizacion}</span></p>
-                        </div>
+    try {
+        // USAMOS EL PUENTE QUE SÍ FUNCIONA EN GITHUB: callGoogleScript
+        // Enviamos 'nombreSheet' dentro del objeto, que es lo que el nuevo doPost busca
+        const res = await callGoogleScript('get_datos_deposito', { nombreSheet: nombreHoja });
+
+        if (res && res.status === "success" && res.reply.success) {
+            const data = res.reply;
+            
+            contenedor.innerHTML = `
+                <div class="w-full flex justify-between items-end mb-6 px-4">
+                    <div class="flex flex-col">
+                        <span class="text-[9px] text-cyan-500/40 font-mono italic">DATA_SOURCE: ${nombreHojaReal}</span>
+                        <span class="text-[11px] text-cyan-500 font-black tracking-widest uppercase">TERMINAL DE CONTROL</span>
                     </div>
-                    <div class="wrapper-tabla-final">
-                        <table id="tabla-maestra-generica" class="tabla-premium">
-                            <thead>
-                                <tr>${columnasCabecera.map(h => `<th>${h}</th>`).join('')}</tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>`;
+                    <div class="bg-slate-950/80 border border-cyan-900/40 px-4 py-2 rounded-sm">
+                        <p class="text-[10px] text-slate-400 font-bold">ACTUALIZACIÓN: <span class="text-cyan-400 font-mono">${data.ultimaActualizacion || '---'}</span></p>
+                    </div>
+                </div>
+                <div class="wrapper-tabla-final">
+                    <table id="tabla-maestra-generica" class="tabla-premium">
+                        <thead>
+                            <tr>${columnasCabecera.map(h => `<th>${h}</th>`).join('')}</tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>`;
 
-                renderTableNico('#tabla-maestra-generica', reply.data, nombreHojaReal);
-            } else {
-                contenedor.innerHTML = `<div class="p-8 text-red-500 font-mono border border-red-900/30 text-center">ERROR: ${reply.error}</div>`;
-            }
-        })
-        .withFailureHandler(function(err) {
-            contenedor.innerHTML = `<div class="p-8 text-red-500 font-mono border border-red-900/30 text-center uppercase text-[10px]">Critical Error: ${err}</div>`;
-        })
-        .get_datos_deposito({ nombreSheet: nombreHoja }); // Llamada directa al servidor
+            renderTableNico('#tabla-maestra-generica', data.data, nombreHojaReal);
+
+        } else {
+            const errorMsg = res.reply?.error || res.message || "Error en enlace de datos";
+            throw new Error(errorMsg);
+        }
+    } catch (err) {
+        console.error("Error en carga genérica:", err);
+        contenedor.innerHTML = `
+            <div class="p-8 text-red-500 font-mono border border-red-900/30 text-center uppercase text-[10px]">
+                Critical Error: ${err.message}
+            </div>`;
+    }
 }
-
 
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 13.");
 
