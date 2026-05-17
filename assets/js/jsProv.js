@@ -651,52 +651,71 @@ console.log("✅ N.I.C.O. Terminal: Carga finalizada 19.");
 
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
 async function cargarProductosPorProveedor() {
-    const selector = document.getElementById('prov-seleccionado');
-    const prov = selector?.value;
-    if (!prov) return Swal.fire('Error', 'Seleccione un proveedor', 'info');
+    const prov = document.getElementById('prov-seleccionado')?.value;
+    if (!prov) return Swal.fire('AVISO', 'Selecciona un proveedor', 'info');
 
     const contenido = document.getElementById('modal-contenido');
-    
-    // 1. Mostrar Loader
-    contenido.innerHTML = `<p class="animate-pulse">Sincronizando Catálogo: ${prov}...</p>`;
+    contenido.innerHTML = `<div class="text-center py-10 text-cyan-500 animate-pulse">SINCRONIZANDO DATA...</div>`;
 
-    try {
-        // 2. Pedir datos (Usamos una nueva acción 'get_productos_proveedor')
-        const res = await callGoogleScript('get_datos_deposito', { 
-            nombreSheet: "baseProductos",
-            filtroProveedor: prov // Deberemos preparar el servidor para esto
-        });
+    google.script.run
+        .withSuccessHandler(res => {
+            if (!res.success) return Swal.fire('ERROR', res.error, 'error');
+            if (res.data.length === 0) {
+                contenido.innerHTML = `<div class="p-10 text-center text-slate-500">SIN PRODUCTOS VINCULADOS.</div>`;
+                return;
+            }
 
-        if (res.status === "success") {
-            // 3. Renderizar directamente con la nueva función
-            contenido.innerHTML = `<table id="tabla-maestra-pedidos" class="w-full"></table>`;
-            renderTableNico('#tabla-maestra-pedidos', res.reply.headers, res.reply.data);
-        }
-    } catch (err) {
-        console.error(err);
-    }
+            // Inyectamos el contenedor del scroll que arreglamos antes
+            contenido.innerHTML = `
+                <div class="sticky top-0 bg-slate-950 z-20 pb-4 flex justify-between items-center">
+                    <div id="contador-items" class="text-xs text-slate-400">ITEMS: ${carritoPedidos.length}</div>
+                    <button onclick="revisarPedido()" class="bg-cyan-600 text-white text-[10px] px-4 py-2 uppercase font-bold">Revisar Pedido →</button>
+                </div>
+                <div class="wrapper-tabla-final">
+                    <table id="tabla-maestra-pedidos" class="w-full">
+                        <thead>
+                            <tr class="text-cyan-500 text-[10px] uppercase">
+                                <th>SEL.</th><th>SKU</th><th>PRODUCTO</th><th>STOCK</th><th>PRECIO</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300 text-xs"></tbody>
+                    </table>
+                </div>`;
+
+            const dataSet = res.data.map(p => {
+                // Verificamos si ya está en el carrito para marcar el checkbox
+                const isChecked = carritoPedidos.some(item => item.id === p.id) ? 'checked' : '';
+                
+                // Sanitizamos el nombre para evitar que las comillas rompan el onclick
+                const nombreSafe = p.nombre.replace(/'/g, "").replace(/"/g, "");
+
+                return [
+                    `<input type="checkbox" ${isChecked} onchange="toggleSeleccion(this, '${p.id}', '${nombreSafe}', ${p.precio}, '${p.sku}', ${p.stock}, '${p.proveedor}', ${p.stockMinimo})">`,
+                    p.sku,
+                    p.nombre,
+                    `<span class="${p.stock <= p.stockMinimo ? 'text-red-500 font-bold' : ''}">${p.stock}</span>`,
+                    `$${p.precio.toLocaleString('es-AR')}`
+                ];
+            });
+
+            $('#tabla-maestra-pedidos').DataTable({
+                data: dataSet,
+                destroy: true,
+                dom: 'rtip',
+                pageLength: 50,
+                autoWidth: false,
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' }
+            });
+        })
+        .obtenerTablaFiltrada("baseProductos", prov);
 }
 
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 20.");
 
 function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, stockMinimo) {
-    const precioNum = parseFloat(precio) || 0;
-    const stockNum = parseInt(stock) || 0;
-    const minNum = parseInt(stockMinimo) || 0;
-
     if (checkbox.checked) {
-        const existe = carritoPedidos.find(p => p.id === id);
-        if (!existe) {
-            carritoPedidos.push({ 
-                id, 
-                nombre, 
-                sku, 
-                precio: precioNum, 
-                stock: stockNum, 
-                stockMinimo: minNum,
-                proveedor, 
-                cantidad: 1 
-            });
+        if (!carritoPedidos.find(p => p.id === id)) {
+            carritoPedidos.push({ id, nombre, sku, precio: parseFloat(precio), stock, stockMinimo, proveedor, cantidad: 1 });
         }
     } else {
         carritoPedidos = carritoPedidos.filter(p => p.id !== id);
@@ -738,70 +757,31 @@ console.log("✅ N.I.C.O. Terminal: Carga finalizada 23.");
 
 
 /*--- INTEGRACIÓN CON DATATABLES---*/
-function cargarProductosPorProveedor() {
-    const selector = document.getElementById('prov-seleccionado');
-    const prov = selector ? selector.value : "";
-    
-    if (!prov) return Swal.fire('AVISO', 'Selecciona un proveedor primero', 'info');
-    
-    const contenido = document.getElementById('modal-contenido');
-    contenido.innerHTML = `
-        <div class="flex flex-col items-center py-20">
-            <div class="custom-spinner mb-4"></div>
-            <p class="text-xs text-slate-400 tracking-tighter">CARGANDO CATÁLOGO DE ${prov.toUpperCase()}...</p>
-        </div>`;
 
-    google.script.run
-        .withSuccessHandler(html => {
-            contenido.innerHTML = `
-                <div class="mb-4 p-3 bg-slate-900/80 border border-slate-700 rounded-lg flex justify-between items-center sticky top-0 z-10 shadow-xl">
-                    <div id="contador-items" class="text-[11px] text-slate-400 uppercase tracking-tighter">
-                        Items seleccionados: <span class="text-cyan-400 font-bold">${carritoPedidos.length}</span>
-                    </div>
-                    <button onclick="revisarPedido()" 
-                            class="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold px-4 py-2 rounded transition-all shadow-lg shadow-cyan-900/20 uppercase">
-                        Revisar Pedido →
-                    </button>
-                </div>
-                <div id="contenedor-tabla-dinamica">${html}</div>
-            `;
-            
-            setTimeout(() => {
-                $('#tabla-maestra-pedidos').DataTable({
-                    "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
-                    "pageLength": 10,
-                    "order": [[1, "asc"]],
-                    "dom": 'rtip',
-                    "drawCallback": function() {
-                    }
-                });
-            }, 100);
-        })
-        .obtenerTablaFiltrada("baseProductos", prov);
-}
     console.log("✅ N.I.C.O. Terminal: Carga finalizada 24.");
 
 
 
 /*------ ARMADO Y CONFIRMACION DEL PEDIDO ----*/
 
-function revisarPedido() {
+async function revisarPedido() {
     if (carritoPedidos.length === 0) {
-        Swal.fire({
-            title: 'CARRITO VACÍO',
-            text: "Debes seleccionar al menos un producto para confeccionar el pedido.",
-            icon: 'info',
-            background: '#0f172a',
-            color: '#fff',
-            confirmButtonColor: '#0891b2'
-        });
+        Swal.fire({ title: 'CARRITO VACÍO', text: "Selecciona productos primero.", icon: 'info', background: '#0f172a', color: '#fff' });
         return;
     }
 
     const contenido = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
+    
+    // Obtener lista de proveedores para el selector (ya deberías tenerla o la pedimos)
+    let proveedoresHTML = "";
+    try {
+        // Asumiendo que guardas la lista de proveedores en una variable global al iniciar la app
+        // Si no, se puede hardcodear o pedir por google.script.run
+        const listaProv = typeof listaProveedoresCache !== 'undefined' ? listaProveedoresCache : [];
+        proveedoresHTML = listaProv.map(p => `<option value="${p}" ${p === carritoPedidos[0].proveedor ? 'selected' : ''}>${p}</option>`).join('');
+    } catch (e) { console.error("Error al cargar proveedores", e); }
 
-    // Generación de ID y Fecha
     const ahora = new Date();
     const idPedido = "PED-" + ahora.getFullYear() + (ahora.getMonth() + 1).toString().padStart(2, '0') + ahora.getDate() + "-" + ahora.getHours() + ahora.getMinutes();
     const fechaActual = ahora.toLocaleDateString();
@@ -812,33 +792,38 @@ function revisarPedido() {
         <div class="p-4 bg-slate-900/50 rounded-lg border border-cyan-500/20 mb-4 w-full">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4 text-xs items-center">
                 <div><span class="text-slate-500 uppercase text-[9px]">ID PEDIDO:</span><br><span class="text-white font-mono font-bold">${idPedido}</span></div>
-                <div><span class="text-slate-500 uppercase text-[9px]">FECHA:</span><br><span class="text-white font-bold">${fechaActual}</span></div>
+                
                 <div class="col-span-2">
-                    <label class="text-cyan-500 block mb-1 uppercase text-[10px]">Días estimados de entrega:</label>
-                    <input type="number" id="tiempo-estimado" min="1" value="3" 
-                           class="w-20 bg-slate-800 border border-cyan-500/50 text-white rounded p-1 text-center font-bold focus:ring-1 focus:ring-cyan-500 outline-none">
+                    <label class="text-cyan-500 block mb-1 uppercase text-[10px]">Proveedor Destinatario:</label>
+                    <select id="cambiar-proveedor-final" onchange="actualizarProveedorCarrito(this.value)"
+                            class="w-full bg-slate-800 border border-cyan-500/50 text-white rounded p-1 font-bold focus:ring-1 focus:ring-cyan-500 outline-none">
+                        ${proveedoresHTML || `<option>${carritoPedidos[0].proveedor}</option>`}
+                    </select>
                 </div>
+
+                <div>
+                    <label class="text-cyan-500 block mb-1 uppercase text-[10px]">Entrega (Días):</label>
+                    <input type="number" id="tiempo-estimado" min="1" value="3" 
+                           class="w-full bg-slate-800 border border-cyan-500/50 text-white rounded p-1 text-center font-bold outline-none">
+                </div>
+
                 <div class="col-span-2 flex gap-2 justify-end">
-                    <button onclick="volverAListaProductos()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded font-bold transition-all text-[11px] uppercase tracking-wider">
-                        ← VOLVER
-                    </button>
-                    <button onclick="prepararEnvioPedido('${idPedido}')" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded font-bold shadow-lg shadow-green-900/20 transition-all text-[11px] uppercase tracking-wider">
-                        GENERAR PEDIDO Y PDF
-                    </button>
+                    <button onclick="volverAListaProductos()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded font-bold text-[10px] uppercase">← VOLVER</button>
+                    <button onclick="prepararEnvioPedido('${idPedido}')" class="bg-green-600 hover:bg-green-500 text-white px-3 py-2 rounded font-bold text-[10px] uppercase shadow-lg shadow-green-900/20">GENERAR PEDIDO</button>
                 </div>
             </div>
         </div>
 
-        <div class="max-h-[400px] overflow-y-auto border border-slate-800 rounded-lg w-full custom-scroll">
+        <div class="wrapper-tabla-final border border-slate-800 rounded-lg">
             <table class="w-full text-left border-collapse table-fixed"> 
                 <thead>
                     <tr class="bg-slate-900 sticky top-0 border-b border-slate-700 text-cyan-500 text-[10px] uppercase z-10">
-                        <th class="p-3 w-2/5">Producto / SKU</th> 
-                        <th class="p-3 text-center w-[15%]">Stock / Mín</th> 
+                        <th class="p-3 w-2/5">Producto</th> 
+                        <th class="p-3 text-center w-[15%]">Stock</th> 
                         <th class="p-3 text-center w-[15%]">Cantidad</th> 
                         <th class="p-3 text-right w-[15%]">Unit.</th> 
                         <th class="p-3 text-right w-[15%]">Subtotal</th> 
-                        <th class="p-3 text-center w-[5%] text-red-500">Quitar</th> 
+                        <th class="p-3 text-center w-[10%] text-red-500">Eliminar</th> 
                     </tr>
                 </thead>
                 <tbody class="bg-slate-900/20">`;
@@ -846,48 +831,38 @@ function revisarPedido() {
     carritoPedidos.forEach((item, index) => {
         const subtotal = item.precio * item.cantidad;
         const alertaStock = item.stock <= item.stockMinimo;
-
         html += `
-            <tr class="border-b border-slate-800 text-xs hover:bg-slate-800/40 transition-colors group">
+            <tr class="border-b border-slate-800 text-xs hover:bg-slate-800/40 transition-colors">
                 <td class="p-3">
-                    <div class="text-white font-medium truncate" title="${item.nombre}">${item.nombre}</div>
+                    <div class="text-white font-medium truncate">${item.nombre}</div>
                     <div class="text-[10px] text-slate-500 font-mono">${item.sku}</div>
                 </td>
                 <td class="p-3 text-center">
-                    <div class="${alertaStock ? 'text-red-500 font-bold animate-pulse' : 'text-slate-400'}">${item.stock}</div>
-                    <div class="text-[9px] text-slate-600 font-bold uppercase">Mín: ${item.stockMinimo}</div>
+                    <div class="${alertaStock ? 'text-red-500 font-bold' : 'text-slate-400'}">${item.stock}</div>
                 </td>
                 <td class="p-3">
                     <input type="number" min="1" value="${item.cantidad}" 
                            onchange="actualizarCantidadCarrito(${index}, this.value)"
-                           class="w-full bg-slate-800 border border-slate-700 text-cyan-400 text-center rounded p-1 focus:border-cyan-500 outline-none font-bold">
+                           class="w-full bg-slate-800 border border-slate-700 text-cyan-400 text-center rounded p-1 outline-none font-bold">
                 </td>
                 <td class="p-3 text-right text-slate-400 font-mono">$${item.precio.toLocaleString('es-AR')}</td>
                 <td class="p-3 text-right text-white font-bold font-mono" id="subtotal-${index}">$${subtotal.toLocaleString('es-AR')}</td>
-                <td class="p-1 text-center">
-                    <button onclick="eliminarDelPedido(${index})" 
-                            class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-95 mx-auto">
-                            <i class="fi fi-ss-trash"></i>
+                <td class="p-3 text-center">
+                    <button onclick="eliminarDelPedido(${index})" class="text-slate-500 hover:text-red-500 transition-colors">
+                         <i class="fi fi-ss-trash"></i>
                     </button>
                 </td>
             </tr>`;
     });
 
-    html += `
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-6 p-4 bg-slate-900/50 border border-slate-800 rounded-lg flex justify-between items-center w-full">
+    html += `</tbody></table></div>
+        <div class="mt-4 p-4 bg-slate-900/50 border border-slate-800 rounded-lg flex justify-between items-center w-full">
             <div>
-                <span class="text-slate-400 text-[10px] uppercase tracking-wider">Total Estimado del Pedido</span>
-                <div id="total-pedido-confirmar" class="text-3xl text-cyan-400 font-bold leading-none mt-1">$0</div>
+                <span class="text-slate-400 text-[10px] uppercase">Total Estimado</span>
+                <div id="total-pedido-confirmar" class="text-2xl text-cyan-400 font-bold leading-none mt-1">$0</div>
             </div>
-            <div class="text-right text-[10px] text-slate-600 italic uppercase tracking-tighter">
-                N.I.C.O. Control System <br> Verifique cantidades antes de generar.
-            </div>
-        </div>
-    `;
+            <div class="text-right text-[9px] text-slate-600 italic uppercase">N.I.C.O. System - Verificación Final</div>
+        </div>`;
 
     contenido.innerHTML = html;
     calcularTotalConfirmacion();
@@ -1011,6 +986,14 @@ function volverAListaProductos() {
 }
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 31.");
 
+function actualizarProveedorCarrito(nuevoProveedor) {
+    if (carritoPedidos.length > 0) {
+        carritoPedidos.forEach(item => {
+            item.proveedor = nuevoProveedor;
+        });
+        console.log("✅ Proveedor actualizado en el pedido: " + nuevoProveedor);
+    }
+}
 
 /*----------------------------------- FUNCIONES DEL MODAL RECEPCIÓN---------------------------------*/
 function abrirRecepcion(datos, fila) {
