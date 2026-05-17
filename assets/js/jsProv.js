@@ -336,7 +336,7 @@ async function cargarTablaGenerica(nombreHoja) {
     contenedor.innerHTML = `
     <div class="flex flex-col items-center justify-center h-64 space-y-4">
         <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-        <p class="text-cyan-500 font-mono text-[10px] tracking-[0.4em] uppercase">Sincronizando: ${nombreHojaReal}</p>
+        <p class="text-cyan-500 font-mono text-[12px] tracking-[0.4em] uppercase">Sincronizando: ${nombreHojaReal}</p>
     </div>`;
 
     try {
@@ -346,6 +346,7 @@ async function cargarTablaGenerica(nombreHoja) {
             const data = res.reply;
             
             // Construcción del Frame N.I.C.O.
+            // NOTA: Eliminamos el ID 'contenedor-estilo-malevich' de aquí porque ya lo tiene el modal padre
             contenedor.innerHTML = `
                 <div class="w-full flex justify-between items-end mb-6 px-4">
                     <div class="flex flex-col">
@@ -356,7 +357,7 @@ async function cargarTablaGenerica(nombreHoja) {
                         <p class="text-[10px] text-slate-400 font-bold">ACTUALIZACIÓN: <span class="text-cyan-400 font-mono">${data.ultimaActualizacion}</span></p>
                     </div>
                 </div>
-                <div class="table-responsive w-full custom-scroll" id="contenedor-estilo-malevich">
+                <div class="wrapper-tabla-final">
                     <table id="tabla-maestra-generica" class="tabla-premium">
                         <thead>
                             <tr>${columnasCabecera.map(h => `<th>${h}</th>`).join('')}</tr>
@@ -482,7 +483,7 @@ function renderTableNico(selector, data, nombreHojaReal) {
 
     const contenedor = document.getElementById('contenedor-estilo-malevich');
     if (contenedor) {
-        contenedor.style.overflowX = "auto";
+        contenedor.style.overflowY = "auto";
         contenedor.style.width = "100%";
         contenedor.style.display = "block";
     }

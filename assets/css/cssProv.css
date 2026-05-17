@@ -97,56 +97,49 @@ height: calc(100vh - 90px) !important;
     }
 
 /*------Seccion tablas------*/
-div#contenedor-estilo-malevich {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 90vw !important; 
-    height: 85vh !important; /* Bajamos a 85 para que nunca toque los bordes físicos */
+#contenedor-estilo-malevich {
+    height: 85vh !important;
     max-height: 85vh !important;
-    overflow: hidden !important; 
-    background-color: #020617 !important;
-    position: relative !important;
-    margin: auto; 
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
 }
 
-div#modal-contenido {
-    display: block !important;
-    flex: 1 !important;
-    width: 90% !important;
-    overflow-y: auto !important; 
-    overflow-x: hidden !important; 
-    padding: 10px 20px 20px 20px !important;
-    box-sizing: border-box !important;
+/* El área donde inyectas el HTML en el JS */
+#modal-contenido {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important; /* IMPORTANTE: El scroll no va aquí, va en la tabla */
+    padding-bottom: 20px;
 }
 
-#modal-contenido table {
-    width: 90% !important;
-    table-layout: fixed !important; 
-    word-wrap: break-word !important;
+/* EL CONTENEDOR REAL DEL SCROLL */
+.wrapper-tabla-final {
+    flex: 1;
+    overflow-y: auto !important; /* Aquí vive la barra vertical */
+    overflow-x: hidden !important; /* Matamos la horizontal */
+    width: 100%;
 }
 
-#modal-contenido::-webkit-scrollbar {
-    width: 8px !important;
-    display: block !important;
+/* Estilizamos la barra de este contenedor específico */
+.wrapper-tabla-final::-webkit-scrollbar {
+    width: 10px !important;
 }
-
-#modal-contenido::-webkit-scrollbar-track {
+.wrapper-tabla-final::-webkit-scrollbar-track {
     background: #020617 !important;
 }
-
-#modal-contenido::-webkit-scrollbar-thumb {
+.wrapper-tabla-final::-webkit-scrollbar-thumb {
     background: #c2902e !important;
-    border-radius: 10px !important;
+    border: 2px solid #020617;
+    border-radius: 4px;
 }
 
-#modal-contenido::-webkit-scrollbar-thumb:hover {
-    background: #e6eabf !important;
-}
-
-/* Soporte para Firefox (Notebooks con Firefox) */
-#modal-contenido {
-    scrollbar-width: auto !important;
-    scrollbar-color: #c2902e #0f172a !important;
+/* Forzamos que la tabla de DataTables no rompa el diseño */
+table.dataTable, 
+.dataTables_wrapper {
+    width: 100% !important;
+    margin: 0 !important;
 }
 
 .tabla-premium {
