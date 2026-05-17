@@ -97,6 +97,40 @@ height: calc(100vh - 90px) !important;
     }
 
 /*------Seccion tablas------*/
+#modal-contenido {
+    padding: 5px 10px !important; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: visible !important;
+}
+
+#modal-contenido::-webkit-scrollbar {
+    width: 10px !important;  
+    height: 10px !important; 
+    display: block;
+}
+
+
+#modal-contenido::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.9) !important; 
+    border-left: 1px solid rgba(6, 182, 212, 0.1) !important;
+}
+
+#modal-contenido::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.4) !important;
+    border: 2px solid #020617 !important; 
+    border-radius: 2px !important;
+}
+
+
+#modal-contenido::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 182, 212, 0.8) !important; 
+    cursor: pointer !important;
+}
+
+
+
 
 /* Estilo de la Tabla dentro del Modal */
 #contenedor-estilo-malevich {
@@ -105,33 +139,11 @@ height: calc(100vh - 90px) !important;
     width: 100%;
     max-height: 550px !important;
     overflow-x: hidden;
-    overflow-y: auto !important;    
+    overflow-y: hidden !important;    
 }
 
 
-#contenedor-estilo-malevich::-webkit-scrollbar {
-    width: 10px !important;  
-    height: 10px !important; 
-    display: block;
-}
 
-
-#contenedor-estilo-malevich::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.9) !important; 
-    border-left: 1px solid rgba(6, 182, 212, 0.1) !important;
-}
-
-#contenedor-estilo-malevich::-webkit-scrollbar-thumb {
-    background: rgba(6, 182, 212, 0.4) !important;
-    border: 2px solid #020617 !important; 
-    border-radius: 2px !important;
-}
-
-
-#contenedor-estilo-malevich::-webkit-scrollbar-thumb:hover {
-    background: rgba(6, 182, 212, 0.8) !important; 
-    cursor: pointer !important;
-}
 
 
 /* #contenedor-estilo-malevich {
@@ -292,13 +304,7 @@ table.dataTable.no-footer {
     transform: scale(0.9) !important;
 }
 
-#modal-contenido {
-    padding: 5px 10px !important; 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    overflow-y: visible !important;
-}
+
 
 
 
