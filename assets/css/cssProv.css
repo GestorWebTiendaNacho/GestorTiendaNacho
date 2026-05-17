@@ -100,42 +100,42 @@ height: calc(100vh - 90px) !important;
 div#contenedor-estilo-malevich {
     display: flex !important;
     flex-direction: column !important;
-    width: 98vw !important;
-    height: 90vh !important;
-    max-height: 90vh !important;
+    width: 95vw !important; /* Un poco más angosto para evitar scroll horizontal */
+    height: 85vh !important; /* Bajamos a 85 para que nunca toque los bordes físicos */
+    max-height: 85vh !important;
     overflow: hidden !important; 
     background-color: #020617 !important;
     position: relative !important;
+    margin: auto; /* Centrado absoluto */
 }
 
-/* Área de contenido: Aquí es donde vive el scroll */
 div#modal-contenido {
     display: block !important;
-    flex: 1 1 auto !important; /* Permite crecer y encogerse */
+    flex: 1 !important;
     width: 100% !important;
-    overflow-y: scroll !important; /* Cambiamos 'auto' por 'scroll' para forzar el canal */
-    overflow-x: auto !important;
-    padding: 15px !important;
+    overflow-y: auto !important; 
+    overflow-x: hidden !important; 
+    padding: 10px 20px 40px 20px !important;
     box-sizing: border-box !important;
 }
 
-/* --- ESTILIZACIÓN FORZADA DE BARRA (Webkit) --- */
-/* Usamos el ID directamente para ganar prioridad absoluta */
+#modal-contenido table {
+    width: 100% !important;
+    table-layout: fixed !important; 
+    word-wrap: break-word !important;
+}
 
 #modal-contenido::-webkit-scrollbar {
-    width: 12px !important; /* Un poco más ancha para el trackpad */
-    height: 12px !important;
+    width: 8px !important;
     display: block !important;
 }
 
 #modal-contenido::-webkit-scrollbar-track {
-    background: #0f172a !important; /* Fondo sólido para que se vea */
-    border-radius: 0px !important;
+    background: #020617 !important;
 }
 
 #modal-contenido::-webkit-scrollbar-thumb {
-    background: #c2902e !important; /* Oro Lex directo */
-    border: 3px solid #0f172a !important; /* Crea un margen alrededor */
+    background: #c2902e !important;
     border-radius: 10px !important;
 }
 
