@@ -336,7 +336,7 @@ async function cargarTablaGenerica(nombreHoja) {
     contenedor.innerHTML = `
     <div class="flex flex-col items-center justify-center h-64 space-y-4">
         <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-        <p class="text-cyan-500 font-mono text-[9px] tracking-[0.4em] uppercase">Sincronizando: ${nombreHojaReal}</p>
+        <p class="text-cyan-500 font-mono text-[10px] tracking-[0.4em] uppercase">Sincronizando: ${nombreHojaReal}</p>
     </div>`;
 
     try {

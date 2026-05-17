@@ -104,7 +104,9 @@ height: calc(100vh - 90px) !important;
     align-items: center;
     overflow-y: visible !important;
     overflow-y: visible !important;
+    height: auto !important;
     max-height: 550px !important;
+
 }
 
 #modal-contenido::-webkit-scrollbar {
