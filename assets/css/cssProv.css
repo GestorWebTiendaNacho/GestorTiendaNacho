@@ -106,6 +106,8 @@ height: calc(100vh - 90px) !important;
     overflow-y: visible !important;
     height: 950 !important;
     max-height: 1050px !important;
+    scrollbar-width: auto !important; 
+    scrollbar-color: rgba(194, 144, 46, 0.3) #0f172a !important;
 
 }
 
@@ -146,10 +148,10 @@ height: calc(100vh - 90px) !important;
     height: 900px !important;
     
 }
- #contenedor-estilo-malevich {
+/* #contenedor-estilo-malevich {
     scrollbar-width: auto !important; 
     scrollbar-color: #06b6d4 #0f172a !important;
-}
+}*/
 
 .tabla-premium {
     width: 100% !important;
