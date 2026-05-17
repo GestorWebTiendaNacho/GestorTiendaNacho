@@ -115,16 +115,35 @@ height: calc(100vh - 90px) !important;
     scrollbar-color: var(--lex-gold) var(--bg-dark);
 }
 #contenedor-estilo-malevich::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 10px;  
+    height: 10px; 
+    display: block;
 }
+
+
+#contenedor-estilo-malevich::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.9); 
+    border-left: 1px solid rgba(6, 182, 212, 0.1);
+}
+
 #contenedor-estilo-malevich::-webkit-scrollbar-thumb {
-    background: rgba(6, 182, 212, 0.3);
-    border-radius: 10px;
+    background: rgba(6, 182, 212, 0.4);
+    border: 2px solid #020617; 
+    border-radius: 2px;
 }
+
+
 #contenedor-estilo-malevich::-webkit-scrollbar-thumb:hover {
-    background: rgba(6, 182, 212, 0.6);
+    background: rgba(6, 182, 212, 0.8); 
+    cursor: pointer;
 }
+
+
+#contenedor-estilo-malevich {
+    scrollbar-width: auto; 
+    scrollbar-color: #06b6d4 #0f172a;
+}
+
 .tabla-premium {
     width: 100% !important;
     border-collapse: separate !important; 
