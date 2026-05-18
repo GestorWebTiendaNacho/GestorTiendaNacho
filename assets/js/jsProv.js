@@ -660,11 +660,10 @@ async function cargarProductosPorProveedor() {
         return;
     }
 
-    // Animación de carga N.I.C.O.
     contenedor.innerHTML = `
         <div class="flex flex-col items-center justify-center h-64">
             <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-cyan-500 font-mono text-[10px] tracking-widest uppercase">Filtrando catálogo: ${proveedor}</p>
+            <p class="text-cyan-500 font-mono text-[12px] tracking-widest uppercase">Filtrando catálogo: ${proveedor}</p>
         </div>`;
 
     try {
@@ -673,15 +672,12 @@ async function cargarProductosPorProveedor() {
             filtroProveedor: proveedor
         });
 
-        // 1. Verificamos que la respuesta sea exitosa
         if (res && res.status === "success") {
             
-            // 2. NORMALIZACIÓN DE LOS DATOS (Aquí estaba el error)
-            // Si res.reply es un array, lo usamos. Si es un objeto, buscamos la propiedad .data
             const listaProductos = Array.isArray(res.reply) ? res.reply : (res.reply.data || []);
 
             if (listaProductos.length === 0) {
-                contenedor.innerHTML = `<p class="p-8 text-center text-amber-500 font-mono text-[10px]">AVISO: No se encontraron productos para este proveedor.</p>`;
+                contenedor.innerHTML = `<p class="p-8 text-center text-amber-500 font-mono text-[12px]">AVISO: No se encontraron productos para este proveedor.</p>`;
                 return;
             }
 
@@ -692,11 +688,15 @@ async function cargarProductosPorProveedor() {
                         <table id="tabla-pedidos-filtrada" class="tabla-premium">
                             <thead>
                                 <tr class="text-left text-cyan-500 text-[10px] uppercase font-bold">
+                                    <th class="p-3">ID</th>
                                     <th class="p-3">PRODUCTO</th>
                                     <th class="p-3">CÓDIGO</th>
+                                    <th class="p-3">COSTO INTERNO</th>
                                     <th class="p-3">STOCK</th>
-                                    <th class="p-3">PEDIR</th>
-                                </tr>
+                                    <th class="p-3">ID PROVEEDOR</th>
+                                    <th class="p-3">NOMBRE PROVEEDOR</th>
+                                    <th class="p-3">STOCK MINIMO</th>
+                                </tr> 	Codigo	CostoInterno	Stock	IDProveedor	Nombre Proveedor	StockMinimo
                             </thead>
                             <tbody id="body-pedidos"></tbody>
                         </table>
