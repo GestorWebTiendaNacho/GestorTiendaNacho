@@ -1,9 +1,5 @@
 console.log("🚀 N.I.C.O. Terminal: Iniciando carga de scripts...");
 //-------------------jsProv---
-/*let estadoEdicion = {
-    hoja: "",
-    fila: 0
-};*/
 
 function cerrarModalYRegresar() {
     // 1. Localizamos los elementos del DOM
@@ -31,7 +27,7 @@ function cerrarModalYRegresar() {
 }
 
 
-
+window.estadoEdicion = { esNuevo: false, fila: null }; // Sin 'let' para evitar el error de redodeclaración
 window.carritoPedidos = window.carritoPedidos || [];
 window.calidadSeleccionada = window.calidadSeleccionada || 0;
 
@@ -652,93 +648,94 @@ console.log("✅ N.I.C.O. Terminal: Carga finalizada 19.");
 
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
 async function cargarProductosPorProveedor() {
-    const proveedor = document.getElementById('prov-seleccionado').value;
+    const proveedorPrincipal = document.getElementById('prov-seleccionado').value;
     const contenedor = document.getElementById('modal-contenido');
 
-    if (!proveedor) {
-        alert("Por favor, selecciona un proveedor");
+    if (!proveedorPrincipal) {
+        alert("Seleccione un proveedor de origen");
         return;
     }
+
+    // Reiniciamos el carrito para este pedido específico
+    window.carritoPedidos = [];
 
     contenedor.innerHTML = `
         <div class="flex flex-col items-center justify-center h-64">
             <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-cyan-500 font-mono text-[12px] tracking-widest uppercase">Filtrando catálogo: ${proveedor}</p>
+            <p class="text-cyan-500 font-mono text-[12px] tracking-widest uppercase">Escaneando Catálogo: ${proveedorPrincipal}</p>
         </div>`;
 
     try {
         const res = await callGoogleScript('obtenerTablaFiltrada', {
             nombreSheet: 'baseProductos',
-            filtroProveedor: proveedor
+            filtroProveedor: proveedorPrincipal
         });
 
         if (res && res.status === "success") {
-            
             const listaProductos = Array.isArray(res.reply) ? res.reply : (res.reply.data || []);
-
-            if (listaProductos.length === 0) {
-                contenedor.innerHTML = `<p class="p-8 text-center text-amber-500 font-mono text-[12px]">AVISO: No se encontraron productos para este proveedor.</p>`;
-                return;
-            }
 
             contenedor.innerHTML = `
                 <div class="p-4">
-                    <h2 class="text-cyan-400 font-black mb-4 uppercase text-xs tracking-tighter">Catálogo de ${proveedor}</h2>
-                    <div class="wrapper-tabla-final">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-cyan-400 font-black uppercase text-xs tracking-widest">Catálogo: ${proveedorPrincipal}</h2>
+                        <div id="contador-items" class="text-[10px] font-mono text-slate-400">Items seleccionados: 0</div>
+                    </div>
+                    
+                    <div class="wrapper-tabla-final max-h-[400px] overflow-y-auto">
                         <table id="tabla-pedidos-filtrada" class="tabla-premium">
                             <thead>
-                                <tr class="text-left text-cyan-500 text-[10px] uppercase font-bold">
+                                <tr class="text-left text-cyan-500 text-[10px] uppercase font-bold sticky top-0 bg-slate-950">
+                                    <th class="p-3">SEL</th>
                                     <th class="p-3">ID</th>
                                     <th class="p-3">PRODUCTO</th>
                                     <th class="p-3">CÓDIGO</th>
-                                    <th class="p-3">COSTO INTERNO</th>
+                                    <th class="p-3">COSTO</th>
                                     <th class="p-3">STOCK</th>
-                                    <th class="p-3">ID PROVEEDOR</th>
-                                    <th class="p-3">NOMBRE PROVEEDOR</th>
-                                    <th class="p-3">STOCK MINIMO</th>
-                                </tr> 	Codigo	CostoInterno	Stock	IDProveedor	Nombre Proveedor	StockMinimo
+                                    <th class="p-3">STOCK MIN</th>
+                                </tr>
                             </thead>
                             <tbody id="body-pedidos"></tbody>
                         </table>
                     </div>
-                    <div class="mt-6 flex justify-end">
-                        <button onclick="procesarPedidoFinal()" class="btn-accion-nico bg-cyan-600 hover:bg-cyan-400 text-white px-6 py-2 rounded font-bold text-[10px] tracking-widest">
-                            GENERAR ORDEN
+
+                    <div class="mt-6 flex justify-end gap-4">
+                        <button onclick="cerrarModal()" class="px-6 py-2 text-[10px] font-bold text-slate-500 uppercase hover:text-white transition-colors">Cancelar</button>
+                        <button onclick="prepararConfirmacionPedido('${proveedorPrincipal}')" class="btn-accion-nico bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-2 rounded font-bold text-[10px] tracking-widest shadow-lg shadow-cyan-900/20">
+                            SIGUIENTE PASO >
                         </button>
                     </div>
                 </div>`;
 
             const tbody = document.getElementById('body-pedidos');
             
-            // 3. Usamos la lista normalizada
             listaProductos.forEach(prod => {
-                // Mapeo flexible por si vienen como Array de Arrays o Array de Objetos
-                const nombre = prod.nombre || prod[1] || 'Sin nombre';
-                const codigo = prod.codigo || prod[2] || 'S/C';
-                const stock = prod.stock !== undefined ? prod.stock : (prod[4] || 0);
+                // Mapeo basado en tus columnas: 0:ID, 1:Nombre, 2:Codigo, 3:Costo, 4:Stock, 7:Minimo
+                const id = prod[0];
+                const nombre = prod[1];
+                const codigo = prod[2];
+                const costo = prod[3];
+                const stock = prod[4];
+                const stockMin = prod[7];
 
                 const tr = document.createElement('tr');
-                tr.className = "border-b border-cyan-900/20 hover:bg-cyan-500/5 transition-colors";
+                tr.className = "border-b border-cyan-900/10 hover:bg-cyan-500/5 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-3 text-[11px] text-slate-300 font-bold">${nombre}</td>
-                    <td class="p-3 font-mono text-cyan-500 text-[10px]">${codigo}</td>
-                    <td class="p-3 text-slate-400 text-[11px]">${stock}</td>
                     <td class="p-3">
-                        <input type="number" 
-                               class="bg-slate-950 border border-cyan-900/50 w-16 p-1 text-cyan-400 text-center outline-none focus:border-cyan-400 text-[11px]" 
-                               min="0" 
-                               value="0">
+                        <input type="checkbox" class="w-4 h-4 accent-cyan-500 cursor-pointer" 
+                               onclick="toggleSeleccion(this, '${id}', '${nombre.replace(/'/g, "")}', '${costo}', '${codigo}', '${stock}', '${proveedorPrincipal}', '${stockMin}')">
                     </td>
+                    <td class="p-3 text-[10px] text-slate-500 font-mono">${id}</td>
+                    <td class="p-3 text-[11px] text-slate-300 font-bold">${nombre}</td>
+                    <td class="p-3 font-mono text-cyan-600 text-[10px]">${codigo}</td>
+                    <td class="p-3 text-slate-300 text-[11px] font-mono">$${formatearNumero(costo)}</td>
+                    <td class="p-3 text-slate-400 text-[11px]">${stock}</td>
+                    <td class="p-3 text-amber-600/70 text-[10px] font-bold">${stockMin}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
     } catch (err) {
-        console.error("Error al filtrar productos:", err);
-        contenedor.innerHTML = `
-            <div class="p-8 text-red-500 font-mono text-center uppercase text-[10px]">
-                Critical Error: ${err.message}
-            </div>`;
+        console.error("Error en despliegue de catálogo:", err);
     }
 }
 
@@ -763,6 +760,7 @@ function actualizarContadorVisual() {
         contador.innerHTML = `Items seleccionados: <span class="text-cyan-400 font-bold">${carritoPedidos.length}</span>`;
     }
 }
+
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 22.");
 
 
@@ -770,21 +768,30 @@ function filtrarProductosMain() {
     const input = document.getElementById("buscador-productos");
     if (!input) return;
     const filter = input.value.toUpperCase();
-    const tbody = document.getElementById("tabla-maestra-pedidos");
+    
+    // AJUSTE: Ahora busca la tabla del modal o la maestra según cuál esté presente
+    const tabla = document.getElementById("tabla-pedidos-filtrada") || document.getElementById("tabla-maestra-pedidos");
+    if (!tabla) return;
+
+    const tbody = tabla.getElementsByTagName("tbody")[0];
     const filas = tbody.getElementsByTagName("tr");
+
     for (let i = 0; i < filas.length; i++) {
-	let visible = false;
-	const celdas = filas[i].getElementsByTagName("td");
-	for (let j = 1; j < celdas.length; j++) {
-	    const txtValue = celdas[j].textContent || celdas[j].innerText;
-	    if (txtValue.toUpperCase().indexOf(filter) > -1) {
-	        visible = true;
-	        break;
-	    }
-	}
-	filas[i].style.display = visible ? "" : "none";
+        let visible = false;
+        const celdas = filas[i].getElementsByTagName("td");
+        
+        // Empezamos en j=1 para no filtrar por el checkbox de la columna SEL
+        for (let j = 1; j < celdas.length; j++) {
+            const txtValue = celdas[j].textContent || celdas[j].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                visible = true;
+                break;
+            }
+        }
+        filas[i].style.display = visible ? "" : "none";
     }
 }
+
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 23.");
 
 
@@ -799,57 +806,68 @@ async function revisarPedido() {
     const contenido = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
     
-    // Obtener lista de proveedores para el selector (ya deberías tenerla o la pedimos)
+    // 1. Obtener proveedores (intentamos usar el cache o pedimos al vuelo)
     let proveedoresHTML = "";
     try {
-        // Asumiendo que guardas la lista de proveedores en una variable global al iniciar la app
-        // Si no, se puede hardcodear o pedir por google.script.run
-        const listaProv = typeof listaProveedoresCache !== 'undefined' ? listaProveedoresCache : [];
-        proveedoresHTML = listaProv.map(p => `<option value="${p}" ${p === carritoPedidos[0].proveedor ? 'selected' : ''}>${p}</option>`).join('');
+        const listaProv = (typeof listaProveedoresCache !== 'undefined' && listaProveedoresCache.length > 0) 
+                          ? listaProveedoresCache 
+                          : await obtenerProveedoresParaSelector();
+        
+        // El primer item del carrito nos dice quién era el proveedor original
+        const provOriginal = carritoPedidos[0].proveedor;
+        
+        proveedoresHTML = listaProv.map(p => 
+            `<option value="${p}" ${p === provOriginal ? 'selected' : ''}>${p}</option>`
+        ).join('');
     } catch (e) { console.error("Error al cargar proveedores", e); }
 
     const ahora = new Date();
     const idPedido = "PED-" + ahora.getFullYear() + (ahora.getMonth() + 1).toString().padStart(2, '0') + ahora.getDate() + "-" + ahora.getHours() + ahora.getMinutes();
-    const fechaActual = ahora.toLocaleDateString();
 
     titulo.innerText = "CONFECCIÓN DE PEDIDO: " + idPedido;
 
     let html = `
-        <div class="p-4 bg-slate-900/50 rounded-lg border border-cyan-500/20 mb-4 w-full">
+        <div class="p-4 bg-slate-900/50 rounded-lg border border-cyan-500/20 mb-4 w-full shadow-inner">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4 text-xs items-center">
-                <div><span class="text-slate-500 uppercase text-[9px]">ID PEDIDO:</span><br><span class="text-white font-mono font-bold">${idPedido}</span></div>
+                <div>
+                    <span class="text-slate-500 uppercase text-[9px]">ID OPERACIÓN:</span><br>
+                    <span class="text-cyan-400 font-mono font-bold">${idPedido}</span>
+                </div>
                 
                 <div class="col-span-2">
-                    <label class="text-cyan-500 block mb-1 uppercase text-[10px]">Proveedor Destinatario:</label>
+                    <label class="text-cyan-500 block mb-1 uppercase text-[10px] font-black tracking-tighter">Remitir Pedido a:</label>
                     <select id="cambiar-proveedor-final" onchange="actualizarProveedorCarrito(this.value)"
-                            class="w-full bg-slate-800 border border-cyan-500/50 text-white rounded p-1 font-bold focus:ring-1 focus:ring-cyan-500 outline-none">
+                            class="w-full bg-slate-950 border border-cyan-500/30 text-white rounded p-1.5 font-bold focus:border-cyan-400 outline-none transition-all">
                         ${proveedoresHTML || `<option>${carritoPedidos[0].proveedor}</option>`}
                     </select>
                 </div>
 
                 <div>
-                    <label class="text-cyan-500 block mb-1 uppercase text-[10px]">Entrega (Días):</label>
-                    <input type="number" id="tiempo-estimado" min="1" value="3" 
-                           class="w-full bg-slate-800 border border-cyan-500/50 text-white rounded p-1 text-center font-bold outline-none">
+                    <label class="text-cyan-500 block mb-1 uppercase text-[10px]">Plazo Entrega:</label>
+                    <div class="flex items-center gap-1">
+                        <input type="number" id="tiempo-estimado" min="1" value="3" 
+                               class="w-full bg-slate-800 border border-slate-700 text-white rounded p-1 text-center font-bold outline-none focus:ring-1 focus:ring-cyan-500">
+                        <span class="text-[9px] text-slate-500">DÍAS</span>
+                    </div>
                 </div>
 
                 <div class="col-span-2 flex gap-2 justify-end">
-                    <button onclick="volverAListaProductos()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded font-bold text-[10px] uppercase">← VOLVER</button>
-                    <button onclick="prepararEnvioPedido('${idPedido}')" class="bg-green-600 hover:bg-green-500 text-white px-3 py-2 rounded font-bold text-[10px] uppercase shadow-lg shadow-green-900/20">GENERAR PEDIDO</button>
+                    <button onclick="volverAListaProductos()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded font-bold text-[9px] uppercase tracking-widest transition-all">← EDITAR</button>
+                    <button onclick="prepararEnvioPedido('${idPedido}')" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded font-bold text-[9px] uppercase tracking-widest shadow-lg shadow-green-900/30 transition-all">ENVIAR ORDEN</button>
                 </div>
             </div>
         </div>
 
-        <div class="wrapper-tabla-final border border-slate-800 rounded-lg">
+        <div class="wrapper-tabla-final border border-slate-800 rounded-lg overflow-hidden">
             <table class="w-full text-left border-collapse table-fixed"> 
                 <thead>
-                    <tr class="bg-slate-900 sticky top-0 border-b border-slate-700 text-cyan-500 text-[10px] uppercase z-10">
-                        <th class="p-3 w-2/5">Producto</th> 
-                        <th class="p-3 text-center w-[15%]">Stock</th> 
+                    <tr class="bg-slate-950 sticky top-0 border-b border-slate-700 text-cyan-500 text-[10px] uppercase z-10">
+                        <th class="p-3 w-2/5">Item / Detalle</th> 
+                        <th class="p-3 text-center w-[15%]">Stock Act.</th> 
                         <th class="p-3 text-center w-[15%]">Cantidad</th> 
-                        <th class="p-3 text-right w-[15%]">Unit.</th> 
+                        <th class="p-3 text-right w-[15%]">Costo U.</th> 
                         <th class="p-3 text-right w-[15%]">Subtotal</th> 
-                        <th class="p-3 text-center w-[10%] text-red-500">Eliminar</th> 
+                        <th class="p-3 text-center w-[10%] text-red-500 font-black">X</th> 
                     </tr>
                 </thead>
                 <tbody class="bg-slate-900/20">`;
@@ -858,23 +876,23 @@ async function revisarPedido() {
         const subtotal = item.precio * item.cantidad;
         const alertaStock = item.stock <= item.stockMinimo;
         html += `
-            <tr class="border-b border-slate-800 text-xs hover:bg-slate-800/40 transition-colors">
+            <tr class="border-b border-slate-800 text-xs hover:bg-cyan-500/5 transition-colors">
                 <td class="p-3">
-                    <div class="text-white font-medium truncate">${item.nombre}</div>
-                    <div class="text-[10px] text-slate-500 font-mono">${item.sku}</div>
+                    <div class="text-slate-200 font-bold truncate">${item.nombre}</div>
+                    <div class="text-[9px] text-cyan-700 font-mono tracking-tighter">${item.sku}</div>
                 </td>
                 <td class="p-3 text-center">
-                    <div class="${alertaStock ? 'text-red-500 font-bold' : 'text-slate-400'}">${item.stock}</div>
+                    <div class="${alertaStock ? 'text-red-500 font-black animate-pulse' : 'text-slate-500'}">${item.stock}</div>
                 </td>
                 <td class="p-3">
                     <input type="number" min="1" value="${item.cantidad}" 
                            onchange="actualizarCantidadCarrito(${index}, this.value)"
-                           class="w-full bg-slate-800 border border-slate-700 text-cyan-400 text-center rounded p-1 outline-none font-bold">
+                           class="w-full bg-slate-950 border border-slate-800 text-cyan-400 text-center rounded p-1 outline-none font-bold focus:border-cyan-500">
                 </td>
-                <td class="p-3 text-right text-slate-400 font-mono">$${item.precio.toLocaleString('es-AR')}</td>
+                <td class="p-3 text-right text-slate-500 font-mono">$${item.precio.toLocaleString('es-AR')}</td>
                 <td class="p-3 text-right text-white font-bold font-mono" id="subtotal-${index}">$${subtotal.toLocaleString('es-AR')}</td>
                 <td class="p-3 text-center">
-                    <button onclick="eliminarDelPedido(${index})" class="text-slate-500 hover:text-red-500 transition-colors">
+                    <button onclick="eliminarDelPedido(${index})" class="text-slate-700 hover:text-red-500 transition-transform hover:scale-110">
                          <i class="fi fi-ss-trash"></i>
                     </button>
                 </td>
@@ -882,57 +900,52 @@ async function revisarPedido() {
     });
 
     html += `</tbody></table></div>
-        <div class="mt-4 p-4 bg-slate-900/50 border border-slate-800 rounded-lg flex justify-between items-center w-full">
+        <div class="mt-4 p-4 bg-slate-950/80 border border-cyan-900/30 rounded-lg flex justify-between items-center w-full shadow-2xl">
             <div>
-                <span class="text-slate-400 text-[10px] uppercase">Total Estimado</span>
-                <div id="total-pedido-confirmar" class="text-2xl text-cyan-400 font-bold leading-none mt-1">$0</div>
+                <span class="text-slate-500 text-[9px] uppercase tracking-widest font-bold">Inversión Estimada</span>
+                <div id="total-pedido-confirmar" class="text-2xl text-cyan-400 font-black leading-none mt-1 tracking-tighter">$0</div>
             </div>
-            <div class="text-right text-[9px] text-slate-600 italic uppercase">N.I.C.O. System - Verificación Final</div>
+            <div class="text-right text-[9px] text-slate-700 font-mono uppercase">
+                Status: Awaiting confirmation<br>
+                N.I.C.O. V2.0 - LEXTECH INTERFACE
+            </div>
         </div>`;
 
     contenido.innerHTML = html;
     calcularTotalConfirmacion();
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 25-fin.");
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 25-fin.");
 
 
 
 // --- FUNCIÓN DE ELIMINACIÓN ---
 function eliminarDelPedido(index) {
-    if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-    }
-
     Swal.fire({
-        title: '<span style="color: #f1f5f9; font-size: 16px; font-weight:bold;">¿QUITAR PRODUCTO?</span>',
+        title: '¿QUITAR PRODUCTO?',
         text: "Se eliminará este item de la lista de confección.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#ef4444', 
+        confirmButtonColor: '#ef4444',
         cancelButtonColor: '#334155',
         confirmButtonText: 'SÍ, ELIMINAR',
-        cancelButtonText: 'CANCELAR',
         background: '#0f172a',
-        color: '#f1f5f9',
-        backdrop: `rgba(0,0,0,0.8)`,
-        returnFocus: false,
-        didOpen: () => {
-            const container = Swal.getContainer();
-            if (container) container.style.zIndex = '100000';
-        }
+        color: '#f1f5f9'
     }).then((result) => {
         if (result.isConfirmed) {
             carritoPedidos.splice(index, 1);
-            setTimeout(() => {
-                revisarPedido(); 
-                if (typeof actualizarInterfazCarrito === "function") {
-                    actualizarInterfazCarrito(); 
-                }
-            }, 100);
+            // Si el carrito queda vacío, cerramos el modal o volvemos atrás
+            if (carritoPedidos.length === 0) {
+                volverAListaProductos();
+            } else {
+                revisarPedido(); // Refrescamos la tabla de revisión
+            }
+            actualizarContadorVisual();
         }
     });
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 26.");
+    
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 26.");
 
 
 function prepararEnvioPedido(idPedido) {
@@ -945,7 +958,19 @@ function prepararEnvioPedido(idPedido) {
     
     ejecutarGeneracionPedido(idPedido, dias);
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 27.");
+
+async function obtenerProveedoresParaSelector() {
+    try {
+        const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'baseProveedores' });
+        // Asumiendo que la columna 1 es el nombre del proveedor
+        const lista = res.reply.data.map(fila => fila[1]);
+        return [...new Set(lista)]; // Eliminamos duplicados
+    } catch (e) {
+        return [carritoPedidos[0].proveedor]; // Fallback al original
+    }
+}
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 27.");
 
 
 function actualizarCantidadCarrito(index, valor) {
@@ -955,12 +980,14 @@ function actualizarCantidadCarrito(index, valor) {
         const subtotal = carritoPedidos[index].precio * cant;
         const celdaSubtotal = document.getElementById(`subtotal-${index}`);
         if (celdaSubtotal) {
+            // Usamos formato moneda local
             celdaSubtotal.innerText = "$" + subtotal.toLocaleString('es-AR');
         }
         calcularTotalConfirmacion();
     }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 28.");
+    
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 28.");
 
 
 function calcularTotalConfirmacion() {
@@ -972,38 +999,71 @@ function calcularTotalConfirmacion() {
         setTimeout(() => display.classList.remove('animate-pulse'), 500);
     }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 29.");
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 29.");
 
 
-function ejecutarGeneracionPedido(idPedido, dias) {
+async function ejecutarGeneracionPedido(idPedido, dias) {
+    // 1. Mostrar bloqueo de pantalla N.I.C.O.
     Swal.fire({
-        title: 'GENERANDO PEDIDO',
-        html: 'Enviando datos y generando PDF...',
+        title: 'PROCESANDO ORDEN',
+        html: '<div class="text-cyan-500 font-mono text-[10px]">Sincronizando con Google Cloud & Actualizando J2...</div>',
+        background: '#0f172a',
+        color: '#fff',
         allowOutsideClick: false,
         didOpen: () => { Swal.showLoading(); }
     });
 
-    google.script.run
-        .withSuccessHandler(res => {
-            if (res.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡PEDIDO GENERADO!',
-                    html: `ID: <b>${idPedido}</b><br><br><a href="${res.url}" target="_blank" class="text-cyan-500 underline font-bold">DESCARGAR PDF</a>`,
-                    background: '#0f172a',
-                    color: '#fff'
-                });
-                carritoPedidos = [];
-                const modal = document.getElementById('modal-maestro');
-                if (modal) modal.classList.add('hidden');
-            }
-        })
-        .withFailureHandler(err => {
-            Swal.fire('ERROR', 'No se pudo procesar: ' + err, 'error');
-        })
-        .procesarPedidoFinal(carritoPedidos, idPedido, dias);
+    try {
+        // 2. Preparar el paquete de datos
+        const payload = {
+            idPedido: idPedido,
+            diasEntrega: dias,
+            items: carritoPedidos,
+            proveedorFinal: document.getElementById('cambiar-proveedor-final').value,
+            fechaActualizacion: new Date().toLocaleString('es-AR') // Esto irá a J2
+        };
+
+        // 3. Llamada al servidor usando tu puente unificado
+        const res = await callGoogleScript('procesarPedidoFinal', payload);
+
+        if (res && res.status === "success") {
+            Swal.fire({
+                icon: 'success',
+                title: '¡ORDEN CONFIRMADA!',
+                html: `
+                    <div class="text-slate-300 text-sm mb-4">La operación <b>${idPedido}</b> ha sido registrada.</div>
+                    <a href="${res.url || '#'}" target="_blank" 
+                       class="inline-block bg-cyan-600 text-white px-6 py-2 rounded font-bold text-xs hover:bg-cyan-500 transition-all">
+                       DESCARGAR PDF DE ORDEN
+                    </a>`,
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#0ea5e9'
+            });
+
+            // Limpieza y cierre
+            carritoPedidos = [];
+            if (typeof actualizarContadorVisual === "function") actualizarContadorVisual();
+            document.getElementById('modal-maestro').classList.add('hidden');
+            
+        } else {
+            throw new Error(res.message || "Error desconocido en el servidor");
+        }
+
+    } catch (err) {
+        console.error("Falla en generación:", err);
+        Swal.fire({
+            icon: 'error',
+            title: 'FALLA DE COMUNICACIÓN',
+            text: 'No se pudo registrar el pedido: ' + err.message,
+            background: '#0f172a',
+            color: '#fff'
+        });
+    }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 30.");
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 30.");
 
 
 
@@ -1012,12 +1072,20 @@ function volverAListaProductos() {
 }
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 31.");
 
+
 function actualizarProveedorCarrito(nuevoProveedor) {
     if (carritoPedidos.length > 0) {
+        // Actualizamos el proveedor en todos los items del carrito
         carritoPedidos.forEach(item => {
             item.proveedor = nuevoProveedor;
         });
-        console.log("✅ Proveedor actualizado en el pedido: " + nuevoProveedor);
+        
+        // Opcional: Podrías disparar una pequeña notificación visual en la consola N.I.C.O.
+        console.log(`%c N.I.C.O. > Destinatario re-asignado: ${nuevoProveedor}`, "color: #00f2ff");
+        
+        // Si quieres que el título del modal cambie dinámicamente:
+        const titulo = document.getElementById('modal-titulo');
+        if(titulo) titulo.innerText = titulo.innerText.split('|')[0] + " | DEST: " + nuevoProveedor;
     }
 }
 
