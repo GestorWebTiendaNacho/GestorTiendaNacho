@@ -652,14 +652,9 @@ async function cargarProductosPorProveedor() {
     const prov = selector ? selector.value.trim() : "";
     const contenedor = document.getElementById('modal-contenido');
 
-    if (!prov) return Swal.fire('AVISO', 'Selecciona un proveedor primero', 'info');
+    if (!prov) return Swal.fire('AVISO', 'Selecciona un proveedor', 'info');
 
-    // Spinner de carga
-    contenedor.innerHTML = `
-        <div class="flex flex-col items-center py-20">
-            <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p class="text-[10px] text-cyan-500 animate-pulse uppercase tracking-widest">Sincronizando Catálogo: ${prov}</p>
-        </div>`;
+    contenedor.innerHTML = `<div class="flex flex-col items-center py-20"><div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div><p class="text-[10px] text-cyan-500 uppercase">Buscando productos...</p></div>`;
 
     try {
         const res = await callGoogleScript('obtenerTablaFiltrada', { 
@@ -667,90 +662,55 @@ async function cargarProductosPorProveedor() {
             proveedorFiltro: prov 
         });
 
-            console.log("--- REPORTE DE DIAGNÓSTICO ---");
-            console.log("Lo que el servidor buscó:", res.debug.recibido);
-            console.log("Lo que el servidor vio en la Columna G (primeras 10 filas):");
-            console.table(res.debug.muestrasEnSheet);
+        console.log("Respuesta completa del servidor:", res);
 
+        // Verificación de seguridad para evitar el error de 'undefined'
+        if (!res || res.status !== "success") {
+            throw new Error(res ? res.message : "Sin respuesta del servidor");
+        }
 
-        const listaProductos = (res && res.status === "success" && res.data) ? res.data : [];
+        const lista = res.data || [];
 
-        if (listaProductos.length > 0) {
-            contenedor.innerHTML = `
-                <div class="mb-4 p-3 bg-slate-900/80 border border-slate-700 rounded-lg flex justify-between items-center sticky top-0 z-10 shadow-xl">
-                    <div id="contador-items" class="text-[11px] text-slate-400 uppercase">
-                        Items seleccionados: <span class="text-cyan-400 font-bold">${window.carritoPedidos.length}</span>
-                    </div>
-                    <button onclick="revisarPedido()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold px-4 py-2 rounded uppercase transition-all shadow-lg shadow-cyan-900/20">
-                        Revisar Pedido →
-                    </button>
+        if (lista.length > 0) {
+            let tablaHtml = `
+                <div class="mb-4 p-3 bg-slate-900 border border-slate-700 rounded-lg flex justify-between items-center">
+                    <div class="text-[11px] text-slate-400 uppercase">Proveedor: <span class="text-cyan-400 font-bold">${prov}</span></div>
+                    <button onclick="revisarPedido()" class="bg-cyan-600 text-white text-[10px] font-bold px-4 py-2 rounded">REVISAR PEDIDO</button>
                 </div>
-                <div class="overflow-x-auto border border-cyan-900/20 rounded">
-                    <table id="tabla-maestra-pedidos" class="w-full text-left border-collapse font-mono text-[11px]">
-                        <thead>
-                            <tr class="bg-slate-950 text-cyan-500 uppercase">
-                                <th class="p-3 border-b border-cyan-900/30 text-center">SEL.</th>
-                                <th class="p-3 border-b border-cyan-900/30">ID</th>
-                                <th class="p-3 border-b border-cyan-900/30">PRODUCTO</th>
-                                <th class="p-3 border-b border-cyan-900/30">CÓDIGO</th>
-                                <th class="p-3 border-b border-cyan-900/30">COSTO</th>
-                                <th class="p-3 border-b border-cyan-900/30">STOCK</th>
-                                <th class="p-3 border-b border-cyan-900/30 text-right">MIN.</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-pedidos" class="divide-y divide-cyan-900/10 text-slate-300"></tbody>
-                    </table>
-                </div>`;
+                <table id="tabla-maestra-pedidos" class="w-full text-left font-mono text-[11px]">
+                    <thead>
+                        <tr class="bg-slate-950 text-cyan-500 uppercase">
+                            <th class="p-3">SEL.</th>
+                            <th class="p-3">PRODUCTO</th>
+                            <th class="p-3">STOCK</th>
+                            <th class="p-3">COSTO</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-cyan-900/10 text-slate-300">`;
 
-            const tbody = document.getElementById('body-pedidos');
-
-            listaProductos.forEach(prod => {
-                const nombreLimpio = String(prod.nombre || "").replace(/'/g, "").replace(/"/g, "");
-                const alertar = parseInt(prod.stock) <= parseInt(prod.stockMinimo);
-                
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-cyan-500/5 transition-colors";
-                tr.innerHTML = `
-                    <td class="p-3 text-center">
-                        <input type="checkbox" class="w-4 h-4 accent-cyan-500 cursor-pointer" 
-                               onclick="toggleSeleccion(this, '${prod.id}', '${nombreLimpio}', '${prod.precio}', '${prod.sku}', '${prod.stock}', '${prov}', '${prod.stockMinimo}')">
-                    </td>
-                    <td class="p-2 text-slate-500 text-[10px]">${prod.id}</td>
-                    <td class="p-2 font-bold text-slate-200">${prod.nombre}</td>
-                    <td class="p-2 text-cyan-700">${prod.sku}</td>
-                    <td class="p-2">$ ${prod.precio}</td>
-                    <td class="p-2 ${alertar ? 'text-red-500 font-bold animate-pulse' : 'text-slate-400'}">${prod.stock}</td>
-                    <td class="p-2 text-amber-600/50 text-right">${prod.stockMinimo}</td>
-                `;
-                tbody.appendChild(tr);
+            lista.forEach(prod => {
+                const nombreLimpio = String(prod.nombre).replace(/'/g, "");
+                tablaHtml += `
+                    <tr class="hover:bg-cyan-500/5">
+                        <td class="p-3">
+                            <input type="checkbox" onclick="toggleSeleccion(this, '${prod.id}', '${nombreLimpio}', '${prod.precio}', '${prod.sku}', '${prod.stock}', '${prov}', '${prod.stockMinimo}')">
+                        </td>
+                        <td class="p-3"><b>${prod.nombre}</b><br><span class="text-[9px] text-slate-500">${prod.sku}</span></td>
+                        <td class="p-3">${prod.stock}</td>
+                        <td class="p-3">$${prod.precio}</td>
+                    </tr>`;
             });
 
-            // Inicialización de DataTable
-            setTimeout(() => {
-                if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
-                    $('#tabla-maestra-pedidos').DataTable().destroy();
-                }
-                $('#tabla-maestra-pedidos').DataTable({
-                    "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
-                    "pageLength": 10,
-                    "order": [[2, "asc"]],
-                    "dom": 'rtip'
-                });
-            }, 50);
+            tablaHtml += `</tbody></table>`;
+            contenedor.innerHTML = tablaHtml;
 
         } else {
-            // Manejo de catálogo vacío sin romper el código
-            contenedor.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-20 text-center">
-                    <i class="fi fi-rr-search-alt text-3xl text-slate-700 mb-4"></i>
-                    <p class="text-amber-500 font-bold uppercase text-xs tracking-widest">Catálogo Vacío</p>
-                    <p class="text-slate-500 text-[10px] mt-2">No se encontraron productos vinculados a "${prov}".</p>
-                    <button onclick="abrirModal('PEDIDOS')" class="mt-6 text-cyan-500 text-[9px] underline">VOLVER A SELECCIONAR</button>
-                </div>`;
+            contenedor.innerHTML = `<div class="p-10 text-center text-amber-500 uppercase font-bold italic">No se encontraron productos para este proveedor.</div>`;
         }
+
     } catch (err) {
-        console.error("Falla crítica en carga de productos:", err);
-        contenedor.innerHTML = `<div class="p-10 text-red-500 text-xs font-mono text-center">ERROR DE CONEXIÓN CON EL SERVIDOR</div>`;
+        console.error("Error en proceso:", err);
+        contenedor.innerHTML = `<div class="p-10 text-red-500 text-xs text-center uppercase">Error: ${err.message}</div>`;
     }
 }
 
