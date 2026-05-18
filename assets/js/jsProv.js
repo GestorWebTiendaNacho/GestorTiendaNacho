@@ -1117,18 +1117,15 @@ function actualizarProveedorCarrito(nuevoProveedor) {
 }
 
 /*----------------------------------- FUNCIONES DEL MODAL RECEPCIÓN---------------------------------*/
-function abrirRecepcion(datos, fila) {
+async function abrirRecepcion(datos, fila) {
     const idPedido = String(datos[0]).trim();
     const modal = document.getElementById('modalRecepcion');
-    const mainContent = document.getElementById('content'); 
-
+    
     document.getElementById('recepcionID').value = idPedido;
     document.getElementById('recepcionFila').value = fila;
 
     const modalInterno = document.querySelector('#modalRecepcion > div');
-    if (modalInterno) {
-        modalInterno.className = "modal-recep-content"; 
-    }
+    if (modalInterno) modalInterno.className = "modal-recep-content"; 
 
     document.getElementById('resumenPedido').innerHTML = `
     <div class="flex justify-between items-center w-full">
@@ -1143,27 +1140,31 @@ function abrirRecepcion(datos, fila) {
     </div>`;
 
     const contenedor = document.getElementById('contenedorItemsRecepcion');
-    contenedor.innerHTML = `<div class="py-20 text-center text-cyan-500 text-[10px] animate-pulse">CARGANDO BASE DE DATOS...</div>`;
-
+    contenedor.innerHTML = `<div class="py-20 text-center text-cyan-500 text-[10px] animate-pulse">SOLICITANDO DESGLOSE A N.I.C.O...</div>`;
 
     modal.style.setProperty('display', 'flex', 'important');
     document.body.style.overflow = 'hidden';
 
     cambiarModoGestion('RECIBIDO'); 
 
-    google.script.run
-        .withSuccessHandler(res => {
-            if (res.success && res.items) {
-                renderizarItemsDesglose(res.items);
-                const titulo = document.getElementById('recepcionTitulo');
-                if(titulo) titulo.focus();
-            }
-        })
-        .obtenerItemsPedido(idPedido);
-    
-    console.log("✅ N.I.C.O. Terminal: Modal recepción abierto para orden " + idPedido);
+    try {
+        // Migración a callGoogleScript
+        const res = await callGoogleScript('obtenerItemsPedido', { idPedido: idPedido });
+        
+        if (res.status === "success" && res.reply.success) {
+            renderizarItemsDesgloseEspecial(res.reply.items, 'contenedorItemsRecepcion');
+            const titulo = document.getElementById('recepcionTitulo');
+            if(titulo) titulo.focus();
+        } else {
+            throw new Error(res.message || res.reply.error);
+        }
+    } catch (err) {
+        console.error("Error al cargar items:", err);
+        contenedor.innerHTML = `<div class="text-red-500 text-[10px] p-4 text-center">ERROR AL CARGAR ITEMS: ${err.message}</div>`;
+    }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 32.");
+    
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 32.");
 
 
 function renderizarItemsDesgloseEspecial(items, idContenedor) {
@@ -1197,7 +1198,8 @@ function renderizarItemsDesgloseEspecial(items, idContenedor) {
     html += `</tbody></table>`;
     contenedor.innerHTML = html;
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 33.");
+    
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 33.");
 
 
 function recalcularPorcentajeDesdeItems() {
@@ -1221,13 +1223,13 @@ function recalcularPorcentajeDesdeItems() {
         actualizarValorPorcentaje(porcentaje);
     }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 34.");
+    
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 34.");
 
 
-function confirmarGestionFinal() {
+async function confirmarGestionFinal() {
     const btn = document.getElementById('btnConfirmarGestion');
     
-    // Recolección de ítems recibidos
     const listaInputs = document.querySelectorAll('.input-recibido-item');
     let itemsRecibidos = [];
     listaInputs.forEach(input => {
@@ -1258,35 +1260,31 @@ function confirmarGestionFinal() {
     btn.innerText = "PROCESANDO...";
     btn.disabled = true;
 
-    google.script.run
-        .withSuccessHandler(res => {
-            if (res && res.success) {
-                cerrarModalRecepcion();
-                Swal.fire({ title: 'ÉXITO', text: 'Pedido impactado.', icon: 'success', timer: 1500, showConfirmButton: false })
-                .then(() => verEstadoPedidos());
-            } else {
-                Swal.fire({ title: 'ERROR', text: res.error, icon: 'error' });
-                btn.innerText = "CONFIRMAR"; btn.disabled = false;
-            }
-        })
-        .gestionarEstadoPedidoServidor(config);
+    try {
+        const res = await callGoogleScript('gestionarEstadoPedidoServidor', config);
+        
+        if (res.status === "success" && res.reply.success) {
+            cerrarModalRecepcion();
+            Swal.fire({ title: 'ÉXITO', text: 'Pedido impactado.', icon: 'success', timer: 1500, showConfirmButton: false })
+            .then(() => verEstadoPedidos());
+        } else {
+            throw new Error(res.message || res.reply.error);
+        }
+    } catch (err) {
+        Swal.fire({ title: 'ERROR', text: err.message, icon: 'error' });
+        btn.innerText = "CONFIRMAR"; 
+        btn.disabled = false;
+    }
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 35.");
+    
+console.log("✅ N.I.C.O. Terminal: Carga finalizada 35.");
 
 
-
-/*--------------------------------*/
-function verEstadoPedidos() {
-    console.log("Sincronizando recepciones...");
+async function verEstadoPedidos() {
     const modal = document.getElementById('modal-maestro');
     const contenedor = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
 
-    if (!modal || !contenedor) {
-        console.error("No se encontraron los elementos del modal maestro.");
-        return;
-    }
-    
     titulo.innerText = "GESTIÓN DE RECEPCIÓN";
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -1297,35 +1295,29 @@ function verEstadoPedidos() {
             <p class="text-cyan-500 animate-pulse font-mono text-xs uppercase tracking-widest">Sincronizando Registros de Recepción...</p>
         </div>`;
 
-    google.script.run
-        .withSuccessHandler(function(html) {
+    try {
+        // En este caso, el servidor devuelve HTML directamente
+        const res = await callGoogleScript('obtenerTablaGenerica', { tipo: "RECEPCION" });
+        
+        if (res.status === "success") {
+            const html = res.reply; // El HTML generado por obtenerTablaGenerica
             if (!html) {
                 contenedor.innerHTML = "<p class='text-slate-500 p-4 text-center text-[10px]'>NO HAY DATOS EN RECEPCIÓN</p>";
                 return;
             }
-            
             contenedor.innerHTML = html;
-
-            if (html.indexOf('<script') !== -1 && typeof ejecutarScriptsInyectados === "function") {
-                try {
-                    ejecutarScriptsInyectados(contenedor);
-                    console.log("N.I.C.O. Terminal: Scripts de tabla inyectados.");
-                } catch (e) {
-                    console.warn("N.I.C.O. Alerta: Error en inyección de scripts dinámicos", e);
-                }
-            } 
             
-            console.log("Tabla de recepción renderizada correctamente.");
-        }) 
-        .withFailureHandler(function(err) {
-            console.error("Error al refrescar tabla:", err);
-            contenedor.innerHTML = `
-                <div class="p-4 bg-red-900/20 border border-red-500/50 text-red-400 text-[10px] font-mono">
-                    ERROR DE ENLACE: ${err}
-                </div>`;
-        })
-        .obtenerTablaGenerica("RECEPCION"); 
+            // Inyección de scripts si existen (DataTables, etc)
+            if (html.indexOf('<script') !== -1 && typeof ejecutarScriptsInyectados === "function") {
+                ejecutarScriptsInyectados(contenedor);
+            }
+        }
+    } catch (err) {
+        console.error("Error al refrescar tabla:", err);
+        contenedor.innerHTML = `<div class="p-4 bg-red-900/20 border border-red-500/50 text-red-400 text-[10px] font-mono">ERROR DE ENLACE: ${err.message}</div>`;
+    }
 }
+
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 36.");
 
 function cambiarModoGestion(modo) {
