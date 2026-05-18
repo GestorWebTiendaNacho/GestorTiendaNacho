@@ -320,7 +320,7 @@ var MAPA_HOJAS = {
     'RECEPCIÓN': 'Estado_Pedidos'
 };
 
-const ENCABEZADOS_SISTEMA = {
+var ENCABEZADOS_SISTEMA = {
     'baseProveedores': ['ID','RAZÓN SOCIAL','CIUDAD','DOMICILIO','TELÉFONO','EMAIL','CODIGO PROV','PROVINCIA','ACCIONES'],
     'baseProductos': ['ID','NOMBRE PROD','CODIGO','COSTO INTERNO','STOCK ACTUAL','ID PROVEEDOR','NOMBRE PROVEEDOR','STOCK MINIMO', 'ACCIONES'],
     'Estado_Pedidos': ['ID_Pedido','Fecha_Pedido','Proveedor_Nombre','Estatus','Cantidad Productos','Total_General','Nueva_Fecha Reprogramada','OBSERVACIONES', 'ACCIONES'],
@@ -668,51 +668,77 @@ async function cargarProductosPorProveedor() {
         </div>`;
 
     try {
-        // CAMBIO CLAVE: Usamos el puente fetch en lugar de google.script.run
         const res = await callGoogleScript('obtenerTablaFiltrada', {
             nombreSheet: 'baseProductos',
             filtroProveedor: proveedor
         });
 
-        if (res.status === "success") {
-            // Aquí generamos la interfaz para los pedidos
+        // 1. Verificamos que la respuesta sea exitosa
+        if (res && res.status === "success") {
+            
+            // 2. NORMALIZACIÓN DE LOS DATOS (Aquí estaba el error)
+            // Si res.reply es un array, lo usamos. Si es un objeto, buscamos la propiedad .data
+            const listaProductos = Array.isArray(res.reply) ? res.reply : (res.reply.data || []);
+
+            if (listaProductos.length === 0) {
+                contenedor.innerHTML = `<p class="p-8 text-center text-amber-500 font-mono text-[10px]">AVISO: No se encontraron productos para este proveedor.</p>`;
+                return;
+            }
+
             contenedor.innerHTML = `
                 <div class="p-4">
                     <h2 class="text-cyan-400 font-black mb-4 uppercase text-xs tracking-tighter">Catálogo de ${proveedor}</h2>
                     <div class="wrapper-tabla-final">
                         <table id="tabla-pedidos-filtrada" class="tabla-premium">
                             <thead>
-                                <tr>
-                                    <th>PRODUCTO</th>
-                                    <th>CÓDIGO</th>
-                                    <th>STOCK</th>
-                                    <th>PEDIR</th>
+                                <tr class="text-left text-cyan-500 text-[10px] uppercase font-bold">
+                                    <th class="p-3">PRODUCTO</th>
+                                    <th class="p-3">CÓDIGO</th>
+                                    <th class="p-3">STOCK</th>
+                                    <th class="p-3">PEDIR</th>
                                 </tr>
                             </thead>
                             <tbody id="body-pedidos"></tbody>
                         </table>
                     </div>
                     <div class="mt-6 flex justify-end">
-                        <button onclick="procesarPedidoFinal()" class="btn-accion-nico bg-green-600">GENERAR ORDEN</button>
+                        <button onclick="procesarPedidoFinal()" class="btn-accion-nico bg-cyan-600 hover:bg-cyan-400 text-white px-6 py-2 rounded font-bold text-[10px] tracking-widest">
+                            GENERAR ORDEN
+                        </button>
                     </div>
                 </div>`;
 
-            // Llenamos la tabla con los datos recibidos
             const tbody = document.getElementById('body-pedidos');
-            res.reply.forEach(prod => {
+            
+            // 3. Usamos la lista normalizada
+            listaProductos.forEach(prod => {
+                // Mapeo flexible por si vienen como Array de Arrays o Array de Objetos
+                const nombre = prod.nombre || prod[1] || 'Sin nombre';
+                const codigo = prod.codigo || prod[2] || 'S/C';
+                const stock = prod.stock !== undefined ? prod.stock : (prod[4] || 0);
+
                 const tr = document.createElement('tr');
+                tr.className = "border-b border-cyan-900/20 hover:bg-cyan-500/5 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-3 text-[11px]">${prod.nombre}</td>
-                    <td class="p-3 font-mono text-cyan-500">${prod.codigo}</td>
-                    <td class="p-3">${prod.stock}</td>
-                    <td class="p-3"><input type="number" class="bg-slate-900 border border-slate-700 w-16 p-1 text-white" min="0" value="0"></td>
+                    <td class="p-3 text-[11px] text-slate-300 font-bold">${nombre}</td>
+                    <td class="p-3 font-mono text-cyan-500 text-[10px]">${codigo}</td>
+                    <td class="p-3 text-slate-400 text-[11px]">${stock}</td>
+                    <td class="p-3">
+                        <input type="number" 
+                               class="bg-slate-950 border border-cyan-900/50 w-16 p-1 text-cyan-400 text-center outline-none focus:border-cyan-400 text-[11px]" 
+                               min="0" 
+                               value="0">
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
     } catch (err) {
         console.error("Error al filtrar productos:", err);
-        contenedor.innerHTML = `<p class="text-red-500 p-4">Error de conexión: ${err.message}</p>`;
+        contenedor.innerHTML = `
+            <div class="p-8 text-red-500 font-mono text-center uppercase text-[10px]">
+                Critical Error: ${err.message}
+            </div>`;
     }
 }
 
