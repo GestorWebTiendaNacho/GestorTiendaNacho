@@ -649,7 +649,7 @@ console.log("✅ N.I.C.O. Terminal: Carga finalizada 19.");
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
 async function cargarProductosPorProveedor() {
     const selector = document.getElementById('prov-seleccionado');
-    const prov = selector ? selector.value : "";
+    const prov = selector ? selector.value.trim() : "";
     const contenedor = document.getElementById('modal-contenido');
 
     if (!prov) return Swal.fire('AVISO', 'Selecciona un proveedor primero', 'info');
