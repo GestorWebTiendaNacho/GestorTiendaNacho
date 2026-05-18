@@ -340,8 +340,6 @@ async function cargarTablaGenerica(nombreHoja) {
     </div>`;
 
     try {
-        // USAMOS EL PUENTE QUE SÍ FUNCIONA EN GITHUB: callGoogleScript
-        // Enviamos 'nombreSheet' dentro del objeto, que es lo que el nuevo doPost busca
         const res = await callGoogleScript('get_datos_deposito', { nombreSheet: nombreHoja });
 
         if (res && res.status === "success" && res.reply.success) {
