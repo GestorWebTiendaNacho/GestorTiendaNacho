@@ -401,7 +401,6 @@ async function abrirModal(tipo) {
             </div>`;
 
         try {
-            // Reutilizamos get_datos_deposito pero solo para obtener la columna de nombres
             const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'baseProveedores' });
             
             if (res.status === "success") {
