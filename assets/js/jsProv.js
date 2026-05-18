@@ -657,7 +657,7 @@ async function cargarProductosPorProveedor() {
     contenedor.innerHTML = `
         <div class="flex flex-col items-center py-20">
             <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p class="text-[10px] text-cyan-500 uppercase tracking-widest animate-pulse">Sincronizando Catálogo...</p>
+            <p class="text-[12px] text-cyan-500 uppercase tracking-widest animate-pulse">Sincronizando Catálogo...</p>
         </div>`;
 
     try {
@@ -680,21 +680,21 @@ async function cargarProductosPorProveedor() {
                     <div id="contador-items" class="text-[11px] text-slate-400 uppercase">
                         Items seleccionados: <span class="text-cyan-400 font-bold">${window.carritoPedidos ? window.carritoPedidos.length : 0}</span>
                     </div>
-                    <button onclick="revisarPedido()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold px-4 py-2 rounded transition-colors uppercase">
+                    <button onclick="revisarPedido()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[12px] font-bold px-4 py-2 rounded transition-colors uppercase">
                         REVISAR PEDIDO →
                     </button>
                 </div>
                 <div class="overflow-x-auto border border-cyan-900/20 rounded">
-                    <table id="tabla-maestra-pedidos" class="tabla-premium w-full text-left font-mono text-[11px]">
+                    <table id="tabla-maestra-pedidos" class="tabla-premium">
                         <thead>
                             <tr class="bg-slate-950 text-cyan-500 uppercase">
-                                <th class="p-3 border-b border-cyan-900/30 text-center">SEL.</th>
-                                <th class="p-3 border-b border-cyan-900/30">ID</th>
-                                <th class="p-3 border-b border-cyan-900/30">PRODUCTO</th>
-                                <th class="p-3 border-b border-cyan-900/30">CÓDIGO</th>
-                                <th class="p-3 border-b border-cyan-900/30">STOCK</th>
-                                <th class="p-3 border-b border-cyan-900/30">COSTO</th>
-                                <th class="p-3 border-b border-cyan-900/30">STOCK MÍN.</th>
+                                <th class="p-3 text-center">SEL.</th>
+                                <th class="p-3">ID</th>
+                                <th class="p-3">PRODUCTO</th>
+                                <th class="p-3">CÓDIGO</th>
+                                <th class="p-3">STOCK</th>
+                                <th class="p-3">COSTO</th>
+                                <th class="p-3">STOCK MÍN.</th>
                             </tr>
                         </thead>
                         <tbody id="body-pedidos" class="divide-y divide-cyan-900/10 text-slate-300">`;
@@ -736,7 +736,7 @@ async function cargarProductosPorProveedor() {
                         "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
                         "pageLength": 10,
                         "dom": 'rtip',
-                        "order": [[2, "asc"]] // Ordenar por nombre de producto
+                        "order": [[2, "asc"]]
                     });
                 }, 50);
             }
