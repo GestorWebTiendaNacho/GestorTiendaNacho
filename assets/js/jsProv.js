@@ -652,53 +652,73 @@ async function cargarProductosPorProveedor() {
     const contenedor = document.getElementById('modal-contenido');
 
     if (!proveedorPrincipal) {
-        alert("Seleccione un proveedor de origen");
+        Swal.fire('ATENCIÓN', 'Seleccione un proveedor de origen antes de escanear.', 'warning');
         return;
     }
 
+    // Reiniciamos el carrito para este pedido específico
     window.carritoPedidos = [];
 
+    // Estado de carga (Spinner)
     contenedor.innerHTML = `
         <div class="flex flex-col items-center justify-center h-64">
             <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-cyan-500 font-mono text-[12px] tracking-widest uppercase">Escaneando Catálogo: ${proveedorPrincipal}</p>
+            <p class="text-cyan-500 font-mono text-[12px] tracking-widest uppercase animate-pulse">
+                Consultando Base de Datos...
+            </p>
+            <p class="text-slate-500 text-[10px] mt-2">${proveedorPrincipal}</p>
         </div>`;
 
     try {
+        // Llamada al servidor pasando el objeto esperado
         const res = await callGoogleScript('obtenerTablaFiltrada', {
             nombreHoja: 'baseProductos',
             proveedorFiltro: proveedorPrincipal
         });
 
-        // Verificamos que la respuesta sea exitosa y contenga data
         if (res && res.status === "success") {
             const listaProductos = res.data || [];
 
+            // Caso: No hay productos para ese proveedor
+            if (listaProductos.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-64 text-center">
+                        <i class="fi fi-rr-box-open text-4xl text-slate-700 mb-4"></i>
+                        <p class="text-amber-500 font-bold uppercase text-xs">Catálogo Vacío</p>
+                        <p class="text-slate-500 text-[10px]">No se encontraron productos vinculados a este proveedor.</p>
+                        <button onclick="cerrarModal()" class="mt-6 px-4 py-2 bg-slate-800 text-white text-[10px] rounded">CERRAR</button>
+                    </div>`;
+                return;
+            }
+
+            // Construcción de la estructura de la tabla
             contenedor.innerHTML = `
                 <div class="p-4">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-cyan-400 font-black uppercase text-xs tracking-widest">Catálogo: ${proveedorPrincipal}</h2>
                         <div id="contador-items" class="text-[10px] font-mono text-slate-400">Items seleccionados: 0</div>
                     </div>
-                    <div class="wrapper-tabla-final max-h-[400px] overflow-y-auto">
-                        <table id="tabla-pedidos-filtrada" class="tabla-premium w-full">
+                    
+                    <div class="wrapper-tabla-final max-h-[400px] overflow-y-auto border border-cyan-900/20 rounded">
+                        <table id="tabla-pedidos-filtrada" class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="text-left text-cyan-500 text-[10px] uppercase font-bold sticky top-0 bg-slate-950">
-                                    <th class="p-3">SEL</th>
-                                    <th class="p-3">ID</th>
-                                    <th class="p-3">PRODUCTO</th>
-                                    <th class="p-3">CÓDIGO</th>
-                                    <th class="p-3">COSTO</th>
-                                    <th class="p-3">STOCK</th>
-                                    <th class="p-3">STOCK MIN</th>
+                                <tr class="text-cyan-500 text-[10px] uppercase font-bold sticky top-0 bg-slate-950 z-20">
+                                    <th class="p-3 border-b border-cyan-900/30">SEL</th>
+                                    <th class="p-3 border-b border-cyan-900/30">ID</th>
+                                    <th class="p-3 border-b border-cyan-900/30">PRODUCTO</th>
+                                    <th class="p-3 border-b border-cyan-900/30">CÓDIGO</th>
+                                    <th class="p-3 border-b border-cyan-900/30">COSTO</th>
+                                    <th class="p-3 border-b border-cyan-900/30">STOCK</th>
+                                    <th class="p-3 border-b border-cyan-900/30 text-right">MIN</th>
                                 </tr>
                             </thead>
-                            <tbody id="body-pedidos"></tbody>
+                            <tbody id="body-pedidos" class="divide-y divide-cyan-900/10"></tbody>
                         </table>
                     </div>
+
                     <div class="mt-6 flex justify-end gap-4">
                         <button onclick="cerrarModal()" class="px-6 py-2 text-[10px] font-bold text-slate-500 uppercase hover:text-white transition-colors">Cancelar</button>
-                        <button onclick="revisarPedido()" class="btn-accion-nico bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-2 rounded font-bold text-[10px] tracking-widest shadow-lg shadow-cyan-900/20">
+                        <button onclick="revisarPedido()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-2 rounded font-bold text-[10px] tracking-widest shadow-lg shadow-cyan-900/20 transition-all">
                             SIGUIENTE PASO >
                         </button>
                     </div>
@@ -706,39 +726,37 @@ async function cargarProductosPorProveedor() {
 
             const tbody = document.getElementById('body-pedidos');
             
+            // Renderizado de filas
             listaProductos.forEach(prod => {
-                // Extraemos según el objeto literal definido en el servidor
-                const id       = prod.id;
-                const nombre   = prod.nombre;
-                const sku      = prod.sku;
-                const precio   = prod.precio;
-                const stock    = prod.stock;
-                const stockMin = prod.stockMinimo;
-
-                // Limpieza para evitar errores en el onclick
-                const nombreEscapado = nombre.replace(/'/g, "");
+                const nombreLimpio = String(prod.nombre).replace(/'/g, "").replace(/"/g, "");
+                const alertaStock = prod.stock <= prod.stockMinimo;
 
                 const tr = document.createElement('tr');
-                tr.className = "border-b border-cyan-900/10 hover:bg-cyan-500/5 transition-colors";
+                tr.className = "hover:bg-cyan-500/5 transition-colors group";
                 tr.innerHTML = `
                     <td class="p-3 text-center">
                         <input type="checkbox" class="w-4 h-4 accent-cyan-500 cursor-pointer" 
-                            onclick="toggleSeleccion(this, '${id}', '${nombreEscapado}', '${precio}', '${sku}', '${stock}', '${proveedorPrincipal}', '${stockMin}')">
+                               onclick="toggleSeleccion(this, '${prod.id}', '${nombreLimpio}', '${prod.precio}', '${prod.sku}', '${prod.stock}', '${proveedorPrincipal}', '${prod.stockMinimo}')">
                     </td>
-                    <td class="p-3 text-[10px] text-slate-500 font-mono">${id}</td>
-                    <td class="p-3 text-[11px] text-slate-300 font-bold">${nombre}</td>
-                    <td class="p-3 font-mono text-cyan-600 text-[10px]">${sku}</td>
-                    <td class="p-3 text-slate-300 text-[11px] font-mono">$${precio.toLocaleString('es-AR')}</td>
-                    <td class="p-3 text-[11px] ${stock <= stockMin ? 'text-red-500 font-bold animate-pulse' : 'text-slate-400'}">${stock}</td>
-                    <td class="p-3 text-amber-600/70 text-[10px] font-bold">${stockMin}</td>
+                    <td class="p-3 text-[10px] text-slate-500 font-mono">${prod.id}</td>
+                    <td class="p-3 text-[11px] text-slate-300 font-bold group-hover:text-cyan-400 transition-colors">${prod.nombre}</td>
+                    <td class="p-3 font-mono text-cyan-700 text-[10px]">${prod.sku}</td>
+                    <td class="p-3 text-slate-300 text-[11px] font-mono">$${prod.precio.toLocaleString('es-AR')}</td>
+                    <td class="p-3 text-[11px] ${alertaStock ? 'text-red-500 font-black animate-pulse' : 'text-slate-400'}">${prod.stock}</td>
+                    <td class="p-3 text-amber-600/70 text-[10px] font-bold text-right">${prod.stockMinimo}</td>
                 `;
                 tbody.appendChild(tr);
             });
         } else {
-            contenedor.innerHTML = `<p class="p-4 text-red-500">Error al cargar datos: ${res.message}</p>`;
+            throw new Error(res.message || "Error desconocido en el servidor");
         }
     } catch (err) {
         console.error("Error en despliegue de catálogo:", err);
+        contenedor.innerHTML = `
+            <div class="p-8 text-center text-red-500">
+                <p class="font-bold">ERROR DE SINCRONIZACIÓN</p>
+                <p class="text-[10px] text-slate-500 mt-2">${err.message}</p>
+            </div>`;
     }
 }
 
