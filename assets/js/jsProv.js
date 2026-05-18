@@ -1,9 +1,9 @@
 console.log("🚀 N.I.C.O. Terminal: Iniciando carga de scripts...");
 //-------------------jsProv---
-let estadoEdicion = {
+/*let estadoEdicion = {
     hoja: "",
     fila: 0
-};
+};*/
 
 function cerrarModalYRegresar() {
     // 1. Localizamos los elementos del DOM
@@ -652,63 +652,68 @@ console.log("✅ N.I.C.O. Terminal: Carga finalizada 19.");
 
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
 async function cargarProductosPorProveedor() {
-    const prov = document.getElementById('prov-seleccionado')?.value;
-    if (!prov) return Swal.fire('AVISO', 'Selecciona un proveedor', 'info');
+    const proveedor = document.getElementById('prov-seleccionado').value;
+    const contenedor = document.getElementById('modal-contenido');
 
-    const contenido = document.getElementById('modal-contenido');
-    contenido.innerHTML = `<div class="text-center py-10 text-cyan-500 animate-pulse">SINCRONIZANDO DATA...</div>`;
+    if (!proveedor) {
+        alert("Por favor, selecciona un proveedor");
+        return;
+    }
 
-    google.script.run
-        .withSuccessHandler(res => {
-            if (!res.success) return Swal.fire('ERROR', res.error, 'error');
-            if (res.data.length === 0) {
-                contenido.innerHTML = `<div class="p-10 text-center text-slate-500">SIN PRODUCTOS VINCULADOS.</div>`;
-                return;
-            }
+    // Animación de carga N.I.C.O.
+    contenedor.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-64">
+            <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+            <p class="text-cyan-500 font-mono text-[10px] tracking-widest uppercase">Filtrando catálogo: ${proveedor}</p>
+        </div>`;
 
-            // Inyectamos el contenedor del scroll que arreglamos antes
-            contenido.innerHTML = `
-                <div class="sticky top-0 bg-slate-950 z-20 pb-4 flex justify-between items-center">
-                    <div id="contador-items" class="text-xs text-slate-400">ITEMS: ${carritoPedidos.length}</div>
-                    <button onclick="revisarPedido()" class="bg-cyan-600 text-white text-[10px] px-4 py-2 uppercase font-bold">Revisar Pedido →</button>
-                </div>
-                <div class="wrapper-tabla-final">
-                    <table id="tabla-maestra-pedidos" class="w-full">
-                        <thead>
-                            <tr class="text-cyan-500 text-[10px] uppercase">
-                                <th>SEL.</th><th>SKU</th><th>PRODUCTO</th><th>STOCK</th><th>PRECIO</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-slate-300 text-xs"></tbody>
-                    </table>
+    try {
+        // CAMBIO CLAVE: Usamos el puente fetch en lugar de google.script.run
+        const res = await callGoogleScript('obtenerTablaFiltrada', {
+            nombreSheet: 'baseProductos',
+            filtroProveedor: proveedor
+        });
+
+        if (res.status === "success") {
+            // Aquí generamos la interfaz para los pedidos
+            contenedor.innerHTML = `
+                <div class="p-4">
+                    <h2 class="text-cyan-400 font-black mb-4 uppercase text-xs tracking-tighter">Catálogo de ${proveedor}</h2>
+                    <div class="wrapper-tabla-final">
+                        <table id="tabla-pedidos-filtrada" class="tabla-premium">
+                            <thead>
+                                <tr>
+                                    <th>PRODUCTO</th>
+                                    <th>CÓDIGO</th>
+                                    <th>STOCK</th>
+                                    <th>PEDIR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="body-pedidos"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="procesarPedidoFinal()" class="btn-accion-nico bg-green-600">GENERAR ORDEN</button>
+                    </div>
                 </div>`;
 
-            const dataSet = res.data.map(p => {
-                // Verificamos si ya está en el carrito para marcar el checkbox
-                const isChecked = carritoPedidos.some(item => item.id === p.id) ? 'checked' : '';
-                
-                // Sanitizamos el nombre para evitar que las comillas rompan el onclick
-                const nombreSafe = p.nombre.replace(/'/g, "").replace(/"/g, "");
-
-                return [
-                    `<input type="checkbox" ${isChecked} onchange="toggleSeleccion(this, '${p.id}', '${nombreSafe}', ${p.precio}, '${p.sku}', ${p.stock}, '${p.proveedor}', ${p.stockMinimo})">`,
-                    p.sku,
-                    p.nombre,
-                    `<span class="${p.stock <= p.stockMinimo ? 'text-red-500 font-bold' : ''}">${p.stock}</span>`,
-                    `$${p.precio.toLocaleString('es-AR')}`
-                ];
+            // Llenamos la tabla con los datos recibidos
+            const tbody = document.getElementById('body-pedidos');
+            res.reply.forEach(prod => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 text-[11px]">${prod.nombre}</td>
+                    <td class="p-3 font-mono text-cyan-500">${prod.codigo}</td>
+                    <td class="p-3">${prod.stock}</td>
+                    <td class="p-3"><input type="number" class="bg-slate-900 border border-slate-700 w-16 p-1 text-white" min="0" value="0"></td>
+                `;
+                tbody.appendChild(tr);
             });
-
-            $('#tabla-maestra-pedidos').DataTable({
-                data: dataSet,
-                destroy: true,
-                dom: 'rtip',
-                pageLength: 50,
-                autoWidth: false,
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' }
-            });
-        })
-        .obtenerTablaFiltrada("baseProductos", prov);
+        }
+    } catch (err) {
+        console.error("Error al filtrar productos:", err);
+        contenedor.innerHTML = `<p class="text-red-500 p-4">Error de conexión: ${err.message}</p>`;
+    }
 }
 
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 20.");
