@@ -648,115 +648,86 @@ console.log("✅ N.I.C.O. Terminal: Carga finalizada 19.");
 
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
 async function cargarProductosPorProveedor() {
-    const proveedorPrincipal = document.getElementById('prov-seleccionado').value;
+    const selector = document.getElementById('prov-seleccionado');
+    const prov = selector ? selector.value : "";
     const contenedor = document.getElementById('modal-contenido');
 
-    if (!proveedorPrincipal) {
-        Swal.fire('ATENCIÓN', 'Seleccione un proveedor de origen antes de escanear.', 'warning');
-        return;
-    }
+    if (!prov) return Swal.fire('AVISO', 'Selecciona un proveedor primero', 'info');
 
-    // Reiniciamos el carrito para este pedido específico
-    window.carritoPedidos = [];
-
-    // Estado de carga (Spinner)
-    contenedor.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-64">
-            <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-cyan-500 font-mono text-[12px] tracking-widest uppercase animate-pulse">
-                Consultando Base de Datos...
-            </p>
-            <p class="text-slate-500 text-[10px] mt-2">${proveedorPrincipal}</p>
-        </div>`;
+    // Spinner de carga
+    contenedor.innerHTML = `<div class="flex flex-col items-center py-20"><div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div><p class="text-[10px] text-cyan-500 animate-pulse uppercase">CARGANDO: ${prov}...</p></div>`;
 
     try {
-        // Llamada al servidor pasando el objeto esperado
-        const res = await callGoogleScript('obtenerTablaFiltrada', {
-            nombreHoja: 'baseProductos',
-            proveedorFiltro: proveedorPrincipal
+        // Llamada a tu puente API (importante pasar el objeto params)
+        const res = await callGoogleScript('obtenerTablaFiltrada', { 
+            nombreHoja: 'baseProductos', 
+            proveedorFiltro: prov 
         });
 
-        if (res && res.status === "success") {
-            const listaProductos = res.data || [];
-
-            // Caso: No hay productos para ese proveedor
-            if (listaProductos.length === 0) {
-                contenedor.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-64 text-center">
-                        <i class="fi fi-rr-box-open text-4xl text-slate-700 mb-4"></i>
-                        <p class="text-amber-500 font-bold uppercase text-xs">Catálogo Vacío</p>
-                        <p class="text-slate-500 text-[10px]">No se encontraron productos vinculados a este proveedor.</p>
-                        <button onclick="cerrarModal()" class="mt-6 px-4 py-2 bg-slate-800 text-white text-[10px] rounded">CERRAR</button>
-                    </div>`;
-                return;
-            }
-
-            // Construcción de la estructura de la tabla
+        if (res.status === "success" && res.data.length > 0) {
+            // 1. Preparamos el HTML base de la tabla
             contenedor.innerHTML = `
-                <div class="p-4">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-cyan-400 font-black uppercase text-xs tracking-widest">Catálogo: ${proveedorPrincipal}</h2>
-                        <div id="contador-items" class="text-[10px] font-mono text-slate-400">Items seleccionados: 0</div>
-                    </div>
-                    
-                    <div class="wrapper-tabla-final max-h-[400px] overflow-y-auto border border-cyan-900/20 rounded">
-                        <table id="tabla-pedidos-filtrada" class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="text-cyan-500 text-[10px] uppercase font-bold sticky top-0 bg-slate-950 z-20">
-                                    <th class="p-3 border-b border-cyan-900/30">SEL</th>
-                                    <th class="p-3 border-b border-cyan-900/30">ID</th>
-                                    <th class="p-3 border-b border-cyan-900/30">PRODUCTO</th>
-                                    <th class="p-3 border-b border-cyan-900/30">CÓDIGO</th>
-                                    <th class="p-3 border-b border-cyan-900/30">COSTO</th>
-                                    <th class="p-3 border-b border-cyan-900/30">STOCK</th>
-                                    <th class="p-3 border-b border-cyan-900/30 text-right">MIN</th>
-                                </tr>
-                            </thead>
-                            <tbody id="body-pedidos" class="divide-y divide-cyan-900/10"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-6 flex justify-end gap-4">
-                        <button onclick="cerrarModal()" class="px-6 py-2 text-[10px] font-bold text-slate-500 uppercase hover:text-white transition-colors">Cancelar</button>
-                        <button onclick="revisarPedido()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-2 rounded font-bold text-[10px] tracking-widest shadow-lg shadow-cyan-900/20 transition-all">
-                            SIGUIENTE PASO >
-                        </button>
-                    </div>
+                <div class="mb-4 p-3 bg-slate-900/80 border border-slate-700 rounded-lg flex justify-between items-center sticky top-0 z-10 shadow-xl">
+                    <div id="contador-items" class="text-[11px] text-slate-400 uppercase">Items seleccionados: <span class="text-cyan-400 font-bold">0</span></div>
+                    <button onclick="revisarPedido()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold px-4 py-2 rounded uppercase">Revisar Pedido →</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="tabla-maestra-pedidos" class="w-full text-left border-collapse font-mono text-[11px]">
+                        <thead>
+                            <tr class="bg-slate-900 text-cyan-500 uppercase">
+                                <th class="p-3 border-b border-cyan-900/30 text-center">SEL.</th>
+                                <th class="p-3 border-b border-cyan-900/30">ID</th>
+                                <th class="p-3 border-b border-cyan-900/30">PRODUCTO</th>
+                                <th class="p-3 border-b border-cyan-900/30">CÓDIGO</th>
+                                <th class="p-3 border-b border-cyan-900/30">COSTO</th>
+                                <th class="p-3 border-b border-cyan-900/30">STOCK</th>
+                                <th class="p-3 border-b border-cyan-900/30 text-right">MIN.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-pedidos" class="divide-y divide-cyan-900/10 text-slate-300"></tbody>
+                    </table>
                 </div>`;
 
             const tbody = document.getElementById('body-pedidos');
-            
-            // Renderizado de filas
-            listaProductos.forEach(prod => {
-                const nombreLimpio = String(prod.nombre).replace(/'/g, "").replace(/"/g, "");
-                const alertaStock = prod.stock <= prod.stockMinimo;
 
+            // 2. Llenamos las filas con los datos del JSON
+            res.data.forEach(prod => {
+                const nombreLimpio = prod.nombre.replace(/'/g, "").replace(/"/g, "");
+                const alertar = parseInt(prod.stock) <= parseInt(prod.stockMinimo);
+                
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-cyan-500/5 transition-colors group";
+                tr.className = "hover:bg-cyan-500/5 transition-colors";
                 tr.innerHTML = `
                     <td class="p-3 text-center">
                         <input type="checkbox" class="w-4 h-4 accent-cyan-500 cursor-pointer" 
-                               onclick="toggleSeleccion(this, '${prod.id}', '${nombreLimpio}', '${prod.precio}', '${prod.sku}', '${prod.stock}', '${proveedorPrincipal}', '${prod.stockMinimo}')">
+                               onclick="toggleSeleccion(this, '${prod.id}', '${nombreLimpio}', '${prod.precio}', '${prod.sku}', '${prod.stock}', '${prov}', '${prod.stockMinimo}')">
                     </td>
-                    <td class="p-3 text-[10px] text-slate-500 font-mono">${prod.id}</td>
-                    <td class="p-3 text-[11px] text-slate-300 font-bold group-hover:text-cyan-400 transition-colors">${prod.nombre}</td>
-                    <td class="p-3 font-mono text-cyan-700 text-[10px]">${prod.sku}</td>
-                    <td class="p-3 text-slate-300 text-[11px] font-mono">$${prod.precio.toLocaleString('es-AR')}</td>
-                    <td class="p-3 text-[11px] ${alertaStock ? 'text-red-500 font-black animate-pulse' : 'text-slate-400'}">${prod.stock}</td>
-                    <td class="p-3 text-amber-600/70 text-[10px] font-bold text-right">${prod.stockMinimo}</td>
+                    <td class="p-2 text-slate-500 text-[10px]">${prod.id}</td>
+                    <td class="p-2 font-bold text-slate-200">${prod.nombre}</td>
+                    <td class="p-2 text-cyan-700">${prod.sku}</td>
+                    <td class="p-2">$ ${prod.precio}</td>
+                    <td class="p-2 ${alertar ? 'text-red-500 font-bold animate-pulse' : 'text-slate-400'}">${prod.stock}</td>
+                    <td class="p-2 text-amber-600/50 text-right">${prod.stockMinimo}</td>
                 `;
                 tbody.appendChild(tr);
             });
+
+            // 3. Inicializamos DataTable
+            setTimeout(() => {
+                $('#tabla-maestra-pedidos').DataTable({
+                    "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
+                    "pageLength": 10,
+                    "order": [[2, "asc"]],
+                    "dom": 'rtip'
+                });
+            }, 50);
+
         } else {
-            throw new Error(res.message || "Error desconocido en el servidor");
+            contenedor.innerHTML = `<div class="p-10 text-center text-amber-500 uppercase font-bold italic">No hay productos disponibles para este proveedor.</div>`;
         }
     } catch (err) {
-        console.error("Error en despliegue de catálogo:", err);
-        contenedor.innerHTML = `
-            <div class="p-8 text-center text-red-500">
-                <p class="font-bold">ERROR DE SINCRONIZACIÓN</p>
-                <p class="text-[10px] text-slate-500 mt-2">${err.message}</p>
-            </div>`;
+        contenedor.innerHTML = `<div class="p-6 text-red-500 font-mono text-xs text-center uppercase">Error de sincronización con la base de datos</div>`;
+        console.error(err);
     }
 }
 
