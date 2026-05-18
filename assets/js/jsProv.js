@@ -707,23 +707,23 @@ async function cargarProductosPorProveedor() {
             const tbody = document.getElementById('body-pedidos');
             
             listaProductos.forEach(prod => {
-                // MAPEADO CORRECTO PARA OBJETOS (no arrays)
-                const id = prod.id || "";
-                const nombre = prod.nombre || "Sin nombre";
-                const sku = prod.sku || "S/N";
-                const precio = parseFloat(prod.precio) || 0;
-                const stock = parseInt(prod.stock) || 0;
-                const stockMin = parseInt(prod.stockMinimo) || 0;
+                // Extraemos según el objeto literal definido en el servidor
+                const id       = prod.id;
+                const nombre   = prod.nombre;
+                const sku      = prod.sku;
+                const precio   = prod.precio;
+                const stock    = prod.stock;
+                const stockMin = prod.stockMinimo;
 
-                // ESCAPADO DE SEGURIDAD PARA EVITAR EL ERROR 'replace'
-                const nombreLimpio = nombre.toString().replace(/'/g, "").replace(/"/g, "");
+                // Limpieza para evitar errores en el onclick
+                const nombreEscapado = nombre.replace(/'/g, "");
 
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-cyan-900/10 hover:bg-cyan-500/5 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-3">
+                    <td class="p-3 text-center">
                         <input type="checkbox" class="w-4 h-4 accent-cyan-500 cursor-pointer" 
-                               onclick="toggleSeleccion(this, '${id}', '${nombreLimpio}', '${precio}', '${sku}', '${stock}', '${proveedorPrincipal}', '${stockMin}')">
+                            onclick="toggleSeleccion(this, '${id}', '${nombreEscapado}', '${precio}', '${sku}', '${stock}', '${proveedorPrincipal}', '${stockMin}')">
                     </td>
                     <td class="p-3 text-[10px] text-slate-500 font-mono">${id}</td>
                     <td class="p-3 text-[11px] text-slate-300 font-bold">${nombre}</td>
