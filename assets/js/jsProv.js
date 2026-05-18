@@ -667,8 +667,12 @@ async function cargarProductosPorProveedor() {
             proveedorFiltro: prov 
         });
 
-        // --- CORRECCIÓN DEL ERROR 'length' ---
-        // Usamos cortocircuito para asegurar que listaProductos sea AL MENOS un array vacío
+            console.log("--- REPORTE DE DIAGNÓSTICO ---");
+            console.log("Lo que el servidor buscó:", res.debug.recibido);
+            console.log("Lo que el servidor vio en la Columna G (primeras 10 filas):");
+            console.table(res.debug.muestrasEnSheet);
+
+
         const listaProductos = (res && res.status === "success" && res.data) ? res.data : [];
 
         if (listaProductos.length > 0) {
