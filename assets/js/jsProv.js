@@ -655,26 +655,36 @@ async function cargarProductosPorProveedor() {
     if (!prov) return Swal.fire('AVISO', 'Selecciona un proveedor primero', 'info');
 
     // Spinner de carga
-    contenedor.innerHTML = `<div class="flex flex-col items-center py-20"><div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div><p class="text-[10px] text-cyan-500 animate-pulse uppercase">CARGANDO: ${prov}...</p></div>`;
+    contenedor.innerHTML = `
+        <div class="flex flex-col items-center py-20">
+            <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-[10px] text-cyan-500 animate-pulse uppercase tracking-widest">Sincronizando Catálogo: ${prov}</p>
+        </div>`;
 
     try {
-        // Llamada a tu puente API (importante pasar el objeto params)
         const res = await callGoogleScript('obtenerTablaFiltrada', { 
             nombreHoja: 'baseProductos', 
             proveedorFiltro: prov 
         });
 
-        if (res.status === "success" && res.data.length > 0) {
-            // 1. Preparamos el HTML base de la tabla
+        // --- CORRECCIÓN DEL ERROR 'length' ---
+        // Usamos cortocircuito para asegurar que listaProductos sea AL MENOS un array vacío
+        const listaProductos = (res && res.status === "success" && res.data) ? res.data : [];
+
+        if (listaProductos.length > 0) {
             contenedor.innerHTML = `
                 <div class="mb-4 p-3 bg-slate-900/80 border border-slate-700 rounded-lg flex justify-between items-center sticky top-0 z-10 shadow-xl">
-                    <div id="contador-items" class="text-[11px] text-slate-400 uppercase">Items seleccionados: <span class="text-cyan-400 font-bold">0</span></div>
-                    <button onclick="revisarPedido()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold px-4 py-2 rounded uppercase">Revisar Pedido →</button>
+                    <div id="contador-items" class="text-[11px] text-slate-400 uppercase">
+                        Items seleccionados: <span class="text-cyan-400 font-bold">${window.carritoPedidos.length}</span>
+                    </div>
+                    <button onclick="revisarPedido()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold px-4 py-2 rounded uppercase transition-all shadow-lg shadow-cyan-900/20">
+                        Revisar Pedido →
+                    </button>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto border border-cyan-900/20 rounded">
                     <table id="tabla-maestra-pedidos" class="w-full text-left border-collapse font-mono text-[11px]">
                         <thead>
-                            <tr class="bg-slate-900 text-cyan-500 uppercase">
+                            <tr class="bg-slate-950 text-cyan-500 uppercase">
                                 <th class="p-3 border-b border-cyan-900/30 text-center">SEL.</th>
                                 <th class="p-3 border-b border-cyan-900/30">ID</th>
                                 <th class="p-3 border-b border-cyan-900/30">PRODUCTO</th>
@@ -690,9 +700,8 @@ async function cargarProductosPorProveedor() {
 
             const tbody = document.getElementById('body-pedidos');
 
-            // 2. Llenamos las filas con los datos del JSON
-            res.data.forEach(prod => {
-                const nombreLimpio = prod.nombre.replace(/'/g, "").replace(/"/g, "");
+            listaProductos.forEach(prod => {
+                const nombreLimpio = String(prod.nombre || "").replace(/'/g, "").replace(/"/g, "");
                 const alertar = parseInt(prod.stock) <= parseInt(prod.stockMinimo);
                 
                 const tr = document.createElement('tr');
@@ -712,8 +721,11 @@ async function cargarProductosPorProveedor() {
                 tbody.appendChild(tr);
             });
 
-            // 3. Inicializamos DataTable
+            // Inicialización de DataTable
             setTimeout(() => {
+                if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
+                    $('#tabla-maestra-pedidos').DataTable().destroy();
+                }
                 $('#tabla-maestra-pedidos').DataTable({
                     "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
                     "pageLength": 10,
@@ -723,11 +735,18 @@ async function cargarProductosPorProveedor() {
             }, 50);
 
         } else {
-            contenedor.innerHTML = `<div class="p-10 text-center text-amber-500 uppercase font-bold italic">No hay productos disponibles para este proveedor.</div>`;
+            // Manejo de catálogo vacío sin romper el código
+            contenedor.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 text-center">
+                    <i class="fi fi-rr-search-alt text-3xl text-slate-700 mb-4"></i>
+                    <p class="text-amber-500 font-bold uppercase text-xs tracking-widest">Catálogo Vacío</p>
+                    <p class="text-slate-500 text-[10px] mt-2">No se encontraron productos vinculados a "${prov}".</p>
+                    <button onclick="abrirModal('PEDIDOS')" class="mt-6 text-cyan-500 text-[9px] underline">VOLVER A SELECCIONAR</button>
+                </div>`;
         }
     } catch (err) {
-        contenedor.innerHTML = `<div class="p-6 text-red-500 font-mono text-xs text-center uppercase">Error de sincronización con la base de datos</div>`;
-        console.error(err);
+        console.error("Falla crítica en carga de productos:", err);
+        contenedor.innerHTML = `<div class="p-10 text-red-500 text-xs font-mono text-center">ERROR DE CONEXIÓN CON EL SERVIDOR</div>`;
     }
 }
 
