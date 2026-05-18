@@ -825,14 +825,13 @@ async function revisarPedido() {
     const contenido = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
     
-    // 1. Obtener proveedores (intentamos usar el cache o pedimos al vuelo)
+    // 1. Obtener proveedores
     let proveedoresHTML = "";
     try {
         const listaProv = (typeof listaProveedoresCache !== 'undefined' && listaProveedoresCache.length > 0) 
-                          ? listaProveedoresCache 
-                          : await obtenerProveedoresParaSelector();
+                        ? listaProveedoresCache 
+                        : await obtenerProveedoresParaSelector();
         
-        // El primer item del carrito nos dice quién era el proveedor original
         const provOriginal = carritoPedidos[0].proveedor;
         
         proveedoresHTML = listaProv.map(p => 
@@ -881,35 +880,44 @@ async function revisarPedido() {
             <table class="w-full text-left border-collapse table-fixed"> 
                 <thead>
                     <tr class="bg-slate-950 sticky top-0 border-b border-slate-700 text-cyan-500 text-[10px] uppercase z-10">
-                        <th class="p-3 w-2/5">Item / Detalle</th> 
-                        <th class="p-3 text-center w-[15%]">Stock Act.</th> 
+                        <th class="p-3 w-1/4">Item / Detalle</th> 
+                        <th class="p-3 text-center w-[12%]">Stock Act.</th> 
+                        <th class="p-3 text-center w-[12%]">Stock Mín.</th> 
                         <th class="p-3 text-center w-[15%]">Cantidad</th> 
-                        <th class="p-3 text-right w-[15%]">Costo U.</th> 
+                        <th class="p-3 text-right w-[15%]">Costo Unit.</th> 
                         <th class="p-3 text-right w-[15%]">Subtotal</th> 
-                        <th class="p-3 text-center w-[10%] text-red-500 font-black">X</th> 
+                        <th class="p-3 text-center w-[6%] text-red-500 font-black">X</th> 
                     </tr>
                 </thead>
                 <tbody class="bg-slate-900/20">`;
 
     carritoPedidos.forEach((item, index) => {
         const subtotal = item.precio * item.cantidad;
-        const alertaStock = item.stock <= item.stockMinimo;
+        const alertaStock = parseInt(item.stock) <= parseInt(item.stockMinimo);
+        
         html += `
             <tr class="border-b border-slate-800 text-xs hover:bg-cyan-500/5 transition-colors">
                 <td class="p-3">
                     <div class="text-slate-200 font-bold truncate">${item.nombre}</div>
                     <div class="text-[9px] text-cyan-700 font-mono tracking-tighter">${item.sku}</div>
                 </td>
-                <td class="p-3 text-center">
-                    <div class="${alertaStock ? 'text-red-500 font-black animate-pulse' : 'text-slate-500'}">${item.stock}</div>
+                <td class="p-3 text-center font-mono">
+                    <div class="${alertaStock ? 'text-red-500 font-black animate-pulse' : 'text-slate-400'}">${item.stock}</div>
+                </td>
+                <td class="p-3 text-center text-slate-500 font-mono">
+                    ${item.stockMinimo}
                 </td>
                 <td class="p-3">
                     <input type="number" min="1" value="${item.cantidad}" 
                            onchange="actualizarCantidadCarrito(${index}, this.value)"
                            class="w-full bg-slate-950 border border-slate-800 text-cyan-400 text-center rounded p-1 outline-none font-bold focus:border-cyan-500">
                 </td>
-                <td class="p-3 text-right text-slate-500 font-mono">$${item.precio.toLocaleString('es-AR')}</td>
-                <td class="p-3 text-right text-white font-bold font-mono" id="subtotal-${index}">$${subtotal.toLocaleString('es-AR')}</td>
+                <td class="p-3 text-right text-slate-400 font-mono">
+                    $${item.precio.toLocaleString('es-AR')}
+                </td>
+                <td class="p-3 text-right text-white font-bold font-mono" id="subtotal-${index}">
+                    $${subtotal.toLocaleString('es-AR')}
+                </td>
                 <td class="p-3 text-center">
                     <button onclick="eliminarDelPedido(${index})" class="text-slate-700 hover:text-red-500 transition-transform hover:scale-110">
                          <i class="fi fi-ss-trash"></i>
