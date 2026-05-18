@@ -656,7 +656,6 @@ async function cargarProductosPorProveedor() {
         return;
     }
 
-    // Reiniciamos el carrito para este pedido específico
     window.carritoPedidos = [];
 
     contenedor.innerHTML = `
@@ -667,12 +666,13 @@ async function cargarProductosPorProveedor() {
 
     try {
         const res = await callGoogleScript('obtenerTablaFiltrada', {
-            nombreSheet: 'baseProductos',
-            filtroProveedor: proveedorPrincipal
+            nombreHoja: 'baseProductos',
+            proveedorFiltro: proveedorPrincipal
         });
 
+        // Verificamos que la respuesta sea exitosa y contenga data
         if (res && res.status === "success") {
-            const listaProductos = Array.isArray(res.reply) ? res.reply : (res.reply.data || []);
+            const listaProductos = res.data || [];
 
             contenedor.innerHTML = `
                 <div class="p-4">
@@ -680,9 +680,8 @@ async function cargarProductosPorProveedor() {
                         <h2 class="text-cyan-400 font-black uppercase text-xs tracking-widest">Catálogo: ${proveedorPrincipal}</h2>
                         <div id="contador-items" class="text-[10px] font-mono text-slate-400">Items seleccionados: 0</div>
                     </div>
-                    
                     <div class="wrapper-tabla-final max-h-[400px] overflow-y-auto">
-                        <table id="tabla-pedidos-filtrada" class="tabla-premium">
+                        <table id="tabla-pedidos-filtrada" class="tabla-premium w-full">
                             <thead>
                                 <tr class="text-left text-cyan-500 text-[10px] uppercase font-bold sticky top-0 bg-slate-950">
                                     <th class="p-3">SEL</th>
@@ -697,10 +696,9 @@ async function cargarProductosPorProveedor() {
                             <tbody id="body-pedidos"></tbody>
                         </table>
                     </div>
-
                     <div class="mt-6 flex justify-end gap-4">
                         <button onclick="cerrarModal()" class="px-6 py-2 text-[10px] font-bold text-slate-500 uppercase hover:text-white transition-colors">Cancelar</button>
-                        <button onclick="prepararConfirmacionPedido('${proveedorPrincipal}')" class="btn-accion-nico bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-2 rounded font-bold text-[10px] tracking-widest shadow-lg shadow-cyan-900/20">
+                        <button onclick="revisarPedido()" class="btn-accion-nico bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-2 rounded font-bold text-[10px] tracking-widest shadow-lg shadow-cyan-900/20">
                             SIGUIENTE PASO >
                         </button>
                     </div>
@@ -709,30 +707,35 @@ async function cargarProductosPorProveedor() {
             const tbody = document.getElementById('body-pedidos');
             
             listaProductos.forEach(prod => {
-                // Mapeo basado en tus columnas: 0:ID, 1:Nombre, 2:Codigo, 3:Costo, 4:Stock, 7:Minimo
-                const id = prod[0];
-                const nombre = prod[1];
-                const codigo = prod[2];
-                const costo = prod[3];
-                const stock = prod[4];
-                const stockMin = prod[7];
+                // MAPEADO CORRECTO PARA OBJETOS (no arrays)
+                const id = prod.id || "";
+                const nombre = prod.nombre || "Sin nombre";
+                const sku = prod.sku || "S/N";
+                const precio = parseFloat(prod.precio) || 0;
+                const stock = parseInt(prod.stock) || 0;
+                const stockMin = parseInt(prod.stockMinimo) || 0;
+
+                // ESCAPADO DE SEGURIDAD PARA EVITAR EL ERROR 'replace'
+                const nombreLimpio = nombre.toString().replace(/'/g, "").replace(/"/g, "");
 
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-cyan-900/10 hover:bg-cyan-500/5 transition-colors";
                 tr.innerHTML = `
                     <td class="p-3">
                         <input type="checkbox" class="w-4 h-4 accent-cyan-500 cursor-pointer" 
-                               onclick="toggleSeleccion(this, '${id}', '${nombre.replace(/'/g, "")}', '${costo}', '${codigo}', '${stock}', '${proveedorPrincipal}', '${stockMin}')">
+                               onclick="toggleSeleccion(this, '${id}', '${nombreLimpio}', '${precio}', '${sku}', '${stock}', '${proveedorPrincipal}', '${stockMin}')">
                     </td>
                     <td class="p-3 text-[10px] text-slate-500 font-mono">${id}</td>
                     <td class="p-3 text-[11px] text-slate-300 font-bold">${nombre}</td>
-                    <td class="p-3 font-mono text-cyan-600 text-[10px]">${codigo}</td>
-                    <td class="p-3 text-slate-300 text-[11px] font-mono">$${formatearNumero(costo)}</td>
-                    <td class="p-3 text-slate-400 text-[11px]">${stock}</td>
+                    <td class="p-3 font-mono text-cyan-600 text-[10px]">${sku}</td>
+                    <td class="p-3 text-slate-300 text-[11px] font-mono">$${precio.toLocaleString('es-AR')}</td>
+                    <td class="p-3 text-[11px] ${stock <= stockMin ? 'text-red-500 font-bold animate-pulse' : 'text-slate-400'}">${stock}</td>
                     <td class="p-3 text-amber-600/70 text-[10px] font-bold">${stockMin}</td>
                 `;
                 tbody.appendChild(tr);
             });
+        } else {
+            contenedor.innerHTML = `<p class="p-4 text-red-500">Error al cargar datos: ${res.message}</p>`;
         }
     } catch (err) {
         console.error("Error en despliegue de catálogo:", err);
