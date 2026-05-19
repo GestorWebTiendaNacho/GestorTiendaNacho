@@ -1655,42 +1655,47 @@ function renderizarVistaMes(response) {
     const { filas, semanasRelativas } = response;
     const contenedor = document.getElementById('contenido-reporte-lex');
     
-    // Si semanasRelativas no es un array, creamos uno por defecto para que no rompa el .map
-    const semanas = (semanasRelativas && Array.isArray(semanasRelativas)) ? semanasRelativas : [1,2,3,4,5];
+    // Limpiamos las semanas para el encabezado (quitamos la primera si está vacía)
+    const semanasHead = semanasRelativas.filter(s => s !== "");
 
-    try {
-        let html = `
-        <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:10px;">
-            <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308; border:1px solid #eab308;">SINCRONIZAR</button>
-        </div>
-        <div style="overflow-x:auto;">
-            <table class="lex-table-report">
-                <thead>
+    let html = `
+    <div class="lex-report-toolbar" style="margin-bottom:15px;">
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308; border-color:#eab308;">
+            <i class="fas fa-sync-alt"></i> REFRESCAR DATOS
+        </button>
+    </div>
+    <div style="overflow-x:auto;" class="custom-scroll">
+        <table class="lex-table-report">
+            <thead>
+                <tr>
+                    <th style="text-align:left; min-width:200px;">PROVEEDOR</th>
+                    ${semanasHead.map((s, index) => {
+                        // Intentamos que el título sea amigable si es una fecha
+                        const d = new Date(s);
+                        const titulo = isNaN(d) ? s : `SEM ${index + 1}`; 
+                        return `<th style="text-align:center">${titulo}</th>`;
+                    }).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${filas.map(f => `
                     <tr>
-                        <th style="color:var(--lex-gold)">PROVEEDOR</th>
-                        ${semanas.map(s => `<th style="text-align:center">SEM. ${s}</th>`).join('')}
+                        <td style="border-left: 3px solid var(--lex-gold); padding-left:10px;">
+                            <div style="font-size:10px; color:#64748b;">ID: ${f.idprov}</div>
+                            <div style="font-weight:bold; color:#fff;">${f.nombre}</div>
+                        </td>
+                        <td style="text-align:center">${formatearEstado(f.s1)}</td>
+                        <td style="text-align:center">${formatearEstado(f.s2)}</td>
+                        <td style="text-align:center">${formatearEstado(f.s3)}</td>
+                        <td style="text-align:center">${formatearEstado(f.s4)}</td>
+                        <td style="text-align:center">${formatearEstado(f.s5)}</td>
                     </tr>
-                </thead>
-                <tbody>
-                    ${filas.map(f => `
-                        <tr>
-                            <td style="font-weight:bold; color:white; border-left:3px solid var(--lex-gold);">${f.nombre || 'S/N'}</td>
-                            <td style="text-align:center">${formatearEstado(f.s1)}</td>
-                            <td style="text-align:center">${formatearEstado(f.s2)}</td>
-                            <td style="text-align:center">${formatearEstado(f.s3)}</td>
-                            <td style="text-align:center">${formatearEstado(f.s4)}</td>
-                            <td style="text-align:center">${formatearEstado(f.s5)}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>`;
+                `).join('')}
+            </tbody>
+        </table>
+    </div>`;
 
-        contenedor.innerHTML = html;
-    } catch (error) {
-        console.error("❌ ERROR al construir el HTML:", error);
-        contenedor.innerHTML = `<div style="color:red;">Error renderizando tabla: ${error.message}</div>`;
-    }
+    contenedor.innerHTML = html;
 }
 
 
