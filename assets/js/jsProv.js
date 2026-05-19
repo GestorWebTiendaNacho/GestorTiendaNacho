@@ -1621,35 +1621,29 @@ let navegacionSemanal = {
     diaActual: null
 };
 
-function abrirModalSemanal() {
-    const modal = document.getElementById('modal-maestro');
+async function abrirModalSemanal() {
     const titulo = document.getElementById('modal-titulo');
     const contenido = document.getElementById('modal-contenido');
 
-    if (!modal) return;
-
     titulo.innerText = "PANEL DE CONTROL SEMANAL";
-    contenido.innerHTML = `
-        <div class="flex flex-col items-center py-20">
-            <div class="custom-spinner mb-4"></div>
-            <p class="text-[10px] text-cyan-500 animate-pulse uppercase tracking-widest">Iniciando Protocolo de Carga...</p>
-        </div>`;
     
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex'; 
+    // Spinner Estilo LexTech
+    contenido.innerHTML = `
+        <div class="flex-center-lex" style="padding:100px 0; text-align:center;">
+            <div class="lex-spinner"></div>
+            <p style="color:#c2902e; font-size:10px; margin-top:20px; letter-spacing:4px; text-transform:uppercase;">Iniciando Protocolo de Carga...</p>
+        </div>`;
 
-    google.script.run
-        .withSuccessHandler(response => {
-            if (!response || !response.filas || response.filas.length === 0) {
-                contenido.innerHTML = "<p class='text-center py-10 text-slate-500'>No hay datos en la Base de Datos</p>";
-                return;
-            }
-            renderizarVistaMes(response); 
-        })
-        .withFailureHandler(err => {
-            contenido.innerHTML = `<p class='text-red-500 p-5'>Error: ${err.message}</p>`;
-        })
-        .obtenerDatosReporteSemanal();
+    try {
+        const res = await callGoogleScript('obtenerDatosReporteSemanal');
+        if (res.status === "success" && res.reply.filas) {
+            renderizarVistaMes(res.reply);
+        } else {
+            contenido.innerHTML = "<p class='lex-error-msg'>No se detectaron registros en la base de datos.</p>";
+        }
+    } catch (err) {
+        contenido.innerHTML = `<p class='lex-error-msg'>ERROR DE ENLACE: ${err.message}</p>`;
+    }
 }
 
 //RENDERIZAR VISTA MES
@@ -1657,6 +1651,7 @@ function renderizarVistaMes(response) {
     const { filas, semanasRelativas } = response;
     const contenedor = document.getElementById('modal-contenido');
     
+    // Cálculo de semana actual
     const hoy = new Date();
     const d = new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -1664,51 +1659,39 @@ function renderizarVistaMes(response) {
     const semanaHoy = Math.ceil((((d - inicioAño) / 86400000) + 1) / 7);
 
     let html = `
-    <div class="flex flex-wrap gap-2 mb-4 px-2">
-        <button onclick="navegar('-Proveedores')" class="btn-header btn-neon-purple">
-            <i class="fi fi-sr-undo"></i> Regresar al Menú</button>
-        <button onclick="ejecutarSincronizacionRelampago()" class="btn-header btn-neon-yellow">
-            <i class="fi fi-ss-back-up"></i> SINCRONIZAR</button>
-        <button onclick="descargarReporteExcel('SEMANAL')" class="btn-header btn-neon-green">
-            <i class="fi fi-br-desktop-arrow-down"></i> DESCARGAR</button>
+    <div class="lex-report-toolbar">
+        <button onclick="navegar('-Proveedores')" class="lex-btn-nav">← VOLVER</button>
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="border-color:#eab308; color:#eab308;">SINCRONIZAR</button>
+        <button onclick="descargarReporteExcel('SEMANAL')" class="lex-btn-nav" style="border-color:#22c55e; color:#22c55e;">EXCEL</button>
     </div>
     
-    <div class="overflow-x-auto custom-scroll p-2">
-        <table class="tabla-reportes" style="border-separate: separate; border-spacing: 4px 0;">
+    <div style="overflow-x:auto; padding:0 10px;">
+        <table class="lex-table-report">
             <thead>
-              <tr class="bg-transparent">
-                  <th class="w-1/4 p-2 th-proveedor-estatico">PROVEEDOR</th>
-                  ${[1, 2, 3, 4, 5].map((s, i) => {
-                      const numSemanaCol = semanasRelativas[i];
-                      const esSemanaActual = numSemanaCol === semanaHoy;
-                      const claseColor = esSemanaActual ? 'btn-header-actual' : 'btn-header-tabla';
-                      
-                      return `
-                      <th class="p-1">
-                          <button onclick="verDetalleSemana(${numSemanaCol})" class="${claseColor} flex-col group w-full">
-                              <span class="text-header-principal">Sem. ${numSemanaCol || s}</span>
-                              ${esSemanaActual 
-                                  ? `<span class="text-[8px] font-black text-green-500 animate-pulse mt-1">● ACTUAL</span>` 
-                                  : `<span class="text-[16px] opacity-50 group-hover:opacity-100 mt-1"><i class="fi fi-rs-interactive"></i></span>`
-                              }
-                          </button>
-                      </th>`;
-                  }).join('')}
-              </tr>
+                <tr>
+                    <th style="width:200px">PROVEEDOR</th>
+                    ${semanasRelativas.map(numSemana => {
+                        const esHoy = numSemana === semanaHoy;
+                        return `
+                        <th style="text-align:center">
+                            <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav" style="width:100%; ${esHoy ? 'background:#c2902e; color:#0f172a;' : ''}">
+                                SEM. ${numSemana} ${esHoy ? '●' : ''}
+                            </button>
+                        </th>`;
+                    }).join('')}
+                </tr>
             </thead>
             <tbody>`;
 
     filas.forEach(fila => {
         const datosSemanas = [fila.s1, fila.s2, fila.s3, fila.s4, fila.s5];
         html += `
-        <tr class="bg-slate-800/30 hover:bg-white/5 transition-colors">
-            <td class="p-3 font-bold text-slate-300 border-l-2 border-cyan-500">${fila.nombre}</td>
+        <tr>
+            <td style="font-weight:bold; color:#fff; border-left: 3px solid #c2902e;">${fila.nombre}</td>
             ${datosSemanas.map((estado, i) => {
                 const numSemanaCol = semanasRelativas[i];
-                if (numSemanaCol > semanaHoy || !estado || estado === "" || estado === null) {
-                    return `<td class="p-3 text-center"></td>`;
-                }
-                return `<td class="p-3 text-center">${formatearEstado(estado)}</td>`;
+                if (numSemanaCol > semanaHoy || !estado) return `<td style="text-align:center; opacity:0.2">—</td>`;
+                return `<td style="text-align:center">${formatearEstado(estado)}</td>`;
             }).join('')}
         </tr>`;
     });
@@ -1717,278 +1700,277 @@ function renderizarVistaMes(response) {
     contenedor.innerHTML = html;
 }
 
-function verDetalleSemana(numSemana) {
-    mostrarCargando(true);
+async function verDetalleSemana(numSemana) {
+    mostrarCargandoLex(true);
     navegacionSemanal.semanaActual = numSemana; 
 
-    google.script.run.withSuccessHandler(data => {
+    try {
+        const res = await callGoogleScript('procesarFiltradoHoja', { param: numSemana, tipo: "SEMANA" });
+        const data = res.reply;
+        
         const titulo = document.getElementById('modal-titulo');
-        titulo.innerText = `PLANIFICACIÓN SEMANAL: SELECCIONE UN DÍA`;
+        titulo.innerText = `PLANIFICACIÓN: SEMANA ${numSemana}`;
         
         const dias = [
-            { corto: 'LUN', largo: 'LUNES' }, { corto: 'MAR', largo: 'MARTES' },
-            { corto: 'MIE', largo: 'MIERCOLES' }, { corto: 'JUE', largo: 'JUEVES' },
-            { corto: 'VIE', largo: 'VIERNES' }, { corto: 'SAB', largo: 'SABADO' }
+            { c: 'LUN', l: 'LUNES' }, { c: 'MAR', l: 'MARTES' },
+            { c: 'MIE', l: 'MIERCOLES' }, { c: 'JUE', l: 'JUEVES' },
+            { c: 'VIE', l: 'VIERNES' }, { c: 'SAB', l: 'SABADO' }
         ];
 
         let html = `
-            <div class="flex flex-wrap gap-2 mb-4 px-2">
-              <button onclick="abrirModalSemanal()" class="btn-header btn-neon-purple">
-                <i class="fi fi-sr-undo"></i> A vista Mensual</button>
-              <button onclick="ejecutarSincronizacionRelampago()" class="btn-header btn-neon-yellow">
-                <i class="fi fi-ss-back-up"></i> Sincronizar</button>
-              <button onclick="descargarReporteExcel('DIARIA', ${numSemana})" class="btn-header btn-neon-green">
-                <i class="fi fi-br-desktop-arrow-down"></i> DESCARGAR</button>
+            <div class="lex-report-toolbar">
+                <button onclick="abrirModalSemanal()" class="lex-btn-nav">← MES</button>
+                <button onclick="descargarReporteExcel('DIARIA', ${numSemana})" class="lex-btn-nav" style="border-color:#22c55e; color:#22c55e;">EXCEL SEMANA</button>
             </div>
-        <div class="overflow-x-auto custom-scroll">
-            <table class="tabla-reportes" style="border-separate: separate; border-spacing: 4px 0;">
-              <thead>
-                  <tr class="bg-transparent">
-                      <th class="w-1/4 p-2 th-proveedor-estatico">PROVEEDOR</th>
-                      ${dias.map(d => `
-                      <th class="p-1"> 
-                          <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="btn-header-tabla flex-col group w-full">
-                              <span class="text-header-principal">${d.corto}</span>
-                              <span class="text-[16px] opacity-50 group-hover:opacity-100 mt-1">
-                                  <i class="fi fi-rs-interactive"></i>
-                              </span>
-                          </button>
-                      </th>
-                      `).join('')}
-                  </tr>
-              </thead>
-              <tbody>`;
+            <div style="overflow-x:auto; padding:0 10px;">
+                <table class="lex-table-report">
+                    <thead>
+                        <tr>
+                            <th style="width:200px">PROVEEDOR</th>
+                            ${dias.map(d => `
+                            <th style="text-align:center">
+                                <button onclick="verDetalleDia('${d.l}', ${numSemana})" class="lex-btn-nav" style="width:100%;">${d.c}</button>
+                            </th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>`;
         
-        if (data.length === 0) {
-            html += `<tr><td colspan="7" class="p-10 text-center text-slate-500">No hay datos.</td></tr>`;
+        if (!data || data.length === 0) {
+            html += `<tr><td colspan="7" style="padding:50px; text-align:center; color:#64748b;">No hay datos registrados para esta semana.</td></tr>`;
         } else {
             data.forEach(fila => {
                 html += `
-                <tr class="hover:bg-white/5 transition-colors">
-                    <td class="p-2 truncate text-slate-300 font-medium border-l-2 border-slate-700" title="${fila[1]}">${fila[1]}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[2])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[3])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[4])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[5])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[6])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[7])}</td>
+                <tr>
+                    <td style="color:#94a3b8; font-weight:600;">${fila[1]}</td>
+                    <td style="text-align:center">${formatearEstado(fila[2])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[3])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[4])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[5])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[6])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[7])}</td>
                 </tr>`;
             });
         }
 
         html += `</tbody></table></div>`;
         document.getElementById('modal-contenido').innerHTML = html;
-        mostrarCargando(false);
-    }).procesarFiltradoHoja(numSemana, "SEMANA");
+    } catch (e) {
+        console.error(e);
+    } finally {
+        mostrarCargandoLex(false);
+    }
 }
 
-function verDetalleDia(nombreDia, numSemana) {
-    mostrarCargando(true);
-    google.script.run.withSuccessHandler(data => {
+async function verDetalleDia(nombreDia, numSemana) {
+    mostrarCargandoLex(true);
+    try {
+        const res = await callGoogleScript('procesarFiltradoHoja', { param: nombreDia, tipo: "DIA" });
+        const data = res.reply;
+
         const titulo = document.getElementById('modal-titulo');
-        titulo.innerText = `DETALLE: ${nombreDia} - SEMANA ${numSemana}`;
+        titulo.innerText = `${nombreDia} - SEMANA ${numSemana}`;
         
         let html = `
-        <div class="flex flex-wrap gap-3 mb-4 px-2">
-            <button onclick="verDetalleSemana(${numSemana})" class="btn-header btn-neon-purple">
-                <i class="fi fi-sr-undo"></i> A vista Semanal
-            </button>
-            <button onclick="ejecutarSincronizacionRelampago()" class="btn-header btn-neon-yellow">
-                <i class="fi fi-ss-back-up"></i> Sincronizar
-            </button>
-            <button onclick="descargarReporteExcel('DIA_DETALLE', '${nombreDia}|${numSemana}')" class="btn-header btn-neon-green">
-                <i class="fi fi-br-desktop-arrow-down"></i> Descargar
-            </button>
+        <div class="lex-report-toolbar">
+            <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav">← SEMANA</button>
+            <button onclick="descargarReporteExcel('DIA_DETALLE', '${nombreDia}|${numSemana}')" class="lex-btn-nav" style="border-color:#22c55e; color:#22c55e;">EXCEL DÍA</button>
         </div>
-        <div class="overflow-x-auto">
-            <table class="tabla-reportes">
+        <div style="padding:0 10px;">
+            <table class="lex-table-report">
                 <thead>
-                    <tr class="bg-transparent">
-                      <th class="p-2 th-proveedor-estatico">Proveedor</th>
-                      <th class="p-2 th-proveedor-estatico text-center">Estado</th>
-                      <th class="p-2 th-proveedor-estatico text-center">Registro</th>
-                      <th class="p-2 th-proveedor-estatico text-center">ID Pedido</th>
-                      <th class="p-2 th-proveedor-estatico text-center">Acción</th>
+                    <tr>
+                        <th>PROVEEDOR</th>
+                        <th style="text-align:center">ESTADO</th>
+                        <th style="text-align:center">REGISTRO</th>
+                        <th style="text-align:center">EXPEDIENTE</th>
+                        <th style="text-align:center">ACCIÓN</th>
                     </tr>
                 </thead>
                 <tbody>`;
 
         if (data.length === 0) {
-            html += `<tr><td colspan="5" class="p-10 text-center">No hay registros para este día.</td></tr>`;
+            html += `<tr><td colspan="5" style="padding:40px; text-align:center;">Sin registros para esta jornada.</td></tr>`;
         } else {
             data.forEach(fila => {
                 html += `
-                <tr class="border-b border-slate-800/50 hover:bg-white/5 transition-colors">
-                    <td class="p-2 text-slate-300 font-bold">${fila.nombre}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila.estado)}</td>
-                    <td class="p-2 text-center text-slate-400">${fila.fecha}</td>
-                    <td class="p-2 text-center text-cyan-500 font-mono">${fila.idPedido}</td>
-                    <td class="p-2 text-center">
-                        <button onclick="abrirPDF('${fila.idPedido}')" class="bg-red-900/30 text-red-400 px-3 py-1 rounded-full border border-red-500/30 hover:bg-red-500 hover:text-white transition-all">
-                            PDF
+                <tr>
+                    <td style="color:#fff; font-weight:bold;">${fila.nombre}</td>
+                    <td style="text-align:center">${formatearEstado(fila.estado)}</td>
+                    <td style="text-align:center; color:#64748b;">${fila.fecha}</td>
+                    <td style="text-align:center; font-family:monospace; color:#c2902e;">${fila.idPedido}</td>
+                    <td style="text-align:center">
+                        <button onclick="abrirArchivoPedido('${fila.idPedido}')" class="lex-btn-nav" style="border-color:#ef4444; color:#ef4444; padding:2px 10px;">
+                            VER
                         </button>
                     </td>
                 </tr>`;
             });
         }
         
-        html += `</tbody></table>
-        </div>
-        <div id="visor-contenedor-fijo" class="hidden absolute inset-0 z-[100] bg-slate-900 flex flex-col">
-              <div class="p-2 bg-slate-800 flex justify-between items-center">
-                  <button onclick="cerrarVisorFijo()" class="btn-header btn-neon-red text-xs">CERRAR VISOR</button>
+        html += `</tbody></table></div>
+        <div id="visor-pdf-lex">
+              <div style="padding:10px; background:#1e293b; display:flex; justify-content:flex-end;">
+                  <button onclick="cerrarVisorLex()" class="lex-btn-nav" style="border-color:#ef4444; color:#ef4444;">CERRAR VISOR</button>
               </div>
-              <embed id="pdf-embed" src="" type="application/pdf" class="w-full h-full">
+              <iframe id="pdf-frame-lex" src="" style="width:100%; height:100%; border:none;"></iframe>
           </div>`;
+          
         document.getElementById('modal-contenido').innerHTML = html;
-        mostrarCargando(false);
-    }).procesarFiltradoHoja(nombreDia, "DIA");
+    } catch (e) {
+        console.error(e);
+    } finally {
+        mostrarCargandoLex(false);
+    }
 }
 
 // HELPERS JS
 function formatearEstado(e) {
     if (!e) return "";
-    
     let txt = e.toString().toUpperCase();
-    if (txt.includes("SI") || txt.includes("✅")) {
-        return `<span class="text-cyan-400 font-bold shadow-neon">✅ SI</span>`;
-    }
-    if (txt.includes("REPRO") || txt.includes("⚠️")) {
-        return `<span class="text-yellow-500 font-bold">⚠️ REPRO</span>`;
-    }
-    if (txt.includes("NO") || txt.includes("❌")) {
-        return `<span class="text-red-500/50">❌ NO</span>`;
-    }
-    return e;
+    if (txt.includes("SI") || txt.includes("✅")) return `<span class="status-lex status-lex-ok">RECIBIDO</span>`;
+    if (txt.includes("REPRO") || txt.includes("⚠️")) return `<span class="status-lex status-lex-warn">REPROG.</span>`;
+    if (txt.includes("NO") || txt.includes("❌")) return `<span class="status-lex status-lex-error">AUSENTE</span>`;
+    return `<span style="font-size:9px; color:#64748b;">${e}</span>`;
 }
 
-function mostrarCargando(show) {
-    const c = document.getElementById('modal-contenido');
+function mostrarCargandoLex(show) {
+    const contenedor = document.getElementById('modal-contenido');
     if (show) {
-        c.setAttribute('data-old-content', c.innerHTML); 
-        c.innerHTML = `
-            <div id="spinner-container" class="flex flex-col items-center py-20">
-                <div class="custom-spinner mb-4"></div>
-                <p class="text-[10px] text-slate-500 tracking-widest uppercase animate-pulse">
-                    Accediendo a la base de datos...
-                </p>
+        const loader = document.createElement('div');
+        loader.id = "lex-loader-overlay";
+        loader.innerHTML = `
+            <div style="position:absolute; inset:0; background:rgba(15,23,42,0.8); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000;">
+                <div class="lex-spinner"></div>
+                <span style="color:#c2902e; font-size:9px; margin-top:15px; letter-spacing:2px;">ACCEDIENDO AL ARCHIVO MAESTRO...</span>
             </div>`;
-    } 
-    else {
-        const spinner = document.getElementById('spinner-container');
-        if (spinner) {
-            spinner.remove();
+        contenedor.appendChild(loader);
+    } else {
+        const loader = document.getElementById('lex-loader-overlay');
+        if (loader) loader.remove();
+    }
+}
+
+async function abrirArchivoPedido(idPedido) {
+    mostrarCargandoLex(true);
+
+    try {
+        // Llamada a la nueva función unificada del servidor
+        const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
+        const data = res.reply;
+
+        if (!data) {
+            alert("SISTEMA: No se encontró ningún documento (PDF/CSV) asociado al pedido " + idPedido);
+            mostrarCargandoLex(false);
+            return;
         }
+
+        const visor = document.getElementById('visor-pdf-lex');
+        const iframe = document.getElementById('pdf-frame-lex');
+        
+        // Limpieza previa del visor
+        iframe.style.display = 'none';
+        const visorContenidoExtra = document.getElementById('visor-csv-container') || document.createElement('div');
+        visorContenidoExtra.id = 'visor-csv-container';
+        visorContenidoExtra.innerHTML = '';
+        if (!document.getElementById('visor-csv-container')) visor.appendChild(visorContenidoExtra);
+
+        if (data.tipo === 'pdf') {
+            // Lógica para PDF
+            const blob = base64ToBlob(data.contenido, 'application/pdf');
+            const url = URL.createObjectURL(blob);
+            iframe.src = url;
+            iframe.style.display = 'block';
+            visor.dataset.currentBlob = url;
+        } 
+        else if (data.tipo === 'csv') {
+            // Lógica para CSV (inyectamos la tabla HTML que generó el servidor)
+            visorContenidoExtra.innerHTML = `
+                <div style="padding:20px; color:#cbd5e1;">
+                    <h3 style="color:#c2902e; margin-bottom:15px; font-size:12px;">VISTA PREVIA CSV: ${data.nombre}</h3>
+                    <div class="lex-csv-wrapper">${data.contenido}</div>
+                </div>`;
+            visorContenidoExtra.style.display = 'block';
+        }
+
+        visor.style.display = 'flex';
+
+    } catch (e) {
+        console.error("Error al abrir archivo:", e);
+        alert("Error de comunicación con el archivo.");
+    } finally {
+        mostrarCargandoLex(false);
     }
 }
 
-function guardarEstadoDia(dia, id, valor, semana) {
-    google.script.run.withSuccessHandler(() => console.log("Estado OK")).guardarEstadoDia(dia, id, valor, semana);
-}
-
-function guardarFechaDia(dia, id, valor, semana) {
-    google.script.run.guardarFechaDia(dia, id, valor, semana);
-}
-
-function abrirPDF(idPedido) {
-    mostrarCargando(true);
-
-    google.script.run
-        .withSuccessHandler(base64 => {
-            mostrarCargando(false);
-            if (!base64) {
-              Swal.fire({ title: 'ERROR EN LA BUSQUEDA', 
-              text: 'No se encontró el archivo.', 
-              icon: 'error', 
-              timer: 1500, 
-              showConfirmButton: false });
-              return;
-            }
-            const byteCharacters = atob(base64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'application/pdf' });
-            const urlBlob = URL.createObjectURL(blob);
-            const visor = document.getElementById('visor-contenedor-fijo');
-            const iframe = document.getElementById('pdf-embed'); 
-            
-            iframe.src = urlBlob;
-            visor.classList.remove('hidden');
-            visor.style.display = 'flex'; 
-            visor.dataset.blobUrl = urlBlob; 
-        })
-        .withFailureHandler(() => mostrarCargando(false))
-        .obtenerPdfBase64(idPedido);
-}
-
-function cerrarVisorFijo() {
-    const visor = document.getElementById('visor-contenedor-fijo');
-    const iframe = document.getElementById('pdf-embed');
-    
-    // Limpieza de memoria
-    if (visor.dataset.blobUrl) {
-        URL.revokeObjectURL(visor.dataset.blobUrl);
-    }
-    
+function cerrarVisorLex() {
+    const visor = document.getElementById('visor-pdf-lex');
+    const iframe = document.getElementById('pdf-frame-lex');
+    if (visor.dataset.currentBlob) URL.revokeObjectURL(visor.dataset.currentBlob);
     iframe.src = "";
-    visor.classList.add('hidden');
     visor.style.display = 'none';
 }
 
-function ejecutarSincronizacionRelampago() {
-    mostrarCargando(true);
-    google.script.run.withSuccessHandler(() => abrirModalSemanal()).verificarReporteSemanal();
-}
-
-function descargarReporteExcel(vistaOrigen, parametroExtra = null) {
+async function descargarReporteExcel(vistaOrigen, parametroExtra = null) {
     const modalTitulo = document.getElementById('modal-titulo').innerText;
     const tabla = document.querySelector('#modal-contenido table');
     
     if (!tabla) {
-        alert("No hay datos para descargar");
+        alert("SISTEMA: No se detectaron datos para exportar.");
         return;
     }
 
+    // Extraemos los datos directamente del DOM para asegurar que coincidan con la vista actual
     const filas = Array.from(tabla.querySelectorAll('tr'));
-    const datos = filas.map(tr => {
-        return Array.from(tr.querySelectorAll('th, td')).map(td => td.innerText);
+    const datosParaExcel = filas.map(tr => {
+        return Array.from(tr.querySelectorAll('th, td')).map(td => td.innerText.replace('●', '').trim());
     });
 
-    mostrarCargando(true);
+    mostrarCargandoLex(true);
 
-    google.script.run
-        .withSuccessHandler(res => {
-            if (res && res.url) {
-                const a = document.createElement('a');
-                a.href = res.url;
-                a.target = '_blank';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
+    try {
+        const res = await callGoogleScript('generarReporteExcel', { 
+            datos: datosParaExcel, 
+            titulo: modalTitulo 
+        });
 
-            // --- LÓGICA DE RECUPERACIÓN DE VISTA ---
-            if (vistaOrigen === 'MENSUAL') {
-                navegar('-Proveedores');
-            } else if (vistaOrigen === 'SEMANAL') {
-                abrirModalSemanal();
-            } else if (vistaOrigen === 'DIARIA') {
-                verDetalleSemana(parametroExtra);
-            } else if (vistaOrigen === 'DIA_DETALLE') {
-                const partes = parametroExtra.split('|'); 
-                verDetalleDia(partes[0], partes[1]);
-            }
-            
-        })
-        .withFailureHandler(err => {
-            mostrarCargando(false);
-            alert("Error: " + err.message);
-        })
-        .generarReporteExcel(datos, modalTitulo);
+        if (res.status === "success" && res.reply.url) {
+            // Descarga silenciosa
+            const a = document.createElement('a');
+            a.href = res.reply.url;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    } catch (err) {
+        alert("ERROR DE EXPORTACIÓN: " + err.message);
+    } finally {
+        mostrarCargandoLex(false);
+    }
 }
 
+function base64ToBlob(base64, type) {
+    const bin = atob(base64);
+    const len = bin.length;
+    const arr = new Uint8Array(len);
+    for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: type });
+}
+
+
+async function ejecutarSincronizacionRelampago() {
+    mostrarCargandoLex(true);
+    try {
+        const res = await callGoogleScript('verificarReporteSemanal');
+        if (res.status === "success") {
+            // Como es solo lectura, volvemos al panel principal para ver los cambios globales
+            await abrirModalSemanal();
+        }
+    } catch (err) {
+        console.error("Falla en Sync:", err);
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
 
 console.log("✅ N.I.C.O. Terminal: Carga finalizada sin errores críticos.");

@@ -137,10 +137,9 @@ height: calc(100vh - 90px) !important;
     border-radius: 4px;
 }
 
-/* Forzamos que la tabla de DataTables no rompa el diseño */
 table.dataTable, 
 .dataTables_wrapper {
-    width: 98% !important;
+    width: 99% !important;
     margin: 0 !important;
 }
 
@@ -623,6 +622,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     position: relative;
     overflow: hidden;
     animation: lexFadeIn 0.3s ease-out;
+    overflow-y: auto !important; 
 }
 
 /* CABECERA */
@@ -789,47 +789,63 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /*----seccion tabla semanal---*/
 .badge-presente {
-    background-color: #39FF14; /* Verde Neón */
-    color: black;
-    font-weight: bold;
+    background-color: rgba(34, 197, 94, 0.15); /* Verde bosque muy sutil */
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    font-size: 10px;
+    font-weight: 600;
     padding: 2px 8px;
-    border-radius: 4px;
-    box-shadow: 0 0 10px #39FF14, 0 0 20px #39FF14;
+    border-radius: 3px;
     text-transform: uppercase;
-  }
+    letter-spacing: 0.5px;
+}
 
-  .badge-repro {
-    background-color: #FFFF00; /* Amarillo Neón */
-    color: black;
-    font-weight: bold;
+.badge-repro {
+    background-color: rgba(194, 144, 46, 0.15); /* Dorado Lex sutil */
+    color: var(--lex-gold);
+    border: 1px solid rgba(194, 144, 46, 0.4);
+    font-size: 10px;
+    font-weight: 600;
     padding: 2px 8px;
-    border-radius: 4px;
-    box-shadow: 0 0 10px #FFFF00, 0 0 20px #FFFF00;
+    border-radius: 3px;
     text-transform: uppercase;
-  }
+}
 
-  .shadow-no {
-    text-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
-    opacity: 0.8;
-  }
+.shadow-no {
+    color: #94a3b8; /* Gris azulado */
+    opacity: 0.6;
+    font-size: 10px;
+    font-weight: 400;
+}
 
 /*---Estilos tablas reportes---*/
 .tabla-reportes {
     width: 100% !important;
     border-collapse: separate !important; 
-    border-spacing: 0 8px !important; 
-    margin: 10px 0px !important;
+    border-spacing: 0 4px !important; /* Espaciado sutil entre filas */
     background: transparent !important;
-    table-layout: auto !important;
-    min-width: 600px;
-    white-space: nowrap !important;
 }
-.tabla-reportes tbody tr {
-    background-color: transparent !important;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-    cursor: pointer;
-    position: relative;
+
+.tabla-reportes thead th {
+    background-color: #0f172a !important;
+    color: var(--lex-gold) !important;
+    border-bottom: 1px solid rgba(194, 144, 46, 0.3) !important;
+    padding: 12px 10px !important;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
 }
+
+.tabla-reportes tbody tr td {
+    background-color: rgba(30, 41, 59, 0.4) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.03) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+    padding: 10px !important;
+    color: #cbd5e1;
+    transition: all 0.2s ease;
+}
+
 .tabla-reportes tbody tr:hover td {
     background-color: rgba(30, 41, 59, 0.8) !important; 
     color: #ffffff !important;
@@ -853,23 +869,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .tabla-reportes tbody tr:hover td:not(:first-child) {
     border-left: none !important;
 }
-.tabla-reportes thead th {
-    background-color: var(--bg-dark) !important;
-    color: var(--lex-gold) !important;
-    border-bottom: 2px solid var(--lex-gold) !important;
-    padding: 10px 8px !important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 0.7rem;
-    font-weight: 900;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    text-align: left;
-    white-space: normal !important; 
-    line-height: 1.2;
-    vertical-align: bottom;
-}
+
 
   .th-neon:hover {
     background: rgba(0, 255, 255, 0.1) !important;
@@ -943,6 +943,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* Estado Especial: Semana Actual (Verde con Brillo) */
+
 .btn-header-actual {
     background: rgba(34, 197, 94, 0.1);
     box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.2);
@@ -976,4 +977,32 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 @keyframes slideIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+.lex-csv-wrapper {
+    background: #0f172a;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 4px;
+    padding: 1px;
+}
+
+.table-lex-mini {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+}
+
+.table-lex-mini th {
+    background: rgba(30, 41, 59, 0.9);
+    color: var(--lex-gold);
+    padding: 10px;
+    border-bottom: 1px solid var(--lex-gold);
+    text-align: left;
+}
+
+.table-lex-mini td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
 }
