@@ -1608,44 +1608,40 @@ async function abrirModalSemanal() {
     abrirModalReportes(); 
 
     try {
-        console.log("📡 Llamando a GAS: obtenerDatosReporteSemanal...");
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
-        
         console.log("📦 Respuesta bruta recibida:", res);
         
-        // Normalización ultra-segura
-        const data = (res && res.reply) ? res.reply : res;
+        // EL TRUCO ESTÁ AQUÍ:
+        // Tu log muestra que los datos están en res.reply.reply
+        let data = res.reply;
+        if (data && data.reply) {
+            data = data.reply; // Bajamos un nivel más
+        }
         
-        if (!data) {
-            console.error("❌ ERROR: La respuesta de GAS llegó vacía (null o undefined)");
-            return;
+        console.log("🔍 Data real extraída:", data);
+
+        const filasRaw = data.filas || [];
+        const semanasRelativas = data.semanasRelativas || [];
+
+        // Quitamos la fila de encabezados si existe
+        if (filasRaw.length > 0 && filasRaw[0].idprov === 'ID PROV') {
+            filasRaw.shift();
         }
 
-        const { filas, semanasRelativas } = data;
-        console.log("📊 Datos procesados - Filas:", filas ? filas.length : "N/A", "Semanas:", semanasRelativas);
+        console.log("📊 Filas listas para renderizar:", filasRaw.length);
 
-        const contenedor = document.getElementById('contenido-reporte-lex');
-        if (!contenedor) {
-            console.error("❌ ERROR: No se encontró el elemento 'contenido-reporte-lex' en el DOM");
-            alert("Error crítico: El contenedor de la tabla no existe.");
-            return;
-        }
-
-        // Caso: GAS respondió pero sin datos
-        if (!filas || filas.length === 0) {
+        if (filasRaw.length === 0) {
             console.warn("⚠️ AVISO: GAS no devolvió filas.");
-            contenedor.innerHTML = `<div style="color:white; text-align:center; padding:20px;">No se encontraron datos en la hoja de Excel.</div>`;
+            document.getElementById('contenido-reporte-lex').innerHTML = 
+                `<div style="color:white; text-align:center; padding:20px;">No hay datos disponibles.</div>`;
             return;
         }
 
-        // Inyectamos
-        console.log("🎨 Renderizando tabla...");
-        renderizarVistaMes(data);
-        console.log("✅ FIN: Renderizado completado");
+        // Llamamos al render con el objeto limpio
+        renderizarVistaMes({ filas: filasRaw, semanasRelativas: semanasRelativas });
 
     } catch (err) {
-        console.error("❌ ERROR CRÍTICO en el flujo:", err);
-        alert("Error de conexión o JS: " + err.message);
+        console.error("❌ ERROR CRÍTICO:", err);
     } finally {
         mostrarCargandoLex(false);
     }
