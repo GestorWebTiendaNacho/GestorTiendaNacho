@@ -1651,40 +1651,55 @@ function renderizarVistaMes(response) {
     const { filas, semanasRelativas } = response;
     const contenedor = document.getElementById('contenido-reporte-lex');
     
-    // Limpiamos las semanas para el encabezado (quitamos la primera si está vacía)
+    // Obtenemos el número de semana real de hoy para comparar
+    const hoy = new Date();
+    const numeroSemanaActual = getWeekNumber(hoy); 
+
     const semanasHead = semanasRelativas.filter(s => s !== "");
 
     let html = `
-    <div class="lex-report-toolbar" style="margin-bottom:15px;">
-        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308; border-color:#eab308;">
-            <i class="fas fa-sync-alt"></i> REFRESCAR DATOS
+    <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:10px; align-items:center;">
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308; border:1px solid #eab308;">
+            <i class="fas fa-sync-alt"></i> SINCRONIZAR
         </button>
+        <span style="color: #64748b; font-size: 12px;">Semana actual del sistema: ${numeroSemanaActual}</span>
     </div>
     <div style="overflow-x:auto;" class="custom-scroll">
         <table class="lex-table-report">
             <thead>
                 <tr>
-                    <th style="text-align:left; min-width:200px;">PROVEEDOR</th>
-                    ${semanasHead.map((s, index) => {
-                        // Intentamos que el título sea amigable si es una fecha
-                        const d = new Date(s);
-                        const titulo = isNaN(d) ? s : `SEM ${index + 1}`; 
-                        return `<th style="text-align:center">${titulo}</th>`;
+                    <th style="color:var(--lex-gold); text-align:left; min-width:220px;">PROVEEDOR</th>
+                    ${semanasHead.map((s, i) => {
+                        // Extraemos el número de semana de la fecha que manda GAS
+                        const fechaSemana = new Date(s);
+                        const numSemanaData = isNaN(fechaSemana) ? (i + 1) : getWeekNumber(fechaSemana);
+                        
+                        // Determinamos si es la semana actual
+                        const esActual = (numSemanaData === numeroSemanaActual);
+                        const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
+
+                        return `
+                        <th style="text-align:center; padding: 0;">
+                            <button onclick="verDetalleSemana(${numSemanaData})" class="lex-btn-nav-header ${claseSemana}">
+                                <span class="lex-label-ver">VER DETALLE</span>
+                                <span class="lex-label-sem">SEM ${numSemanaData}</span>
+                            </button>
+                        </th>`;
                     }).join('')}
                 </tr>
             </thead>
             <tbody>
                 ${filas.map(f => `
                     <tr>
-                        <td style="border-left: 3px solid var(--lex-gold); padding-left:10px;">
-                            <div style="font-size:10px; color:#64748b;">ID: ${f.idprov}</div>
-                            <div style="font-weight:bold; color:#fff;">${f.nombre}</div>
+                        <td class="lex-td-prov font-size: 11px;">
+                            <div class="lex-id-badge">ID: ${f.idprov}</div>
+                            <div class="lex-nombre-prov">${f.nombre}</div>
                         </td>
-                        <td style="text-align:center">${formatearEstado(f.s1)}</td>
-                        <td style="text-align:center">${formatearEstado(f.s2)}</td>
-                        <td style="text-align:center">${formatearEstado(f.s3)}</td>
-                        <td style="text-align:center">${formatearEstado(f.s4)}</td>
-                        <td style="text-align:center">${formatearEstado(f.s5)}</td>
+                        <td class="lex-td-status">${formatearEstado(f.s1)}</td>
+                        <td class="lex-td-status">${formatearEstado(f.s2)}</td>
+                        <td class="lex-td-status">${formatearEstado(f.s3)}</td>
+                        <td class="lex-td-status">${formatearEstado(f.s4)}</td>
+                        <td class="lex-td-status">${formatearEstado(f.s5)}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -1764,8 +1779,8 @@ async function verDetalleSemana(numSemana) {
 function formatearEstado(e) {
     if (!e || e === "" || e === "NO") return `<span class="status-lex status-lex-error" style="opacity:0.4">NO</span>`;
     let txt = e.toString().toUpperCase();
-    if (txt.includes("SI") || txt.includes("✅")) return `<span class="status-lex status-lex-ok">RECIBIDO</span>`;
-    if (txt.includes("REPRO") || txt.includes("⚠️")) return `<span class="status-lex status-lex-warn">REPROG.</span>`;
+    if (txt.includes("SI") || txt.includes("✅")) return `<span class="status-lex status-lex-ok">✅OK</span>`;
+    if (txt.includes("REPRO") || txt.includes("⚠️")) return `<span class="status-lex status-lex-warn">⚠️REPROG.</span>`;
     return `<span class="status-lex" style="background:#475569">${txt}</span>`;
 }
 
