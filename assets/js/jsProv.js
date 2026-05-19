@@ -1589,9 +1589,10 @@ let navegacionSemanal = {
 
 function abrirModalReportes() {
     const modal = document.getElementById('modal-reportes-lex');
+    console.log("🚀 Módulo de Reportes Semanales cargado correctamente.");
+
     if (modal) modal.style.display = 'flex';
 }
-console.log("🚀 Módulo de Reportes Semanales cargado correctamente.");
 
 function cerrarModalReportes() {
     const modal = document.getElementById('modal-reportes-lex');
