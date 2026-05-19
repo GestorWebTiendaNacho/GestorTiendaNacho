@@ -1007,7 +1007,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: #94a3b8;
 }
 #modal-reportes-lex {
-    z-index: 3000; /* Por encima de todo */
+    z-index: 30000; /* Por encima de todo */
 }
 
 .auditoria-width {
