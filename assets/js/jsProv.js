@@ -327,13 +327,12 @@ var ENCABEZADOS_SISTEMA = {
 async function cargarTablaGenerica(nombreHoja) {
     const contenedor = document.getElementById('modal-contenido');
     const nombreHojaReal = MAPA_HOJAS[nombreHoja] || nombreHoja;
-    const columnasCabecera = ENCABEZADOS_SISTEMA[nombreHojaReal] || [];
-
-    // Protocolo de carga visual N.I.C.O.
+    
+    // Loading State
     contenedor.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-64 space-y-4">
-        <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-        <p class="text-cyan-500 font-mono text-[12px] tracking-[0.4em] uppercase">Sincronizando: ${nombreHojaReal}</p>
+    <div class="flex flex-col items-center justify-center h-64">
+        <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-cyan-500 font-mono text-[10px] uppercase tracking-[0.3em]">Sincronizando: ${nombreHojaReal}</p>
     </div>`;
 
     try {
@@ -343,36 +342,26 @@ async function cargarTablaGenerica(nombreHoja) {
             const data = res.reply;
             
             contenedor.innerHTML = `
-                <div class="w-full flex justify-between items-end mb-6 px-4">
+                <div class="w-full flex justify-between items-end mb-4 px-4">
                     <div class="flex flex-col">
-                        <span class="text-[9px] text-cyan-500/40 font-mono italic">DATA_SOURCE: ${nombreHojaReal}</span>
-                        <span class="text-[11px] text-cyan-500 font-black tracking-widest uppercase">TERMINAL DE CONTROL</span>
+                        <span class="text-[8px] text-cyan-500/40 font-mono italic">FS_STREAM: ${nombreHojaReal}</span>
+                        <span class="text-[14px] text-white font-black tracking-tighter uppercase">ARCHIVO MAESTRO</span>
                     </div>
-                    <div class="bg-slate-950/80 border border-cyan-900/40 px-4 py-2 rounded-sm">
-                        <p class="text-[10px] text-slate-400 font-bold">ACTUALIZACIÓN: <span class="text-cyan-400 font-mono">${data.ultimaActualizacion || '---'}</span></p>
+                    <div class="text-[9px] text-slate-500 font-mono">
+                        ÚLTIMA SYNC: <span class="text-cyan-400">${data.ultimaActualizacion}</span>
                     </div>
                 </div>
-                <div class="wrapper-tabla-final">
-                    <table id="tabla-maestra-generica" class="tabla-premium">
-                        <thead>
-                            <tr>${columnasCabecera.map(h => `<th>${h}</th>`).join('')}</tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+                <div class="wrapper-tabla-final overflow-hidden border border-slate-800 rounded-lg">
+                    <table id="tabla-maestra-generica" class="tabla-premium w-full">
+                        </table>
                 </div>`;
 
             renderTableNico('#tabla-maestra-generica', data.data, nombreHojaReal);
-
         } else {
-            const errorMsg = res.reply?.error || res.message || "Error en enlace de datos";
-            throw new Error(errorMsg);
+            throw new Error(res.reply?.error || "Falla en el enlace");
         }
     } catch (err) {
-        console.error("Error en carga genérica:", err);
-        contenedor.innerHTML = `
-            <div class="p-8 text-red-500 font-mono border border-red-900/30 text-center uppercase text-[10px]">
-                Critical Error: ${err.message}
-            </div>`;
+        contenedor.innerHTML = `<div class="p-10 text-red-500 font-mono text-center text-[10px]">ERROR DE ACCESO: ${err.message}</div>`;
     }
 }
 
@@ -440,10 +429,25 @@ async function abrirModal(tipo) {
 function renderTableNico(selector, data, nombreHojaReal) {
     if (!$.fn.DataTable) return;
 
-    const columnas = ENCABEZADOS_SISTEMA[nombreHojaReal];
-    const indexAcciones = columnas.length - 1;
+    // Obtener configuración de columnas
+    const columnasCabecera = ENCABEZADOS_SISTEMA[nombreHojaReal] || [];
+    if (columnasCabecera.length === 0) {
+        console.error("No se definieron encabezados para:", nombreHojaReal);
+        return;
+    }
 
-    const configDefs = columnas.map((titulo, i) => {
+    // 1. Limpieza y Reconstrucción del DOM
+    if ($.fn.DataTable.isDataTable(selector)) {
+        $(selector).DataTable().destroy();
+    }
+    
+    // Forzamos el THEAD para que coincida con los encabezados del sistema
+    let theadHtml = `<thead><tr>${columnasCabecera.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody></tbody>`;
+    $(selector).html(theadHtml);
+
+    // 2. Configuración de Columnas
+    const indexAcciones = columnasCabecera.length - 1;
+    const configDefs = columnasCabecera.map((titulo, i) => {
         if (i === indexAcciones) {
             return {
                 targets: i,
@@ -452,39 +456,40 @@ function renderTableNico(selector, data, nombreHojaReal) {
                 render: function(val, type, row, meta) {
                     const filaIndex = meta.row + 2;
                     const rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
-                    if (nombreHojaReal === "Historial_Compras") return `<button onclick='verDetalleHistorial("${row[0]}")' class='btn-accion-nico'>DETALLE</button>`;
-                    if (nombreHojaReal === "Estado_Pedidos") return `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' class='btn-accion-nico'>GESTIONAR</button>`;
+                    
+                    if (nombreHojaReal === "Historial_Compras") {
+                        return `<button onclick='verDetalleHistorial("${row[0]}")' class='btn-accion-nico bg-green-600/20 text-green-400 border-green-500/50 hover:bg-green-600 hover:text-white'>DETALLE</button>`;
+                    }
+                    if (nombreHojaReal === "Estado_Pedidos") {
+                        return `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' class='btn-accion-nico'>GESTIONAR</button>`;
+                    }
                     return `<button onclick='abrirEditorGenerico("${nombreHojaReal}", ${filaIndex}, "${rowJson}")' class='btn-accion-nico'>EDITAR</button>`;
                 }
             };
         }
-        return { targets: i, className: "p-3 dt-nowrap" };
+        return { 
+            targets: i, 
+            className: "p-3 dt-nowrap font-mono text-[10px]",
+            defaultContent: "---" // CRÍTICO: Evita el error "Unknown Parameter"
+        };
     });
 
-    if ($.fn.DataTable.isDataTable(selector)) {
-        $(selector).DataTable().destroy();
-    }
-
+    // 3. Inicialización
     $(selector).DataTable({
-        data: data,
+        data: data || [],
         dom: 'rtip',
         language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
         pageLength: 15,
-        scrollX: false, 
+        scrollX: true,
         autoWidth: false,
-        
         columnDefs: configDefs,
         headerCallback: function(thead) {
-            $(thead).find('th').addClass('text-cyan-500 font-black uppercase tracking-widest text-[11px] p-4');
+            $(thead).find('th').addClass('text-cyan-500 font-black uppercase tracking-widest text-[10px] p-4 bg-slate-900/50');
+        },
+        drawCallback: function() {
+            console.log(`✅ Terminal N.I.C.O: Tabla ${nombreHojaReal} lista.`);
         }
     });
-
-    const contenedor = document.getElementById('contenedor-estilo-malevich');
-    if (contenedor) {
-        contenedor.style.overflowY = "auto";
-        contenedor.style.width = "100%";
-        contenedor.style.display = "block";
-    }
 }
 
 
