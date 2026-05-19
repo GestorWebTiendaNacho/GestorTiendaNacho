@@ -48,7 +48,6 @@ function toggleMenu() {
     console.warn("NICO: No se encontró #mainMenu para toggle");
   }
 };
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 1.");
 
 window.speedIncrase = function() {
     if (typeof speed === 'undefined') window.speed = 0;
@@ -62,7 +61,6 @@ window.speedIncrase = function() {
     if (typeof currentScale !== 'undefined') currentScale++;
     window.changeActive();
 };
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 2.");
 
 window.actualizarInterfaz = function() {
     const el = document.getElementsByClassName("arrow-wrapper")[0];
@@ -73,7 +71,6 @@ window.actualizarInterfaz = function() {
     el.classList.add(claseNueva);
     window.prevSpeed = speed;
 };
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 3.");
 
 window.changeActive = function() {
     let nombreClaseBusqueda = "speedometer-Scale-" + currentScale;
@@ -82,7 +79,6 @@ window.changeActive = function() {
         el.classList.toggle("active");
     }
 };
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 4.");
 
 
 // ----------------------------- NICO CONTROLLER -----------------
@@ -127,7 +123,6 @@ if (!window.NicoController) {
             }, 4500);
             
         }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 5.");
 
         function cambiarEstado(nuevoEstado) {
             if (ESTADOS[nuevoEstado] && nico.estadoActual !== nuevoEstado) {
@@ -137,7 +132,6 @@ console.log("✅ N.I.C.O. Terminal: Carga finalizada 5.");
                 nico.frame = 0;
             }
         }
-            console.log("✅ N.I.C.O. Terminal: Carga finalizada 6.");
 
         function draw(timestamp) {
             const currentCanvas = document.getElementById("canvas-nico");
@@ -180,7 +174,7 @@ console.log("✅ N.I.C.O. Terminal: Carga finalizada 5.");
 
     NicoController.rearrancar();
 }
-    console.log("✅ N.I.C.O. Terminal: Carga finalizada 7.");
+
 // ------------------- LOGICA DEL CHAT ----------------------------
 window.avatarPensar = () => window.NicoController && NicoController.cambiarA("PENSANDO");
 window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ESPERANDO");
@@ -232,7 +226,6 @@ function enviarPrompt() {
     })
     .procesarPrompt(userInput);
 }
-     console.log("✅ N.I.C.O. Terminal: Carga finalizada 8.");
 
 function mostrarMensajeUsuario(texto) {
     const chatContainer = document.getElementById("chat-messages");
@@ -248,7 +241,6 @@ function mostrarMensajeUsuario(texto) {
     chatContainer.appendChild(div);
     ejecutarScrollYLimpieza();
 }
-            console.log("✅ N.I.C.O. Terminal: Carga finalizada 9.");  
 
 function mostrarRespuestaEnChat(texto) {
     const chatContainer = document.getElementById("chat-messages");
@@ -267,7 +259,6 @@ function mostrarRespuestaEnChat(texto) {
         ejecutarScriptsInyectados(div);
     }
 }
- console.log("✅ N.I.C.O. Terminal: Carga finalizada 10.");
 
 
  function ejecutarScrollYLimpieza() {
@@ -283,7 +274,6 @@ function mostrarRespuestaEnChat(texto) {
         chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     }, 50);
 }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 11.");
 
 
 function toggleSidebar() {
@@ -302,7 +292,6 @@ function toggleSidebar() {
         if (overlay) overlay.classList.add('hidden');
     }
 }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 12.");
 
 
 //-------SECCION DE APERTURA DEL MODAL Y CARGA DE TABLAS------------------------------------
@@ -365,7 +354,6 @@ async function cargarTablaGenerica(nombreHoja) {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 13.");
 
 
 async function abrirModal(tipo) {
@@ -493,7 +481,6 @@ function renderTableNico(selector, data, nombreHojaReal) {
 }
 
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 14.");
 
 
 function getTipoByHoja(hoja) {
@@ -507,14 +494,12 @@ function getTipoByHoja(hoja) {
     return nombres[hoja] || 'SISTEMA';
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 15.");
 
 function escapingForOption(str) {
     if (!str) return "";
     return str.toString().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 16.");
 
 
 function cerrarModal() {
@@ -530,7 +515,6 @@ function cerrarModal() {
 }
     
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 17.");
 
 
 /* ---SECCION DE EDICION DE TABLA PROVEEDORES--- */
@@ -598,7 +582,6 @@ function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 18.");
 
 
 async function ejecutarGuardado() {
@@ -647,7 +630,6 @@ async function ejecutarGuardado() {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 19.");
 
 
 
@@ -764,7 +746,6 @@ async function cargarProductosPorProveedor() {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 20.");
 
 function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, stockMinimo) {
     if (checkbox.checked) {
@@ -776,7 +757,6 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
     }
     actualizarContadorVisual();
 }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 21.");
 
 
 function actualizarContadorVisual() {
@@ -786,7 +766,6 @@ function actualizarContadorVisual() {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 22.");
 
 
 function filtrarProductosMain() {
@@ -817,7 +796,6 @@ function filtrarProductosMain() {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 23.");
 
 
 /*------ ARMADO Y CONFIRMACION DEL PEDIDO ----*/
@@ -948,7 +926,6 @@ async function revisarPedido() {
     calcularTotalConfirmacion();
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 25-fin.");
 
 
 
@@ -978,7 +955,6 @@ function eliminarDelPedido(index) {
     });
 }
     
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 26.");
 
 
 function prepararEnvioPedido(idPedido) {
@@ -1003,7 +979,6 @@ async function obtenerProveedoresParaSelector() {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 27.");
 
 
 function actualizarCantidadCarrito(index, valor) {
@@ -1020,7 +995,6 @@ function actualizarCantidadCarrito(index, valor) {
     }
 }
     
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 28.");
 
 
 function calcularTotalConfirmacion() {
@@ -1033,7 +1007,6 @@ function calcularTotalConfirmacion() {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 29.");
 
 
 async function ejecutarGeneracionPedido(idPedido, dias) {
@@ -1096,14 +1069,12 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 30.");
 
 
 
 function volverAListaProductos() {
     cargarProductosPorProveedor();
 }
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 31.");
 
 
 function actualizarProveedorCarrito(nuevoProveedor) {
@@ -1169,7 +1140,6 @@ async function abrirRecepcion(datos, fila) {
     }
 }
     
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 32.");
 
 
 function renderizarItemsDesgloseEspecial(items, idContenedor) {
@@ -1210,7 +1180,6 @@ function renderizarItemsDesgloseEspecial(items, idContenedor) {
     recalcularPorcentajeDesdeItems();
 }
     
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 33.");
 
 
 function recalcularPorcentajeDesdeItems() {
@@ -1243,7 +1212,6 @@ function recalcularPorcentajeDesdeItems() {
     if (display) display.innerText = porcentaje + "%";
 }
     
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 34.");
 
 
 async function confirmarGestionFinal() {
@@ -1296,7 +1264,6 @@ async function confirmarGestionFinal() {
     }
 }
     
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 35.");
 
 function setCalidad(valor) {
     calidadSeleccionada = valor;
@@ -1361,7 +1328,6 @@ async function verEstadoPedidos() {
     }
 }
 
-console.log("✅ N.I.C.O. Terminal: Carga finalizada 36.");
 
 function cambiarModoGestion(modo) {
     document.getElementById('accionActual').value = modo;
@@ -1625,6 +1591,7 @@ function abrirModalReportes() {
     const modal = document.getElementById('modal-reportes-lex');
     if (modal) modal.style.display = 'flex';
 }
+console.log("🚀 Módulo de Reportes Semanales cargado correctamente.");
 
 function cerrarModalReportes() {
     const modal = document.getElementById('modal-reportes-lex');
