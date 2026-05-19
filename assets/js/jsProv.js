@@ -1766,13 +1766,16 @@ function renderizarVistaMes(response) {
 
 async function verDetalleSemana(numSemana) {
     mostrarCargandoLex(true);
-    // Cambiamos el destino al ID que SI existe en el HTML
     const contenedor = document.getElementById('contenido-reporte-lex');
     const titulo = document.getElementById('reportesTitulo');
 
     try {
-        const res = await callGoogleScript('procesarFiltradoHoja', { param: numSemana, tipo: "SEMANA" });
-        const data = res; 
+        // CORRECCIÓN: Enviamos los parámetros por separado según espera tu función GAS
+        // Si tu wrapper 'callGoogleScript' solo acepta un objeto, avísame para ajustar el GAS.
+        const res = await callGoogleScript('procesarFiltradoHoja', numSemana, "SEMANA");
+        
+        // Normalización de la data (ajusta según tu wrapper)
+        const data = res.reply ? res.reply : res; 
         
         titulo.innerText = `PLANIFICACIÓN: SEMANA ${numSemana}`;
         const dias = [
@@ -1783,25 +1786,18 @@ async function verDetalleSemana(numSemana) {
 
         let html = `
             <div class="flex flex-wrap gap-2 mb-4 px-2">
-              <button onclick="abrirModalSemanal()" class="btn-header btn-neon-purple">
-                <i class="fi fi-sr-undo"></i> A vista Mensual</button>
-              <button onclick="ejecutarSincronizacionRelampago()" class="btn-header btn-neon-yellow">
-                <i class="fi fi-ss-back-up"></i> Sincronizar</button>
-              <button onclick="exportarVistaActualALex('DIARIA', ${numSemana})" class="btn-header btn-neon-green">
-                <i class="fi fi-br-desktop-arrow-down"></i> DESCARGAR</button>
+              <button onclick="abrirModalSemanal()" class="lex-btn-nav">← VISTA MENSUAL</button>
+              <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308">SINCRONIZAR</button>
             </div>
-        <div class="overflow-x-auto custom-scroll">
-            <table class="tabla-reportes" style="border-separate: separate; border-spacing: 4px 0;">
+            <div class="overflow-x-auto custom-scroll">
+            <table class="lex-table-report">
               <thead>
-                  <tr class="bg-transparent">
-                      <th class="w-1/4 p-2 th-proveedor-estatico">PROVEEDOR</th>
+                  <tr>
+                      <th style="width:250px">PROVEEDOR</th>
                       ${dias.map(d => `
-                      <th class="p-1"> 
-                          <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="btn-header-tabla flex-col group w-full">
-                              <span class="text-header-principal">${d.corto}</span>
-                              <span class="text-[16px] opacity-50 group-hover:opacity-100 mt-1">
-                                  <i class="fi fi-rs-interactive"></i>
-                              </span>
+                      <th style="text-align:center"> 
+                          <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="lex-btn-nav" style="width:100%; font-size:10px;">
+                              ${d.corto} <i class="fas fa-eye" style="display:block; margin-top:4px"></i>
                           </button>
                       </th>
                       `).join('')}
@@ -1809,27 +1805,29 @@ async function verDetalleSemana(numSemana) {
               </thead>
               <tbody>`;
         
-        if (data.length === 0) {
-            html += `<tr><td colspan="7" class="p-10 text-center text-slate-500">No hay datos.</td></tr>`;
+        if (!data || data.length === 0) {
+            html += `<tr><td colspan="7" style="padding:50px; text-align:center; color:#64748b;">No hay datos en la hoja 'Filter' para la semana ${numSemana}.</td></tr>`;
         } else {
             data.forEach(fila => {
                 html += `
-                <tr class="hover:bg-white/5 transition-colors">
-                    <td class="p-2 truncate text-slate-300 font-medium border-l-2 border-slate-700" title="${fila[1]}">${fila[1]}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[2])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[3])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[4])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[5])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[6])}</td>
-                    <td class="p-2 text-center">${formatearEstado(fila[7])}</td>
+                <tr>
+                    <td style="font-weight:bold; color:#fff;">${fila[1]}</td>
+                    <td style="text-align:center">${formatearEstado(fila[2])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[3])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[4])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[5])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[6])}</td>
+                    <td style="text-align:center">${formatearEstado(fila[7])}</td>
                 </tr>`;
             });
         }
 
         html += `</tbody></table></div>`;
-        document.getElementById('contenido-reporte-lex').innerHTML = html;
+        contenedor.innerHTML = html;
+
     } catch (e) {
-        console.error(e);
+        console.error("Error Lex:", e);
+        contenedor.innerHTML = `<div style="color:red; padding:20px;">Error: ${e.message}</div>`;
     } finally {
         mostrarCargandoLex(false);
     }
@@ -1837,63 +1835,58 @@ async function verDetalleSemana(numSemana) {
 
 async function verDetalleDia(nombreDia, numSemana) {
     mostrarCargandoLex(true);
-    try {
-        const res = await callGoogleScript('procesarFiltradoHoja', { param: nombreDia, tipo: "DIA" });
-        const data = res.reply;
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
 
-        const titulo = document.getElementById('reportesTitulo');
+    try {
+        // CORRECCIÓN: Parámetros directos para GAS
+        const res = await callGoogleScript('procesarFiltradoHoja', nombreDia, "DIA");
+        const data = res.reply ? res.reply : res;
+
         titulo.innerText = `${nombreDia} - SEMANA ${numSemana}`;
         
         let html = `
         <div class="lex-report-toolbar">
-            <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav">← SEMANA</button>
-            <button onclick="descargarReporteExcel('DIA_DETALLE', '${nombreDia}|${numSemana}')" class="lex-btn-nav" style="border-color:#22c55e; color:#22c55e;">EXCEL DÍA</button>
+            <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav">← VOLVER A SEMANA</button>
         </div>
-        <div style="padding:0 10px;">
+        <div style="overflow-x:auto;">
             <table class="lex-table-report">
                 <thead>
                     <tr>
-                        <th>ID PROV</th> 			 	
-                        <th style="text-align:center">NOMBRE PROVEEDOR</th>
+                        <th>ID</th> 			 	
+                        <th>PROVEEDOR</th>
                         <th style="text-align:center">ESTADO</th>
                         <th style="text-align:center">FECHA</th>
                         <th style="text-align:center">ID PEDIDO</th>
-                        <th style="text-align:center">ACCIÓN</th>
+                        <th style="text-align:center">PDF</th>
                     </tr>
                 </thead>
                 <tbody>`;
 
-        if (data.length === 0) {
-            html += `<tr><td colspan="5" style="padding:40px; text-align:center;">Sin registros para esta jornada.</td></tr>`;
+        if (!data || data.length === 0) {
+            html += `<tr><td colspan="6" style="padding:40px; text-align:center; color:#64748b;">Sin registros en la hoja ${nombreDia}.</td></tr>`;
         } else {
             data.forEach(fila => {
                 html += `
                 <tr>
-                    <td style="color:#fff; font-weight:bold;">${fila.id}</td>
+                    <td style="color:#64748b; font-size:10px;">${fila.id}</td>
                     <td style="color:#fff; font-weight:bold;">${fila.nombre}</td>
                     <td style="text-align:center">${formatearEstado(fila.estado)}</td>
                     <td style="text-align:center; color:#64748b;">${fila.fecha}</td>
-                    <td style="text-align:center; font-family:monospace; color:#c2902e;">${fila.idPedido}</td>
+                    <td style="text-align:center; font-family:monospace; color:#c2902e;">${fila.idPedido || '---'}</td>
                     <td style="text-align:center">
-                        <button onclick="abrirArchivoPedido('${fila.idPedido}')" class="lex-btn-nav" style="border-color:#ef4444; color:#ef4444; padding:2px 10px;">
-                            VER
-                        </button>
+                        ${fila.idPedido ? `<button onclick="abrirArchivoPedido('${fila.idPedido}')" class="lex-btn-nav" style="border-color:#ef4444; color:#ef4444; padding:2px 8px;">VER</button>` : '---'}
                     </td>
                 </tr>`;
             });
         }
         
-        html += `</tbody></table></div>
-        <div id="visor-pdf-lex">
-              <div style="padding:10px; background:#1e293b; display:flex; justify-content:flex-end;">
-                  <button onclick="cerrarVisorLex()" class="lex-btn-nav" style="border-color:#ef4444; color:#ef4444;">CERRAR VISOR</button>
-              </div>
-              <iframe id="pdf-frame-lex" src="" style="width:100%; height:100%; border:none;"></iframe>
-          </div>`;
-          
-        document.getElementById('contenido-reporte-lex').innerHTML = html;
+        html += `</tbody></table></div>`;
+        contenedor.innerHTML = html;
+
     } catch (e) {
-        console.error(e);
+        console.error("Error Dia Lex:", e);
+        contenedor.innerHTML = `<div style="color:red; padding:20px;">Error al cargar día: ${e.message}</div>`;
     } finally {
         mostrarCargandoLex(false);
     }
