@@ -1007,7 +1007,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: #94a3b8;
 }
 #modal-reportes-lex {
-    z-index: 30000; /* Por encima de todo */
+    position: fixed !important;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(2, 6, 23, 0.9);
+    backdrop-filter: blur(8px);
+    z-index: 30000 !important;
+    display: none; /* Se cambia a flex desde JS */
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
 }
 
 .auditoria-width {
