@@ -1071,6 +1071,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     flex: 1; /* Esto obliga al body a crecer y ocupar todo el espacio sobrante */
     overflow-y: auto; /* El scroll ahora sucede solo aquí dentro */
     padding: 25px;
+    z-index: 85 !important;
 }
 
 .auditoria-width {
