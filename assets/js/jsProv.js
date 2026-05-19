@@ -1903,7 +1903,7 @@ function formatearEstado(e) {
 }
 
 function mostrarCargandoLex(show) {
-    const contenedor = document.getElementById('modal-contenido');
+    const contenedor = document.getElementById('contenido-reporte-lex');
     if (show) {
         const loader = document.createElement('div');
         loader.id = "lex-loader-overlay";
