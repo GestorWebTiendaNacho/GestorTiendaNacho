@@ -1743,12 +1743,15 @@ async function verDetalleSemana(numSemana) {
                   <tr>
                       <th style="width:250px">PROVEEDOR</th>
                       ${dias.map(d => `
-                      <th style="text-align:center"> 
-                          <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="lex-btn-nav" style="width:100%; font-size:10px;">
-                              ${d.corto} <i class="fas fa-eye" style="display:block; margin-top:4px"></i>
-                          </button>
-                      </th>
-                      `).join('')}
+                        <th style="text-align:center; padding:5px;"> 
+                            <button onclick="verDetalleDia('${d.largo}', ${numSemana})" 
+                                    class="lex-btn-nav-header ${navegacionSemanal.diaActual === d.largo ? 'lex-header-actual' : ''}" 
+                                    style="width:100%;">
+                                <span style="font-size:10px; display:block; color:var(--lex-gold);">${d.corto}</span>
+                                <i class="fas fa-chevron-down" style="font-size:10px; opacity:0.5"></i>
+                            </button>
+                        </th>
+                    `).join('')}
                   </tr>
               </thead>
               <tbody>`;
@@ -1776,6 +1779,73 @@ async function verDetalleSemana(numSemana) {
     } catch (e) {
         console.error("Error en verDetalleSemana:", e);
         contenedor.innerHTML = `<div style="color:red; padding:20px;">Error: ${e.message}</div>`;
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+async function verDetalleDia(nombreDia, numSemana) {
+    console.log(`🔍 Filtrando detalle para: ${nombreDia} (Semana ${numSemana})`);
+    mostrarCargandoLex(true);
+    
+    navegacionSemanal.diaActual = nombreDia;
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+
+    try {
+        // Esta llamada al GS impactará la celda K2 según tu lógica de 'procesarFiltradoHoja'
+        const res = await callGoogleScript('procesarFiltradoHoja', { 
+            param: nombreDia, 
+            tipo: "DIA" 
+        });
+        
+        const data = (res && res.reply) ? res.reply : res;
+        
+        titulo.innerText = `DETALLE: ${nombreDia} - SEMANA ${numSemana}`;
+
+        let html = `
+            <div class="lex-report-toolbar" style="margin-bottom:15px; display:flex; gap:10px;">
+                <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav">← VOLVER A SEMANA</button>
+                <button onclick="abrirModalSemanal()" class="lex-btn-nav">INICIO MES</button>
+            </div>
+            <div class="overflow-x-auto custom-scroll">
+                <table class="lex-table-report">
+                    <thead>
+                        <tr>
+                            <th>PROVEEDOR</th>
+                            <th style="text-align:center">ESTADO</th>
+                            <th style="text-align:center">FECHA</th>
+                            <th style="text-align:center">ID PEDIDO</th>
+                            <th style="text-align:center">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        if (!data || data.length === 0) {
+            html += `<tr><td colspan="5" style="padding:50px; text-align:center; color:#64748b;">No hay pedidos registrados para este día.</td></tr>`;
+        } else {
+            data.forEach(item => {
+                html += `
+                <tr>
+                    <td style="font-weight:bold; color:var(--lex-gold);">${item.nombre}</td>
+                    <td style="text-align:center">${formatearEstado(item.estado)}</td>
+                    <td style="text-align:center; font-size:11px;">${item.fecha}</td>
+                    <td style="text-align:center; color:#94a3b8;">#${item.idPedido}</td>
+                    <td style="text-align:center">
+                        <button onclick="verPedidoDirecto('${item.idPedido}')" class="lex-btn-nav" style="padding:4px 8px; font-size:10px;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        html += `</tbody></table></div>`;
+        contenedor.innerHTML = html;
+
+    } catch (e) {
+        console.error("Error en verDetalleDia:", e);
+        contenedor.innerHTML = `<div style="color:red; padding:20px;">Error al traer detalle diario: ${e.message}</div>`;
     } finally {
         mostrarCargandoLex(false);
     }
