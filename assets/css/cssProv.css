@@ -1006,3 +1006,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: #94a3b8;
 }
+#modal-reportes-lex {
+    z-index: 3000; /* Por encima de todo */
+}
+
+.auditoria-width {
+    width: 95% !important;
+    max-width: 1200px !important;
+    border: 1px solid var(--lex-gold) !important;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(194, 144, 46, 0.1);
+}
+
+.lex-toolbar {
+    padding: 10px 20px;
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom: 1px solid rgba(194, 144, 46, 0.2);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}

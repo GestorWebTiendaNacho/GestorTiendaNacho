@@ -1621,28 +1621,66 @@ let navegacionSemanal = {
     diaActual: null
 };
 
+function abrirModalReportes() {
+    document.getElementById('modal-reportes-lex').style.display = 'flex';
+}
+
+function cerrarModalReportes() {
+    document.getElementById('modal-reportes-lex').style.display = 'none';
+    document.getElementById('contenido-reporte-lex').innerHTML = ''; // Limpiamos al salir
+}
+
+
 async function abrirModalSemanal() {
-    const titulo = document.getElementById('modal-titulo');
-    const contenido = document.getElementById('modal-contenido');
-
-    titulo.innerText = "PANEL DE CONTROL SEMANAL";
+    mostrarCargandoLex(true);
     
-    // Spinner Estilo LexTech
-    contenido.innerHTML = `
-        <div class="flex-center-lex" style="padding:100px 0; text-align:center;">
-            <div class="lex-spinner"></div>
-            <p style="color:#c2902e; font-size:10px; margin-top:20px; letter-spacing:4px; text-transform:uppercase;">Iniciando Protocolo de Carga...</p>
-        </div>`;
-
     try {
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
-        if (res.status === "success" && res.reply.filas) {
-            renderizarVistaMes(res.reply);
+        const { filas, semanasRelativas } = res.reply || { filas: [], semanasRelativas: [] };
+
+        const contenedor = document.getElementById('contenido-reporte-lex');
+        const titulo = document.getElementById('titulo-reporte-lex');
+        const toolbar = document.getElementById('toolbar-reportes');
+        
+        titulo.innerText = "AUDITORÍA DE PROVEEDORES: VISTA MENSUAL";
+        toolbar.style.display = 'flex'; // Mostramos botones de Sync y Excel
+
+        if (!filas || filas.length === 0) {
+            contenedor.innerHTML = `<div class="msg-vacio">BASE DE DATOS SIN REGISTROS ACTUALES</div>`;
         } else {
-            contenido.innerHTML = "<p class='lex-error-msg'>No se detectaron registros en la base de datos.</p>";
+            // Inyectamos la tabla en el contenedor DE REPORTES
+            contenedor.innerHTML = `
+                <div class="animacion-entrada">
+                    <table class="tabla-reportes">
+                        <thead>
+                            <tr>
+                                <th class="th-proveedor-estatico">PROVEEDOR</th>
+                                ${semanasRelativas.map((s, i) => `<th onclick="verDetalleSemana(${s})">SEMANA ${i+1}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filas.map(f => `
+                                <tr>
+                                    <td style="font-weight:bold; color:var(--lex-gold);">${f.nombre}</td>
+                                    <td>${renderizarBadgeLex(f.s1)}</td>
+                                    <td>${renderizarBadgeLex(f.s2)}</td>
+                                    <td>${renderizarBadgeLex(f.s3)}</td>
+                                    <td>${renderizarBadgeLex(f.s4)}</td>
+                                    <td>${renderizarBadgeLex(f.s5)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
         }
+
+        // ABRIMOS EL MODAL ESPECÍFICO
+        abrirModalReportes();
+
     } catch (err) {
-        contenido.innerHTML = `<p class='lex-error-msg'>ERROR DE ENLACE: ${err.message}</p>`;
+        console.error("Error LexTech Auditoría:", err);
+    } finally {
+        mostrarCargandoLex(false);
     }
 }
 
@@ -1910,40 +1948,57 @@ function cerrarVisorLex() {
     visor.style.display = 'none';
 }
 
-async function descargarReporteExcel(vistaOrigen, parametroExtra = null) {
-    const modalTitulo = document.getElementById('modal-titulo').innerText;
-    const tabla = document.querySelector('#modal-contenido table');
+async function exportarVistaActualALex() {
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const tabla = contenedor.querySelector('table');
     
     if (!tabla) {
-        alert("SISTEMA: No se detectaron datos para exportar.");
+        alert("SISTEMA: No hay datos en pantalla para exportar.");
         return;
     }
-
-    // Extraemos los datos directamente del DOM para asegurar que coincidan con la vista actual
-    const filas = Array.from(tabla.querySelectorAll('tr'));
-    const datosParaExcel = filas.map(tr => {
-        return Array.from(tr.querySelectorAll('th, td')).map(td => td.innerText.replace('●', '').trim());
-    });
 
     mostrarCargandoLex(true);
 
     try {
-        const res = await callGoogleScript('generarReporteExcel', { 
-            datos: datosParaExcel, 
-            titulo: modalTitulo 
+        const filas = [];
+        const headers = [];
+        
+        // 1. Capturamos los encabezados
+        tabla.querySelectorAll('thead th').forEach(th => headers.push(th.innerText.trim()));
+        filas.push(headers);
+
+        // 2. Capturamos los datos de las celdas
+        tabla.querySelectorAll('tbody tr').forEach(tr => {
+            const fila = [];
+            tr.querySelectorAll('td').forEach(td => {
+                // Si la celda tiene un badge, tomamos su texto, si no, el texto de la celda
+                const badge = td.querySelector('span');
+                fila.push(badge ? badge.innerText.trim() : td.innerText.trim());
+            });
+            filas.push(fila);
         });
 
-        if (res.status === "success" && res.reply.url) {
-            // Descarga silenciosa
-            const a = document.createElement('a');
-            a.href = res.reply.url;
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        const tituloReporte = document.getElementById('titulo-reporte-lex').innerText;
+
+        // 3. Enviamos al servidor
+        const res = await callGoogleScript('generarReporteExcel', { 
+            datos: filas, 
+            titulo: tituloReporte 
+        });
+
+        if (res.reply && res.reply.url) {
+            // Descarga directa
+            const link = document.createElement('a');
+            link.href = res.reply.url;
+            link.download = ""; 
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
-    } catch (err) {
-        alert("ERROR DE EXPORTACIÓN: " + err.message);
+
+    } catch (e) {
+        console.error("Error en exportación:", e);
+        alert("Falla en el protocolo de exportación.");
     } finally {
         mostrarCargandoLex(false);
     }
