@@ -1722,6 +1722,7 @@ function renderizarVistaMes(response) {
 
 
 async function verDetalleSemana(numSemana) {
+    navegacionSemanal.semanaActual = numSemana;
     mostrarCargandoLex(true);
     const contenedor = document.getElementById('contenido-reporte-lex');
     const titulo = document.getElementById('reportesTitulo');
