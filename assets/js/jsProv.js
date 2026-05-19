@@ -1713,7 +1713,7 @@ function renderizarBadgeLex(estado) {
 //RENDERIZAR VISTA MES
 function renderizarVistaMes(response) {
     const { filas, semanasRelativas } = response;
-    const contenedor = document.getElementById('modal-contenido');
+    const contenedor = document.getElementById('contenido-reporte-lex');
     
     // Cálculo de semana actual
     const hoy = new Date();
