@@ -313,7 +313,8 @@ var MAPA_HOJAS = {
     'BASEPROVEEDORES': 'baseProveedores', 
     'ESTADO': 'Estado_Pedidos',
     'PRODUCTOS': 'baseProductos',
-    'RECEPCIÓN': 'Estado_Pedidos'
+    'RECEPCIÓN': 'Estado_Pedidos',
+    'RECEPCION': 'Estado_Pedidos'
 };
 
 var ENCABEZADOS_SISTEMA = {
