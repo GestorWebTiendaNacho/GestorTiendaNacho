@@ -121,6 +121,7 @@ height: calc(100vh - 90px) !important;
     overflow-x: hidden !important; 
     width: 99%;
     align-items: center !important;
+    margin-left: 15px !important;
 }
 
 /* Estilizamos la barra de este contenedor específico */

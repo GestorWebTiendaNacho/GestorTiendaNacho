@@ -321,8 +321,7 @@ var ENCABEZADOS_SISTEMA = {
     'baseProveedores': ['ID','RAZÓN SOCIAL','CIUDAD','DOMICILIO','TELÉFONO','EMAIL','CODIGO PROV','PROVINCIA','ACCIONES'],
     'baseProductos': ['ID','NOMBRE PROD','CODIGO','COSTO INTERNO','STOCK ACTUAL','ID PROVEEDOR','NOMBRE PROVEEDOR','STOCK MINIMO', 'ACCIONES'],
     'Estado_Pedidos': ['ID_Pedido','Fecha_Pedido','Proveedor_Nombre','Estatus','Cantidad Productos','Total_General','Nueva_Fecha Reprogramada','OBSERVACIONES', 'ACCIONES'],
-    'Historial_Compras': ['ID_Pedido','Fecha_Pedido','Nombre_Proveedor','Estatus','Unidades Adquiridas','Total Inversión','Fecha Recepción','Nivel Cumplimiento','Calidad/Precio','Días de Demora','OBSERVACIONES', 'ACCIONES'],
-    'Historial_Compras': ['ID PEDIDO', 'FECHA PEDIDO', 'PROVEEDOR', 'ESTATUS', 'DETALLE', 'INVERSIÓN', 'FECHA RECEPCIÓN', '% CUMP.', 'CALIDAD', 'DEMORA', 'OBS']
+    'Historial_Compras': ['ID PEDIDO', 'FECHA PEDIDO', 'PROVEEDOR', 'ESTATUS', 'DETALLE', 'INVERSIÓN', 'FECHA RECEPCIÓN', '% CUMP.', 'CALIDAD', 'DEMORA', 'OBS', 'ACCIONES']
 };
 
 async function cargarTablaGenerica(nombreHoja) {
