@@ -1770,12 +1770,10 @@ async function verDetalleSemana(numSemana) {
     const titulo = document.getElementById('reportesTitulo');
 
     try {
-        // CORRECCIÓN: Enviamos los parámetros por separado según espera tu función GAS
-        // Si tu wrapper 'callGoogleScript' solo acepta un objeto, avísame para ajustar el GAS.
-        const res = await callGoogleScript('procesarFiltradoHoja', numSemana, "SEMANA");
-        
-        // Normalización de la data (ajusta según tu wrapper)
+        // ERROR CORREGIDO: Enviamos objeto para que GAS lo reciba correctamente
+        const res = await callGoogleScript('procesarFiltradoHoja', { param: numSemana, tipo: "SEMANA" });
         const data = (res && res.reply) ? res.reply : res;        
+        
         titulo.innerText = `PLANIFICACIÓN: SEMANA ${numSemana}`;
         const dias = [
             { corto: 'LUN', largo: 'LUNES' }, { corto: 'MAR', largo: 'MARTES' },
@@ -1805,7 +1803,7 @@ async function verDetalleSemana(numSemana) {
               <tbody>`;
         
         if (!data || data.length === 0) {
-            html += `<tr><td colspan="7" style="padding:50px; text-align:center; color:#64748b;">No hay datos en la hoja 'Filter' para la semana ${numSemana}.</td></tr>`;
+            html += `<tr><td colspan="7" style="padding:50px; text-align:center; color:#64748b;">No hay datos para la semana ${numSemana}.</td></tr>`;
         } else {
             data.forEach(fila => {
                 html += `
@@ -1825,7 +1823,7 @@ async function verDetalleSemana(numSemana) {
         contenedor.innerHTML = html;
 
     } catch (e) {
-        console.error("Error Lex:", e);
+        console.error("Error en verDetalleSemana:", e);
         contenedor.innerHTML = `<div style="color:red; padding:20px;">Error: ${e.message}</div>`;
     } finally {
         mostrarCargandoLex(false);
@@ -1838,9 +1836,10 @@ async function verDetalleDia(nombreDia, numSemana) {
     const titulo = document.getElementById('reportesTitulo');
 
     try {
-        // CORRECCIÓN: Parámetros directos para GAS
-        const res = await callGoogleScript('procesarFiltradoHoja', nombreDia, "DIA");
+        // ERROR CORREGIDO: Enviamos objeto coincidente con GAS
+        const res = await callGoogleScript('procesarFiltradoHoja', { param: nombreDia, tipo: "DIA" });
         const data = (res && res.reply) ? res.reply : res;
+        
         titulo.innerText = `${nombreDia} - SEMANA ${numSemana}`;
         
         let html = `
@@ -1883,7 +1882,7 @@ async function verDetalleDia(nombreDia, numSemana) {
         contenedor.innerHTML = html;
 
     } catch (e) {
-        console.error("Error Dia Lex:", e);
+        console.error("Error en verDetalleDia:", e);
         contenedor.innerHTML = `<div style="color:red; padding:20px;">Error al cargar día: ${e.message}</div>`;
     } finally {
         mostrarCargandoLex(false);
