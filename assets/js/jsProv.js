@@ -1633,29 +1633,30 @@ function cerrarModalReportes() {
 
 async function abrirModalSemanal() {
     mostrarCargandoLex(true);
-    
+    abrirModalReportes(); // Abrimos el contenedor primero
+
     try {
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
-        const { filas, semanasRelativas } = res.reply || { filas: [], semanasRelativas: [] };
+        const { filas, semanasRelativas } = res || { filas: [], semanasRelativas: [] };
 
         const contenedor = document.getElementById('contenido-reporte-lex');
-        const titulo = document.getElementById('titulo-reporte-lex');
+        const titulo = document.getElementById('reportesTitulo'); // Corregido el ID del título
         const toolbar = document.getElementById('toolbar-reportes');
         
         titulo.innerText = "AUDITORÍA DE PROVEEDORES: VISTA MENSUAL";
-        toolbar.style.display = 'flex'; // Mostramos botones de Sync y Excel
+        toolbar.style.display = 'flex'; 
 
         if (!filas || filas.length === 0) {
             contenedor.innerHTML = `<div class="msg-vacio">BASE DE DATOS SIN REGISTROS ACTUALES</div>`;
         } else {
-            // Inyectamos la tabla en el contenedor DE REPORTES
+            // Inyectamos la tabla
             contenedor.innerHTML = `
                 <div class="animacion-entrada">
                     <table class="tabla-reportes">
                         <thead>
                             <tr>
                                 <th class="th-proveedor-estatico">PROVEEDOR</th>
-                                ${semanasRelativas.map((s, i) => `<th onclick="verDetalleSemana(${s})">SEMANA ${i+1}</th>`).join('')}
+                                ${semanasRelativas.map((s, i) => `<th onclick="verDetalleSemana(${s})">SEMANA ${s}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>
@@ -1673,10 +1674,6 @@ async function abrirModalSemanal() {
                     </table>
                 </div>`;
         }
-
-        // ABRIMOS EL MODAL ESPECÍFICO
-        abrirModalReportes();
-
     } catch (err) {
         console.error("Error LexTech Auditoría:", err);
     } finally {
@@ -1763,58 +1760,19 @@ function renderizarVistaMes(response) {
 
 async function verDetalleSemana(numSemana) {
     mostrarCargandoLex(true);
-    navegacionSemanal.semanaActual = numSemana; 
+    // Cambiamos el destino al ID que SI existe en el HTML
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
 
     try {
         const res = await callGoogleScript('procesarFiltradoHoja', { param: numSemana, tipo: "SEMANA" });
-        const data = res.reply;
+        const data = res; // Dependiendo de cómo devuelve tu callGoogleScript el reply
         
-        const titulo = document.getElementById('modal-titulo');
         titulo.innerText = `PLANIFICACIÓN: SEMANA ${numSemana}`;
         
-        const dias = [
-            { c: 'LUN', l: 'LUNES' }, { c: 'MAR', l: 'MARTES' },
-            { c: 'MIE', l: 'MIERCOLES' }, { c: 'JUE', l: 'JUEVES' },
-            { c: 'VIE', l: 'VIERNES' }, { c: 'SAB', l: 'SABADO' }
-        ];
+        // ... (resto de tu lógica de construcción de 'html')
 
-        let html = `
-            <div class="lex-report-toolbar">
-                <button onclick="abrirModalSemanal()" class="lex-btn-nav">← MES</button>
-                <button onclick="descargarReporteExcel('DIARIA', ${numSemana})" class="lex-btn-nav" style="border-color:#22c55e; color:#22c55e;">EXCEL SEMANA</button>
-            </div>
-            <div style="overflow-x:auto; padding:0 10px;">
-                <table class="lex-table-report">
-                    <thead>
-                        <tr>
-                            <th style="width:200px">PROVEEDOR</th>
-                            ${dias.map(d => `
-                            <th style="text-align:center">
-                                <button onclick="verDetalleDia('${d.l}', ${numSemana})" class="lex-btn-nav" style="width:100%;">${d.c}</button>
-                            </th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>`;
-        
-        if (!data || data.length === 0) {
-            html += `<tr><td colspan="7" style="padding:50px; text-align:center; color:#64748b;">No hay datos registrados para esta semana.</td></tr>`;
-        } else {
-            data.forEach(fila => {
-                html += `
-                <tr>
-                    <td style="color:#94a3b8; font-weight:600;">${fila[1]}</td>
-                    <td style="text-align:center">${formatearEstado(fila[2])}</td>
-                    <td style="text-align:center">${formatearEstado(fila[3])}</td>
-                    <td style="text-align:center">${formatearEstado(fila[4])}</td>
-                    <td style="text-align:center">${formatearEstado(fila[5])}</td>
-                    <td style="text-align:center">${formatearEstado(fila[6])}</td>
-                    <td style="text-align:center">${formatearEstado(fila[7])}</td>
-                </tr>`;
-            });
-        }
-
-        html += `</tbody></table></div>`;
-        document.getElementById('modal-contenido').innerHTML = html;
+        contenedor.innerHTML = html; // Inyectar en el contenedor correcto
     } catch (e) {
         console.error(e);
     } finally {

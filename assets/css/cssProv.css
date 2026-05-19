@@ -1083,3 +1083,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     gap: 10px;
     justify-content: flex-end;
 }
+.lex-modal-reportes-footer {
+    padding: 20px;
+    border-top: 1px solid #1e293b;
+    display: flex;
+    justify-content: flex-end;
+    background: #0f172a;
+    z-index: 10;
+}
