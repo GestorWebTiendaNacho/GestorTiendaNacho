@@ -819,14 +819,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /*---Estilos tablas reportes---*/
-.tabla-reportes {
+.lex-table-report {
     width: 100% !important;
     border-collapse: separate !important; 
     border-spacing: 0 4px !important; /* Espaciado sutil entre filas */
     background: transparent !important;
 }
 
-.tabla-reportes thead th {
+.lex-table-report thead th {
     background-color: #0f172a !important;
     color: var(--lex-gold) !important;
     border-bottom: 1px solid rgba(194, 144, 46, 0.3) !important;
@@ -837,7 +837,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     text-transform: uppercase;
 }
 
-.tabla-reportes tbody tr td {
+.lex-table-report tbody tr td {
     background-color: rgba(30, 41, 59, 0.4) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.03) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
@@ -846,8 +846,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     transition: all 0.2s ease;
 }
 
-.tabla-reportes tbody tr:hover td {
-    background-color: rgba(30, 41, 59, 0.8) !important; 
+.lex-table-report tbody tr:hover td {
+    background-color: rgba(30, 41, 59, 0.8) !important;
     color: #ffffff !important;
     box-shadow: 
         0 10px 20px -10px rgba(194, 144, 46, 0.4), 
@@ -857,7 +857,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /*indicador lateral de oro al hacer hover */
-.tabla-reportes tbody tr:hover td:first-child {
+.lex-table-report tbody tr:hover td:first-child {
     box-shadow: 
         -10px 10px 25px -10px rgba(194, 144, 46, 0.6), 
         inset 15px -15px 30px -15px rgba(194, 144, 46, 0.5) !important; 
@@ -867,7 +867,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     z-index: 1;
 }
 
-.tabla-reportes tbody tr:hover td:not(:first-child) {
+.lex-table-report tbody tr:hover td:not(:first-child) {
     border-left: none !important;
 }
 
