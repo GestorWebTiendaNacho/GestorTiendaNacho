@@ -1638,7 +1638,7 @@ async function abrirModalSemanal() {
     try {
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
         // Si tu wrapper usa 'reply', úsalo, si no, usa 'res' directamente
-        const data = res.reply ? res.reply : res;
+        const data = (res && res.reply) ? res.reply : res;
         
         const { filas, semanasRelativas } = data;
         const contenedor = document.getElementById('contenido-reporte-lex');
@@ -1775,8 +1775,7 @@ async function verDetalleSemana(numSemana) {
         const res = await callGoogleScript('procesarFiltradoHoja', numSemana, "SEMANA");
         
         // Normalización de la data (ajusta según tu wrapper)
-        const data = res.reply ? res.reply : res; 
-        
+        const data = (res && res.reply) ? res.reply : res;        
         titulo.innerText = `PLANIFICACIÓN: SEMANA ${numSemana}`;
         const dias = [
             { corto: 'LUN', largo: 'LUNES' }, { corto: 'MAR', largo: 'MARTES' },
@@ -1841,8 +1840,7 @@ async function verDetalleDia(nombreDia, numSemana) {
     try {
         // CORRECCIÓN: Parámetros directos para GAS
         const res = await callGoogleScript('procesarFiltradoHoja', nombreDia, "DIA");
-        const data = res.reply ? res.reply : res;
-
+        const data = (res && res.reply) ? res.reply : res;
         titulo.innerText = `${nombreDia} - SEMANA ${numSemana}`;
         
         let html = `
@@ -1925,7 +1923,7 @@ async function abrirArchivoPedido(idPedido) {
     try {
         // Llamada a la nueva función unificada del servidor
         const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
-        const data = res.reply;
+        const data = (res && res.reply) ? res.reply : res;
 
         if (!data) {
             alert("SISTEMA: No se encontró ningún documento (PDF/CSV) asociado al pedido " + idPedido);
