@@ -822,7 +822,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .lex-table-report {
     width: 100% !important;
     border-collapse: separate !important; 
-    border-spacing: 0 4px !important; /* Espaciado sutil entre filas */
+    border-spacing: 0 4px !important; 
     background: transparent !important;
     z-index: 105 !important;
 }
