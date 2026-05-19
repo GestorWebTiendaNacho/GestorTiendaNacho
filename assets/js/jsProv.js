@@ -1633,49 +1633,55 @@ function cerrarModalReportes() {
 
 async function abrirModalSemanal() {
     mostrarCargandoLex(true);
-    abrirModalReportes(); // Abrimos el contenedor primero
+    abrirModalReportes(); 
 
     try {
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
-        const { filas, semanasRelativas } = res || { filas: [], semanasRelativas: [] };
-
+        // Si tu wrapper usa 'reply', úsalo, si no, usa 'res' directamente
+        const data = res.reply ? res.reply : res;
+        
+        const { filas, semanasRelativas } = data;
         const contenedor = document.getElementById('contenido-reporte-lex');
-        const titulo = document.getElementById('reportesTitulo'); // Corregido el ID del título
-        const toolbar = document.getElementById('toolbar-reportes');
+        const titulo = document.getElementById('reportesTitulo');
         
         titulo.innerText = "AUDITORÍA DE PROVEEDORES: VISTA MENSUAL";
-        toolbar.style.display = 'flex'; 
 
         if (!filas || filas.length === 0) {
-            contenedor.innerHTML = `<div class="msg-vacio">BASE DE DATOS SIN REGISTROS ACTUALES</div>`;
-        } else {
-            // Inyectamos la tabla
-            contenedor.innerHTML = `
-                <div class="animacion-entrada">
-                    <table class="tabla-reportes">
-                        <thead>
-                            <tr>
-                                <th class="th-proveedor-estatico">PROVEEDOR</th>
-                                ${semanasRelativas.map((s, i) => `<th onclick="verDetalleSemana(${s})">SEMANA ${s}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${filas.map(f => `
-                                <tr>
-                                    <td style="font-weight:bold; color:var(--lex-gold);">${f.nombre}</td>
-                                    <td>${renderizarBadgeLex(f.s1)}</td>
-                                    <td>${renderizarBadgeLex(f.s2)}</td>
-                                    <td>${renderizarBadgeLex(f.s3)}</td>
-                                    <td>${renderizarBadgeLex(f.s4)}</td>
-                                    <td>${renderizarBadgeLex(f.s5)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>`;
+            contenedor.innerHTML = `<div style="padding:50px; text-align:center; color:#64748b;">
+                <i class="fas fa-database" style="font-size:3rem; margin-bottom:15px;"></i>
+                <p>NO SE ENCONTRARON REGISTROS EN 'reporteSemanal'</p>
+            </div>`;
+            return;
         }
+
+        let html = `
+            <div class="animacion-entrada">
+                <table class="tabla-reportes">
+                    <thead>
+                        <tr>
+                            <th class="th-proveedor-estatico">PROVEEDOR</th>
+                            ${semanasRelativas.map(s => `<th onclick="verDetalleSemana(${s})" style="cursor:pointer">SEM. ${s}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filas.map(f => `
+                            <tr>
+                                <td style="font-weight:bold; color:var(--lex-gold);">${f.nombre}</td>
+                                <td>${renderizarBadgeLex(f.s1)}</td>
+                                <td>${renderizarBadgeLex(f.s2)}</td>
+                                <td>${renderizarBadgeLex(f.s3)}</td>
+                                <td>${renderizarBadgeLex(f.s4)}</td>
+                                <td>${renderizarBadgeLex(f.s5)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+        
+        contenedor.innerHTML = html;
+
     } catch (err) {
-        console.error("Error LexTech Auditoría:", err);
+        alert("Error de conexión: " + err);
     } finally {
         mostrarCargandoLex(false);
     }
@@ -1766,13 +1772,62 @@ async function verDetalleSemana(numSemana) {
 
     try {
         const res = await callGoogleScript('procesarFiltradoHoja', { param: numSemana, tipo: "SEMANA" });
-        const data = res; // Dependiendo de cómo devuelve tu callGoogleScript el reply
+        const data = res; 
         
         titulo.innerText = `PLANIFICACIÓN: SEMANA ${numSemana}`;
-        
-        // ... (resto de tu lógica de construcción de 'html')
+        const dias = [
+            { corto: 'LUN', largo: 'LUNES' }, { corto: 'MAR', largo: 'MARTES' },
+            { corto: 'MIE', largo: 'MIERCOLES' }, { corto: 'JUE', largo: 'JUEVES' },
+            { corto: 'VIE', largo: 'VIERNES' }, { corto: 'SAB', largo: 'SABADO' }
+        ];
 
-        contenedor.innerHTML = html; // Inyectar en el contenedor correcto
+        let html = `
+            <div class="flex flex-wrap gap-2 mb-4 px-2">
+              <button onclick="abrirModalSemanal()" class="btn-header btn-neon-purple">
+                <i class="fi fi-sr-undo"></i> A vista Mensual</button>
+              <button onclick="ejecutarSincronizacionRelampago()" class="btn-header btn-neon-yellow">
+                <i class="fi fi-ss-back-up"></i> Sincronizar</button>
+              <button onclick="exportarVistaActualALex('DIARIA', ${numSemana})" class="btn-header btn-neon-green">
+                <i class="fi fi-br-desktop-arrow-down"></i> DESCARGAR</button>
+            </div>
+        <div class="overflow-x-auto custom-scroll">
+            <table class="tabla-reportes" style="border-separate: separate; border-spacing: 4px 0;">
+              <thead>
+                  <tr class="bg-transparent">
+                      <th class="w-1/4 p-2 th-proveedor-estatico">PROVEEDOR</th>
+                      ${dias.map(d => `
+                      <th class="p-1"> 
+                          <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="btn-header-tabla flex-col group w-full">
+                              <span class="text-header-principal">${d.corto}</span>
+                              <span class="text-[16px] opacity-50 group-hover:opacity-100 mt-1">
+                                  <i class="fi fi-rs-interactive"></i>
+                              </span>
+                          </button>
+                      </th>
+                      `).join('')}
+                  </tr>
+              </thead>
+              <tbody>`;
+        
+        if (data.length === 0) {
+            html += `<tr><td colspan="7" class="p-10 text-center text-slate-500">No hay datos.</td></tr>`;
+        } else {
+            data.forEach(fila => {
+                html += `
+                <tr class="hover:bg-white/5 transition-colors">
+                    <td class="p-2 truncate text-slate-300 font-medium border-l-2 border-slate-700" title="${fila[1]}">${fila[1]}</td>
+                    <td class="p-2 text-center">${formatearEstado(fila[2])}</td>
+                    <td class="p-2 text-center">${formatearEstado(fila[3])}</td>
+                    <td class="p-2 text-center">${formatearEstado(fila[4])}</td>
+                    <td class="p-2 text-center">${formatearEstado(fila[5])}</td>
+                    <td class="p-2 text-center">${formatearEstado(fila[6])}</td>
+                    <td class="p-2 text-center">${formatearEstado(fila[7])}</td>
+                </tr>`;
+            });
+        }
+
+        html += `</tbody></table></div>`;
+        document.getElementById('contenido-reporte-lex').innerHTML = html;
     } catch (e) {
         console.error(e);
     } finally {
@@ -1786,7 +1841,7 @@ async function verDetalleDia(nombreDia, numSemana) {
         const res = await callGoogleScript('procesarFiltradoHoja', { param: nombreDia, tipo: "DIA" });
         const data = res.reply;
 
-        const titulo = document.getElementById('modal-titulo');
+        const titulo = document.getElementById('reportesTitulo');
         titulo.innerText = `${nombreDia} - SEMANA ${numSemana}`;
         
         let html = `
@@ -1798,10 +1853,11 @@ async function verDetalleDia(nombreDia, numSemana) {
             <table class="lex-table-report">
                 <thead>
                     <tr>
-                        <th>PROVEEDOR</th>
+                        <th>ID PROV</th> 			 	
+                        <th style="text-align:center">NOMBRE PROVEEDOR</th>
                         <th style="text-align:center">ESTADO</th>
-                        <th style="text-align:center">REGISTRO</th>
-                        <th style="text-align:center">EXPEDIENTE</th>
+                        <th style="text-align:center">FECHA</th>
+                        <th style="text-align:center">ID PEDIDO</th>
                         <th style="text-align:center">ACCIÓN</th>
                     </tr>
                 </thead>
@@ -1813,6 +1869,7 @@ async function verDetalleDia(nombreDia, numSemana) {
             data.forEach(fila => {
                 html += `
                 <tr>
+                    <td style="color:#fff; font-weight:bold;">${fila.id}</td>
                     <td style="color:#fff; font-weight:bold;">${fila.nombre}</td>
                     <td style="text-align:center">${formatearEstado(fila.estado)}</td>
                     <td style="text-align:center; color:#64748b;">${fila.fecha}</td>
@@ -1834,7 +1891,7 @@ async function verDetalleDia(nombreDia, numSemana) {
               <iframe id="pdf-frame-lex" src="" style="width:100%; height:100%; border:none;"></iframe>
           </div>`;
           
-        document.getElementById('modal-contenido').innerHTML = html;
+        document.getElementById('contenido-reporte-lex').innerHTML = html;
     } catch (e) {
         console.error(e);
     } finally {
