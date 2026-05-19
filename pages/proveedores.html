@@ -271,35 +271,39 @@
 
 
 <!-- MODAL historial -->
-<div id="modalDetalleHistorial" class="modal-recep-overlay" style="display: none;">
-  <div class="modal-recep-content !max-w-3xl"> 
-    <div class="modal-header-recep !border-cyan-500/50">
-      <div class="flex flex-col">
-        <h3 id="historialTitulo" class="text-cyan-500">DETALLE DE PEDIDO</h3>
-        <span id="historialSubtitulo" class="text-[9px] text-slate-500 font-mono">ID: ---</span>
+<div id="modalDetalleHistorial" class="lex-modal-overlay">
+  <div class="lex-modal-content">
+    
+    <div class="lex-modal-header">
+      <div class="lex-header-group">
+        <h3 id="historialTitulo">DETALLE DE EXPEDIENTE</h3>
+        <span id="historialSubtitulo">ID: ---</span>
       </div>
-      <button onclick="cerrarModalHistorial()" class="btn-closeRecep">&times;</button>
+      <button onclick="cerrarModalHistorial()" class="lex-btn-close">&times;</button>
     </div>
     
-    <div class="modal-body-recep custom-scroll">
-      <div class="mb-4">
-        <label class="block text-[10px] uppercase text-cyan-500 mb-2 font-bold italic tracking-widest">Desglose de Productos</label>
-        <div id="contenedorItemsHistorial" class="bg-slate-950 border border-slate-800 rounded overflow-hidden"></div>
+    <div class="lex-modal-body custom-scroll">
+      <div id="lex-cabecera-historial"></div>
+
+      <div class="lex-section">
+        <label class="lex-label">Desglose de Productos e Inversión</label>
+        <div id="contenedorItemsHistorial" class="lex-container-items"></div>
       </div>
 
-      <div class="mb-6">
-        <label class="block text-[10px] uppercase text-slate-500 mb-2 font-bold italic tracking-widest">Notas del Registro</label>
-        <div id="obsHistorial" class="w-full bg-slate-900/30 border border-slate-800 p-3 rounded text-slate-400 text-xs italic min-h-[60px]">
+      <div class="lex-section">
+        <label class="lex-label">Notas del Registro</label>
+        <div id="obsHistorial" class="lex-obs-box">
             Sin observaciones registradas.
         </div>
       </div>
     </div>
 
-    <div class="sect-footer !justify-end">
-      <button type="button" onclick="cerrarModalHistorial()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded text-[10px] font-bold uppercase border border-slate-700">
-        Cerrar Consulta
+    <div class="lex-modal-footer">
+      <button type="button" onclick="cerrarModalHistorial()" class="lex-btn-footer">
+        Finalizar Consulta
       </button>
     </div>
+
   </div>
 </div>
 
