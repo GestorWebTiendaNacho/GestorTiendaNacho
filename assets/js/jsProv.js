@@ -1635,33 +1635,49 @@ function cerrarModalReportes() {
 }
 
 async function abrirModalSemanal() {
+    console.log("🚩 INICIO: abrirModalSemanal");
     mostrarCargandoLex(true);
     abrirModalReportes(); 
 
     try {
+        console.log("📡 Llamando a GAS: obtenerDatosReporteSemanal...");
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
-        const data = (res && res.reply) ? res.reply : res;
-        console.log("CRÍTICO - Respuesta completa del servidor:", res);
-        console.log("CRÍTICO - Respuesta completa del servidor:", data);
         
-        const titulo = document.getElementById('reportesTitulo');
-        titulo.innerText = "AUDITORÍA DE PROVEEDORES: VISTA MENSUAL";
-
-        if (!data || !data.filas || data.filas.length === 0) {
-            document.getElementById('contenido-reporte-lex').innerHTML = `
-                <div style="padding:50px; text-align:center; color:#64748b;">
-                    <i class="fas fa-database" style="font-size:3rem; margin-bottom:15px;"></i>
-                    <p>NO SE ENCONTRARON REGISTROS</p>
-                </div>`;
+        console.log("📦 Respuesta bruta recibida:", res);
+        
+        // Normalización ultra-segura
+        const data = (res && res.reply) ? res.reply : res;
+        
+        if (!data) {
+            console.error("❌ ERROR: La respuesta de GAS llegó vacía (null o undefined)");
             return;
         }
 
-        // LLAMADA CLAVE: Inyectamos el HTML usando la función especializada
+        const { filas, semanasRelativas } = data;
+        console.log("📊 Datos procesados - Filas:", filas ? filas.length : "N/A", "Semanas:", semanasRelativas);
+
+        const contenedor = document.getElementById('contenido-reporte-lex');
+        if (!contenedor) {
+            console.error("❌ ERROR: No se encontró el elemento 'contenido-reporte-lex' en el DOM");
+            alert("Error crítico: El contenedor de la tabla no existe.");
+            return;
+        }
+
+        // Caso: GAS respondió pero sin datos
+        if (!filas || filas.length === 0) {
+            console.warn("⚠️ AVISO: GAS no devolvió filas.");
+            contenedor.innerHTML = `<div style="color:white; text-align:center; padding:20px;">No se encontraron datos en la hoja de Excel.</div>`;
+            return;
+        }
+
+        // Inyectamos
+        console.log("🎨 Renderizando tabla...");
         renderizarVistaMes(data);
+        console.log("✅ FIN: Renderizado completado");
 
     } catch (err) {
-        console.error("Error en abrirModalSemanal:", err);
-        alert("Error de conexión: " + err);
+        console.error("❌ ERROR CRÍTICO en el flujo:", err);
+        alert("Error de conexión o JS: " + err.message);
     } finally {
         mostrarCargandoLex(false);
     }
@@ -1671,55 +1687,42 @@ function renderizarVistaMes(response) {
     const { filas, semanasRelativas } = response;
     const contenedor = document.getElementById('contenido-reporte-lex');
     
-    // Cálculo de semana actual para resaltar
-    const hoy = new Date();
-    const d = new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const inicioAño = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const semanaHoy = Math.ceil((((d - inicioAño) / 86400000) + 1) / 7);
+    // Si semanasRelativas no es un array, creamos uno por defecto para que no rompa el .map
+    const semanas = (semanasRelativas && Array.isArray(semanasRelativas)) ? semanasRelativas : [1,2,3,4,5];
 
-    let html = `
-    <div class="lex-report-toolbar" style="display:flex; gap:10px; margin-bottom:15px;">
-        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="border-color:#eab308; color:#eab308;">
-            <i class="fas fa-sync"></i> SINCRONIZAR
-        </button>
-    </div>
-    
-    <div class="animacion-entrada" style="overflow-x:auto;">
-        <table class="lex-table-report">
-            <thead>
-                <tr>
-                    <th style="width:200px">PROVEEDOR</th>
-                    ${semanasRelativas.map(numSemana => {
-                        const esHoy = numSemana === semanaHoy;
-                        return `
-                        <th style="text-align:center">
-                            <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav" 
-                                style="width:100%; font-size:11px; ${esHoy ? 'background:#c2902e; color:#0f172a; border:none;' : ''}">
-                                SEM. ${numSemana} ${esHoy ? '●' : ''}
-                            </button>
-                        </th>`;
-                    }).join('')}
-                </tr>
-            </thead>
-            <tbody>`;
+    try {
+        let html = `
+        <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:10px;">
+            <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308; border:1px solid #eab308;">SINCRONIZAR</button>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="lex-table-report">
+                <thead>
+                    <tr>
+                        <th style="color:var(--lex-gold)">PROVEEDOR</th>
+                        ${semanas.map(s => `<th style="text-align:center">SEM. ${s}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filas.map(f => `
+                        <tr>
+                            <td style="font-weight:bold; color:white; border-left:3px solid var(--lex-gold);">${f.nombre || 'S/N'}</td>
+                            <td style="text-align:center">${formatearEstado(f.s1)}</td>
+                            <td style="text-align:center">${formatearEstado(f.s2)}</td>
+                            <td style="text-align:center">${formatearEstado(f.s3)}</td>
+                            <td style="text-align:center">${formatearEstado(f.s4)}</td>
+                            <td style="text-align:center">${formatearEstado(f.s5)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>`;
 
-    filas.forEach(fila => {
-        const datosSemanas = [fila.s1, fila.s2, fila.s3, fila.s4, fila.s5];
-        html += `
-        <tr>
-            <td style="font-weight:bold; color:#fff; border-left: 3px solid #c2902e; padding-left:10px;">${fila.nombre}</td>
-            ${datosSemanas.map((estado, i) => {
-                const numSemanaCol = semanasRelativas[i];
-                // Si es una semana futura (respecto a la actual del sistema), mostramos vacío
-                if (numSemanaCol > semanaHoy && !estado) return `<td style="text-align:center; opacity:0.2">—</td>`;
-                return `<td style="text-align:center">${formatearEstado(estado)}</td>`;
-            }).join('')}
-        </tr>`;
-    });
-
-    html += `</tbody></table></div>`;
-    contenedor.innerHTML = html;
+        contenedor.innerHTML = html;
+    } catch (error) {
+        console.error("❌ ERROR al construir el HTML:", error);
+        contenedor.innerHTML = `<div style="color:red;">Error renderizando tabla: ${error.message}</div>`;
+    }
 }
 
 
