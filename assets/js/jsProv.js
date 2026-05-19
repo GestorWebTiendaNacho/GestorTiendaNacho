@@ -1684,6 +1684,29 @@ async function abrirModalSemanal() {
     }
 }
 
+function renderizarBadgeLex(estado) {
+    // Si la celda está vacía o es nula
+    if (!estado || estado === "" || estado === null) {
+        return '<span class="badge-vacio">---</span>';
+    }
+    
+    const est = estado.toString().toUpperCase();
+
+    // Lógica de detección de estados
+    if (est.includes('SI')) {
+        return `<span class="badge-presente">SI</span>`;
+    } 
+    else if (est.includes('REPRO')) {
+        return `<span class="badge-repro">REPRO</span>`;
+    } 
+    else if (est.includes('NO')) {
+        return `<span class="shadow-no">NO</span>`;
+    }
+
+    // Por defecto si hay algo desconocido
+    return `<span class="shadow-no">${est}</span>`;
+}
+
 //RENDERIZAR VISTA MES
 function renderizarVistaMes(response) {
     const { filas, semanasRelativas } = response;
