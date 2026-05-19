@@ -1641,6 +1641,8 @@ async function abrirModalSemanal() {
     try {
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
         const data = (res && res.reply) ? res.reply : res;
+        console.log("CRÍTICO - Respuesta completa del servidor:", res);
+        console.log("CRÍTICO - Respuesta completa del servidor:", data);
         
         const titulo = document.getElementById('reportesTitulo');
         titulo.innerText = "AUDITORÍA DE PROVEEDORES: VISTA MENSUAL";
