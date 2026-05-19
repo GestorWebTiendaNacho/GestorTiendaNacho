@@ -1290,32 +1290,40 @@ async function verEstadoPedidos() {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 
-    contenedor.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-20">
-            <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p class="text-cyan-500 animate-pulse font-mono text-xs uppercase tracking-widest">Sincronizando Registros de Recepción...</p>
-        </div>`;
+    // Loader N.I.C.O.
+    contenedor.innerHTML = `<div class="flex flex-col items-center justify-center py-20">
+        <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-cyan-500 animate-pulse font-mono text-xs uppercase tracking-widest">Sincronizando Recepciones...</p>
+    </div>`;
 
     try {
-        // En este caso, el servidor devuelve HTML directamente
-        const res = await callGoogleScript('obtenerTablaGenerica', { tipo: "RECEPCION" });
+        const res = await callGoogleScript('obtenerTablaGenerica', { tipo: 'RECEPCION' });
         
-        if (res.status === "success") {
-            const html = res.reply; // El HTML generado por obtenerTablaGenerica
-            if (!html) {
-                contenedor.innerHTML = "<p class='text-slate-500 p-4 text-center text-[10px]'>NO HAY DATOS EN RECEPCIÓN</p>";
-                return;
-            }
-            contenedor.innerHTML = html;
+        if (res.status === "success" && res.reply.success) {
+            const data = res.reply;
             
-            // Inyección de scripts si existen (DataTables, etc)
-            if (html.indexOf('<script') !== -1 && typeof ejecutarScriptsInyectados === "function") {
-                ejecutarScriptsInyectados(contenedor);
-            }
+            // Construimos la estructura de la tabla (igual que en cargarTablaGenerica)
+            const nombreHojaReal = 'Estado_Pedidos';
+            const columnasCabecera = ENCABEZADOS_SISTEMA[nombreHojaReal] || [];
+
+            contenedor.innerHTML = `
+                <div class="wrapper-tabla-final px-4">
+                    <table id="tabla-maestra-generica" class="tabla-premium w-full">
+                        <thead>
+                            <tr>${columnasCabecera.map(h => `<th>${h}</th>`).join('')}</tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>`;
+
+            // Llamamos al render de DataTables
+            renderTableNico('#tabla-maestra-generica', data.data, nombreHojaReal);
+            
+        } else {
+            throw new Error(res.reply.error || "Error desconocido");
         }
     } catch (err) {
-        console.error("Error al refrescar tabla:", err);
-        contenedor.innerHTML = `<div class="p-4 bg-red-900/20 border border-red-500/50 text-red-400 text-[10px] font-mono">ERROR DE ENLACE: ${err.message}</div>`;
+        contenedor.innerHTML = `<div class="p-4 text-red-400 text-xs font-mono">ERROR: ${err.message}</div>`;
     }
 }
 
