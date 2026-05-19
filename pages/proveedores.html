@@ -306,13 +306,14 @@
 </div>
 
 <div id="modal-reportes-lex" class="modal-lex-overlay">
-  <div class="lex-modal-reportes-content">
-           <div class="lex-modal-reportes-header">
-                <div class="lex-header-group">
-                    <h3 id="reportesTitulo">AUDITORIA DE PEDIDOS</h3>
-                </div>
-                <button onclick="cerrarModalReportes()" class="lex-btn-close">&times;</button>
-          </div> 
+    <div class="lex-modal-reportes-content">
+        <div class="lex-modal-reportes-header">
+            <div class="lex-header-group">
+                <h3 id="reportesTitulo">AUDITORIA DE PEDIDOS</h3>
+            </div>
+            <button onclick="cerrarModalReportes()" class="lex-btn-close">&times;</button>
+        </div> 
+
         <div id="toolbar-reportes" class="lex-toolbar" style="display:none;">
             <button onclick="ejecutarSincronizacionRelampago()" class="btn-header-tabla">
                 <i class="fas fa-sync-alt"></i> SYNC
@@ -323,14 +324,14 @@
         </div>
 
         <div id="contenido-reporte-lex" class="modal-lex-body custom-scroll">
-        
+            </div>
+
+        <div class="lex-modal-reportes-footer">
+            <span class="status-indicator">SISTEMA DE SOLO LECTURA</span>
+            <button type="button" onclick="cerrarModalReportes()" class="lex-btn-footer">
+                Finalizar Consulta
+            </button>
         </div>
-    </div>
-    <div class="lex-modal-reportes-footer">
-        <span class="status-indicator">SISTEMA DE SOLO LECTURA</span>
-        <button type="button" onclick="cerrarModalReportes()" class="lex-btn-footer">
-            Finalizar Consulta
-        </button>
     </div>
 </div>
 
