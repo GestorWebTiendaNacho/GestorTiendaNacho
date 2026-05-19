@@ -1149,7 +1149,6 @@ async function abrirRecepcion(datos, fila) {
     cambiarModoGestion('RECIBIDO'); 
 
     try {
-        // Migración a callGoogleScript
         const res = await callGoogleScript('obtenerItemsPedido', { idPedido: idPedido });
         
         if (res.status === "success" && res.reply.success) {
@@ -1191,13 +1190,19 @@ function renderizarItemsDesgloseEspecial(items, idContenedor) {
             <td class="p-3 text-center text-white font-mono font-bold">${item.cantidadPedida}</td>
             <td class="p-3 text-right">
                 <input type="number" class="input-recibido-item w-20 bg-slate-950 border border-slate-700 rounded p-1 text-right text-cyan-400 font-bold outline-none" 
-                       data-sku="${item.sku}" data-original="${item.cantidadPedida}" value="${item.cantidadPedida}">
+                        data-sku="${item.sku}" 
+                        data-original="${item.cantidadPedida}" 
+                        value="${item.cantidadPedida}"
+                        oninput="recalcularPorcentajeDesdeItems()">
             </td>
         </tr>`;
     });
 
     html += `</tbody></table>`;
     contenedor.innerHTML = html;
+    
+    // Ejecutamos el cálculo una vez al cargar para que empiece en 100% (o lo que corresponda)
+    recalcularPorcentajeDesdeItems();
 }
     
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 33.");
@@ -1209,20 +1214,28 @@ function recalcularPorcentajeDesdeItems() {
     let totalRecibido = 0;
 
     inputs.forEach(input => {
-        totalPedido += parseFloat(input.dataset.original) || 0;
-        totalRecibido += parseFloat(input.value) || 0;
+        // Obtenemos los valores de los atributos data-original y el value actual
+        const pedido = parseFloat(input.getAttribute('data-original')) || 0;
+        const recibido = parseFloat(input.value) || 0;
+        
+        totalPedido += pedido;
+        totalRecibido += recibido;
     });
 
     if (totalPedido === 0) return;
 
+    // Cálculo del porcentaje
     let porcentaje = Math.round((totalRecibido / totalPedido) * 100);
+    
+    // Limitar a 100 para evitar que pedidos excedentes rompan la métrica
     if (porcentaje > 100) porcentaje = 100;
 
+    // Actualizar el Slider y el Texto visualmente
     const slider = document.getElementById('inputPorcentaje');
-    if (slider) {
-        slider.value = porcentaje;
-        actualizarValorPorcentaje(porcentaje);
-    }
+    const display = document.getElementById('valorPorcentaje');
+    
+    if (slider) slider.value = porcentaje;
+    if (display) display.innerText = porcentaje + "%";
 }
     
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 34.");
@@ -1280,6 +1293,22 @@ async function confirmarGestionFinal() {
     
 console.log("✅ N.I.C.O. Terminal: Carga finalizada 35.");
 
+function setCalidad(valor) {
+    calidadSeleccionada = valor;
+    document.getElementById('inputCalidad').value = valor;
+    
+    // Feedback visual: iluminar estrellas
+    const estrellas = document.querySelectorAll('.btn-star');
+    estrellas.forEach((estrella, index) => {
+        if (index < valor) {
+            estrella.style.color = "#eee346"; // Cian activo
+            estrella.style.textShadow = "0 0 10px #a41721";
+        } else {
+            estrella.style.color = "#2499d8"; // Apagado
+            estrella.style.textShadow = "none";
+        }
+    });
+}
 
 async function verEstadoPedidos() {
     const modal = document.getElementById('modal-maestro');
@@ -1399,6 +1428,7 @@ function cerrarModalRecepcion() {
     const mainContent = document.getElementById('content');
     if (mainContent) mainContent.removeAttribute('inert');
 }
+
 async function solicitarFechaReprogramacion() {
     const mainContent = document.getElementById('content');
     if (mainContent) mainContent.removeAttribute('aria-hidden');
