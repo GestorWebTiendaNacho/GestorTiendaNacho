@@ -1622,14 +1622,17 @@ let navegacionSemanal = {
 };
 
 function abrirModalReportes() {
-    document.getElementById('modal-reportes-lex').style.display = 'flex';
+    const modal = document.getElementById('modal-reportes-lex');
+    if (modal) modal.style.display = 'flex';
 }
 
 function cerrarModalReportes() {
-    document.getElementById('modal-reportes-lex').style.display = 'none';
-    document.getElementById('contenido-reporte-lex').innerHTML = ''; // Limpiamos al salir
+    const modal = document.getElementById('modal-reportes-lex');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('contenido-reporte-lex').innerHTML = ''; 
+    }
 }
-
 
 async function abrirModalSemanal() {
     mostrarCargandoLex(true);
@@ -1637,85 +1640,36 @@ async function abrirModalSemanal() {
 
     try {
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
-        // Si tu wrapper usa 'reply', úsalo, si no, usa 'res' directamente
         const data = (res && res.reply) ? res.reply : res;
         
-        const { filas, semanasRelativas } = data;
-        const contenedor = document.getElementById('contenido-reporte-lex');
         const titulo = document.getElementById('reportesTitulo');
-        
         titulo.innerText = "AUDITORÍA DE PROVEEDORES: VISTA MENSUAL";
 
-        if (!filas || filas.length === 0) {
-            contenedor.innerHTML = `<div style="padding:50px; text-align:center; color:#64748b;">
-                <i class="fas fa-database" style="font-size:3rem; margin-bottom:15px;"></i>
-                <p>NO SE ENCONTRARON REGISTROS EN 'reporteSemanal'</p>
-            </div>`;
+        if (!data || !data.filas || data.filas.length === 0) {
+            document.getElementById('contenido-reporte-lex').innerHTML = `
+                <div style="padding:50px; text-align:center; color:#64748b;">
+                    <i class="fas fa-database" style="font-size:3rem; margin-bottom:15px;"></i>
+                    <p>NO SE ENCONTRARON REGISTROS</p>
+                </div>`;
             return;
         }
 
-        let html = `
-            <div class="animacion-entrada">
-                <table class="tabla-reportes">
-                    <thead>
-                        <tr>
-                            <th class="th-proveedor-estatico">PROVEEDOR</th>
-                            ${semanasRelativas.map(s => `<th onclick="verDetalleSemana(${s})" style="cursor:pointer">SEM. ${s}</th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filas.map(f => `
-                            <tr>
-                                <td style="font-weight:bold; color:var(--lex-gold);">${f.nombre}</td>
-                                <td>${renderizarBadgeLex(f.s1)}</td>
-                                <td>${renderizarBadgeLex(f.s2)}</td>
-                                <td>${renderizarBadgeLex(f.s3)}</td>
-                                <td>${renderizarBadgeLex(f.s4)}</td>
-                                <td>${renderizarBadgeLex(f.s5)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>`;
-        
-        contenedor.innerHTML = html;
+        // LLAMADA CLAVE: Inyectamos el HTML usando la función especializada
+        renderizarVistaMes(data);
 
     } catch (err) {
+        console.error("Error en abrirModalSemanal:", err);
         alert("Error de conexión: " + err);
     } finally {
         mostrarCargandoLex(false);
     }
 }
 
-function renderizarBadgeLex(estado) {
-    // Si la celda está vacía o es nula
-    if (!estado || estado === "" || estado === null) {
-        return '<span class="badge-vacio">---</span>';
-    }
-    
-    const est = estado.toString().toUpperCase();
-
-    // Lógica de detección de estados
-    if (est.includes('SI')) {
-        return `<span class="badge-presente">SI</span>`;
-    } 
-    else if (est.includes('REPRO')) {
-        return `<span class="badge-repro">REPRO</span>`;
-    } 
-    else if (est.includes('NO')) {
-        return `<span class="shadow-no">NO</span>`;
-    }
-
-    // Por defecto si hay algo desconocido
-    return `<span class="shadow-no">${est}</span>`;
-}
-
-//RENDERIZAR VISTA MES
 function renderizarVistaMes(response) {
     const { filas, semanasRelativas } = response;
     const contenedor = document.getElementById('contenido-reporte-lex');
     
-    // Cálculo de semana actual
+    // Cálculo de semana actual para resaltar
     const hoy = new Date();
     const d = new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -1723,13 +1677,13 @@ function renderizarVistaMes(response) {
     const semanaHoy = Math.ceil((((d - inicioAño) / 86400000) + 1) / 7);
 
     let html = `
-    <div class="lex-report-toolbar">
-        <button onclick="navegar('-Proveedores')" class="lex-btn-nav">← VOLVER</button>
-        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="border-color:#eab308; color:#eab308;">SINCRONIZAR</button>
-        <button onclick="descargarReporteExcel('SEMANAL')" class="lex-btn-nav" style="border-color:#22c55e; color:#22c55e;">EXCEL</button>
+    <div class="lex-report-toolbar" style="display:flex; gap:10px; margin-bottom:15px;">
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="border-color:#eab308; color:#eab308;">
+            <i class="fas fa-sync"></i> SINCRONIZAR
+        </button>
     </div>
     
-    <div style="overflow-x:auto; padding:0 10px;">
+    <div class="animacion-entrada" style="overflow-x:auto;">
         <table class="lex-table-report">
             <thead>
                 <tr>
@@ -1738,7 +1692,8 @@ function renderizarVistaMes(response) {
                         const esHoy = numSemana === semanaHoy;
                         return `
                         <th style="text-align:center">
-                            <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav" style="width:100%; ${esHoy ? 'background:#c2902e; color:#0f172a;' : ''}">
+                            <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav" 
+                                style="width:100%; font-size:11px; ${esHoy ? 'background:#c2902e; color:#0f172a; border:none;' : ''}">
                                 SEM. ${numSemana} ${esHoy ? '●' : ''}
                             </button>
                         </th>`;
@@ -1751,10 +1706,11 @@ function renderizarVistaMes(response) {
         const datosSemanas = [fila.s1, fila.s2, fila.s3, fila.s4, fila.s5];
         html += `
         <tr>
-            <td style="font-weight:bold; color:#fff; border-left: 3px solid #c2902e;">${fila.nombre}</td>
+            <td style="font-weight:bold; color:#fff; border-left: 3px solid #c2902e; padding-left:10px;">${fila.nombre}</td>
             ${datosSemanas.map((estado, i) => {
                 const numSemanaCol = semanasRelativas[i];
-                if (numSemanaCol > semanaHoy || !estado) return `<td style="text-align:center; opacity:0.2">—</td>`;
+                // Si es una semana futura (respecto a la actual del sistema), mostramos vacío
+                if (numSemanaCol > semanaHoy && !estado) return `<td style="text-align:center; opacity:0.2">—</td>`;
                 return `<td style="text-align:center">${formatearEstado(estado)}</td>`;
             }).join('')}
         </tr>`;
@@ -1764,13 +1720,13 @@ function renderizarVistaMes(response) {
     contenedor.innerHTML = html;
 }
 
+
 async function verDetalleSemana(numSemana) {
     mostrarCargandoLex(true);
     const contenedor = document.getElementById('contenido-reporte-lex');
     const titulo = document.getElementById('reportesTitulo');
 
     try {
-        // ERROR CORREGIDO: Enviamos objeto para que GAS lo reciba correctamente
         const res = await callGoogleScript('procesarFiltradoHoja', { param: numSemana, tipo: "SEMANA" });
         const data = (res && res.reply) ? res.reply : res;        
         
@@ -1782,9 +1738,8 @@ async function verDetalleSemana(numSemana) {
         ];
 
         let html = `
-            <div class="flex flex-wrap gap-2 mb-4 px-2">
-              <button onclick="abrirModalSemanal()" class="lex-btn-nav">← VISTA MENSUAL</button>
-              <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308">SINCRONIZAR</button>
+            <div class="lex-report-toolbar" style="margin-bottom:15px;">
+              <button onclick="abrirModalSemanal()" class="lex-btn-nav">← VOLVER AL MES</button>
             </div>
             <div class="overflow-x-auto custom-scroll">
             <table class="lex-table-report">
@@ -1803,7 +1758,7 @@ async function verDetalleSemana(numSemana) {
               <tbody>`;
         
         if (!data || data.length === 0) {
-            html += `<tr><td colspan="7" style="padding:50px; text-align:center; color:#64748b;">No hay datos para la semana ${numSemana}.</td></tr>`;
+            html += `<tr><td colspan="7" style="padding:50px; text-align:center; color:#64748b;">No hay registros para filtrar.</td></tr>`;
         } else {
             data.forEach(fila => {
                 html += `
@@ -1830,73 +1785,13 @@ async function verDetalleSemana(numSemana) {
     }
 }
 
-async function verDetalleDia(nombreDia, numSemana) {
-    mostrarCargandoLex(true);
-    const contenedor = document.getElementById('contenido-reporte-lex');
-    const titulo = document.getElementById('reportesTitulo');
-
-    try {
-        // ERROR CORREGIDO: Enviamos objeto coincidente con GAS
-        const res = await callGoogleScript('procesarFiltradoHoja', { param: nombreDia, tipo: "DIA" });
-        const data = (res && res.reply) ? res.reply : res;
-        
-        titulo.innerText = `${nombreDia} - SEMANA ${numSemana}`;
-        
-        let html = `
-        <div class="lex-report-toolbar">
-            <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav">← VOLVER A SEMANA</button>
-        </div>
-        <div style="overflow-x:auto;">
-            <table class="lex-table-report">
-                <thead>
-                    <tr>
-                        <th>ID</th> 			 	
-                        <th>PROVEEDOR</th>
-                        <th style="text-align:center">ESTADO</th>
-                        <th style="text-align:center">FECHA</th>
-                        <th style="text-align:center">ID PEDIDO</th>
-                        <th style="text-align:center">PDF</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-
-        if (!data || data.length === 0) {
-            html += `<tr><td colspan="6" style="padding:40px; text-align:center; color:#64748b;">Sin registros en la hoja ${nombreDia}.</td></tr>`;
-        } else {
-            data.forEach(fila => {
-                html += `
-                <tr>
-                    <td style="color:#64748b; font-size:10px;">${fila.id}</td>
-                    <td style="color:#fff; font-weight:bold;">${fila.nombre}</td>
-                    <td style="text-align:center">${formatearEstado(fila.estado)}</td>
-                    <td style="text-align:center; color:#64748b;">${fila.fecha}</td>
-                    <td style="text-align:center; font-family:monospace; color:#c2902e;">${fila.idPedido || '---'}</td>
-                    <td style="text-align:center">
-                        ${fila.idPedido ? `<button onclick="abrirArchivoPedido('${fila.idPedido}')" class="lex-btn-nav" style="border-color:#ef4444; color:#ef4444; padding:2px 8px;">VER</button>` : '---'}
-                    </td>
-                </tr>`;
-            });
-        }
-        
-        html += `</tbody></table></div>`;
-        contenedor.innerHTML = html;
-
-    } catch (e) {
-        console.error("Error en verDetalleDia:", e);
-        contenedor.innerHTML = `<div style="color:red; padding:20px;">Error al cargar día: ${e.message}</div>`;
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-// HELPERS JS
+// HELPERS DE FORMATO
 function formatearEstado(e) {
-    if (!e) return "";
+    if (!e || e === "" || e === "NO") return `<span class="status-lex status-lex-error" style="opacity:0.4">NO</span>`;
     let txt = e.toString().toUpperCase();
     if (txt.includes("SI") || txt.includes("✅")) return `<span class="status-lex status-lex-ok">RECIBIDO</span>`;
     if (txt.includes("REPRO") || txt.includes("⚠️")) return `<span class="status-lex status-lex-warn">REPROG.</span>`;
-    if (txt.includes("NO") || txt.includes("❌")) return `<span class="status-lex status-lex-error">AUSENTE</span>`;
-    return `<span style="font-size:9px; color:#64748b;">${e}</span>`;
+    return `<span class="status-lex" style="background:#475569">${txt}</span>`;
 }
 
 function mostrarCargandoLex(show) {
