@@ -321,7 +321,8 @@ var ENCABEZADOS_SISTEMA = {
     'baseProveedores': ['ID','RAZÓN SOCIAL','CIUDAD','DOMICILIO','TELÉFONO','EMAIL','CODIGO PROV','PROVINCIA','ACCIONES'],
     'baseProductos': ['ID','NOMBRE PROD','CODIGO','COSTO INTERNO','STOCK ACTUAL','ID PROVEEDOR','NOMBRE PROVEEDOR','STOCK MINIMO', 'ACCIONES'],
     'Estado_Pedidos': ['ID_Pedido','Fecha_Pedido','Proveedor_Nombre','Estatus','Cantidad Productos','Total_General','Nueva_Fecha Reprogramada','OBSERVACIONES', 'ACCIONES'],
-    'Historial_Compras': ['ID_Pedido','Fecha_Pedido','Nombre_Proveedor','Estatus','Unidades Adquiridas','Total Inversión','Fecha Recepción','Nivel Cumplimiento','Calidad/Precio','Días de Demora','OBSERVACIONES', 'ACCIONES']
+    'Historial_Compras': ['ID_Pedido','Fecha_Pedido','Nombre_Proveedor','Estatus','Unidades Adquiridas','Total Inversión','Fecha Recepción','Nivel Cumplimiento','Calidad/Precio','Días de Demora','OBSERVACIONES', 'ACCIONES'],
+    'Historial_Compras': ['ID PEDIDO', 'FECHA PEDIDO', 'PROVEEDOR', 'ESTATUS', 'DETALLE', 'INVERSIÓN', 'FECHA RECEPCIÓN', '% CUMP.', 'CALIDAD', 'DEMORA', 'OBS']
 };
 
 async function cargarTablaGenerica(nombreHoja) {
@@ -1474,61 +1475,105 @@ async function solicitarFechaReprogramacion() {
 
 /*--------------SECCION HISTORIAL-----------------------*/
 
-function verDetalleHistorial(idPedido) {
+async function verDetalleHistorial(idPedido) {
     const modal = document.getElementById('modalDetalleHistorial');
     const contenedor = document.getElementById('contenedorItemsHistorial');
     const subtitulo = document.getElementById('historialSubtitulo');
     
-    subtitulo.innerText = `ID: ${idPedido}`;
-    contenedor.innerHTML = `<div class="p-10 text-center text-cyan-500 text-[10px] animate-pulse">RECOMPILANDO DATOS...</div>`;
+    // Preparar UI
+    subtitulo.innerText = `EXPEDIENTE: ${idPedido}`;
+    contenedor.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12">
+            <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest italic">Accediendo al archivo central...</p>
+        </div>`;
     
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
-    google.script.run
-        .withSuccessHandler(res => {
-            if (res.success) {
-                //Construir Cabecera Única
-                let html = `
-                <div class="grid grid-cols-2 gap-4 p-4 mb-4 bg-slate-900/50 border border-slate-800 rounded-lg text-[11px]">
+    try {
+        const res = await callGoogleScript('obtenerItemHistorial', { idPedido: idPedido });
+        
+        if (res.status === "success" && res.reply.success) {
+            const data = res.reply;
+            
+            // 1. Construir Cabecera de Datos Maestros
+            let html = `
+            <div class="grid grid-cols-2 gap-3 p-4 mb-4 bg-slate-950/50 border border-slate-800 rounded-lg text-[10px]">
+                <div class="space-y-2">
                     <div>
-                        <p class="text-slate-500 uppercase text-[9px]">Proveedor</p>
-                        <p class="text-cyan-400 font-bold">${res.info.proveedor}</p>
+                        <p class="text-slate-500 uppercase text-[8px] font-bold">Proveedor / Origen</p>
+                        <p class="text-cyan-400 font-bold uppercase">${data.info.proveedor}</p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-slate-500 uppercase text-[9px]">Fecha Registro</p>
-                        <p class="text-slate-300">${res.info.fecha}</p>
+                    <div>
+                        <p class="text-slate-500 uppercase text-[8px] font-bold">Estatus Final</p>
+                        <span class="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">${data.info.estatus}</span>
                     </div>
-                </div>`;
+                </div>
+                <div class="space-y-2 text-right">
+                    <div>
+                        <p class="text-slate-500 uppercase text-[8px] font-bold">Registro / Cierre</p>
+                        <p class="text-slate-300 font-mono">${data.info.fechaPedido} <span class="text-slate-600">>></span> ${data.info.fechaRecepcion}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 uppercase text-[8px] font-bold">Performance</p>
+                        <p class="text-yellow-500">${data.info.calidad} <span class="text-slate-400 ml-2 font-mono">${data.info.cumplimiento}</span></p>
+                    </div>
+                </div>
+                <div class="col-span-2 pt-2 border-t border-slate-800/50">
+                    <p class="text-slate-500 uppercase text-[8px] font-bold">Observaciones de Gestión</p>
+                    <p class="text-slate-400 italic">"${data.info.observaciones}"</p>
+                </div>
+            </div>`;
 
-                // Construir Tabla de Ítems (Unidades e Inversión)
-                html += `
+            // 2. Tabla de Desglose de Inversión
+            html += `
+            <div class="overflow-hidden rounded border border-slate-800">
                 <table class="w-full text-[11px] border-collapse">
                     <thead>
-                        <tr class="text-slate-500 border-b border-cyan-900/30 text-left">
-                            <th class="p-2 font-bold uppercase text-[9px]">Línea / Ítem</th>
-                            <th class="p-2 font-bold uppercase text-[9px] text-center">Unidades</th>
-                            <th class="p-2 font-bold uppercase text-[9px] text-right">Inversión</th>
+                        <tr class="bg-slate-900/80 text-slate-500 text-left border-b border-slate-800">
+                            <th class="p-2 uppercase text-[8px] font-black">Descripción del Ítem</th>
+                            <th class="p-2 uppercase text-[8px] font-black text-right">Inversión Final</th>
                         </tr>
                     </thead>
-                    <tbody>`;
+                    <tbody class="divide-y divide-slate-800/30">`;
 
-                res.items.forEach((item, index) => {
-                    html += `
-                    <tr class="border-b border-slate-800/50 hover:bg-white/5">
-                        <td class="p-2 text-slate-500">Ítem #${index + 1}</td>
-                        <td class="p-2 text-center text-white font-mono">${item.unidades}</td>
-                        <td class="p-2 text-right text-cyan-400 font-bold">$${Number(item.inversion).toLocaleString()}</td>
-                    </tr>`;
-                });
+            let totalInversion = 0;
+            data.items.forEach((item) => {
+                totalInversion += item.inversion;
+                html += `
+                <tr class="hover:bg-cyan-500/5 transition-colors">
+                    <td class="p-2 text-slate-300">
+                        <span class="text-cyan-900 mr-2 font-mono">▸</span>${item.producto}
+                    </td>
+                    <td class="p-2 text-right text-white font-mono">$${item.inversion.toLocaleString()}</td>
+                </tr>`;
+            });
 
-                html += `</tbody></table>`;
-                contenedor.innerHTML = html;
-            } else {
-                contenedor.innerHTML = `<p class="p-10 text-red-400 text-center uppercase text-xs">Error: No se pudieron recuperar los registros.</p>`;
-            }
-        })
-        .obtenerItemHistorial(idPedido);
+            html += `
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-cyan-500/5 border-t border-cyan-500/20">
+                            <td class="p-2 text-cyan-500 font-bold uppercase text-[9px]">Total Invertido</td>
+                            <td class="p-2 text-right text-cyan-400 font-bold font-mono">$${totalInversion.toLocaleString()}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>`;
+
+            contenedor.innerHTML = html;
+
+        } else {
+            throw new Error(res.reply.error || "No se pudo recuperar la información.");
+        }
+    } catch (err) {
+        console.error("Error Historial:", err);
+        contenedor.innerHTML = `
+            <div class="p-10 text-center">
+                <div class="text-red-500 mb-2">⚠️</div>
+                <p class="text-red-400 uppercase text-[10px] font-mono">${err.message}</p>
+            </div>`;
+    }
 }
 
 function cerrarModalHistorial() {
