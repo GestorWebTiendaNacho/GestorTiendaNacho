@@ -117,9 +117,10 @@ height: calc(100vh - 90px) !important;
 /* EL CONTENEDOR REAL DEL SCROLL */
 .wrapper-tabla-final {
     flex: 1;
-    overflow-y: auto !important; /* Aquí vive la barra vertical */
+    overflow-y: auto !important; 
     overflow-x: hidden !important; 
-    width: 98%;
+    width: 99%;
+    align-items: center !important;
 }
 
 /* Estilizamos la barra de este contenedor específico */
