@@ -824,7 +824,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-collapse: separate !important; 
     border-spacing: 0 4px !important; 
     background: transparent !important;
-    z-index: 105 !important;
+    z-index: 9999 !important;
 }
 
 .lex-table-report thead th {
