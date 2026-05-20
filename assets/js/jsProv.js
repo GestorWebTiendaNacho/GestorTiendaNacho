@@ -1412,7 +1412,6 @@ function renderizarVistaMes(response) {
 
     const semanasHead = semanasRelativas.filter(s => s !== "" && s !== null && s !== undefined);
 
-    // 🌟 1. Pre-calculamos los números de semana para mapear dinámicamente las columnas
     const semanasNumeros = semanasHead.map((s, i) => {
         if (/^\d{1,2}$/.test(String(s).trim())) {
             return parseInt(s);
@@ -1469,7 +1468,6 @@ function renderizarVistaMes(response) {
                             <div class="lex-id-badge">ID: ${idprov}</div>
                             <div class="lex-nombre-prov">${nombre}</div>
                         </td>
-                        /* 🌟 2. Renderizado de celdas 100% dinámico cruzado con control de futuro */
                         ${semanasNumeros.map((numSemanaColumna, idx) => {
                             const val = f[`s${idx + 1}`] !== undefined ? f[`s${idx + 1}`] : f[idx + 2];
                             const esFuturo = numSemanaColumna > semanaHoy;
@@ -1968,7 +1966,7 @@ window.verPedidoDirecto = async function(idPedido) {
             confirmButtonText: 'ENTENDIDO',
             confirmButtonColor: '#00f0ff',
             customClass: {
-                confirmButton: 'lex-sweet-btn' // Por si querés meterle estilos luego
+                confirmButton: 'lex-sweet-btn'
             }
         });
 
