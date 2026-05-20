@@ -1679,25 +1679,29 @@ function renderizarVistaMes(response) {
             <thead>
                 <tr>
                     <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
-                    ${semanasHead.map((s, i) => {
-                        // Calculamos el número de semana que representa esta columna
-                        const fechaSemana = new Date(s);
-                        const numSemanaColumna = isNaN(fechaSemana.getTime()) ? (i + 1) : getWeekNumber(fechaSemana);
-                        
-                        // Lógica de colores: Verde Neón para la actual, normal para el resto
-                        const esActual = (numSemanaColumna === numeroSemanaActual);
-                        const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
+                   ${semanasHead.map((s, i) => {
+                    // Intentamos obtener el número de semana
+                    let numSemanaParaGAS;
+                    const fechaSemana = new Date(s);
 
-                        return `
-                        <th style="text-align:center; padding: 0;">
-                            <button onclick="verDetalleSemana(${numSemanaColumna})" 
-                                    class="lex-btn-nav-header ${claseSemana}"
-                                    title="Filtrar semana ${numSemanaColumna} en hoja Filter">
-                                <span class="lex-label-ver">FILTRAR A2</span>
-                                <span class="lex-label-sem">SEM ${numSemanaColumna}</span>
-                                <i class="fas fa-filter" style="font-size:8px; margin-top:2px; opacity:0.5;"></i>
-                            </button>
-                        </th>`;
+                    if (!isNaN(fechaSemana.getTime())) {
+                        numSemanaParaGAS = getWeekNumber(fechaSemana);
+                    } else {
+                        const match = s.toString().match(/\d+/);
+                        numSemanaParaGAS = match ? parseInt(match[0]) : (i + 1);
+                    }
+                    
+                    const esActual = (numSemanaParaGAS === numeroSemanaActual);
+                    const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
+
+                    return `
+                    <th style="text-align:center; padding: 0;">
+                        <button onclick="verDetalleSemana(${parseInt(numSemanaParaGAS)})" 
+                                class="lex-btn-nav-header ${claseSemana}">
+                            <span class="lex-label-ver">FILTRAR A2</span>
+                            <span class="lex-label-sem">SEM ${numSemanaParaGAS}</span>
+                        </button>
+                    </th>`;
                     }).join('')}
                 </tr>
             </thead>
