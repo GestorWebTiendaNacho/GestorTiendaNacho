@@ -1648,7 +1648,7 @@ async function abrirModalSemanal() {
 }
 
 function renderizarVistaMes(response) {
-    // 1. Extracción de datos (Manejo del doble objeto reply de GAS)
+    // 1. Extracción de datos
     let data = response.reply && response.reply.filas ? response.reply : response;
     const { filas, semanasRelativas } = data;
     
@@ -1657,11 +1657,11 @@ function renderizarVistaMes(response) {
     
     if (titulo) titulo.innerText = "REPORTE MENSUAL DE ENTREGAS";
 
-    // 2. Cálculo de la semana actual para el estilo neón
+    // 2. Cálculo de la semana actual
     const hoy = new Date();
     const numeroSemanaActual = getWeekNumber(hoy);
 
-    // 3. Limpieza de encabezados de semana (filtramos vacíos)
+    // 3. Filtrado de encabezados
     const semanasHead = semanasRelativas.filter(s => s !== "");
 
     let html = `
@@ -1679,37 +1679,38 @@ function renderizarVistaMes(response) {
             <thead>
                 <tr>
                     <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
-                   ${semanasHead.map((s, i) => {
-                    // Intentamos obtener el número de semana
-                    let numSemanaParaGAS;
-                    const fechaSemana = new Date(s);
+                    ${semanasHead.map((s, i) => {
+                        let numSemanaParaGAS;
+                        const fechaSemana = new Date(s);
 
-                    if (!isNaN(fechaSemana.getTime())) {
-                        numSemanaParaGAS = getWeekNumber(fechaSemana);
-                    } else {
-                        const match = s.toString().match(/\d+/);
-                        numSemanaParaGAS = match ? parseInt(match[0]) : (i + 1);
-                    }
-                    
-                    const esActual = (numSemanaParaGAS === numeroSemanaActual);
-                    const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
+                        // Si es una fecha válida, sacamos el número, si no, buscamos dígitos en el texto
+                        if (!isNaN(fechaSemana.getTime())) {
+                            numSemanaParaGAS = getWeekNumber(fechaSemana);
+                        } else {
+                            const match = s.toString().match(/\d+/);
+                            numSemanaParaGAS = match ? parseInt(match[0]) : (i + 1);
+                        }
+                        
+                        // Aseguramos que sea un número entero
+                        numSemanaParaGAS = Math.floor(numSemanaParaGAS);
 
-                    return `
-                    <th style="text-align:center; padding: 0;">
-                        <button onclick="verDetalleSemana(${parseInt(numSemanaParaGAS)})" 
-                                class="lex-btn-nav-header ${claseSemana}">
-                            <span class="lex-label-ver">FILTRAR A2</span>
-                            <span class="lex-label-sem">SEM ${numSemanaParaGAS}</span>
-                        </button>
-                    </th>`;
+                        const esActual = (numSemanaParaGAS === numeroSemanaActual);
+                        const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
+
+                        return `
+                        <th style="text-align:center; padding: 0;">
+                            <button onclick="verDetalleSemana(${numSemanaParaGAS})" 
+                                    class="lex-btn-nav-header ${claseSemana}">
+                                <span class="lex-label-ver">FILTRAR A2</span>
+                                <span class="lex-label-sem">SEM ${numSemanaParaGAS}</span>
+                            </button>
+                        </th>`;
                     }).join('')}
                 </tr>
             </thead>
             <tbody>
                 ${filas.map(f => {
-                    // Evitamos renderizar la fila de encabezados si se coló desde el Excel
                     if (f.idprov === 'ID PROV' || f.nombre === 'NOMBRE PROVEEDOR') return '';
-
                     return `
                     <tr>
                         <td class="lex-td-prov">
@@ -1721,15 +1722,13 @@ function renderizarVistaMes(response) {
                         <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s3)}</td>
                         <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s4)}</td>
                         <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s5)}</td>
-                    </tr>
-                    `;
+                    </tr>`;
                 }).join('')}
             </tbody>
         </table>
     </div>`;
 
     contenedor.innerHTML = html;
-    console.log("✅ Renderizado Mensual completado con botones de filtrado activos.");
 }
 
 function getWeekNumber(d) {
