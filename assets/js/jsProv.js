@@ -1662,18 +1662,18 @@ function renderizarVistaMes(response) {
     const d = new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     const inicioAño = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const numeroSemanaActual = Math.ceil((((d - inicioAño) / 86400000) + 1) / 7);
+    const semanaHoy = Math.ceil((((d - inicioAño) / 86400000) + 1) / 7);
 
     // 3. Limpieza de encabezados de semana
     const semanasHead = semanasRelativas.filter(s => s !== "" && s !== null && s !== undefined);
 
     let html = `
     <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:15px; align-items:center;">
-        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308; border:1px solid #eab308;">
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav">
             <i class="fas fa-sync-alt"></i> REFRESCAR HOJA
         </button>
         <span style="color: #64748b; font-size: 11px; letter-spacing: 1px;">
-            SISTEMA: SEMANA <b style="color:#22c55e;">${numeroSemanaActual}</b>
+            SISTEMA: SEMANA <b style="color:#22c55e;">${semanaHoy}</b>
         </span>
     </div>
 
