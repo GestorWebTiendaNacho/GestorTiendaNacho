@@ -1863,6 +1863,25 @@ async function ejecutarSincronizacionRelampago() {
     }
 }
 
+window.verPedidoDirecto = function(idPedido) {
+    console.log(`🔮 Buscando e impactando vista para el pedido: ${idPedido}`);
+    
+    if (!idPedido || idPedido.trim() === "") {
+        alert("El registro no cuenta con un ID de pedido válido.");
+        return;
+    }
+
+    // 💡 ACÁ VÁ TU LÓGICA EXISTENTE PARA ABRIR EL MODAL DEL PEDIDO
+    // Por ejemplo, si tenés una función que carga el pedido por ID, la llamás acá:
+    if (typeof abrirModalDetallePedido === 'function') {
+        abrirModalDetallePedido(idPedido);
+    } else {
+        // Alerta temporal por si usás otro nombre de función para tus modales
+        console.warn("⚠️ Tenés que enlazar esta función con tu lógica de apertura de modales.");
+        alert(`Pedido seleccionado: ${idPedido}\n\n(Pronto: Conectar con el modal de visualización de órdenes)`);
+    }
+};
+
 console.log("✅ N.I.C.O. Terminal: Carga finalizada sin errores críticos.");
 
 
