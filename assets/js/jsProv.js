@@ -1684,19 +1684,19 @@ function renderizarVistaMes(response) {
                     <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
                     ${semanasHead.map((s, i) => {
                         // FORZAMOS extracción del número de semana puro para evitar textos extensos
-                        let numSemanaColumna = parseInt(s);
+                        let semanaHoy = parseInt(s);
                         
-                        if (isNaN(numSemanaColumna)) {
+                        if (isNaN(semanaHoy)) {
                             const fechaSemana = new Date(s);
                             if (!isNaN(fechaSemana.getTime())) {
-                                numSemanaColumna = getWeekNumber(fechaSemana);
+                                semanaHoy = getWeekNumber(fechaSemana);
                             } else {
                                 const match = s.toString().match(/\d+/);
-                                numSemanaColumna = match ? parseInt(match[0]) : (i + 1);
+                                semanaHoy = match ? parseInt(match[0]) : (i + 1);
                             }
                         }
 
-                        const esActual = (numSemanaColumna === numeroSemanaActual);
+                        const esActual = (semanaHoy === semanaHoy);
                         const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
 
                         return `
