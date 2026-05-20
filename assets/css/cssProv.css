@@ -955,6 +955,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: #a5f3fc !important;
 }
 
+
+
 .lex-btn-nav {
     width: 100%;
     border: none;
@@ -1006,7 +1008,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     box-shadow: 0 4px 20px rgba(255, 119, 0, 0.4);
 }
 
-
+.lex-toolbar .lex-btn-nav {
+    width: auto;                        
+    flex-direction: row;             
+    padding: 8px 18px;                  
+    border-radius: 6px;                 
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    justify-content: center;
+    gap: 8px;                          
+    border-bottom: 3px solid transparent !important; 
+}
 
 /* Etiquetas internas */
 .lex-label-ver {
@@ -1019,6 +1032,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: white;
 }
 
+.lex-toolbar .lex-btn-nav i {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.lex-toolbar .lex-btn-nav {
+    min-width: 120px;
+}
 
 .animacion-entrada {
     animation: slideIn 0.3s ease-out;
