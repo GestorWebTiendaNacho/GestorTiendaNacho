@@ -1648,65 +1648,84 @@ async function abrirModalSemanal() {
 }
 
 function renderizarVistaMes(response) {
-    const { filas, semanasRelativas } = response;
-    const contenedor = document.getElementById('contenido-reporte-lex');
+    // 1. Extracción de datos (Manejo del doble objeto reply de GAS)
+    let data = response.reply && response.reply.filas ? response.reply : response;
+    const { filas, semanasRelativas } = data;
     
-    // Obtenemos el número de semana real de hoy para comparar
-    const hoy = new Date();
-    const numeroSemanaActual = getWeekNumber(hoy); 
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+    
+    if (titulo) titulo.innerText = "REPORTE MENSUAL DE ENTREGAS";
 
+    // 2. Cálculo de la semana actual para el estilo neón
+    const hoy = new Date();
+    const numeroSemanaActual = getWeekNumber(hoy);
+
+    // 3. Limpieza de encabezados de semana (filtramos vacíos)
     const semanasHead = semanasRelativas.filter(s => s !== "");
 
     let html = `
-    <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:10px; align-items:center;">
+    <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:15px; align-items:center;">
         <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308; border:1px solid #eab308;">
-            <i class="fas fa-sync-alt"></i> SINCRONIZAR
+            <i class="fas fa-sync-alt"></i> REFRESCAR HOJA
         </button>
-        <span style="color: #64748b; font-size: 12px;">Semana actual del sistema: ${numeroSemanaActual}</span>
+        <span style="color: #64748b; font-size: 11px; letter-spacing: 1px;">
+            SISTEMA: SEMANA <b style="color:#22c55e;">${numeroSemanaActual}</b>
+        </span>
     </div>
+
     <div style="overflow-x:auto;" class="custom-scroll">
         <table class="lex-table-report">
             <thead>
                 <tr>
-                    <th style="color:var(--lex-gold); text-align:left; min-width:220px;">PROVEEDOR</th>
+                    <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
                     ${semanasHead.map((s, i) => {
-                        // Extraemos el número de semana de la fecha que manda GAS
+                        // Calculamos el número de semana que representa esta columna
                         const fechaSemana = new Date(s);
-                        const numSemanaData = isNaN(fechaSemana) ? (i + 1) : getWeekNumber(fechaSemana);
+                        const numSemanaColumna = isNaN(fechaSemana.getTime()) ? (i + 1) : getWeekNumber(fechaSemana);
                         
-                        // Determinamos si es la semana actual
-                        const esActual = (numSemanaData === numeroSemanaActual);
+                        // Lógica de colores: Verde Neón para la actual, normal para el resto
+                        const esActual = (numSemanaColumna === numeroSemanaActual);
                         const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
 
                         return `
                         <th style="text-align:center; padding: 0;">
-                            <button onclick="verDetalleSemana(${numSemanaData})" class="lex-btn-nav-header ${claseSemana}">
-                                <span class="lex-label-ver">VER DETALLE</span>
-                                <span class="lex-label-sem">SEM ${numSemanaData}</span>
+                            <button onclick="verDetalleSemana(${numSemanaColumna})" 
+                                    class="lex-btn-nav-header ${claseSemana}"
+                                    title="Filtrar semana ${numSemanaColumna} en hoja Filter">
+                                <span class="lex-label-ver">FILTRAR A2</span>
+                                <span class="lex-label-sem">SEM ${numSemanaColumna}</span>
+                                <i class="fas fa-filter" style="font-size:8px; margin-top:2px; opacity:0.5;"></i>
                             </button>
                         </th>`;
                     }).join('')}
                 </tr>
             </thead>
             <tbody>
-                ${filas.map(f => `
+                ${filas.map(f => {
+                    // Evitamos renderizar la fila de encabezados si se coló desde el Excel
+                    if (f.idprov === 'ID PROV' || f.nombre === 'NOMBRE PROVEEDOR') return '';
+
+                    return `
                     <tr>
-                        <td class="lex-td-prov font-size: 11px;">
+                        <td class="lex-td-prov">
                             <div class="lex-id-badge">ID: ${f.idprov}</div>
                             <div class="lex-nombre-prov">${f.nombre}</div>
                         </td>
-                        <td class="lex-td-status">${formatearEstado(f.s1)}</td>
-                        <td class="lex-td-status">${formatearEstado(f.s2)}</td>
-                        <td class="lex-td-status">${formatearEstado(f.s3)}</td>
-                        <td class="lex-td-status">${formatearEstado(f.s4)}</td>
-                        <td class="lex-td-status">${formatearEstado(f.s5)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s1)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s2)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s3)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s4)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s5)}</td>
                     </tr>
-                `).join('')}
+                    `;
+                }).join('')}
             </tbody>
         </table>
     </div>`;
 
     contenedor.innerHTML = html;
+    console.log("✅ Renderizado Mensual completado con botones de filtrado activos.");
 }
 
 function getWeekNumber(d) {
