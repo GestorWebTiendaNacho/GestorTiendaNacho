@@ -1412,6 +1412,21 @@ function renderizarVistaMes(response) {
 
     const semanasHead = semanasRelativas.filter(s => s !== "" && s !== null && s !== undefined);
 
+    // 🌟 1. Pre-calculamos los números de semana para mapear dinámicamente las columnas
+    const semanasNumeros = semanasHead.map((s, i) => {
+        if (/^\d{1,2}$/.test(String(s).trim())) {
+            return parseInt(s);
+        } else {
+            const fechaSemana = new Date(s);
+            if (!isNaN(fechaSemana.getTime())) {
+                return getWeekNumber(fechaSemana);
+            } else {
+                const match = s.toString().match(/\d+/);
+                return match ? parseInt(match[0]) : (i + 1);
+            }
+        }
+    });
+
     let html = `
     <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:15px; align-items:center;">
         <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-btn-nav-header">
@@ -1427,20 +1442,7 @@ function renderizarVistaMes(response) {
             <thead>
                 <tr>
                     <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
-                    ${semanasHead.map((s, i) => {
-                        let numSemanaColumna;
-                        if (/^\d{1,2}$/.test(String(s).trim())) {
-                            numSemanaColumna = parseInt(s);
-                        } else {
-                            const fechaSemana = new Date(s);
-                            if (!isNaN(fechaSemana.getTime())) {
-                                numSemanaColumna = getWeekNumber(fechaSemana);
-                            } else {
-                                const match = s.toString().match(/\d+/);
-                                numSemanaColumna = match ? parseInt(match[0]) : (i + 1);
-                            }
-                        }
-
+                    ${semanasNumeros.map(numSemanaColumna => {
                         const esActual = (numSemanaColumna === semanaHoy);
                         const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
 
@@ -1467,11 +1469,12 @@ function renderizarVistaMes(response) {
                             <div class="lex-id-badge">ID: ${idprov}</div>
                             <div class="lex-nombre-prov">${nombre}</div>
                         </td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s1 !== undefined ? f.s1 : f[2])}</td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s2 !== undefined ? f.s2 : f[3])}</td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s3 !== undefined ? f.s3 : f[4])}</td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s4 !== undefined ? f.s4 : f[5])}</td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s5 !== undefined ? f.s5 : f[6])}</td>
+                        /* 🌟 2. Renderizado de celdas 100% dinámico cruzado con control de futuro */
+                        ${semanasNumeros.map((numSemanaColumna, idx) => {
+                            const val = f[`s${idx + 1}`] !== undefined ? f[`s${idx + 1}`] : f[idx + 2];
+                            const esFuturo = numSemanaColumna > semanaHoy;
+                            return `<td class="lex-td-status" style="text-align:center">${formatearEstado(val, esFuturo)}</td>`;
+                        }).join('')}
                     </tr>`;
                 }).join('')}
             </tbody>
@@ -1558,7 +1561,6 @@ function renderizarVistaSemanal(data, numSemana) {
         });
 
         filasFiltradas.forEach(f => {
-            // 🛠️ MAPEADO SEGURO TAMBIÉN AQUÍ POR SI LA VISTA SEMANAL USA EL MISMO OBJETO
             const idprov = f.idProveedor || f.idprov || f[0] || '';
             const nombre = f.nombreProveedor || f.nombre || f[1] || 'SIN NOMBRE';
             const s1 = f.s1 !== undefined ? f.s1 : f[2] || 'NO';
@@ -1568,18 +1570,19 @@ function renderizarVistaSemanal(data, numSemana) {
             const s5 = f.s5 !== undefined ? f.s5 : f[6] || 'NO';
             const s6 = f.s6 !== undefined ? f.s6 : f[7] || 'NO';
             
+            // Nota: En la vista de los días de la semana actual no ocultamos, pasamos false por defecto
             html += `
             <tr>
                 <td class="lex-td-prov">
                     <div class="lex-id-badge">ID: ${idprov}</div>
                     <div class="lex-nombre-prov">${nombre}</div>
                 </td>
-                <td style="text-align:center">${formatearEstado(s1)}</td>
-                <td style="text-align:center">${formatearEstado(s2)}</td>
-                <td style="text-align:center">${formatearEstado(s3)}</td>
-                <td style="text-align:center">${formatearEstado(s4)}</td>
-                <td style="text-align:center">${formatearEstado(s5)}</td>
-                <td style="text-align:center">${formatearEstado(s6)}</td>
+                <td style="text-align:center">${formatearEstado(s1, false)}</td>
+                <td style="text-align:center">${formatearEstado(s2, false)}</td>
+                <td style="text-align:center">${formatearEstado(s3, false)}</td>
+                <td style="text-align:center">${formatearEstado(s4, false)}</td>
+                <td style="text-align:center">${formatearEstado(s5, false)}</td>
+                <td style="text-align:center">${formatearEstado(s6, false)}</td>
             </tr>`;
         });
     }
@@ -1698,12 +1701,35 @@ function getWeekNumber(d) {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
-function formatearEstado(e) {
-    if (!e || e === "" || e === "NO" || e === "❌ NO") return `<span class="status-lex status-lex-error" style="opacity:0.4">❌ NO</span>`;
-    let txt = e.toString().toUpperCase();
-    if (txt.includes("SI") || txt.includes("✅")) return `<span class="status-lex status-lex-ok">✅ OK</span>`;
-    if (txt.includes("REPRO") || txt.includes("⚠️")) return `<span class="status-lex status-lex-warn">⚠️ REPROG</span>`;
-    return `<span class="status-lex" style="background:#475569">${txt}</span>`;
+function formatearEstado(e, esFuturo = false) {
+    const txt = e ? e.toString().toUpperCase().trim() : "";
+    const esNo = !txt || txt === "NO" || txt === "❌ NO";
+
+    // Si es un "NO" pero corresponde a una columna del futuro, se limpia la celda por completo
+    if (esNo && esFuturo) {
+        return ""; 
+    }
+
+    // Estilo base común para mantener simetría visual
+    const estiloBase = "display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;";
+
+    // Caso 1: ❌ NO (Halo Rojo Neon)
+    if (esNo) {
+        return `<span class="status-lex" style="${estiloBase} background: rgba(239, 68, 68, 0.12); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5); box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);">❌ NO</span>`;
+    }
+
+    // Caso 2: ✅ OK / SI (Halo Verde Neon)
+    if (txt.includes("SI") || txt.includes("✅") || txt.includes("OK")) {
+        return `<span class="status-lex" style="${estiloBase} background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.6); box-shadow: 0 0 12px rgba(34, 197, 94, 0.45);">✅ OK</span>`;
+    }
+
+    // Caso 3: ⚠️ REPROG / REPRO (Halo Amarillo/Oro Neon)
+    if (txt.includes("REPRO") || txt.includes("⚠️")) {
+        return `<span class="status-lex" style="${estiloBase} background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.6); box-shadow: 0 0 12px rgba(234, 179, 8, 0.45);">⚠️ REPROG</span>`;
+    }
+
+    // Cualquier otro estado alternativo por las dudas
+    return `<span class="status-lex" style="${estiloBase} background: #475569; color: #cbd5e1; border: 1px solid #64748b;">${txt}</span>`;
 }
 
 function mostrarCargandoLex(show) {
