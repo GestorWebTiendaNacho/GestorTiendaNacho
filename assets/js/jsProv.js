@@ -1648,7 +1648,6 @@ async function abrirModalSemanal() {
 }
 
 function renderizarVistaMes(response) {
-    // 1. Extracción y normalización de datos
     let data = response.reply && response.reply.filas ? response.reply : response;
     const { filas, semanasRelativas } = data;
     
@@ -1683,16 +1682,15 @@ function renderizarVistaMes(response) {
                 <tr>
                     <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
                     ${semanasHead.map((s, i) => {
-                        // FORZAMOS extracción del número de semana puro para evitar textos extensos
-                        let semanaHoy = parseInt(s);
+                        let numSemanaColumna = parseInt(s);
                         
-                        if (isNaN(semanaHoy)) {
+                        if (isNaN(numSemanaColumna)) {
                             const fechaSemana = new Date(s);
                             if (!isNaN(fechaSemana.getTime())) {
-                                semanaHoy = getWeekNumber(fechaSemana);
+                                numSemanaColumna = getWeekNumber(fechaSemana);
                             } else {
                                 const match = s.toString().match(/\d+/);
-                                semanaHoy = match ? parseInt(match[0]) : (i + 1);
+                                numSemanaColumna = match ? parseInt(match[0]) : (i + 1);
                             }
                         }
 
