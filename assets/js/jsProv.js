@@ -1696,7 +1696,7 @@ function renderizarVistaMes(response) {
                             }
                         }
 
-                        const esActual = (semanaHoy === semanaHoy);
+                        const esActual = (numSemanaColumna === semanaHoy);
                         const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
 
                         return `
