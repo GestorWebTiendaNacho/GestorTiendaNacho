@@ -1912,14 +1912,15 @@ window.verPedidoDirecto = async function(idPedido) {
     });
 
     try {
-        // 2. Pedir los datos exactos a la hoja "Estado_Pedidos"
-        const res = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
+        const response = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
         
-        if (res.status !== 'success') {
+        const res = response?.reply || response;
+        
+        if (!res || res.status !== 'success') {
             Swal.fire({
                 icon: 'info',
                 title: 'No encontrado',
-                text: res.message || 'No se hallaron registros extras para este pedido.',
+                text: res?.message || 'No se hallaron registros extras para este pedido.',
                 background: '#1e293b',
                 color: '#cbd5e1',
                 confirmButtonColor: '#475569'
@@ -1928,8 +1929,8 @@ window.verPedidoDirecto = async function(idPedido) {
         }
 
         const d = res.data;
+        if (!d) throw new Error("La propiedad 'data' vino vacía desde el servidor.");
         
-        // 3. Renderizar el SweetAlert con estructura CSS limpia tipo Card Cyberpunk
         Swal.fire({
             title: `<span style="font-size:14px; color:#94a3b8; letter-spacing:1px;">DETALLE DE TRANSACCIÓN</span><br>
                     <span style="color:#00f0ff; font-family:monospace; font-size:20px;">#${idPedido}</span>`,
@@ -1937,7 +1938,7 @@ window.verPedidoDirecto = async function(idPedido) {
                 <div style="text-align: left; background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; margin-top:10px;">
                     <div style="margin-bottom: 8px;">
                         <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">PROVEEDOR:</span>
-                        <span style="color: #f8fafc; font-weight:600;">(${d["ID PROV"] || d["IDPROVEEDOR"] || '---'}) ${d["NOMBRE"] || d["NOMBREPROVEEDOR"] || '---'}</span>
+                        <span style="color: #f8fafc; font-weight:600;">(${d["ID PROV"] || d["IDPROVEEDOR"] || '---'}) ${d["NOMBRE"] || d["PROVEEDOR"] || d["NOMBREPROVEEDOR"] || '---'}</span>
                     </div>
                     <div style="margin-bottom: 8px;">
                         <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">ESTADO HOJA:</span>
@@ -1975,7 +1976,7 @@ window.verPedidoDirecto = async function(idPedido) {
         Swal.fire({
             icon: 'error',
             title: 'Error de Comunicación',
-            text: 'No pudimos conectar con la base de datos de pedidos.',
+            text: 'No pudimos procesar o conectar con la base de datos de pedidos.',
             background: '#1e293b',
             color: '#cbd5e1'
         });
