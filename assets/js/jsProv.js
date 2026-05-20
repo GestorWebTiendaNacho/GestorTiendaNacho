@@ -1912,7 +1912,7 @@ function formatearEstado(e) {
     if (!e || e === "" || e === "NO") return `<span class="status-lex status-lex-error" style="opacity:0.4">NO</span>`;
     let txt = e.toString().toUpperCase();
     if (txt.includes("SI") || txt.includes("✅")) return `<span class="status-lex status-lex-ok">✅OK</span>`;
-    if (txt.includes("REPRO") || txt.includes("⚠️")) return `<span class="status-lex status-lex-warn">⚠️REPROG.</span>`;
+    if (txt.includes("REPRO") || txt.includes("⚠️")) return `<span class="status-lex status-lex-warn">⚠️REPROG</span>`;
     return `<span class="status-lex" style="background:#475569">${txt}</span>`;
 }
 
