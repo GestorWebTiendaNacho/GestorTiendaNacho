@@ -1648,55 +1648,80 @@ async function abrirModalSemanal() {
 }
 
 function renderizarVistaMes(response) {
-    let data = response.reply ? response.reply : response;
+    // 1. Extracción y normalización de datos
+    let data = response.reply && response.reply.filas ? response.reply : response;
     const { filas, semanasRelativas } = data;
-    const contenedor = document.getElementById('contenido-reporte-lex'); // Ajustado a tu ID actual
     
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+    
+    if (titulo) titulo.innerText = "REPORTE MENSUAL DE ENTREGAS";
+
+    // 2. Cálculo exacto de la semana actual para el estilo neón
     const hoy = new Date();
     const d = new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     const inicioAño = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const semanaHoy = Math.ceil((((d - inicioAño) / 86400000) + 1) / 7);
+    const numeroSemanaActual = Math.ceil((((d - inicioAño) / 86400000) + 1) / 7);
+
+    // 3. Limpieza de encabezados de semana
+    const semanasHead = semanasRelativas.filter(s => s !== "" && s !== null && s !== undefined);
 
     let html = `
-    <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:10px; align-items:center;">
+    <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:15px; align-items:center;">
         <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav" style="color:#eab308; border:1px solid #eab308;">
-            <i class="fas fa-sync-alt"></i> SINCRONIZAR
+            <i class="fas fa-sync-alt"></i> REFRESCAR HOJA
         </button>
-        <span style="color: #64748b; font-size: 11px;">Semana Actual: ${semanaHoy}</span>
+        <span style="color: #64748b; font-size: 11px; letter-spacing: 1px;">
+            SISTEMA: SEMANA <b style="color:#22c55e;">${numeroSemanaActual}</b>
+        </span>
     </div>
+
     <div style="overflow-x:auto;" class="custom-scroll">
         <table class="lex-table-report">
             <thead>
                 <tr>
-                    <th style="color:var(--lex-gold); text-align:left; min-width:220px;">PROVEEDOR</th>
-                    ${[0, 1, 2, 3, 4].map(i => {
-                        const numSemanaCol = semanasRelativas[i];
-                        const esSemanaActual = numSemanaCol === semanaHoy;
-                        const claseSemana = esSemanaActual ? 'lex-header-actual' : 'lex-header-other';
+                    <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
+                    ${semanasHead.map((s, i) => {
+                        // FORZAMOS extracción del número de semana puro para evitar textos extensos
+                        let numSemanaColumna = parseInt(s);
+                        
+                        if (isNaN(numSemanaColumna)) {
+                            const fechaSemana = new Date(s);
+                            if (!isNaN(fechaSemana.getTime())) {
+                                numSemanaColumna = getWeekNumber(fechaSemana);
+                            } else {
+                                const match = s.toString().match(/\d+/);
+                                numSemanaColumna = match ? parseInt(match[0]) : (i + 1);
+                            }
+                        }
+
+                        const esActual = (numSemanaColumna === numeroSemanaActual);
+                        const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
 
                         return `
                         <th style="text-align:center; padding: 0;">
-                            <button onclick="verDetalleSemana(${numSemanaCol})" class="lex-btn-nav-header ${claseSemana}">
-                                <span class="lex-label-ver">VER DETALLE</span>
-                                <span class="lex-label-sem">SEM ${numSemanaCol}</span>
+                            <button onclick="verDetalleSemana(${numSemanaColumna})" 
+                                    class="lex-btn-nav-header ${claseSemana}">
+                                <span class="lex-label-ver">FILTRAR A2</span>
+                                <span class="lex-label-sem">SEM ${numSemanaColumna}</span>
                             </button>
                         </th>`;
                     }).join('')}
                 </tr>
             </thead>
             <tbody>
-                ${filas.map(f => `
+                ${filas.filter(f => f.nombre && f.nombre !== 'NOMBRE PROVEEDOR' && f.idprov !== 'ID PROV').map(f => `
                     <tr>
                         <td class="lex-td-prov">
                             <div class="lex-id-badge">ID: ${f.idprov}</div>
                             <div class="lex-nombre-prov">${f.nombre}</div>
                         </td>
-                        <td class="lex-td-status">${formatearEstado(f.s1)}</td>
-                        <td class="lex-td-status">${formatearEstado(f.s2)}</td>
-                        <td class="lex-td-status">${formatearEstado(f.s3)}</td>
-                        <td class="lex-td-status">${formatearEstado(f.s4)}</td>
-                        <td class="lex-td-status">${formatearEstado(f.s5)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s1)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s2)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s3)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s4)}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s5)}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -1704,13 +1729,14 @@ function renderizarVistaMes(response) {
     </div>`;
 
     contenedor.innerHTML = html;
+    console.log("✅ Renderizado Mensual completado con estilos LexTech.");
 }
 
 function getWeekNumber(d) {
-  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
 async function verDetalleSemana(numSemana) {
