@@ -1737,6 +1737,83 @@ function getWeekNumber(d) {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
+function renderizarVistaSemanal(data, numSemana) {
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+    
+    if (titulo) titulo.innerText = `PLANIFICACIÓN SEMANAL: SEMANA ${numSemana}`;
+    
+    // Mapeo de días interactivos para los encabezados de tu tabla
+    const dias = [
+        { corto: 'LUN', largo: 'LUNES' },
+        { corto: 'MAR', largo: 'MARTES' },
+        { corto: 'MIE', largo: 'MIERCOLES' },
+        { corto: 'JUE', largo: 'JUEVES' },
+        { corto: 'VIE', largo: 'VIERNES' },
+        { corto: 'SAB', largo: 'SABADO' }
+    ];
+    
+    let html = `
+    <div class="lex-report-toolbar" style="margin-bottom:15px; display:flex; gap:10px;">
+        <button onclick="abrirModalSemanal()" class="lex-btn-nav">← VOLVER AL MES</button>
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav">
+            <i class="fas fa-sync-alt"></i> REFRESCAR
+        </button>
+    </div>
+    <div class="overflow-x-auto custom-scroll">
+        <table class="lex-table-report">
+            <thead>
+                <tr>
+                    <th style="color:var(--lex-gold); text-align:left; min-width:200px;">PROVEEDOR</th>
+                    ${dias.map(d => `
+                        <th style="text-align:center; padding: 0;">
+                            <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="lex-btn-nav" style="width:100%; padding:6px 2px; font-size:11px;">
+                                ${d.corto}
+                            </button>
+                        </th>
+                    `).join('')}
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    if (!data || data.length === 0) {
+        html += `<tr><td colspan="7" style="padding:40px; text-align:center; color:#64748b;">No hay datos disponibles para esta semana.</td></tr>`;
+    } else {
+        data.forEach(f => {
+            // Lectura tolerante: por si GAS responde con matriz de arrays [id, nombre, lun, mar...] o con objetos {idprov, nombre...}
+            const idprov = f.idprov || f[0] || '';
+            const nombre = f.nombre || f[1] || 'SIN NOMBRE';
+            const s1 = f.s1 !== undefined ? f.s1 : f[2] || 'NO';
+            const s2 = f.s2 !== undefined ? f.s2 : f[3] || 'NO';
+            const s3 = f.s3 !== undefined ? f.s3 : f[4] || 'NO';
+            const s4 = f.s4 !== undefined ? f.s4 : f[5] || 'NO';
+            const s5 = f.s5 !== undefined ? f.s5 : f[6] || 'NO';
+            const s6 = f.s6 !== undefined ? f.s6 : f[7] || 'NO';
+            
+            html += `
+            <tr>
+                <td class="lex-td-prov">
+                    <div class="lex-id-badge">ID: ${idprov}</div>
+                    <div class="lex-nombre-prov">${nombre}</div>
+                </td>
+                <td style="text-align:center">${formatearEstado(s1)}</td>
+                <td style="text-align:center">${formatearEstado(s2)}</td>
+                <td style="text-align:center">${formatearEstado(s3)}</td>
+                <td style="text-align:center">${formatearEstado(s4)}</td>
+                <td style="text-align:center">${formatearEstado(s5)}</td>
+                <td style="text-align:center">${formatearEstado(s6)}</td>
+            </tr>`;
+        });
+    }
+    
+    html += `</tbody></table></div>`;
+    
+    if (contenedor) {
+        contenedor.innerHTML = html;
+    }
+    console.log(`✅ Vista semanal renderizada correctamente para la semana ${numSemana}`);
+}
+
 async function verDetalleSemana(numSemana) {
     if (!numSemana) return;
     mostrarCargandoLex(true);
