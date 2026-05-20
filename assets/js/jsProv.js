@@ -1414,7 +1414,7 @@ function renderizarVistaMes(response) {
 
     let html = `
     <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:15px; align-items:center;">
-        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav">
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-btn-nav-header">
             <i class="fas fa-sync-alt"></i> REFRESCAR HOJA
         </button>
         <span style="color: #64748b; font-size: 11px; letter-spacing: 1px;">
@@ -1528,8 +1528,8 @@ function renderizarVistaSemanal(data, numSemana) {
     
     let html = `
     <div class="lex-report-toolbar" style="margin-bottom:15px; display:flex; gap:10px;">
-        <button onclick="abrirModalSemanal()" class="lex-btn-nav">← VOLVER AL MES</button>
-        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav">
+        <button onclick="abrirModalSemanal()" class="lex-btn-nav lex-neon-green">← VOLVER AL MES</button>
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-neon-blue">
             <i class="fas fa-sync-alt"></i> REFRESCAR
         </button>
     </div>
@@ -1540,7 +1540,7 @@ function renderizarVistaSemanal(data, numSemana) {
                     <th style="color:var(--lex-gold); text-align:left; min-width:200px;">PROVEEDOR</th>
                     ${dias.map(d => `
                         <th style="text-align:center; padding: 0;">
-                            <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="lex-btn-nav" style="width:100%; padding:6px 2px; font-size:11px;">
+                            <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="lex-btn-nav lex-neon-orange" style="width:100%; padding:6px 2px; font-size:11px;">
                                 ${d.corto}
                             </button>
                         </th>
@@ -1552,15 +1552,15 @@ function renderizarVistaSemanal(data, numSemana) {
     if (!data || data.length === 0) {
         html += `<tr><td colspan="7" style="padding:40px; text-align:center; color:#64748b;">No hay datos disponibles para esta semana.</td></tr>`;
     } else {
-        // Descartamos posibles cabeceras devueltas por error
         const filasFiltradas = data.filter(f => {
-            const id = f.idprov || f[0] || '';
+            const id = f.idProveedor || f.idprov || f[0] || '';
             return id !== 'ID PROV' && id !== '';
         });
 
         filasFiltradas.forEach(f => {
-            const idprov = f.idprov || f[0] || '';
-            const nombre = f.nombre || f[1] || 'SIN NOMBRE';
+            // 🛠️ MAPEADO SEGURO TAMBIÉN AQUÍ POR SI LA VISTA SEMANAL USA EL MISMO OBJETO
+            const idprov = f.idProveedor || f.idprov || f[0] || '';
+            const nombre = f.nombreProveedor || f.nombre || f[1] || 'SIN NOMBRE';
             const s1 = f.s1 !== undefined ? f.s1 : f[2] || 'NO';
             const s2 = f.s2 !== undefined ? f.s2 : f[3] || 'NO';
             const s3 = f.s3 !== undefined ? f.s3 : f[4] || 'NO';
@@ -1615,8 +1615,8 @@ async function verDetalleDia(nombreDia, numSemana) {
             data = [];
         }
 
-        // Limpieza estricta de la primera fila si trae los nombres de las columnas
-        if (data.length > 0 && (data[0][0] === 'ID PROV' || data[0].idprov === 'ID PROV')) {
+        // Limpieza de cabeceras físicas por las dudas
+        if (data.length > 0 && (data[0].idProveedor === 'ID PROV' || data[0][0] === 'ID PROV')) {
             data.shift();
         }
         
@@ -1624,8 +1624,8 @@ async function verDetalleDia(nombreDia, numSemana) {
 
         let html = `
             <div class="lex-report-toolbar" style="margin-bottom:15px; display:flex; gap:10px;">
-                <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav">← VOLVER A SEMANA</button>
-                <button onclick="abrirModalSemanal()" class="lex-btn-nav">INICIO MES</button>
+                <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav lex-neon-green">← VOLVER A SEMANA</button>
+                <button onclick="abrirModalSemanal()" class="lex-btn-nav lex-neon-orange">INICIO MES</button>
             </div>
             <div class="overflow-x-auto custom-scroll">
                 <table class="lex-table-report">
@@ -1645,17 +1645,16 @@ async function verDetalleDia(nombreDia, numSemana) {
             html += `<tr><td colspan="6" style="padding:50px; text-align:center; color:#64748b;">No hay pedidos registrados para este día.</td></tr>`;
         } else {
             data.forEach(item => {
-                // LECTURA TOLERANTE: Mapea indices físicos de la hoja diaria [0 a 6] u Objetos JSON
-                const idProv = item.idprov || item[0] || '';
-                const nombre = item.nombre || item[1] || 'SIN NOMBRE';
+                // 🛠️ MAPEADO CORREGIDO SEGÚN TU CONSOLA OBJETO REAL
+                const idProv = item.idProveedor || item.idprov || item[0] || '';
+                const nombre = item.nombreProveedor || item.nombre || item[1] || 'SIN NOMBRE';
                 const estado = item.estado || item[2] || 'NO';
-                const fechaReg = item.fecha || item[3] || '';
+                const fechaReg = item.fechaRegistro || item.fecha || item[3] || ''; 
                 const idPedido = item.idPedido || item[4] || '';
                 const observaciones = item.observaciones || item[5] || '';
-                const fechaReprog = item.fechaReprog || item[6] || '';
+                const fechaReprog = item.nuevaFechaReprog || item.fechaReprog || item[6] || '';
 
-                // Construcción visual del bloque de reprogramación si existiera
-                let infoFechaHtml = `<div>${fechaReg}</div>`;
+                let infoFechaHtml = `<div>${fechaReg || '---'}</div>`;
                 if (fechaReprog && estado.toString().toUpperCase().includes("REPRO")) {
                     infoFechaHtml += `<div style="font-size:10px; color:var(--lex-gold); margin-top:2px;"><i class="fas fa-calendar-alt"></i> Reprog: ${fechaReprog}</div>`;
                 }
@@ -1673,7 +1672,7 @@ async function verDetalleDia(nombreDia, numSemana) {
                         ${observaciones || '<span style="color:#475569; font-style:italic;">Sin observaciones</span>'}
                     </td>
                     <td style="text-align:center; vertical-align:middle;">
-                        <button onclick="verPedidoDirecto('${idPedido}')" class="lex-btn-nav" style="padding:5px 10px; font-size:11px;">
+                        <button onclick="verPedidoDirecto('${idPedido}')" class="lex-btn-nav lex-neon-purple" style="padding:5px 10px; font-size:11px;">
                             <i class="fas fa-search"></i> Ver
                         </button>
                     </td>

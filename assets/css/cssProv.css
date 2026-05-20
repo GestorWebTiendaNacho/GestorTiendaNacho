@@ -875,50 +875,84 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .lex-btn-nav-header {
     width: 100%;
     border: none;
-    background: rgba(30, 41, 59, 0.5);
+    background: rgba(30, 41, 59, 0.4);
     cursor: pointer;
-    padding: 12px 5px;
-    transition: all 0.3s ease;
+    /* Más padding vertical y horizontal para dar presencia de bloque */
+    padding: 16px 8px; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px; /* Más aire entre "FILTRAR A2" y "SEM XX" */
 }
 
-/* 1. SEMANA ACTUAL: Verde Neón */
+/* botones de cabecera */
+.lex-btn-nav-header .lex-label-ver {
+    font-size: 10px;
+    letter-spacing: 1px;
+    font-weight: 500;
+    opacity: 0.8;
+    transition: color 0.3s ease;
+}
+
+.lex-btn-nav-header .lex-label-sem {
+    font-size: 14px; 
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+
 .lex-header-actual {
-    border-bottom: 3px solid #22c55e !important; /* Verde neón base */
-    box-shadow: inset 0 -10px 20px -10px rgba(34, 197, 94, 0.4);
+    border-bottom: 3px solid #22c55e !important; 
+    background: rgba(34, 197, 94, 0.07) !important; 
+    box-shadow: 0 0 14px rgba(34, 197, 94, 0.25), inset 0 0 10px rgba(34, 197, 94, 0.15) !important;
 }
 
 .lex-header-actual .lex-label-sem {
-    color: #4ade80 !important; /* Texto verde brillante */
+    color: #4ade80 !important; 
     text-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
-    font-weight: bold;
+    font-weight: 700;
 }
 
-/* 2. OTRAS SEMANAS: Color estándar (Azul grisáceo / Oro suave) */
+.lex-header-actual .lex-label-ver {
+    color: #86efac !important;
+}
+
 .lex-header-other {
     border-bottom: 3px solid #475569;
 }
 
 .lex-header-other .lex-label-sem {
-    color: #cbd5e1;
+    color: #94a3b8;
 }
 
-/* 3. HOVERS PARA TODAS */
+.lex-header-other .lex-label-ver {
+    color: #64748b;
+}
+
 .lex-btn-nav-header:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.08) !important;
+    transform: translateY(-3px); 
 }
 
 .lex-header-actual:hover {
-    box-shadow: inset 0 -15px 25px -10px rgba(34, 197, 94, 0.6);
     border-bottom: 3px solid #4ade80 !important;
+    box-shadow: 0 0 25px rgba(34, 197, 94, 0.55), inset 0 0 15px rgba(34, 197, 94, 0.25) !important;
 }
 
 .lex-header-other:hover {
-    border-bottom: 3px solid var(--lex-gold) !important;
+    border-bottom: 3px solid #00f0ff !important; 
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.45), inset 0 0 12px rgba(0, 240, 255, 0.2) !important;
+}
+
+.lex-header-other:hover .lex-label-sem {
+    color: #00f0ff !important;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
+    font-weight: 600;
+}
+
+.lex-header-other:hover .lex-label-ver {
+    color: #a5f3fc !important;
 }
 
 .lex-btn-nav {
@@ -940,6 +974,39 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     transform: translateY(-2px);
     color: var(--lex-gold) !important;
 }
+
+.lex-btn-nav.lex-neon-blue:hover {
+    border-bottom: 3px solid #00f0ff !important;
+    color: #00f0ff !important;
+    background: rgba(0, 240, 255, 0.12) !important;
+    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4);
+}
+
+/* 2. VERDE NEÓN (Matrix Green) */
+.lex-btn-nav.lex-neon-green:hover {
+    border-bottom: 3px solid #00ff66 !important;
+    color: #00ff66 !important;
+    background: rgba(0, 255, 102, 0.1) !important;
+    box-shadow: 0 4px 20px rgba(0, 255, 102, 0.4);
+}
+
+/* 3. PÚRPURA NEÓN (Cyber Punk Purple) */
+.lex-btn-nav.lex-neon-purple:hover {
+    border-bottom: 3px solid #cc00ff !important;
+    color: #cc00ff !important;
+    background: rgba(204, 0, 255, 0.12) !important;
+    box-shadow: 0 4px 20px rgba(204, 0, 255, 0.4);
+}
+
+/* 4. NARANJA NEÓN (High-Volt Orange) */
+.lex-btn-nav.lex-neon-orange:hover {
+    border-bottom: 3px solid #ff7700 !important;
+    color: #ff7700 !important;
+    background: rgba(255, 119, 0, 0.12) !important;
+    box-shadow: 0 4px 20px rgba(255, 119, 0, 0.4);
+}
+
+
 
 /* Etiquetas internas */
 .lex-label-ver {
