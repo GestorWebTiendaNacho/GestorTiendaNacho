@@ -1863,22 +1863,98 @@ async function ejecutarSincronizacionRelampago() {
     }
 }
 
-window.verPedidoDirecto = function(idPedido) {
-    console.log(`🔮 Buscando e impactando vista para el pedido: ${idPedido}`);
-    
+window.verPedidoDirecto = async function(idPedido) {
     if (!idPedido || idPedido.trim() === "") {
-        alert("El registro no cuenta con un ID de pedido válido.");
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'Este registro no cuenta con un ID de pedido válido.',
+            background: '#1e293b',
+            color: '#cbd5e1'
+        });
         return;
     }
 
-    // 💡 ACÁ VÁ TU LÓGICA EXISTENTE PARA ABRIR EL MODAL DEL PEDIDO
-    // Por ejemplo, si tenés una función que carga el pedido por ID, la llamás acá:
-    if (typeof abrirModalDetallePedido === 'function') {
-        abrirModalDetallePedido(idPedido);
-    } else {
-        // Alerta temporal por si usás otro nombre de función para tus modales
-        console.warn("⚠️ Tenés que enlazar esta función con tu lógica de apertura de modales.");
-        alert(`Pedido seleccionado: ${idPedido}\n\n(Pronto: Conectar con el modal de visualización de órdenes)`);
+    // 1. Mostrar loading sutil mientras viaja al backend
+    Swal.fire({
+        title: 'Buscando registro...',
+        html: `Consultando orden <b style="color:#00f0ff">${idPedido}</b>`,
+        background: '#1e293b',
+        color: '#cbd5e1',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        // 2. Pedir los datos exactos a la hoja "Estado_Pedidos"
+        const res = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
+        
+        if (res.status !== 'success') {
+            Swal.fire({
+                icon: 'info',
+                title: 'No encontrado',
+                text: res.message || 'No se hallaron registros extras para este pedido.',
+                background: '#1e293b',
+                color: '#cbd5e1',
+                confirmButtonColor: '#475569'
+            });
+            return;
+        }
+
+        const d = res.data;
+        
+        // 3. Renderizar el SweetAlert con estructura CSS limpia tipo Card Cyberpunk
+        Swal.fire({
+            title: `<span style="font-size:14px; color:#94a3b8; letter-spacing:1px;">DETALLE DE TRANSACCIÓN</span><br>
+                    <span style="color:#00f0ff; font-family:monospace; font-size:20px;">#${idPedido}</span>`,
+            html: `
+                <div style="text-align: left; background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; margin-top:10px;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">PROVEEDOR:</span>
+                        <span style="color: #f8fafc; font-weight:600;">(${d["ID PROV"] || d["IDPROVEEDOR"] || '---'}) ${d["NOMBRE"] || d["NOMBREPROVEEDOR"] || '---'}</span>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">ESTADO HOJA:</span>
+                        <span style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius:4px; color:#34d399;">${d["ESTADO"] || '---'}</span>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">REGISTRO:</span>
+                        <span style="color: #cbd5e1;">${d["FECHA REGISTRO"] || d["FECHA"] || '---'}</span>
+                    </div>
+                    ${d["NUEVA FECHA REPROG"] && d["NUEVA FECHA REPROG"] !== "---" ? `
+                    <div style="margin-bottom: 8px; border-left: 2px solid #eab308; padding-left: 8px;">
+                        <span style="color: #eab308; font-weight: bold; display:inline-block; width:102px;">REPROGRAMADO:</span>
+                        <span style="color: #fef08a;">${d["NUEVA FECHA REPROG"]}</span>
+                    </div>` : ''}
+                    <hr style="border:0; border-top: 1px dashed #334155; margin: 12px 0;">
+                    <div>
+                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">OBSERVACIONES HISTÓRICAS:</span>
+                        <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; color: #94a3b8; font-style: italic; min-height: 40px; word-break: break-word;">
+                            ${d["OBSERVACIONES"] || 'Sin comentarios registrados.'}
+                        </div>
+                    </div>
+                </div>
+            `,
+            background: '#1e293b',
+            color: '#cbd5e1',
+            confirmButtonText: 'ENTENDIDO',
+            confirmButtonColor: '#00f0ff',
+            customClass: {
+                confirmButton: 'lex-sweet-btn' // Por si querés meterle estilos luego
+            }
+        });
+
+    } catch (error) {
+        console.error("Error en verPedidoDirecto:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Comunicación',
+            text: 'No pudimos conectar con la base de datos de pedidos.',
+            background: '#1e293b',
+            color: '#cbd5e1'
+        });
     }
 };
 
