@@ -1609,39 +1609,40 @@ async function abrirModalSemanal() {
 
     try {
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
-        console.log("📦 Respuesta bruta recibida:", res);
+        console.log("📦 Respuesta bruta recibida (Mes):", res);
         
-        // EL TRUCO ESTÁ AQUÍ:
-        // Tu log muestra que los datos están en res.reply.reply
-        let data = res.reply;
-        if (data && data.reply) {
-            data = data.reply; // Bajamos un nivel más
+        // Desenvolvimiento ultra-defensivo multinivel
+        let data = res;
+        if (data && data.reply) data = data.reply;
+        if (data && data.reply) data = data.reply; 
+        
+        console.log("🔍 Data real extraída (Mes):", data);
+
+        let filasRaw = [];
+        let semanasRelativas = [];
+
+        if (data) {
+            filasRaw = data.filas || (Array.isArray(data) ? data : []);
+            semanasRelativas = data.semanasRelativas || [];
         }
-        
-        console.log("🔍 Data real extraída:", data);
 
-        const filasRaw = data.filas || [];
-        const semanasRelativas = data.semanasRelativas || [];
-
-        // Quitamos la fila de encabezados si existe
-        if (filasRaw.length > 0 && filasRaw[0].idprov === 'ID PROV') {
+        // Eliminar fila de encabezado física si se coló desde el array
+        if (filasRaw.length > 0 && (filasRaw[0].idprov === 'ID PROV' || filasRaw[0][0] === 'ID PROV')) {
             filasRaw.shift();
         }
 
-        console.log("📊 Filas listas para renderizar:", filasRaw.length);
+        console.log("📊 Filas listas para renderizar (Mes):", filasRaw.length);
 
         if (filasRaw.length === 0) {
-            console.warn("⚠️ AVISO: GAS no devolvió filas.");
             document.getElementById('contenido-reporte-lex').innerHTML = 
-                `<div style="color:white; text-align:center; padding:20px;">No hay datos disponibles.</div>`;
+                `<div style="color:white; text-align:center; padding:20px;">No hay datos disponibles para el reporte mensual.</div>`;
             return;
         }
 
-        // Llamamos al render con el objeto limpio
         renderizarVistaMes({ filas: filasRaw, semanasRelativas: semanasRelativas });
 
     } catch (err) {
-        console.error("❌ ERROR CRÍTICO:", err);
+        console.error("❌ ERROR CRÍTICO en abrirModalSemanal:", err);
     } finally {
         mostrarCargandoLex(false);
     }
@@ -1656,14 +1657,12 @@ function renderizarVistaMes(response) {
     
     if (titulo) titulo.innerText = "REPORTE MENSUAL DE ENTREGAS";
 
-    // 2. Cálculo exacto de la semana actual para el estilo neón
     const hoy = new Date();
     const d = new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     const inicioAño = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     const semanaHoy = Math.ceil((((d - inicioAño) / 86400000) + 1) / 7);
 
-    // 3. Limpieza de encabezados de semana
     const semanasHead = semanasRelativas.filter(s => s !== "" && s !== null && s !== undefined);
 
     let html = `
@@ -1683,17 +1682,13 @@ function renderizarVistaMes(response) {
                     <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
                     ${semanasHead.map((s, i) => {
                         let numSemanaColumna;
-                        
-                        // SOLUCIÓN AL TRUCO: Si es un número puro de 1 o 2 dígitos (ej: "18" o 21)
                         if (/^\d{1,2}$/.test(String(s).trim())) {
                             numSemanaColumna = parseInt(s);
                         } else {
-                            // Si es un string ISO ("2026-05-18...") o formato fecha completo
                             const fechaSemana = new Date(s);
                             if (!isNaN(fechaSemana.getTime())) {
                                 numSemanaColumna = getWeekNumber(fechaSemana);
                             } else {
-                                // Extracción de emergencia por si dice "SEM 21"
                                 const match = s.toString().match(/\d+/);
                                 numSemanaColumna = match ? parseInt(match[0]) : (i + 1);
                             }
@@ -1714,32 +1709,59 @@ function renderizarVistaMes(response) {
                 </tr>
             </thead>
             <tbody>
-                ${filas.filter(f => f.nombre && f.nombre !== 'NOMBRE PROVEEDOR' && f.idprov !== 'ID PROV').map(f => `
+                ${filas.map(f => {
+                    const idprov = f.idprov || f[0] || '';
+                    const nombre = f.nombre || f[1] || 'SIN NOMBRE';
+                    if (!nombre || nombre === 'NOMBRE PROVEEDOR' || idprov === 'ID PROV') return '';
+
+                    return `
                     <tr>
                         <td class="lex-td-prov">
-                            <div class="lex-id-badge">ID: ${f.idprov}</div>
-                            <div class="lex-nombre-prov">${f.nombre}</div>
+                            <div class="lex-id-badge">ID: ${idprov}</div>
+                            <div class="lex-nombre-prov">${nombre}</div>
                         </td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s1)}</td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s2)}</td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s3)}</td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s4)}</td>
-                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s5)}</td>
-                    </tr>
-                `).join('')}
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s1 !== undefined ? f.s1 : f[2])}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s2 !== undefined ? f.s2 : f[3])}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s3 !== undefined ? f.s3 : f[4])}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s4 !== undefined ? f.s4 : f[5])}</td>
+                        <td class="lex-td-status" style="text-align:center">${formatearEstado(f.s5 !== undefined ? f.s5 : f[6])}</td>
+                    </tr>`;
+                }).join('')}
             </tbody>
         </table>
     </div>`;
 
     contenedor.innerHTML = html;
-    console.log("✅ Renderizado Mensual completado con asignación correcta de semanas reales.");
 }
 
-function getWeekNumber(d) {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+async function verDetalleSemana(numSemana) {
+    if (!numSemana) return;
+    mostrarCargandoLex(true);
+    
+    try {
+        const res = await callGoogleScript('procesarFiltradoHoja', { 
+            param: parseInt(numSemana), 
+            tipo: "SEMANA" 
+        });
+        console.log("📦 Respuesta bruta recibida (Semana):", res);
+
+        let data = res;
+        if (data && data.reply) data = data.reply;
+        if (data && data.reply) data = data.reply;
+        if (data && data.filas) data = data.filas;
+
+        if (!Array.isArray(data)) {
+            console.error("⚠️ La estructura devuelta no se pudo transformar en Array:", data);
+            data = [];
+        }
+
+        renderizarVistaSemanal(data, numSemana); 
+        
+    } catch (e) {
+        console.error("Error en verDetalleSemana:", e);
+    } finally {
+        mostrarCargandoLex(false);
+    }
 }
 
 function renderizarVistaSemanal(data, numSemana) {
@@ -1748,7 +1770,6 @@ function renderizarVistaSemanal(data, numSemana) {
     
     if (titulo) titulo.innerText = `PLANIFICACIÓN SEMANAL: SEMANA ${numSemana}`;
     
-    // Mapeo de días interactivos para los encabezados de tu tabla
     const dias = [
         { corto: 'LUN', largo: 'LUNES' },
         { corto: 'MAR', largo: 'MARTES' },
@@ -1784,8 +1805,13 @@ function renderizarVistaSemanal(data, numSemana) {
     if (!data || data.length === 0) {
         html += `<tr><td colspan="7" style="padding:40px; text-align:center; color:#64748b;">No hay datos disponibles para esta semana.</td></tr>`;
     } else {
-        data.forEach(f => {
-            // Lectura tolerante: por si GAS responde con matriz de arrays [id, nombre, lun, mar...] o con objetos {idprov, nombre...}
+        // Descartamos posibles cabeceras devueltas por error
+        const filasFiltradas = data.filter(f => {
+            const id = f.idprov || f[0] || '';
+            return id !== 'ID PROV' && id !== '';
+        });
+
+        filasFiltradas.forEach(f => {
             const idprov = f.idprov || f[0] || '';
             const nombre = f.nombre || f[1] || 'SIN NOMBRE';
             const s1 = f.s1 !== undefined ? f.s1 : f[2] || 'NO';
@@ -1812,52 +1838,42 @@ function renderizarVistaSemanal(data, numSemana) {
     }
     
     html += `</tbody></table></div>`;
-    
-    if (contenedor) {
-        contenedor.innerHTML = html;
-    }
-    console.log(`✅ Vista semanal renderizada correctamente para la semana ${numSemana}`);
-}
-
-async function verDetalleSemana(numSemana) {
-    if (!numSemana) return;
-    mostrarCargandoLex(true);
-    
-    try {
-        const res = await callGoogleScript('procesarFiltradoHoja', { 
-            param: parseInt(numSemana), 
-            tipo: "SEMANA" 
-        });
-        
-        const data = (res && res.reply) ? res.reply : res;
-        
-        renderizarVistaSemanal(data, numSemana); 
-        
-    } catch (e) {
-        console.error("Error:", e);
-    } finally {
-        mostrarCargandoLex(false);
-    }
+    if (contenedor) contenedor.innerHTML = html;
 }
 
 async function verDetalleDia(nombreDia, numSemana) {
     console.log(`🔍 Filtrando detalle para: ${nombreDia} (Semana ${numSemana})`);
     mostrarCargandoLex(true);
     
-    navegacionSemanal.diaActual = nombreDia;
+    if (typeof navegacionSemanal !== 'undefined') {
+        navegacionSemanal.diaActual = nombreDia;
+    }
+    
     const contenedor = document.getElementById('contenido-reporte-lex');
     const titulo = document.getElementById('reportesTitulo');
 
     try {
-        // Esta llamada al GS impactará la celda K2 según tu lógica de 'procesarFiltradoHoja'
         const res = await callGoogleScript('procesarFiltradoHoja', { 
             param: nombreDia, 
             tipo: "DIA" 
         });
+        console.log("📦 Respuesta bruta recibida (Día):", res);
         
-        const data = (res && res.reply) ? res.reply : res;
+        let data = res;
+        if (data && data.reply) data = data.reply;
+        if (data && data.reply) data = data.reply;
+        if (data && data.filas) data = data.filas;
+
+        if (!Array.isArray(data)) {
+            data = [];
+        }
+
+        // Limpieza estricta de la primera fila si trae los nombres de las columnas
+        if (data.length > 0 && (data[0][0] === 'ID PROV' || data[0].idprov === 'ID PROV')) {
+            data.shift();
+        }
         
-        titulo.innerText = `DETALLE: ${nombreDia} - SEMANA ${numSemana}`;
+        if (titulo) titulo.innerText = `DETALLE: ${nombreDia} - SEMANA ${numSemana}`;
 
         let html = `
             <div class="lex-report-toolbar" style="margin-bottom:15px; display:flex; gap:10px;">
@@ -1870,26 +1886,48 @@ async function verDetalleDia(nombreDia, numSemana) {
                         <tr>
                             <th>PROVEEDOR</th>
                             <th style="text-align:center">ESTADO</th>
-                            <th style="text-align:center">FECHA</th>
+                            <th style="text-align:center">FECHA REGISTRO</th>
                             <th style="text-align:center">ID PEDIDO</th>
+                            <th style="text-align:center">OBSERVACIONES</th>
                             <th style="text-align:center">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>`;
 
-        if (!data || data.length === 0) {
-            html += `<tr><td colspan="5" style="padding:50px; text-align:center; color:#64748b;">No hay pedidos registrados para este día.</td></tr>`;
+        if (data.length === 0) {
+            html += `<tr><td colspan="6" style="padding:50px; text-align:center; color:#64748b;">No hay pedidos registrados para este día.</td></tr>`;
         } else {
             data.forEach(item => {
+                // LECTURA TOLERANTE: Mapea indices físicos de la hoja diaria [0 a 6] u Objetos JSON
+                const idProv = item.idprov || item[0] || '';
+                const nombre = item.nombre || item[1] || 'SIN NOMBRE';
+                const estado = item.estado || item[2] || 'NO';
+                const fechaReg = item.fecha || item[3] || '';
+                const idPedido = item.idPedido || item[4] || '';
+                const observaciones = item.observaciones || item[5] || '';
+                const fechaReprog = item.fechaReprog || item[6] || '';
+
+                // Construcción visual del bloque de reprogramación si existiera
+                let infoFechaHtml = `<div>${fechaReg}</div>`;
+                if (fechaReprog && estado.toString().toUpperCase().includes("REPRO")) {
+                    infoFechaHtml += `<div style="font-size:10px; color:var(--lex-gold); margin-top:2px;"><i class="fas fa-calendar-alt"></i> Reprog: ${fechaReprog}</div>`;
+                }
+
                 html += `
                 <tr>
-                    <td style="font-weight:bold; color:var(--lex-gold);">${item.nombre}</td>
-                    <td style="text-align:center">${formatearEstado(item.estado)}</td>
-                    <td style="text-align:center; font-size:11px;">${item.fecha}</td>
-                    <td style="text-align:center; color:#94a3b8;">#${item.idPedido}</td>
-                    <td style="text-align:center">
-                        <button onclick="verPedidoDirecto('${item.idPedido}')" class="lex-btn-nav" style="padding:4px 8px; font-size:10px;">
-                            <i class="fas fa-search"></i>
+                    <td class="lex-td-prov">
+                        <div class="lex-id-badge">ID: ${idProv}</div>
+                        <div class="lex-nombre-prov">${nombre}</div>
+                    </td>
+                    <td style="text-align:center; vertical-align:middle;">${formatearEstado(estado)}</td>
+                    <td style="text-align:center; font-size:11px; vertical-align:middle;">${infoFechaHtml}</td>
+                    <td style="text-align:center; color:#94a3b8; font-family:monospace; font-size:12px; vertical-align:middle;">#${idPedido}</td>
+                    <td style="max-width:200px; font-size:11px; color:#cbd5e1; white-space:normal; word-break:break-word; vertical-align:middle;">
+                        ${observaciones || '<span style="color:#475569; font-style:italic;">Sin observaciones</span>'}
+                    </td>
+                    <td style="text-align:center; vertical-align:middle;">
+                        <button onclick="verPedidoDirecto('${idPedido}')" class="lex-btn-nav" style="padding:5px 10px; font-size:11px;">
+                            <i class="fas fa-search"></i> Ver
                         </button>
                     </td>
                 </tr>`;
@@ -1897,22 +1935,28 @@ async function verDetalleDia(nombreDia, numSemana) {
         }
 
         html += `</tbody></table></div>`;
-        contenedor.innerHTML = html;
+        if (contenedor) contenedor.innerHTML = html;
 
     } catch (e) {
         console.error("Error en verDetalleDia:", e);
-        contenedor.innerHTML = `<div style="color:red; padding:20px;">Error al traer detalle diario: ${e.message}</div>`;
+        if (contenedor) contenedor.innerHTML = `<div style="color:red; padding:20px;">Error al traer detalle diario: ${e.message}</div>`;
     } finally {
         mostrarCargandoLex(false);
     }
 }
 
-// HELPERS DE FORMATO
+function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
 function formatearEstado(e) {
-    if (!e || e === "" || e === "NO") return `<span class="status-lex status-lex-error" style="opacity:0.4">NO</span>`;
+    if (!e || e === "" || e === "NO" || e === "❌ NO") return `<span class="status-lex status-lex-error" style="opacity:0.4">❌ NO</span>`;
     let txt = e.toString().toUpperCase();
-    if (txt.includes("SI") || txt.includes("✅")) return `<span class="status-lex status-lex-ok">✅OK</span>`;
-    if (txt.includes("REPRO") || txt.includes("⚠️")) return `<span class="status-lex status-lex-warn">⚠️REPROG</span>`;
+    if (txt.includes("SI") || txt.includes("✅")) return `<span class="status-lex status-lex-ok">✅ OK</span>`;
+    if (txt.includes("REPRO") || txt.includes("⚠️")) return `<span class="status-lex status-lex-warn">⚠️ REPROG</span>`;
     return `<span class="status-lex" style="background:#475569">${txt}</span>`;
 }
 
