@@ -1682,13 +1682,18 @@ function renderizarVistaMes(response) {
                 <tr>
                     <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
                     ${semanasHead.map((s, i) => {
-                        let numSemanaColumna = parseInt(s);
+                        let numSemanaColumna;
                         
-                        if (isNaN(numSemanaColumna)) {
+                        // SOLUCIÓN AL TRUCO: Si es un número puro de 1 o 2 dígitos (ej: "18" o 21)
+                        if (/^\d{1,2}$/.test(String(s).trim())) {
+                            numSemanaColumna = parseInt(s);
+                        } else {
+                            // Si es un string ISO ("2026-05-18...") o formato fecha completo
                             const fechaSemana = new Date(s);
                             if (!isNaN(fechaSemana.getTime())) {
                                 numSemanaColumna = getWeekNumber(fechaSemana);
                             } else {
+                                // Extracción de emergencia por si dice "SEM 21"
                                 const match = s.toString().match(/\d+/);
                                 numSemanaColumna = match ? parseInt(match[0]) : (i + 1);
                             }
@@ -1727,7 +1732,7 @@ function renderizarVistaMes(response) {
     </div>`;
 
     contenedor.innerHTML = html;
-    console.log("✅ Renderizado Mensual completado con estilos LexTech.");
+    console.log("✅ Renderizado Mensual completado con asignación correcta de semanas reales.");
 }
 
 function getWeekNumber(d) {
