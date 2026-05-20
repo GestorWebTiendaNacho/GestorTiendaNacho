@@ -38,260 +38,7 @@ var currentScale = typeof currentScale !== 'undefined' ? currentScale : 1;
 window.estadoEdicion = window.estadoEdicion || { hoja: "", fila: null };
 
 
-//----------------------------SECCION NICO Y SIDEBAR-------------
 
-function toggleMenu() {
-  const menu = document.getElementById('mainMenu');
-  if (menu) {
-    menu.classList.toggle('active');
-  } else {
-    console.warn("NICO: No se encontró #mainMenu para toggle");
-  }
-};
-
-window.speedIncrase = function() {
-    if (typeof speed === 'undefined') window.speed = 0;
-    if (speed < 180) {
-        speed = speed + 15;
-    } else {
-        speed = 0;
-        currentScale = 0;
-    }
-    window.actualizarInterfaz();
-    if (typeof currentScale !== 'undefined') currentScale++;
-    window.changeActive();
-};
-
-window.actualizarInterfaz = function() {
-    const el = document.getElementsByClassName("arrow-wrapper")[0];
-    if (!el) return;
-    const claseVieja = "speed-" + (typeof prevSpeed !== 'undefined' ? prevSpeed : 0);
-    const claseNueva = "speed-" + speed;
-    el.classList.remove(claseVieja);
-    el.classList.add(claseNueva);
-    window.prevSpeed = speed;
-};
-
-window.changeActive = function() {
-    let nombreClaseBusqueda = "speedometer-Scale-" + currentScale;
-    const el = document.getElementsByClassName(nombreClaseBusqueda)[0];
-    if (el) {
-        el.classList.toggle("active");
-    }
-};
-
-
-// ----------------------------- NICO CONTROLLER -----------------
-if (!window.NicoController) {
-    window.NicoController = (function() {
-        const ESTADOS = {
-            SALUDANDO: "https://lh3.googleusercontent.com/d/1mkCllM3of8cBljHNcE0O-PnxChIdlck6",
-            PENSANDO:  "https://lh3.googleusercontent.com/d/1Fraz2E6WH19fo2rfhaoqMt0hkbkZILX8",
-            ESPERANDO: "https://lh3.googleusercontent.com/d/1lYxZJVhxkfteppRdVvFcLddPWu6IJkIe",
-            RESPONDE:  "https://lh3.googleusercontent.com/d/1N8CNvmkgBbunVbPG758xeHrTuo7aw7q4"
-        };
-
-        const nico = {
-            img: new Image(),
-            estadoActual: "SALUDANDO",
-            frame: 0,
-            fps: 9,
-            lastUpdate: 0,
-            distanciaSalto: 178,
-            anchoRecorte: 80,
-            altoCuadro: 300,
-            yInicial: -128,
-            totalFrames: 8,
-            tamanoVisual: 180
-        };
-
-        function iniciar() {
-            const currentCanvas = document.getElementById("canvas-nico");
-            if (!currentCanvas) return;
-
-            nico.estadoActual = "SALUDANDO";
-            nico.img.crossOrigin = "Anonymous";
-            nico.img.src = ESTADOS.SALUDANDO;
-            nico.frame = 0;
-            
-            requestAnimationFrame(draw);
-            
-            setTimeout(() => {
-                if (nico.estadoActual === "SALUDANDO") {
-                    cambiarEstado("ESPERANDO");
-                }
-            }, 4500);
-            
-        }
-
-        function cambiarEstado(nuevoEstado) {
-            if (ESTADOS[nuevoEstado] && nico.estadoActual !== nuevoEstado) {
-                nico.estadoActual = nuevoEstado;
-                nico.fps = (nuevoEstado === "RESPONDE") ? 12 : 9;
-                nico.img.src = ESTADOS[nuevoEstado];
-                nico.frame = 0;
-            }
-        }
-
-        function draw(timestamp) {
-            const currentCanvas = document.getElementById("canvas-nico");
-            if (!currentCanvas) return;
-            
-            const currentCtx = currentCanvas.getContext("2d");
-            if (!nico.img.complete) {
-                requestAnimationFrame(draw);
-                return;
-            }
-
-            currentCtx.clearRect(0, 0, currentCanvas.width, currentCanvas.height);
-            const col = nico.frame % nico.totalFrames;
-            const sx = col * nico.distanciaSalto;
-
-            currentCtx.drawImage(
-                nico.img,
-                sx, nico.yInicial, 
-                nico.anchoRecorte, nico.altoCuadro,
-                (currentCanvas.width / 2) - (nico.tamanoVisual / 2),
-                currentCanvas.height - nico.tamanoVisual,
-                nico.tamanoVisual, nico.tamanoVisual
-            );
-
-            if (timestamp - nico.lastUpdate > (1000 / nico.fps)) {
-                nico.frame = (nico.frame + 1) % nico.totalFrames;
-                nico.lastUpdate = timestamp;
-            }
-            requestAnimationFrame(draw);
-        }
-
-        iniciar();
-
-        return { 
-            cambiarA: cambiarEstado,
-            rearrancar: iniciar 
-        };
-    })();
-} else {
-
-    NicoController.rearrancar();
-}
-
-// ------------------- LOGICA DEL CHAT ----------------------------
-window.avatarPensar = () => window.NicoController && NicoController.cambiarA("PENSANDO");
-window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ESPERANDO");
-window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
-
-/*const btnVoz = document.getElementById('btn-nico-voz');*/
-
-/*btnVoz.onclick = () => {
-    const input = document.getElementById("user-input");
-    input.value = "";
-    input.placeholder = "ESCUCHANDO... (Usa Super+S o habla)";
-    input.focus();
-
-    window.avatarIdle();
-    btnVoz.classList.replace('text-slate-500', 'text-red-500');
-
-    input.onblur = () => {
-        if(input.value.length > 2) {
-           enviarPrompt();
-           btnVoz.classList.replace('text-red-500', 'text-slate-500');
-           input.placeholder = "Comando de sistema...";
-        }
-    };
-};*/
-
-
-
-function enviarPrompt() {
-    const inputElement = document.getElementById("user-input");
-    if (!inputElement) return;
-    const userInput = inputElement.value;
-    if (!userInput) return;
-
-    mostrarMensajeUsuario(userInput); 
-    inputElement.value = "";
-    window.avatarPensar();
-
-    google.script.run
-    .withSuccessHandler((respuesta) => {
-        window.avatarHablar();
-        if (typeof mostrarRespuestaEnChat === "function") {
-            mostrarRespuestaEnChat(respuesta);
-        }
-        setTimeout(() => window.avatarIdle(), 4000);
-    })
-    .withFailureHandler((err) => {
-        window.avatarIdle();
-        console.error("Error en Nico:", err);
-    })
-    .procesarPrompt(userInput);
-}
-
-function mostrarMensajeUsuario(texto) {
-    const chatContainer = document.getElementById("chat-messages");
-    if (!chatContainer) return;
-    const div = document.createElement("div");
-    div.className = "flex flex-col items-end message-fade mb-4 transition-all duration-500";
-    div.innerHTML = `
-        <span class="text-[8px] text-slate-500 mb-1 font-bold tracking-widest uppercase">USUARIO >></span>
-        <div class="contenido-mensaje bg-cyan-900/40 border border-cyan-700/50 p-3 rounded-xl rounded-tr-none text-[11px] text-cyan-100 max-w-[90%] shadow-lg backdrop-blur-sm">
-            ${texto}
-        </div>
-    `;
-    chatContainer.appendChild(div);
-    ejecutarScrollYLimpieza();
-}
-
-function mostrarRespuestaEnChat(texto) {
-    const chatContainer = document.getElementById("chat-messages");
-    if (!chatContainer) return;
-    const div = document.createElement("div");
-    div.className = "flex flex-col items-start message-fade mb-4";
-    div.innerHTML = `
-        <span class="text-[8px] text-cyan-500 mb-1 font-bold tracking-widest uppercase">N.I.C.O. >></span>
-        <div class="cuerpo-respuesta bg-slate-800/80 border border-slate-700 p-3 rounded-xl rounded-tl-none text-[11px] text-slate-300 max-w-[90%] shadow-lg backdrop-blur-sm">
-            ${texto}
-        </div>
-    `;
-    chatContainer.appendChild(div);
-    ejecutarScrollYLimpieza();
-    if (typeof ejecutarScriptsInyectados === "function") {
-        ejecutarScriptsInyectados(div);
-    }
-}
-
-
- function ejecutarScrollYLimpieza() {
-    const chatContainer = document.getElementById("chat-messages");
-    if (!chatContainer) return;
-    const mensajes = chatContainer.getElementsByClassName("message-fade");
-    if (mensajes.length > 6) {
-        const primerMensaje = mensajes[0];
-        primerMensaje.classList.add("mensaje-saliente");
-        setTimeout(() => primerMensaje.remove(), 500);
-    }
-    setTimeout(() => {
-        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-    }, 50);
-}
-
-
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar-nico');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (!sidebar) return;
-
-    const isHidden = sidebar.classList.contains('-translate-x-[120%]');
-    if (isHidden) {
-        sidebar.classList.remove('-translate-x-[120%]');
-        sidebar.classList.add('translate-x-0');
-        if (overlay) overlay.classList.remove('hidden');
-    } else {
-        sidebar.classList.remove('translate-x-0');
-        sidebar.classList.add('-translate-x-[120%]');
-        if (overlay) overlay.classList.add('hidden');
-    }
-}
 
 
 //-------SECCION DE APERTURA DEL MODAL Y CARGA DE TABLAS------------------------------------
@@ -2118,3 +1865,260 @@ async function ejecutarSincronizacionRelampago() {
 }
 
 console.log("✅ N.I.C.O. Terminal: Carga finalizada sin errores críticos.");
+
+
+
+//----------------------------SECCION NICO Y SIDEBAR-------------
+
+function toggleMenu() {
+  const menu = document.getElementById('mainMenu');
+  if (menu) {
+    menu.classList.toggle('active');
+  } else {
+    console.warn("NICO: No se encontró #mainMenu para toggle");
+  }
+};
+
+window.speedIncrase = function() {
+    if (typeof speed === 'undefined') window.speed = 0;
+    if (speed < 180) {
+        speed = speed + 15;
+    } else {
+        speed = 0;
+        currentScale = 0;
+    }
+    window.actualizarInterfaz();
+    if (typeof currentScale !== 'undefined') currentScale++;
+    window.changeActive();
+};
+
+window.actualizarInterfaz = function() {
+    const el = document.getElementsByClassName("arrow-wrapper")[0];
+    if (!el) return;
+    const claseVieja = "speed-" + (typeof prevSpeed !== 'undefined' ? prevSpeed : 0);
+    const claseNueva = "speed-" + speed;
+    el.classList.remove(claseVieja);
+    el.classList.add(claseNueva);
+    window.prevSpeed = speed;
+};
+
+window.changeActive = function() {
+    let nombreClaseBusqueda = "speedometer-Scale-" + currentScale;
+    const el = document.getElementsByClassName(nombreClaseBusqueda)[0];
+    if (el) {
+        el.classList.toggle("active");
+    }
+};
+
+
+// ----------------------------- NICO CONTROLLER -----------------
+if (!window.NicoController) {
+    window.NicoController = (function() {
+        const ESTADOS = {
+            SALUDANDO: "https://lh3.googleusercontent.com/d/1mkCllM3of8cBljHNcE0O-PnxChIdlck6",
+            PENSANDO:  "https://lh3.googleusercontent.com/d/1Fraz2E6WH19fo2rfhaoqMt0hkbkZILX8",
+            ESPERANDO: "https://lh3.googleusercontent.com/d/1lYxZJVhxkfteppRdVvFcLddPWu6IJkIe",
+            RESPONDE:  "https://lh3.googleusercontent.com/d/1N8CNvmkgBbunVbPG758xeHrTuo7aw7q4"
+        };
+
+        const nico = {
+            img: new Image(),
+            estadoActual: "SALUDANDO",
+            frame: 0,
+            fps: 9,
+            lastUpdate: 0,
+            distanciaSalto: 178,
+            anchoRecorte: 80,
+            altoCuadro: 300,
+            yInicial: -128,
+            totalFrames: 8,
+            tamanoVisual: 180
+        };
+
+        function iniciar() {
+            const currentCanvas = document.getElementById("canvas-nico");
+            if (!currentCanvas) return;
+
+            nico.estadoActual = "SALUDANDO";
+            nico.img.crossOrigin = "Anonymous";
+            nico.img.src = ESTADOS.SALUDANDO;
+            nico.frame = 0;
+            
+            requestAnimationFrame(draw);
+            
+            setTimeout(() => {
+                if (nico.estadoActual === "SALUDANDO") {
+                    cambiarEstado("ESPERANDO");
+                }
+            }, 4500);
+            
+        }
+
+        function cambiarEstado(nuevoEstado) {
+            if (ESTADOS[nuevoEstado] && nico.estadoActual !== nuevoEstado) {
+                nico.estadoActual = nuevoEstado;
+                nico.fps = (nuevoEstado === "RESPONDE") ? 12 : 9;
+                nico.img.src = ESTADOS[nuevoEstado];
+                nico.frame = 0;
+            }
+        }
+
+        function draw(timestamp) {
+            const currentCanvas = document.getElementById("canvas-nico");
+            if (!currentCanvas) return;
+            
+            const currentCtx = currentCanvas.getContext("2d");
+            if (!nico.img.complete) {
+                requestAnimationFrame(draw);
+                return;
+            }
+
+            currentCtx.clearRect(0, 0, currentCanvas.width, currentCanvas.height);
+            const col = nico.frame % nico.totalFrames;
+            const sx = col * nico.distanciaSalto;
+
+            currentCtx.drawImage(
+                nico.img,
+                sx, nico.yInicial, 
+                nico.anchoRecorte, nico.altoCuadro,
+                (currentCanvas.width / 2) - (nico.tamanoVisual / 2),
+                currentCanvas.height - nico.tamanoVisual,
+                nico.tamanoVisual, nico.tamanoVisual
+            );
+
+            if (timestamp - nico.lastUpdate > (1000 / nico.fps)) {
+                nico.frame = (nico.frame + 1) % nico.totalFrames;
+                nico.lastUpdate = timestamp;
+            }
+            requestAnimationFrame(draw);
+        }
+
+        iniciar();
+
+        return { 
+            cambiarA: cambiarEstado,
+            rearrancar: iniciar 
+        };
+    })();
+} else {
+
+    NicoController.rearrancar();
+}
+
+// ------------------- LOGICA DEL CHAT ----------------------------
+window.avatarPensar = () => window.NicoController && NicoController.cambiarA("PENSANDO");
+window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ESPERANDO");
+window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
+
+/*const btnVoz = document.getElementById('btn-nico-voz');*/
+
+/*btnVoz.onclick = () => {
+    const input = document.getElementById("user-input");
+    input.value = "";
+    input.placeholder = "ESCUCHANDO... (Usa Super+S o habla)";
+    input.focus();
+
+    window.avatarIdle();
+    btnVoz.classList.replace('text-slate-500', 'text-red-500');
+
+    input.onblur = () => {
+        if(input.value.length > 2) {
+           enviarPrompt();
+           btnVoz.classList.replace('text-red-500', 'text-slate-500');
+           input.placeholder = "Comando de sistema...";
+        }
+    };
+};*/
+
+
+
+function enviarPrompt() {
+    const inputElement = document.getElementById("user-input");
+    if (!inputElement) return;
+    const userInput = inputElement.value;
+    if (!userInput) return;
+
+    mostrarMensajeUsuario(userInput); 
+    inputElement.value = "";
+    window.avatarPensar();
+
+    google.script.run
+    .withSuccessHandler((respuesta) => {
+        window.avatarHablar();
+        if (typeof mostrarRespuestaEnChat === "function") {
+            mostrarRespuestaEnChat(respuesta);
+        }
+        setTimeout(() => window.avatarIdle(), 4000);
+    })
+    .withFailureHandler((err) => {
+        window.avatarIdle();
+        console.error("Error en Nico:", err);
+    })
+    .procesarPrompt(userInput);
+}
+
+function mostrarMensajeUsuario(texto) {
+    const chatContainer = document.getElementById("chat-messages");
+    if (!chatContainer) return;
+    const div = document.createElement("div");
+    div.className = "flex flex-col items-end message-fade mb-4 transition-all duration-500";
+    div.innerHTML = `
+        <span class="text-[8px] text-slate-500 mb-1 font-bold tracking-widest uppercase">USUARIO >></span>
+        <div class="contenido-mensaje bg-cyan-900/40 border border-cyan-700/50 p-3 rounded-xl rounded-tr-none text-[11px] text-cyan-100 max-w-[90%] shadow-lg backdrop-blur-sm">
+            ${texto}
+        </div>
+    `;
+    chatContainer.appendChild(div);
+    ejecutarScrollYLimpieza();
+}
+
+function mostrarRespuestaEnChat(texto) {
+    const chatContainer = document.getElementById("chat-messages");
+    if (!chatContainer) return;
+    const div = document.createElement("div");
+    div.className = "flex flex-col items-start message-fade mb-4";
+    div.innerHTML = `
+        <span class="text-[8px] text-cyan-500 mb-1 font-bold tracking-widest uppercase">N.I.C.O. >></span>
+        <div class="cuerpo-respuesta bg-slate-800/80 border border-slate-700 p-3 rounded-xl rounded-tl-none text-[11px] text-slate-300 max-w-[90%] shadow-lg backdrop-blur-sm">
+            ${texto}
+        </div>
+    `;
+    chatContainer.appendChild(div);
+    ejecutarScrollYLimpieza();
+    if (typeof ejecutarScriptsInyectados === "function") {
+        ejecutarScriptsInyectados(div);
+    }
+}
+
+
+ function ejecutarScrollYLimpieza() {
+    const chatContainer = document.getElementById("chat-messages");
+    if (!chatContainer) return;
+    const mensajes = chatContainer.getElementsByClassName("message-fade");
+    if (mensajes.length > 6) {
+        const primerMensaje = mensajes[0];
+        primerMensaje.classList.add("mensaje-saliente");
+        setTimeout(() => primerMensaje.remove(), 500);
+    }
+    setTimeout(() => {
+        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+    }, 50);
+}
+
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar-nico');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (!sidebar) return;
+
+    const isHidden = sidebar.classList.contains('-translate-x-[120%]');
+    if (isHidden) {
+        sidebar.classList.remove('-translate-x-[120%]');
+        sidebar.classList.add('translate-x-0');
+        if (overlay) overlay.classList.remove('hidden');
+    } else {
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('-translate-x-[120%]');
+        if (overlay) overlay.classList.add('hidden');
+    }
+}
