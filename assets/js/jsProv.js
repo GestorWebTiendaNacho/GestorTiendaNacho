@@ -1808,11 +1808,17 @@ function cerrarVisorLex() {
 }
 
 async function exportarVistaActualALex() {
-    const contenedor = document.getElementById('contenido-reporte-lex');
+    const contenedor = document.getElementById('contenido-reporte-lex') || document.querySelector('.tab-pane.active') || document.body;
     const tabla = contenedor.querySelector('table');
     
     if (!tabla) {
-        alert("SISTEMA: No hay datos en pantalla para exportar.");
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin datos',
+            text: 'No se detectó ninguna tabla activa en pantalla para exportar.',
+            background: '#1e293b',
+            color: '#cbd5e1'
+        });
         return;
     }
 
@@ -1821,43 +1827,66 @@ async function exportarVistaActualALex() {
     try {
         const filas = [];
         const headers = [];
+        let colAccionesIdx = -1;
         
-        // 1. Capturamos los encabezados
-        tabla.querySelectorAll('thead th').forEach(th => headers.push(th.innerText.trim()));
+        tabla.querySelectorAll('thead th').forEach((th, index) => {
+            const textoHeader = th.innerText.trim();
+            if (textoHeader.toUpperCase() === 'ACCIONES' || textoHeader.toUpperCase() === 'ACCION') {
+                colAccionesIdx = index; 
+            } else {
+                headers.push(textoHeader);
+            }
+        });
         filas.push(headers);
 
-        // 2. Capturamos los datos de las celdas
         tabla.querySelectorAll('tbody tr').forEach(tr => {
             const fila = [];
-            tr.querySelectorAll('td').forEach(td => {
-                // Si la celda tiene un badge, tomamos su texto, si no, el texto de la celda
+            tr.querySelectorAll('td').forEach((td, index) => {
+                if (index === colAccionesIdx) return;
+
                 const badge = td.querySelector('span');
-                fila.push(badge ? badge.innerText.trim() : td.innerText.trim());
+                let textoCelda = badge ? badge.innerText.trim() : td.innerText.trim();
+                
+                textoCelda = textoCelda.replace(/\n|\r/g, " "); 
+                fila.push(textoCelda);
             });
-            filas.push(fila);
+            
+            if (fila.length > 0) filas.push(fila);
         });
 
-        const tituloReporte = document.getElementById('titulo-reporte-lex').innerText;
+        const elTitulo = document.getElementById('titulo-reporte-lex') 
+                         || document.querySelector('.active h2') 
+                         || document.querySelector('.active h3');
+                         
+        let nombreArchivo = elTitulo ? elTitulo.innerText.trim() : 'Reporte_Pedidos_Vista_Actual';
+        nombreArchivo = nombreArchivo.toLowerCase().replace(/[^a-z0-9áéíóúñ_-]/gi, '_');
 
-        // 3. Enviamos al servidor
-        const res = await callGoogleScript('generarReporteExcel', { 
-            datos: filas, 
-            titulo: tituloReporte 
-        });
 
-        if (res.reply && res.reply.url) {
-            // Descarga directa
-            const link = document.createElement('a');
-            link.href = res.reply.url;
-            link.download = ""; 
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+        const contenidoCSV = "\uFEFF" + filas.map(f => 
+            f.map(celda => `"${celda.replace(/"/g, '""')}"`).join(";")
+        ).join("\n");
+
+        const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
+        const urlDescarga = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = urlDescarga;
+        link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`; 
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(urlDescarga);
 
     } catch (e) {
-        console.error("Error en exportación:", e);
-        alert("Falla en el protocolo de exportación.");
+        console.error("❌ Falló el wrapper de exportación CSV:", e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Exportación',
+            text: 'Ocurrió un inconveniente al empaquetar los datos de la vista.',
+            background: '#1e293b',
+            color: '#cbd5e1'
+        });
     } finally {
         mostrarCargandoLex(false);
     }
