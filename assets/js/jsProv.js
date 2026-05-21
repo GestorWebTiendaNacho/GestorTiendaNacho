@@ -760,7 +760,7 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
     // 1. Mostrar bloqueo de pantalla N.I.C.O.
     Swal.fire({
         title: 'PROCESANDO ORDEN',
-        html: '<div class="text-cyan-500 font-mono text-[10px]">Sincronizando con Google Cloud & Actualizando J2...</div>',
+        html: '<div class="text-cyan-500 font-mono text-[10px]">Sincronizando con Google Cloud & Actualizando ...</div>',
         background: '#0f172a',
         color: '#fff',
         allowOutsideClick: false,
@@ -1892,7 +1892,7 @@ window.verPedidoDirecto = async function(idPedido) {
         Swal.fire({
             icon: 'warning',
             title: 'Atención',
-            text: 'Este registro no cuenta con un ID de pedido válido.',
+            text: 'ID de pedido no válido.',
             background: '#1e293b',
             color: '#cbd5e1'
         });
@@ -1901,30 +1901,25 @@ window.verPedidoDirecto = async function(idPedido) {
 
     Swal.fire({
         title: 'Buscando registro...',
-        html: `Consultando orden <b style="color:#00f0ff">${idPedido}</b>`,
+        html: `Consultando orden <b style="color:#00f0ff">${idPedido}</b> en el ecosistema...`,
         background: '#1e293b',
         color: '#cbd5e1',
         allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+        didOpen: () => { Swal.showLoading(); }
     });
 
     try {
         const response = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
-        console.log("🔍 [LexTech-DEBUG] Respuesta cruda del servidor:", response);
+        console.log("📦 [LexTech-DEBUG] Respuesta unificada procesada:", response);
         
-        let rawData = response?.reply || response?.data || response;
-        
-        if (Array.isArray(rawData)) {
-            rawData = rawData[0];
-        }
+        // Extraemos la propiedad data normalizada del backend
+        const resData = response?.data || response;
 
-        if (!rawData || response?.status === 'error' || rawData?.status === 'error') {
+        if (!response || response.status === 'error' || resData.status === 'error') {
             Swal.fire({
                 icon: 'info',
-                title: 'No encontrado',
-                text: response?.message || rawData?.message || 'No se hallaron registros extras para este pedido.',
+                title: 'Información del Sistema',
+                text: response?.message || resData?.message || 'No se localizó el pedido.',
                 background: '#1e293b',
                 color: '#cbd5e1',
                 confirmButtonColor: '#475569'
@@ -1932,59 +1927,81 @@ window.verPedidoDirecto = async function(idPedido) {
             return;
         }
 
-        const idProv = rawData.idProveedor || rawData["ID PROV"] || rawData["IDPROVEEDOR"] || '---';
-        const nombreProv = rawData.nombreProveedor || rawData["NOMBRE"] || rawData["PROVEEDOR"] || '---';
-        const estado = rawData.estado || rawData["ESTADO"] || '---';
-        const fecha = rawData.fechaRegistro || rawData["FECHA REGISTRO"] || rawData["FECHA"] || '---';
-        const reprog = rawData.nuevaFechaReprog || rawData["NUEVA FECHA REPROG"] || '---';
-        const obs = rawData.observaciones || rawData["OBSERVACIONES"] || 'Sin comentarios registrados.';
+        // Estructura limpia y fija
+        const proveedor = resData.proveedor || '---';
+        const productos = resData.productos || '---';
+        const estado = resData.estado || '---';
+        const fechaRegistro = resData.fechaRegistro || '---';
+        const observaciones = resData.observaciones || 'Sin comentarios registrados.';
+        const nuevaFechaReprog = resData.nuevaFechaReprog || '';
+        const origenHoja = response.origen || 'Ecosistema';
 
+        // Estilo dinámico según estado
+        let colorEstado = '#34d399'; // Verde para recibidos / OK
+        if (estado.toUpperCase().includes('REPRO')) colorEstado = '#eab308'; // Amarillo
+        if (estado.toUpperCase().includes('PEND')) colorEstado = '#38bdf8'; // Azul
+
+        // Renderizado Fijo Estructurado en Swal
         Swal.fire({
-            title: `<span style="font-size:14px; color:#94a3b8; letter-spacing:1px;">DETALLE DE TRANSACCIÓN</span><br>
-                    <span style="color:#00f0ff; font-family:monospace; font-size:20px;">#${idPedido}</span>`,
+            title: `<span style="font-size:11px; color:#64748b; letter-spacing:1.5px; font-weight:bold;">DETALLE DE PEDIDO • ${origenHoja.toUpperCase()}</span><br>
+                    <span style="color:#00f0ff; font-family:monospace; font-size:22px;">#${idPedido}</span>`,
             html: `
-                <div style="text-align: left; background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; margin-top:10px;">
-                    <div style="margin-bottom: 8px;">
-                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">PROVEEDOR:</span>
-                        <span style="color: #f8fafc; font-weight:600;">(${idProv}) ${nombreProv}</span>
+                <div style="text-align: left; background: rgba(15, 23, 42, 0.7); padding: 16px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; margin-top:10px;">
+                    
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">PROVEEDOR:</span>
+                        <span style="color: #f8fafc; font-weight:600;">${proveedor}</span>
                     </div>
-                    <div style="margin-bottom: 8px;">
-                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">ESTADO HOJA:</span>
-                        <span style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius:4px; color:#34d399;">${estado}</span>
-                    </div>
-                    <div style="margin-bottom: 8px;">
-                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">REGISTRO:</span>
-                        <span style="color: #cbd5e1;">${fecha}</span>
-                    </div>
-                    ${reprog && reprog !== "---" && reprog !== "" ? `
-                    <div style="margin-bottom: 8px; border-left: 2px solid #eab308; padding-left: 8px;">
-                        <span style="color: #eab308; font-weight: bold; display:inline-block; width:102px;">REPROGRAMADO:</span>
-                        <span style="color: #fef08a;">${reprog}</span>
-                    </div>` : ''}
-                    <hr style="border:0; border-top: 1px dashed #334155; margin: 12px 0;">
-                    <div>
-                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">OBSERVACIONES HISTÓRICAS:</span>
-                        <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; color: #94a3b8; font-style: italic; min-height: 40px; word-break: break-word;">
-                            ${obs}
+
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">PRODUCTOS / DETALLE:</span>
+                        <div style="background: rgba(15, 23, 42, 0.9); padding: 8px 12px; border-radius: 4px; color: #cbd5e1; border-left: 3px solid #00f0ff; font-family: sans-serif; font-size: 12.5px;">
+                            ${productos}
                         </div>
                     </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">ESTADO:</span>
+                        <span style="background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius:4px; color:${colorEstado}; font-weight: bold; font-size: 12px;">
+                            ${estado}
+                        </span>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">FECHA REGISTRO:</span>
+                        <span style="color: #cbd5e1;">${fechaRegistro}</span>
+                    </div>
+
+                    ${nuevaFechaReprog && nuevaFechaReprog !== "---" ? `
+                    <div style="margin-bottom: 10px; border-left: 3px solid #eab308; padding-left: 8px; background: rgba(234, 179, 8, 0.05); padding-top: 4px; padding-bottom: 4px;">
+                        <span style="color: #eab308; font-weight: bold; display:inline-block; width:110px;">REPROGRAMADO:</span>
+                        <span style="color: #fef08a; font-weight: bold;">${nuevaFechaReprog}</span>
+                    </div>` : ''}
+
+                    <hr style="border:0; border-top: 1px dashed #334155; margin: 14px 0;">
+                    
+                    <div>
+                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">OBSERVACIONES:</span>
+                        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; color: #94a3b8; font-style: italic; min-height: 40px; word-break: break-word; border: 1px solid rgba(255,255,255,0.01);">
+                            ${observaciones}
+                        </div>
+                    </div>
+
                 </div>
             `,
             background: '#1e293b',
             color: '#cbd5e1',
             confirmButtonText: 'ENTENDIDO',
-            confirmButtonColor: '#00f0ff',
-            customClass: {
-                confirmButton: 'lex-sweet-btn'
-            }
+            confirmButtonColor: '#475569',
+            customClass: { confirmButton: 'lex-sweet-btn' }
         });
 
     } catch (error) {
-        console.error("❌ Error crítico en verPedidoDirecto:", error);
+        console.error("❌ Error en renderizado frontend:", error);
         Swal.fire({
             icon: 'error',
-            title: 'Error de Comunicación',
-            text: 'No pudimos procesar la información estructurada de la orden.',
+            title: 'Error de Renderizado',
+            text: 'No se pudo mapear adecuadamente la estructura del pedido.',
             background: '#1e293b',
             color: '#cbd5e1'
         });
