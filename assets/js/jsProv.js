@@ -914,7 +914,7 @@ function renderizarItemsDesgloseEspecial(items, idContenedor) {
                 <input type="number" class="input-recibido-item w-20 bg-slate-950 border border-slate-700 rounded p-1 text-right text-cyan-400 font-bold outline-none" 
                         data-sku="${item.sku}" 
                         data-original="${item.cantidadPedida}" 
-                        value="${item.cantidadPedida}"
+                        data-nombre="${item.nombre}" value="${item.cantidadPedida}"                        
                         oninput="recalcularPorcentajeDesdeItems()">
             </td>
         </tr>`;
@@ -969,6 +969,7 @@ async function confirmarGestionFinal() {
     listaInputs.forEach(input => {
         itemsRecibidos.push({
             sku: input.getAttribute('data-sku') || "",
+            nombre: input.getAttribute('data-nombre') || "",
             cantidadRecibida: parseFloat(input.value) || 0,
             cantidadPedida: parseFloat(input.dataset.original) || 0
         });
