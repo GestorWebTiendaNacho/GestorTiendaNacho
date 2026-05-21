@@ -1889,13 +1889,7 @@ async function ejecutarSincronizacionRelampago() {
 
 window.verPedidoDirecto = async function(idPedido) {
     if (!idPedido || idPedido.trim() === "") {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Atención',
-            text: 'ID de pedido no válido.',
-            background: '#1e293b',
-            color: '#cbd5e1'
-        });
+        Swal.fire({ icon: 'warning', title: 'Atención', text: 'ID de pedido no válido.', background: '#1e293b', color: '#cbd5e1' });
         return;
     }
 
@@ -1910,16 +1904,14 @@ window.verPedidoDirecto = async function(idPedido) {
 
     try {
         const response = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
-        console.log("📦 [LexTech-DEBUG] Respuesta unificada procesada:", response);
-        
-        // Extraemos la propiedad data normalizada del backend
-        const resData = response?.data || response;
+        console.log("📦 [LexTech-DEBUG] Respuesta cruda de la API:", response);
+        const laRespuestaReal = response?.reply || response;
 
-        if (!response || response.status === 'error' || resData.status === 'error') {
+        if (!laRespuestaReal || laRespuestaReal.status === 'error') {
             Swal.fire({
                 icon: 'info',
                 title: 'Información del Sistema',
-                text: response?.message || resData?.message || 'No se localizó el pedido.',
+                text: laRespuestaReal?.message || 'No se localizó el pedido.',
                 background: '#1e293b',
                 color: '#cbd5e1',
                 confirmButtonColor: '#475569'
@@ -1927,21 +1919,19 @@ window.verPedidoDirecto = async function(idPedido) {
             return;
         }
 
-        // Estructura limpia y fija
+        const resData = laRespuestaReal.data || laRespuestaReal;
         const proveedor = resData.proveedor || '---';
         const productos = resData.productos || '---';
         const estado = resData.estado || '---';
         const fechaRegistro = resData.fechaRegistro || '---';
         const observaciones = resData.observaciones || 'Sin comentarios registrados.';
         const nuevaFechaReprog = resData.nuevaFechaReprog || '';
-        const origenHoja = response.origen || 'Ecosistema';
+        const origenHoja = laRespuestaReal.origen || 'Ecosistema';
 
-        // Estilo dinámico según estado
-        let colorEstado = '#34d399'; // Verde para recibidos / OK
+        let colorEstado = '#34d399'; 
         if (estado.toUpperCase().includes('REPRO')) colorEstado = '#eab308'; // Amarillo
         if (estado.toUpperCase().includes('PEND')) colorEstado = '#38bdf8'; // Azul
 
-        // Renderizado Fijo Estructurado en Swal
         Swal.fire({
             title: `<span style="font-size:11px; color:#64748b; letter-spacing:1.5px; font-weight:bold;">DETALLE DE PEDIDO • ${origenHoja.toUpperCase()}</span><br>
                     <span style="color:#00f0ff; font-family:monospace; font-size:22px;">#${idPedido}</span>`,
@@ -1972,7 +1962,7 @@ window.verPedidoDirecto = async function(idPedido) {
                         <span style="color: #cbd5e1;">${fechaRegistro}</span>
                     </div>
 
-                    ${nuevaFechaReprog && nuevaFechaReprog !== "---" ? `
+                    ${nuevaFechaReprog && nuevaFechaReprog !== "---" && nuevaFechaReprog !== "" ? `
                     <div style="margin-bottom: 10px; border-left: 3px solid #eab308; padding-left: 8px; background: rgba(234, 179, 8, 0.05); padding-top: 4px; padding-bottom: 4px;">
                         <span style="color: #eab308; font-weight: bold; display:inline-block; width:110px;">REPROGRAMADO:</span>
                         <span style="color: #fef08a; font-weight: bold;">${nuevaFechaReprog}</span>
@@ -2001,7 +1991,7 @@ window.verPedidoDirecto = async function(idPedido) {
         Swal.fire({
             icon: 'error',
             title: 'Error de Renderizado',
-            text: 'No se pudo mapear adecuadamente la estructura del pedido.',
+            text: 'No se pudo procesar adecuadamente la estructura del pedido.',
             background: '#1e293b',
             color: '#cbd5e1'
         });
