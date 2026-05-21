@@ -1899,7 +1899,6 @@ window.verPedidoDirecto = async function(idPedido) {
         return;
     }
 
-    // 1. Mostrar loading sutil mientras viaja al backend
     Swal.fire({
         title: 'Buscando registro...',
         html: `Consultando orden <b style="color:#00f0ff">${idPedido}</b>`,
@@ -1913,14 +1912,19 @@ window.verPedidoDirecto = async function(idPedido) {
 
     try {
         const response = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
+        console.log("🔍 [LexTech-DEBUG] Respuesta cruda del servidor:", response);
         
-        const res = response?.reply || response;
+        let rawData = response?.reply || response?.data || response;
         
-        if (!res || res.status !== 'success') {
+        if (Array.isArray(rawData)) {
+            rawData = rawData[0];
+        }
+
+        if (!rawData || response?.status === 'error' || rawData?.status === 'error') {
             Swal.fire({
                 icon: 'info',
                 title: 'No encontrado',
-                text: res?.message || 'No se hallaron registros extras para este pedido.',
+                text: response?.message || rawData?.message || 'No se hallaron registros extras para este pedido.',
                 background: '#1e293b',
                 color: '#cbd5e1',
                 confirmButtonColor: '#475569'
@@ -1928,9 +1932,13 @@ window.verPedidoDirecto = async function(idPedido) {
             return;
         }
 
-        const d = res.data;
-        if (!d) throw new Error("La propiedad 'data' vino vacía desde el servidor.");
-        
+        const idProv = rawData.idProveedor || rawData["ID PROV"] || rawData["IDPROVEEDOR"] || '---';
+        const nombreProv = rawData.nombreProveedor || rawData["NOMBRE"] || rawData["PROVEEDOR"] || '---';
+        const estado = rawData.estado || rawData["ESTADO"] || '---';
+        const fecha = rawData.fechaRegistro || rawData["FECHA REGISTRO"] || rawData["FECHA"] || '---';
+        const reprog = rawData.nuevaFechaReprog || rawData["NUEVA FECHA REPROG"] || '---';
+        const obs = rawData.observaciones || rawData["OBSERVACIONES"] || 'Sin comentarios registrados.';
+
         Swal.fire({
             title: `<span style="font-size:14px; color:#94a3b8; letter-spacing:1px;">DETALLE DE TRANSACCIÓN</span><br>
                     <span style="color:#00f0ff; font-family:monospace; font-size:20px;">#${idPedido}</span>`,
@@ -1938,26 +1946,26 @@ window.verPedidoDirecto = async function(idPedido) {
                 <div style="text-align: left; background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; margin-top:10px;">
                     <div style="margin-bottom: 8px;">
                         <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">PROVEEDOR:</span>
-                        <span style="color: #f8fafc; font-weight:600;">(${d["ID PROV"] || d["IDPROVEEDOR"] || '---'}) ${d["NOMBRE"] || d["PROVEEDOR"] || d["NOMBREPROVEEDOR"] || '---'}</span>
+                        <span style="color: #f8fafc; font-weight:600;">(${idProv}) ${nombreProv}</span>
                     </div>
                     <div style="margin-bottom: 8px;">
                         <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">ESTADO HOJA:</span>
-                        <span style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius:4px; color:#34d399;">${d["ESTADO"] || '---'}</span>
+                        <span style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius:4px; color:#34d399;">${estado}</span>
                     </div>
                     <div style="margin-bottom: 8px;">
                         <span style="color: #64748b; font-weight: bold; display:inline-block; width:110px;">REGISTRO:</span>
-                        <span style="color: #cbd5e1;">${d["FECHA REGISTRO"] || d["FECHA"] || '---'}</span>
+                        <span style="color: #cbd5e1;">${fecha}</span>
                     </div>
-                    ${d["NUEVA FECHA REPROG"] && d["NUEVA FECHA REPROG"] !== "---" ? `
+                    ${reprog && reprog !== "---" && reprog !== "" ? `
                     <div style="margin-bottom: 8px; border-left: 2px solid #eab308; padding-left: 8px;">
                         <span style="color: #eab308; font-weight: bold; display:inline-block; width:102px;">REPROGRAMADO:</span>
-                        <span style="color: #fef08a;">${d["NUEVA FECHA REPROG"]}</span>
+                        <span style="color: #fef08a;">${reprog}</span>
                     </div>` : ''}
                     <hr style="border:0; border-top: 1px dashed #334155; margin: 12px 0;">
                     <div>
                         <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">OBSERVACIONES HISTÓRICAS:</span>
                         <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; color: #94a3b8; font-style: italic; min-height: 40px; word-break: break-word;">
-                            ${d["OBSERVACIONES"] || 'Sin comentarios registrados.'}
+                            ${obs}
                         </div>
                     </div>
                 </div>
@@ -1972,11 +1980,11 @@ window.verPedidoDirecto = async function(idPedido) {
         });
 
     } catch (error) {
-        console.error("Error en verPedidoDirecto:", error);
+        console.error("❌ Error crítico en verPedidoDirecto:", error);
         Swal.fire({
             icon: 'error',
             title: 'Error de Comunicación',
-            text: 'No pudimos procesar o conectar con la base de datos de pedidos.',
+            text: 'No pudimos procesar la información estructurada de la orden.',
             background: '#1e293b',
             color: '#cbd5e1'
         });
