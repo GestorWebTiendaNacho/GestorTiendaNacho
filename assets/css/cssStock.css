@@ -137,7 +137,8 @@
 /* --- ANIMACIÓN DE IMÁGENES --- */
 .cover { 
     animation: flotarImagen 6s ease-in-out infinite; 
-    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 35px; 
 }
 .box-1 .cover { animation-delay: 0s; }
 .box-2 .cover { animation-delay: 1.5s; }
