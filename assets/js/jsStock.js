@@ -329,3 +329,14 @@ window.crearBackupCSV = async function() {
 };
 
 })();
+function abrirModalSincronizacion() {
+        document.getElementById('modal-sync-canvases').classList.remove('hidden');
+        document.getElementById('modal-sync-canvases').classList.add('flex');
+    }
+function cerrarModalSincronizacion() {
+        document.getElementById('modal-sync-canvases').classList.remove('flex');
+        document.getElementById('modal-sync-canvases').classList.add('hidden');
+    }
+function abrirModalConfiguracion() {
+        console.log("Abriendo panel de configuraciones avanzadas...");
+    }
