@@ -217,8 +217,8 @@ canvas {
     font-weight: 900;
     letter-spacing: 2px;
     transition: 0.3s;
-    width: 85px !important;
-    height: 55px !important;
+    width: 105px !important;
+    height: 75px !important;
 }
 .btn-modal-ok:hover {
     background: var(--neon-red);
