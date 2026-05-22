@@ -1,176 +1,235 @@
 /*----cssStock------*/
 :root {
     --bg-deep: #020617;
-    --card-bg: #0f172a; /* Fondo semi-traslúcido para las cards si quieres, o sólido */
+    --card-bg: linear-gradient(145deg, #0f172a, #020617);
     --gold: #c2902e;
-    --blue: #00f2ff;
-    --orange: #ff6b00;
-    --neon-green: #00ff9d; 
-    --neon-purple: #9d4edd;
+    --blue: #008BFF;
+    --orange: #FF6500;
+    --neon-green: #00BF9C; 
+    --neon-purple: #653EE6;
 }
 
 * {
     box-sizing: border-box !important;
 }
 
-/* Contenedor Principal de la Sección */
 .main-admin-container {
     background: transparent;
     min-height: 100vh;
     color: white;
-    padding: 40px 20px !important;
-}
-
-/* Encabezado NICO */
-.admin-header {
-    text-align: center;
-    margin-bottom: 2rem;
+    padding: 60px 20px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .admin-header h1 {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: 3px;
-    color: #ffffff;
-    text-shadow: 0 0 10px rgba(255,255,255,0.3);
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-align: center;
+    margin-bottom: 3rem;
     text-transform: uppercase;
+    background: linear-gradient(to right, #fff, #64748b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-/*---- CONTENEDOR DE BOXES (Tu diseño original readecuado) ----*/
-
+/* --- CONTENEDOR RELATIVE (Para el anclaje del círculo) --- */
 .container-box {
+    position: relative; 
     display: grid;
-    /* FUERZA LA GRILLA 2x2 */
-    grid-template-columns: repeat(2, 1fr); 
-    gap: 3rem; /* Espaciado entre cards */
-    
+    grid-template-columns: repeat(2, 1fr); /* Estricto 2x2 */
+    gap: 3.5rem; /* Espacio calibrado para la unión de esquinas */
     width: 100%;
-    max-width: 1000px; /* Ancho máximo para que no se estiren demasiado */
-    margin: 0 auto; /* Centrado en pantalla */
-    
-    /* ELIMINADA LA PERSPECTIVA 3D RÍGIDA */
-    transform: none !important;
-    -webkit-transform: none !important;
+    max-width: 950px;
+    margin: 0 auto;
 }
 
+/* --- CARDS ULTRA REDONDEADAS --- */
 .box {
     display: flex;
     align-items: center;
     flex-direction: column;
-    transition: all .3s ease-out;
-    will-change: transform;
-    /* Fondo opcional para darle más cuerpo a la card ciberpunk */
-    background: rgba(15, 23, 42, 0.5); 
-    padding: 20px;
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.05);
+    background: var(--card-bg);
+    padding: 40px 25px 30px 25px;
+    border-radius: 45px; /* Súper redondeadas como pediste */
+    position: relative;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+    
+    /* Transición elástica y más lenta para el efecto de empuje */
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                box-shadow 0.5s ease, 
+                border-color 0.5s ease;
+    will-change: transform, box-shadow;
 }
 
-/* EFECTO HOVER DE LEVITACIÓN (Recuperado) */
+/* Bordes sutiles iniciales */
+.box-1 { border: 1px solid rgba(0, 191, 156, 0.15); }
+.box-2 { border: 1px solid rgba(101, 62, 230, 0.15); }
+.box-3 { border: 1px solid rgba(0, 139, 255, 0.15); }
+.box-4 { border: 1px solid rgba(255, 101, 0, 0.15); }
+
+/* --- EL CÍRCULO CENTRAL ("ADMINISTRACIÓN") --- */
+.center-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centrado matemático perfecto en la intersección */
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #1e293b 0%, #020617 100%);
+    border: 3px double var(--gold);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 
+                0 0 20px rgba(194, 144, 46, 0.2),
+                inset 0 0 20px rgba(194, 144, 46, 0.15);
+    z-index: 100; /* Por encima de las esquinas de las cards */
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    
+    color: #fff;
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-align: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Hover del núcleo: se sobre-energiza */
+.center-core:hover {
+    width: 195px;
+    height: 195px;
+    border-color: var(--blue);
+    box-shadow: 0 0 50px rgba(0, 139, 255, 0.5), 
+                inset 0 0 25px rgba(0, 139, 255, 0.3);
+    color: var(--blue);
+    text-shadow: 0 0 8px rgba(0, 139, 255, 0.6);
+}
+
+/* ========================================================================= */
+/* MECÁNICA MAGNÉTICA: EL CÍRCULO EMPUJA LAS CARDS HACIA AFUERA (Hover Core) */
+/* ========================================================================= */
+.center-core:hover ~ .box-1 { transform: translate(-35px, -35px); } /* Arriba-Izquierda */
+.center-core:hover ~ .box-2 { transform: translate(35px, -35px);  } /* Arriba-Derecha */
+.center-core:hover ~ .box-3 { transform: translate(-35px, 35px);  } /* Abajo-Izquierda */
+.center-core:hover ~ .box-4 { transform: translate(35px, 35px);   } /* Abajo-Derecha */
+
+
+/* --- HOVER INDIVIDUAL DE CARD (Cuando el mouse va directo a una tarjeta) --- */
+.box:hover {
+    transform: translateY(-12px) scale(1.02);
+    z-index: 101; /* Se superpone al círculo si la elegís directamente */
+}
+
+.box-1:hover { border-color: var(--neon-green); box-shadow: 0 30px 60px rgba(0, 191, 156, 0.25); }
+.box-2:hover { border-color: var(--neon-purple); box-shadow: 0 30px 60px rgba(101, 62, 230, 0.25); }
+.box-3:hover { border-color: var(--blue); box-shadow: 0 30px 60px rgba(0, 139, 255, 0.25); }
+.box-4:hover { border-color: var(--orange); box-shadow: 0 30px 60px rgba(255, 101, 0, 0.25); }
+
+/* --- FLOTACIÓN PASIVA DE IMÁGENES (Para no romper el transform del Box) --- */
+.cover {
+    animation: flotarImagen 6s ease-in-out infinite;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.box-1 .cover { animation-delay: 0s; }
+.box-2 .cover { animation-delay: 1.5s; }
+.box-3 .cover { animation-delay: 3s; }
+.box-4 .cover { animation-delay: 4.5s; }
+
 .box:hover .cover {
-    transform: translateY(-14px) scale(1.04);
-    -webkit-transform: translateY(-14px) scale(1.04);
+    transform: translateY(-15px) scale(1.05); /* Despegue interno */
 }
 
 .cover img {
-    width: 200px; /* Ajuste de tamaño de imagen */
+    width: 190px;
     height: auto;
-    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+    filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
 }
 
-/* ---- ESTILOS DE LOS BOTONES CIBERPUNK (Recuperados) ---- */
+@keyframes flotarImagen {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
 
+/* --- BOTONES CIBERPUNK SUAVES Y DESACELERADOS --- */
 .box button {
     cursor: pointer;
     outline: 0;
-    width: 100%; /* Ancho completo dentro de la card */
-    max-width: 280px;
-    height: 54px;
-    border-radius: 8px;
-    background-color: #020617; /* Fondo negro profundo */
-    margin-top: 20px;
+    width: 100%;
+    max-width: 250px;
+    height: 50px;
+    border-radius: 12px;
+    background-color: #05070c;
+    margin-top: 25px;
     overflow: hidden;
     position: relative;
-    transition: all 0.3s ease;
     
-    /* Estilos de texto (Recuperados de .box-1 button) */
     color: #fff;
-    font-size: 16px; /* Ajustado para que entre el texto administrativo */
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
     text-align: right;
     padding-right: 20px;
-    line-height: 52px; /* Centrado vertical */
+    line-height: 48px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    transition: all 0.4s ease;
 }
 
-/* Icono SVG en el 'after' (Recuperado) */
 .box button::after {
     content: "";
     position: absolute;
     top: 0;
     left: 0;
     display: block;
-    width: 54px; /* Mismo ancho que alto */
+    width: 50px;
     height: 100%;
     background-color: #000;
-    border-radius: 6px 0 0 6px;
+    border-radius: 10px 0 0 10px;
     background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMTRweCIgaGVpZ2h0PSIxN3B4IiB2aWV3Qm94PSIwIDAgMTQgMTciIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDUxLjEgKDU3NTAxKSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5TaGFwZTwvdGl0bGU+CiAgICA8ZGVzYz5DcmVhdGVkIHdpdGggU2tldGNoLjwvZGVzYz4KIC2ZGVmcz48L2RlZfsPCiAgICA8ZCBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iRGVza3RvcC1IRC1Db3B5LTMiIHRyYW5zZm9ybT0idHJhbnNsYXRloLTYwOS4wMDAwMDAsIC0xMDA4LjAwMDAwMCkiIGZpbGw9IiNGOUZDRkYiIGZpbGwtcnVsZT0ibm9uemVybyI+CiAgICAgICAgICAgIDxnIGlkPSJHcm91cC0xMSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNTQ3LjAwMDAwMCwgNDk5LjAwMDAwMCkiPgogICAgICAgICAgICAgICAgPGcgaWQ9Ikdyb3VwLTYtQ29weSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDYuMDAwMDAwLCA0OTUuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICAgICAgPGcgaWQ9ImljX2ZpbGVfZG93bmxvYWRfYmxhY2tfMjRweC0oMSkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2LjAwMDAwMCwgOC4wMDAwMDApIj4KICAgICAgICAgICAgICAgICAgICAgICAgPHBhdGggZD0iTTE0LDEyIEwxMCwxMiBMMTAsNiBMNCw2IEw0LDEyIEwwLDEyIEw3LDE5IEwxNCwxMiBaIE0wLDIxIEwwLDIzIEwxNCwyMyBMMTQsMjEgTDAsMjEgWiIgaWQ9IlNoYXBlIj48L3BhdGg+CiAgICAgICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8L2c+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4=');
     background-repeat: no-repeat;
     background-position: center;
     z-index: 2;
 }
 
-/* Efecto de deslizamiento de color 'before' (Recuperado) */
+/* Barrido de color suavizado (500ms con aceleración controlada) */
 .box button::before {
     content: "";
     position: absolute;
     top: 0;
     left: 0;
     display: block;
-    width: 0; /* Empieza en 0 */
+    width: 0;
     height: 100%;
-    transition: all 300ms cubic-bezier(0.25, 0.75, 0.5, 1.25);
+    transition: width 500ms cubic-bezier(0.25, 1, 0.5, 1), opacity 300ms ease;
     z-index: 1;
     opacity: 0;
 }
 
-/* HOVERS DE COLOR INDIVIDUALES (Recuperados) */
+.box-1 button { border: 1px solid var(--neon-green); }
+.box-1:hover button::before { width: 100%; opacity: 1; background-color: var(--neon-green); }
 
-/* Box 1: Sincronización (Verde Menta) */
-.box-1 button { border: 1px solid #00BF9C; }
-.box-1:hover button::before {
-    width: 100%;
-    opacity: 1;
-    background-color: #00BF9C;
-}
+.box-2 button { border: 1px solid var(--neon-purple); }
+.box-2:hover button::before { width: 100%; opacity: 1; background-color: var(--neon-purple); }
 
-/* Box 2: Rescate BD (Morado) */
-.box-2 button { border: 1px solid #653EE6; }
-.box-2:hover button::before {
-    width: 100%;
-    opacity: 1;
-    background-color: #653EE6;
-}
+.box-3 button { border: 1px solid var(--blue); }
+.box-3:hover button::before { width: 100%; opacity: 1; background-color: var(--blue); }
 
-/* Box 3: Stock Masivo (Azul) */
-.box-3 button { border: 1px solid #008BFF; }
-.box-3:hover button::before {
-    width: 100%;
-    opacity: 1;
-    background-color: #008BFF;
-}
+.box-4 button { border: 1px solid var(--orange); }
+.box-4:hover button::before { width: 100%; opacity: 1; background-color: var(--orange); }
 
-/* Box 4: Ajustes (Naranja) */
-.box-4 button { border: 1px solid #FF6500; }
-.box-4:hover button::before {
-    width: 100%;
-    opacity: 1;
-    background-color: #FF6500;
-}
-
-/* Asegurar que el texto del botón esté por encima del efecto de color */
 .box button div {
     position: relative;
     z-index: 3;
+    transition: color 0.3s ease, transform 0.3s ease;
 }
+
+.box:hover button div { transform: translateX(-3px); }
+.box-1:hover button div, .box-4:hover button div { color: #000; }
