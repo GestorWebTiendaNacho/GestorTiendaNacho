@@ -7,6 +7,7 @@
     --orange: #FF6500;
     --neon-green: #00BF9C; 
     --neon-purple: #653EE6;
+    --neon-red: #CB1735;
 }
 
 * {
@@ -129,7 +130,7 @@
 }
 
 .box-1:hover { border-color: var(--neon-green); box-shadow: 0 30px 60px rgba(0, 191, 156, 0.25); }
-.box-2:hover { border-color: var(--neon-purple); box-shadow: 0 30px 60px rgba(101, 62, 230, 0.25); }
+.box-2:hover { border-color: var(--neon-red); box-shadow: 0 30px 60px rgba(203, 23, 53, 0.25); }
 .box-3:hover { border-color: var(--blue); box-shadow: 0 30px 60px rgba(0, 139, 255, 0.25); }
 .box-4:hover { border-color: var(--orange); box-shadow: 0 30px 60px rgba(255, 101, 0, 0.25); }
 
@@ -190,7 +191,7 @@
 }
 
 .box-1 button::before { background-color: var(--neon-green); }
-.box-2 button::before { background-color: var(--neon-purple); }
+.box-2 button::before { background-color: var(--neon-red); }
 .box-3 button::before { background-color: var(--blue); }
 .box-4 button::before { background-color: var(--orange); }
 

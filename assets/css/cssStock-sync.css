@@ -106,8 +106,9 @@
 }
 
 .logo-plataforma-sync {
-    width: 110px; /* Ajustado el tamaño para que encastre estético dentro del canvas */
+    width: 250px; 
     height: auto;
+    filter: drop-shadow(0 0 15px rgba(194, 144, 46, 0.3));
     animation: flotarLogo 3s ease-in-out infinite;
 }
 
@@ -191,3 +192,17 @@ canvas {
 .s-gold .neon-line { background: var(--gold); }
 .s-red span { color: #ff3131; }
 .s-red .neon-line { background: #ff3131; }
+
+.btn-modal-ok {
+    background: linear-gradient(145deg, #0f172a, #020617);
+    color: var(--neon-green);
+    border: 1px solid var(--neon-green);
+    font-weight: 900;
+    letter-spacing: 2px;
+    transition: 0.3s;
+}
+.btn-modal-ok:hover {
+    background: var(--neon-green);
+    color: black;
+    box-shadow: 0 0 20px var(--neon-green);
+}
