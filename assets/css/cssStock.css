@@ -125,7 +125,8 @@
 /* --- HOVER INDIVIDUAL DE CARD  --- */
 .box:hover {
     transform: translateY(-12px) scale(1.02);
-    z-index: 101; 
+    z-index: 101;
+    box-shadow: 1px 30px 60px rgba(244, 235, 115, 0.25); 
 }
 
 .box-1:hover { border-color: var(--neon-green); box-shadow: 1px 30px 60px rgba(0, 191, 156, 0.25);}
