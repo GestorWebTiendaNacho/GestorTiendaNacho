@@ -337,6 +337,6 @@ function cerrarModalSincronizacion() {
         document.getElementById('modal-sync-canvases').classList.remove('flex');
         document.getElementById('modal-sync-canvases').classList.add('hidden');
     }
-function abrirModalConfiguracion() {
-        console.log("Abriendo panel de configuraciones avanzadas...");
+function abrirModalVenta() {
+        console.log("Abriendo panel de Actualización de Ventas...");
     }
