@@ -1,12 +1,11 @@
 /*----cssStock------*/
 :root {
     --bg-deep: #020617;
-    --card-bg: rgba(15, 23, 42, 0.65); /* Semi-translúcido para el efecto glass */
+    --card-bg: #0f172a; /* Fondo semi-traslúcido para las cards si quieres, o sólido */
     --gold: #c2902e;
     --blue: #00f2ff;
     --orange: #ff6b00;
     --neon-green: #00ff9d; 
-    --neon-orange: #ff6b00;
     --neon-purple: #9d4edd;
 }
 
@@ -14,195 +13,164 @@
     box-sizing: border-box !important;
 }
 
-/* Contenedor Principal */
+/* Contenedor Principal de la Sección */
 .main-admin-container {
     background: transparent;
     min-height: 100vh;
     color: white;
     padding: 40px 20px !important;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
 }
 
-/* Encabezado del Panel */
+/* Encabezado NICO */
 .admin-header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
 }
 
 .admin-header h1 {
     font-size: 2rem;
     font-weight: 800;
-    letter-spacing: 2px;
-    background: linear-gradient(to right, #ffffff, #94a3b8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    letter-spacing: 3px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.3);
     text-transform: uppercase;
 }
 
-.admin-header p {
-    color: #64748b;
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-}
+/*---- CONTENEDOR DE BOXES (Tu diseño original readecuado) ----*/
 
-/* Grid Central de 4 Columnas / Tarjetas */
-.admin-grid {
+.container-box {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 2rem;
+    /* FUERZA LA GRILLA 2x2 */
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 3rem; /* Espaciado entre cards */
+    
     width: 100%;
-    max-width: 1200px;
-    padding: 10px;
+    max-width: 1000px; /* Ancho máximo para que no se estiren demasiado */
+    margin: 0 auto; /* Centrado en pantalla */
+    
+    /* ELIMINADA LA PERSPECTIVA 3D RÍGIDA */
+    transform: none !important;
+    -webkit-transform: none !important;
 }
 
-/* Tarjeta Base Estilo Neon Glassmorphic */
-.admin-card {
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 24px;
-    padding: 35px 25px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+.box {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    min-height: 280px;
-    cursor: pointer;
+    flex-direction: column;
+    transition: all .3s ease-out;
+    will-change: transform;
+    /* Fondo opcional para darle más cuerpo a la card ciberpunk */
+    background: rgba(15, 23, 42, 0.5); 
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
-/* Línea de brillo superior decorativa */
-.admin-card::before {
+/* EFECTO HOVER DE LEVITACIÓN (Recuperado) */
+.box:hover .cover {
+    transform: translateY(-14px) scale(1.04);
+    -webkit-transform: translateY(-14px) scale(1.04);
+}
+
+.cover img {
+    width: 200px; /* Ajuste de tamaño de imagen */
+    height: auto;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+}
+
+/* ---- ESTILOS DE LOS BOTONES CIBERPUNK (Recuperados) ---- */
+
+.box button {
+    cursor: pointer;
+    outline: 0;
+    width: 100%; /* Ancho completo dentro de la card */
+    max-width: 280px;
+    height: 54px;
+    border-radius: 8px;
+    background-color: #020617; /* Fondo negro profundo */
+    margin-top: 20px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+    
+    /* Estilos de texto (Recuperados de .box-1 button) */
+    color: #fff;
+    font-size: 16px; /* Ajustado para que entre el texto administrativo */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: right;
+    padding-right: 20px;
+    line-height: 52px; /* Centrado vertical */
+}
+
+/* Icono SVG en el 'after' (Recuperado) */
+.box button::after {
     content: "";
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    display: block;
+    width: 54px; /* Mismo ancho que alto */
+    height: 100%;
+    background-color: #000;
+    border-radius: 6px 0 0 6px;
+    background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMTRweCIgaGVpZ2h0PSIxN3B4IiB2aWV3Qm94PSIwIDAgMTQgMTciIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDUxLjEgKDU3NTAxKSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5TaGFwZTwvdGl0bGU+CiAgICA8ZGVzYz5DcmVhdGVkIHdpdGggU2tldGNoLjwvZGVzYz4KIC2ZGVmcz48L2RlZfsPCiAgICA8ZCBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iRGVza3RvcC1IRC1Db3B5LTMiIHRyYW5zZm9ybT0idHJhbnNsYXRloLTYwOS4wMDAwMDAsIC0xMDA4LjAwMDAwMCkiIGZpbGw9IiNGOUZDRkYiIGZpbGwtcnVsZT0ibm9uemVybyI+CiAgICAgICAgICAgIDxnIGlkPSJHcm91cC0xMSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNTQ3LjAwMDAwMCwgNDk5LjAwMDAwMCkiPgogICAgICAgICAgICAgICAgPGcgaWQ9Ikdyb3VwLTYtQ29weSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDYuMDAwMDAwLCA0OTUuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICAgICAgPGcgaWQ9ImljX2ZpbGVfZG93bmxvYWRfYmxhY2tfMjRweC0oMSkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2LjAwMDAwMCwgOC4wMDAwMDApIj4KICAgICAgICAgICAgICAgICAgICAgICAgPHBhdGggZD0iTTE0LDEyIEwxMCwxMiBMMTAsNiBMNCw2IEw0LDEyIEwwLDEyIEw3LDE5IEwxNCwxMiBaIE0wLDIxIEwwLDIzIEwxNCwyMyBMMTQsMjEgTDAsMjEgWiIgaWQ9IlNoYXBlIj48L3BhdGg+CiAgICAgICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8L2c+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4=');
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 2;
 }
 
-/* Variaciones de Neón Individuales */
-.card-neon-blue { border: 1px solid rgba(0, 242, 255, 0.25) !important; }
-.card-neon-green { border: 1px solid rgba(0, 255, 157, 0.25) !important; }
-.card-neon-orange { border: 1px solid rgba(255, 107, 0, 0.25) !important; }
-.card-neon-purple { border: 1px solid rgba(157, 78, 221, 0.25) !important; }
-
-/* Contenido de las Tarjetas */
-.card-icon-wrapper {
-    width: 70px;
-    height: 70px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.card-icon-wrapper i {
-    font-size: 2rem;
-}
-
-/* Asignación de colores de iconos */
-.card-neon-blue i { color: var(--blue); }
-.card-neon-green i { color: var(--neon-green); }
-.card-neon-orange i { color: var(--neon-orange); }
-.card-neon-purple i { color: var(--neon-purple); }
-
-.card-info h3 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #f8fafc;
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.5px;
-}
-
-.card-info p {
-    font-size: 0.82rem;
-    color: #94a3b8;
-    line-height: 1.4;
-}
-
-/* Efectos Hover Dinámicos */
-.admin-card:hover {
-    transform: translateY(-8px);
-}
-
-.card-neon-blue:hover {
-    border-color: var(--blue) !important;
-    box-shadow: 0 15px 35px rgba(0, 242, 255, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-}
-.card-neon-blue:hover .card-icon-wrapper {
-    background: rgba(0, 242, 255, 0.1);
-    filter: drop-shadow(0 0 10px var(--blue));
-}
-
-.card-neon-green:hover {
-    border-color: var(--neon-green) !important;
-    box-shadow: 0 15px 35px rgba(0, 255, 157, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-}
-.card-neon-green:hover .card-icon-wrapper {
-    background: rgba(0, 255, 157, 0.1);
-    filter: drop-shadow(0 0 10px var(--neon-green));
-}
-
-.card-neon-orange:hover {
-    border-color: var(--neon-orange) !important;
-    box-shadow: 0 15px 35px rgba(255, 107, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-}
-.card-neon-orange:hover .card-icon-wrapper {
-    background: rgba(255, 107, 0, 0.1);
-    filter: drop-shadow(0 0 10px var(--neon-orange));
-}
-
-.card-neon-purple:hover {
-    border-color: var(--neon-purple) !important;
-    box-shadow: 0 15px 35px rgba(157, 78, 221, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-}
-.card-neon-purple:hover .card-icon-wrapper {
-    background: rgba(157, 78, 221, 0.1);
-    filter: drop-shadow(0 0 10px var(--neon-purple));
-}
-
-/* --- SECCIÓN MODALES (Estructura de Sincronización) --- */
-.canvas-wrapper {
-    width: 240px !important;
-    height: 240px !important;
-    display: flex !important;
-    border-radius: 50% !important;
-    justify-content: center !important;
-    align-items: center !important;
-    position: relative !important;
-    background: transparent !important;
-    margin: 10px auto !important;
-}
-
-.logo-plataforma-sync {
-    width: 130px;
-    height: auto;
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
-    animation: flotarLogo 3s ease-in-out infinite;
-}
-
-@keyframes flotarLogo {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-}
-
-canvas {
-    width: 240px !important;
-    height: 240px !important;
-    display: block !important;
+/* Efecto de deslizamiento de color 'before' (Recuperado) */
+.box button::before {
+    content: "";
+    position: absolute;
     top: 0;
     left: 0;
-    z-index: 50 !important;
-    position: absolute !important;
+    display: block;
+    width: 0; /* Empieza en 0 */
+    height: 100%;
+    transition: all 300ms cubic-bezier(0.25, 0.75, 0.5, 1.25);
+    z-index: 1;
+    opacity: 0;
+}
+
+/* HOVERS DE COLOR INDIVIDUALES (Recuperados) */
+
+/* Box 1: Sincronización (Verde Menta) */
+.box-1 button { border: 1px solid #00BF9C; }
+.box-1:hover button::before {
+    width: 100%;
+    opacity: 1;
+    background-color: #00BF9C;
+}
+
+/* Box 2: Rescate BD (Morado) */
+.box-2 button { border: 1px solid #653EE6; }
+.box-2:hover button::before {
+    width: 100%;
+    opacity: 1;
+    background-color: #653EE6;
+}
+
+/* Box 3: Stock Masivo (Azul) */
+.box-3 button { border: 1px solid #008BFF; }
+.box-3:hover button::before {
+    width: 100%;
+    opacity: 1;
+    background-color: #008BFF;
+}
+
+/* Box 4: Ajustes (Naranja) */
+.box-4 button { border: 1px solid #FF6500; }
+.box-4:hover button::before {
+    width: 100%;
+    opacity: 1;
+    background-color: #FF6500;
+}
+
+/* Asegurar que el texto del botón esté por encima del efecto de color */
+.box button div {
+    position: relative;
+    z-index: 3;
 }
