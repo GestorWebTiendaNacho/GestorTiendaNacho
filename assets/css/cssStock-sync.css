@@ -54,6 +54,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     letter-spacing: 1px;
+    z-index: 4500 !important;
 }
 
 .btn-lex-minimal:hover {
