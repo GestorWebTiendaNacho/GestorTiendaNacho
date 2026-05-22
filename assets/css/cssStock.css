@@ -376,7 +376,7 @@ button::before {
     background-color: #FF6500;
 }
 
-.container {
+.container-box {
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
