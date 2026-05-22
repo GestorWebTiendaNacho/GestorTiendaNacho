@@ -32,7 +32,7 @@
     text-transform: uppercase;
     background: linear-gradient(to right, #fff, #64748b);
     -webkit-background-clip: text;
-    background-clip: text; /* Solución al warning de vendorPrefix */
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -41,13 +41,13 @@
     position: relative; 
     display: grid;
     grid-template-columns: repeat(2, 1fr); 
-    gap: 3.5rem; 
+    gap: 3.5rem; /* Espacio calibrado para el flujo del centro */
     width: 100%;
     max-width: 950px;
     margin: 0 auto;
 }
 
-/* --- CARDS CON MÁSCARA DE RECORTE (Base) --- */
+/* --- CARDS CON TU LÓGICA DE RADIAL GRADIENT MASK --- */
 .box {
     display: flex;
     align-items: center;
@@ -58,62 +58,48 @@
     position: relative;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
     
+    /* Variables dinámicas basadas en tu ejemplo */
+    --cut-radius: 92px; /* El radio del mordisco (un poco más de los 90px del centro) */
+    
+    /* Aplicamos tu lógica de gradiente circular como máscara nativa */
+    -webkit-mask-image: radial-gradient(circle at var(--cnr), transparent var(--cut-radius), #000 calc(var(--cut-radius) + 0.5px));
+    mask-image: radial-gradient(circle at var(--cnr), transparent var(--cut-radius), #000 calc(var(--cut-radius) + 0.5px));
+    
     transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 box-shadow 0.5s ease, 
-                border-color 0.5s ease,
-                -webkit-mask-position 0.6s ease,
-                mask-position 0.6s ease;
+                border-color 0.5s ease;
     
     will-change: transform, mask-image, -webkit-mask-image;
-
-    /* Solución a los warnings de compatibilidad de máscaras */
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
 }
 
-/* Bordes sutiles iniciales */
-.box-1 { border: 1px solid rgba(0, 191, 156, 0.15); }
-.box-2 { border: 1px solid rgba(101, 62, 230, 0.15); }
-.box-3 { border: 1px solid rgba(0, 139, 255, 0.15); }
-.box-4 { border: 1px solid rgba(255, 101, 0, 0.15); }
+/* --- ASIGNACIÓN DE COORDENADAS POR CUADRANTE (Igual a tu ejemplo) --- */
 
-/* --- INGENIERÍA DE RECORTES INDIVIDUALES (SVG masks) --- */
-
-/* Box 1: Arriba-Izquierda. Recorta esquina Inferior-Derecha */
+/* Box 1 (Top-Left): El núcleo está en su esquina inferior derecha */
 .box-1 { 
-    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><defs><mask id='m1'><rect width='100' height='100' fill='white'/><circle cx='100' cy='100' r='92' fill='black'/></mask></defs><rect width='100' height='100' fill='white' mask='url(%23m1)'/></svg>");
-    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><defs><mask id='m1'><rect width='100' height='100' fill='white'/><circle cx='100' cy='100' r='92' fill='black'/></mask></defs><rect width='100' height='100' fill='white' mask='url(%23m1)'/></svg>");
-    -webkit-mask-position: bottom right;
-    mask-position: bottom right;
+    --cnr: right bottom; 
+    border: 1px solid rgba(0, 191, 156, 0.15); 
 }
 
-/* Box 2: Arriba-Derecha. Recorta esquina Inferior-Izquierda */
+/* Box 2 (Top-Right): El núcleo está en su esquina inferior izquierda */
 .box-2 { 
-    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><defs><mask id='m2'><rect width='100' height='100' fill='white'/><circle cx='0' cy='100' r='92' fill='black'/></mask></defs><rect width='100' height='100' fill='white' mask='url(%23m2)'/></svg>");
-    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><defs><mask id='m2'><rect width='100' height='100' fill='white'/><circle cx='0' cy='100' r='92' fill='black'/></mask></defs><rect width='100' height='100' fill='white' mask='url(%23m2)'/></svg>");
-    -webkit-mask-position: bottom left;
-    mask-position: bottom left;
+    --cnr: left bottom; 
+    border: 1px solid rgba(101, 62, 230, 0.15); 
 }
 
-/* Box 3: Abajo-Izquierda. Recorta esquina Superior-Derecha */
+/* Box 3 (Bottom-Left): El núcleo está en su esquina superior derecha */
 .box-3 { 
-    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><defs><mask id='m3'><rect width='100' height='100' fill='white'/><circle cx='100' cy='0' r='92' fill='black'/></mask></defs><rect width='100' height='100' fill='white' mask='url(%23m3)'/></svg>");
-    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><defs><mask id='m3'><rect width='100' height='100' fill='white'/><circle cx='100' cy='0' r='92' fill='black'/></mask></defs><rect width='100' height='100' fill='white' mask='url(%23m3)'/></svg>");
-    -webkit-mask-position: top right;
-    mask-position: top right;
+    --cnr: right top; 
+    border: 1px solid rgba(0, 139, 255, 0.15); 
 }
 
-/* Box 4: Abajo-Derecha. Recorta esquina Superior-Izquierda */
+/* Box 4 (Bottom-Right): El núcleo está en su esquina superior izquierda */
 .box-4 { 
-    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><defs><mask id='m4'><rect width='100' height='100' fill='white'/><circle cx='0' cy='0' r='92' fill='black'/></mask></defs><rect width='100' height='100' fill='white' mask='url(%23m4)'/></svg>");
-    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><defs><mask id='m4'><rect width='100' height='100' fill='white'/><circle cx='0' cy='0' r='92' fill='black'/></mask></defs><rect width='100' height='100' fill='white' mask='url(%23m4)'/></svg>");
-    -webkit-mask-position: top left;
-    mask-position: top left;
+    --cnr: left top; 
+    border: 1px solid rgba(255, 101, 0, 0.15); 
 }
 
-/* --- EL CÍRCULO CENTRAL (Anclaje Visual) --- */
+
+/* --- EL CÍRCULO CENTRAL --- */
 .center-core {
     position: absolute;
     top: 50%;
@@ -148,14 +134,14 @@
     color: var(--blue);
 }
 
-/* --- MECÁNICA MAGNÉTICA: EL CÍRCULO EMPUJA LAS CARDS HACIA AFUERA --- */
+/* --- EFECTO MAGNÉTICO (Separación) --- */
 .center-core:hover ~ .box-1 { transform: translate(-35px, -35px); } 
 .center-core:hover ~ .box-2 { transform: translate(35px, -35px);  } 
 .center-core:hover ~ .box-3 { transform: translate(-35px, 35px);  } 
 .center-core:hover ~ .box-4 { transform: translate(35px, 35px);   } 
 
-/* Al empujar, anulamos la máscara estándar y webkit simultáneamente */
-.center-core:hover ~ .box { 
+/* Al expandirse o hacer hover individual, se restaura la esquina completa */
+.center-core:hover ~ .box, .box:hover { 
     -webkit-mask-image: none !important; 
     mask-image: none !important; 
 }
@@ -164,8 +150,6 @@
 .box:hover {
     transform: translateY(-12px) scale(1.02);
     z-index: 101; 
-    -webkit-mask-image: none !important; 
-    mask-image: none !important; 
 }
 
 .box-1:hover { border-color: var(--neon-green); box-shadow: 0 30px 60px rgba(0, 191, 156, 0.25); }
@@ -173,7 +157,7 @@
 .box-3:hover { border-color: var(--blue); box-shadow: 0 30px 60px rgba(0, 139, 255, 0.25); }
 .box-4:hover { border-color: var(--orange); box-shadow: 0 30px 60px rgba(255, 101, 0, 0.25); }
 
-/* --- FLOTACIÓN PASIVA DE IMÁGENES --- */
+/* --- ANIMACIÓN DE IMÁGENES --- */
 .cover { 
     animation: flotarImagen 6s ease-in-out infinite; 
     transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
@@ -190,7 +174,7 @@
     50% { transform: translateY(-8px); } 
 }
 
-/* --- BOTONES CIBERPUNK SUAVES --- */
+/* --- BOTONES --- */
 .box button {
     cursor: pointer; 
     outline: 0; 
