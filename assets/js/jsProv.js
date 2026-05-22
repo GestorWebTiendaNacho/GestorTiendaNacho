@@ -674,8 +674,6 @@ async function revisarPedido() {
 }
 
 
-
-
 // --- FUNCIÓN DE ELIMINACIÓN ---
 function eliminarDelPedido(index) {
     Swal.fire({
@@ -701,7 +699,6 @@ function eliminarDelPedido(index) {
         }
     });
 }
-    
 
 
 function prepararEnvioPedido(idPedido) {
@@ -714,6 +711,7 @@ function prepararEnvioPedido(idPedido) {
     
     ejecutarGeneracionPedido(idPedido, dias);
 }
+
 
 async function obtenerProveedoresParaSelector() {
     try {
@@ -818,7 +816,6 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
 
 
 
-
 function volverAListaProductos() {
     cargarProductosPorProveedor();
 }
@@ -839,6 +836,8 @@ function actualizarProveedorCarrito(nuevoProveedor) {
         if(titulo) titulo.innerText = titulo.innerText.split('|')[0] + " | DEST: " + nuevoProveedor;
     }
 }
+
+
 
 /*----------------------------------- FUNCIONES DEL MODAL RECEPCIÓN---------------------------------*/
 async function abrirRecepcion(datos, fila) {
