@@ -1,4 +1,16 @@
 /*---estilos para el modal de sincronización---------------------------*/
+:root {
+    --bg-deep: #020617;
+    --card-bg: linear-gradient(145deg, #0f172a, #020617);
+    --gold: #c2902e;
+    --blue: #008BFF;
+    --orange: #FF6500;
+    --neon-green: #00BF9C; 
+    --neon-purple: #653EE6;
+    --neon-red: #CB1735;
+}
+
+
 #modal-sync-canvases, 
 #modal-sync-canvases * {
     box-sizing: border-box !important;
@@ -106,7 +118,7 @@
 }
 
 .logo-plataforma-sync {
-    width: 250px; 
+    width: 280px; 
     height: auto;
     filter: drop-shadow(0 0 15px rgba(194, 144, 46, 0.3));
     animation: flotarLogo 3s ease-in-out infinite;
@@ -195,14 +207,17 @@ canvas {
 
 .btn-modal-ok {
     background: linear-gradient(145deg, #0f172a, #020617);
-    color: var(--neon-green);
-    border: 1px solid var(--neon-green);
+    color: var(--neon-red);
+    border-radius: 25px;
+    border: 1px solid var(--neon-red);
     font-weight: 900;
     letter-spacing: 2px;
     transition: 0.3s;
+    width: auto !important;
+    height: auto !important;
 }
 .btn-modal-ok:hover {
-    background: var(--neon-green);
+    background: var(--neon-red);
     color: black;
-    box-shadow: 0 0 20px var(--neon-green);
+    box-shadow: 0 0 20px var(--neon-red);
 }
