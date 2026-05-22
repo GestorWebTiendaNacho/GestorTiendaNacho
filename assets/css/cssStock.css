@@ -191,6 +191,12 @@
     border-radius: 10px;
 }
 
+.box-1 button { border: 2px solid rgba(0, 191, 156, 0.15); }
+.box-2 button { border: 2px solid rgba(176, 18, 23, 0.15); }
+.box-3 button { border: 2px solid rgba(0, 139, 255, 0.15); }
+.box-4 button { border: 2px solid rgba(255, 101, 0, 0.15); }
+
+
 .box-1 button::before { background-color: var(--neon-green); }
 .box-2 button::before { background-color: var(--neon-red); }
 .box-3 button::before { background-color: var(--blue); }
