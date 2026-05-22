@@ -210,12 +210,12 @@ canvas {
     background: linear-gradient(145deg, #0f172a, #020617);
     color: var(--neon-red);
     border-radius: 25px;
-    border: 1px solid var(--neon-red);
+    border: 2px solid var(--neon-red);
     font-weight: 900;
     letter-spacing: 2px;
     transition: 0.3s;
-    width: auto !important;
-    height: auto !important;
+    width: 85px !important;
+    height: 55px !important;
 }
 .btn-modal-ok:hover {
     background: var(--neon-red);
