@@ -273,6 +273,26 @@ window.ejecutarProtocoloRescate = function() {
 
     /*----- BACKUP CSV MASIVO -----------*/
 window.crearBackupCSV = async function() {
+      const result = await Swal.fire({
+        title: '🚨 PROTOCOLO DE EMERGENCIA',
+        text: 'Se disparará la descarga del stock masivo y se generarán dos archivos en formato .csv (CB y TN). ¿Deseas continuar con el proceso?',
+        icon: 'warning',
+        background: '#0f172a', 
+        color: '#ffffff',      
+        showCancelButton: true,
+        confirmButtonColor: '#c2902e',   
+        cancelButtonColor: '#475569',   
+        confirmButtonText: 'SÍ, INICIAR',
+        cancelButtonText: 'CANCELAR',
+        heightAuto: false                
+    });
+
+    if (!result.isConfirmed) {
+        if (typeof log === "function") {
+            log("🚫 Descarga de emergencia cancelada por el usuario.", "info");
+        }
+        return;
+    }
     const btn = document.getElementById('btn-backup-emergencia');
     if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; }
     
@@ -284,8 +304,6 @@ window.crearBackupCSV = async function() {
         if (data.status === "success" && data.reply && data.reply.urls) {
             const urls = data.reply.urls;
             log(`✅ PROCESO EXITOSO. PREPARANDO ARCHIVOS...`, "success");
-
-            // Función interna para ejecutar la descarga física
             const ejecutarDescargaReal = (url, nombre) => {
                 if (!url || !url.includes('drive.google.com')) {
                     log(`❌ ERROR EN ${nombre}: ${url}`, "error");
@@ -293,7 +311,6 @@ window.crearBackupCSV = async function() {
                 }
                 const a = document.createElement('a');
                 a.href = url;
-                // Forzamos target blank solo para la descarga si el delay falla
                 a.target = '_blank'; 
                 document.body.appendChild(a);
                 a.click();
@@ -301,17 +318,16 @@ window.crearBackupCSV = async function() {
             };
 
             // --- SISTEMA DE COLA CON DELAY ---
-            
-            // 1. Primera descarga (Depósito CB)
+            //Primera descarga (Depósito CB)
             log("💾 Descargando Stock CB...", "info");
             ejecutarDescargaReal(urls.cb, "STOCK CB");
 
-            // 2. Segunda descarga (Depósito TN) con un delay de 3 segundos
+            // Segunda descarga (Depósito TN) con un delay de 3 segundos
             setTimeout(() => {
                 log("💾 Descargando Stock TN...", "info");
                 ejecutarDescargaReal(urls.tn, "STOCK TN");
                 log(`📦 PROCESO FINALIZADO. Revisa tu carpeta de descargas.`, "success");
-            }, 3000); // 3000ms = 3 segundos de espera
+            }, 3000);
 
         } else {
             const msj = data.reply ? data.reply.msj : "Error desconocido";

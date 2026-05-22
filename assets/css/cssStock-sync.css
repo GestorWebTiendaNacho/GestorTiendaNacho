@@ -54,7 +54,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     letter-spacing: 1px;
-    z-index: 4500 !important;
+    z-index: 45 !important;
 }
 
 .btn-lex-minimal:hover {
@@ -215,12 +215,22 @@ canvas {
     color: var(--neon-red);
     border-radius: 25px;
     border: 2px solid var(--neon-red);
+    padding: 12px 24px; 
+    min-width: 260px; 
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border-radius: 14px;
+    font-size: 0.9rem;  
+    line-height: 1.2;
+    height: 52px;
     font-weight: 900;
-    letter-spacing: 2px;
-    transition: 0.3s;
-    width: 105px !important;
-    height: 75px !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
 }
+
 .btn-modal-ok:hover {
     background: var(--neon-red);
     color: black;
