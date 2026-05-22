@@ -88,11 +88,11 @@
     align-items: center;
 }
 
-.card-glass-CB { border: 1px solid rgba(0, 191, 156, 0.2) !important; }
-.card-glass-TN { border: 1px solid rgba(255, 101, 0, 0.2) !important; }
+.card-glass-CB { border: 2px solid rgba(41, 56, 224, 0.2) !important; }
+.card-glass-TN { border: 2px solid rgba(146, 28, 196, 0.2) !important; }
 
-.card-glass-CB:hover { border-color: var(--neon-green) !important; transform: translateY(-4px); }
-.card-glass-TN:hover { border-color: var(--orange) !important; transform: translateY(-4px); }
+.card-glass-CB:hover { border-color: var(--neon-green) !important; transform: translateY(-4px); box-shadow: 0 4px 20px rgba(206, 221, 139, 0.4);}
+.card-glass-TN:hover { border-color: var(--neon-purple) !important; transform: translateY(-4px); box-shadow: 0 4px 20px rgba(239, 125, 240, 0.4);}
 
 .label-gauge {
     font-size: 0.8rem;
