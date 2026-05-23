@@ -354,6 +354,126 @@ function cerrarModalSincronizacion() {
         document.getElementById('modal-sync-canvases').classList.add('hidden');
     }
 
-    function abrirModalVenta() {
-        console.log("Abriendo panel de Actualización de Ventas...");
+
+    /*---Seccion Ventas--*/
+let archivoVentasBase64 = null;
+let nombreArchivoVentas = "";
+
+// 1. ABRIR PANEL MODAL
+window.abrirModalVenta = function() {
+    const modal = document.getElementById('modal-ventas');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
     }
+};
+
+// CERRAR PANEL MODAL Y REINICIAR ESTADOS DE SEGURIDAD
+window.cerrarModalVenta = function() {
+    const modal = document.getElementById('modal-ventas');
+    if (modal) {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+    // Hard Reset para evitar fugas de memoria o reprocesos accidentales
+    archivoVentasBase64 = null;
+    nombreArchivoVentas = "";
+    document.getElementById('input-archivo-ventas').value = "";
+    document.getElementById('label-archivo-ventas').innerText = "Seleccionar Documento (.xlsx)";
+    document.getElementById('btn-procesar-ventas').disabled = true;
+};
+
+// CAPTURA Y CONVERSIÓN DEL ARCHIVO LOCAL A BASE64
+window.manejarSeleccionArchivoVentas = function(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        nombreArchivoVentas = file.name;
+        
+        // Renderizamos estado de lectura rápida
+        document.getElementById('label-archivo-ventas').innerText = `Leyendo: ${file.name}...`;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const dataURL = e.target.result;
+            // Extraemos puramente el string binario base64 del dataUrl de JavaScript
+            archivoVentasBase64 = dataURL.split(',')[1];
+            
+            // Actualizamos la UI liberando el botón de acción masiva
+            document.getElementById('label-archivo-ventas').innerText = `📄 Carga lista: ${file.name}`;
+            document.getElementById('btn-procesar-ventas').disabled = false;
+        };
+        
+        reader.onerror = function() {
+            Swal.fire({
+                title: '❌ ERROR DE LECTURA',
+                text: 'El navegador no pudo procesar el archivo local. Intente nuevamente.',
+                icon: 'error',
+                background: '#0f172a',
+                color: '#fff'
+            });
+        };
+        
+        reader.readAsDataURL(file); // Dispara la conversión asíncrona interna
+    }
+};
+
+//EJECUCIÓN HACIA EL SERVIDOR
+window.ejecutarProcesamientoVentas = function() {
+    if (!archivoVentasBase64 || !nombreArchivoVentas) return;
+    
+    const btnProcesar = document.getElementById('btn-procesar-ventas');
+    btnProcesar.disabled = true; 
+    
+    // Lanzamos SweetAlert de espera
+    Swal.fire({
+        title: '⚙️ PROCESANDO ARCHIVO',
+        text: 'Extrayendo datos y actualizando la base histórica en Sheets. Esta operación puede tardar varios minutos. Aguarde por favor...',
+        icon: 'info',
+        background: '#0f172a',
+        color: '#fff',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Disparo estratégico hacia GAS
+    google.script.run
+        .withSuccessHandler(function(response) {
+            if (response && response.success) {
+                // Notificación Premium de finalización exitosa
+                Swal.fire({
+                    title: '🎉 ¡ACTUALIZACIÓN EXITOSA!',
+                    text: `El historial fue procesado correctamente. Registros de venta impactados: ${response.registros}`,
+                    icon: 'success',
+                    background: '#0f172a',
+                    color: '#fff',
+                    confirmButtonColor: '#c2902e'
+                });
+                window.cerrarModalVenta(); // Limpieza e inmunidad total del modal
+            } else {
+                Swal.fire({
+                    title: '❌ ERROR EN PROCESO',
+                    text: response.error || 'El servidor rechazó la estructura interna del documento.',
+                    icon: 'error',
+                    background: '#0f172a',
+                    color: '#fff',
+                    confirmButtonColor: '#c2902e'
+                });
+                btnProcesar.disabled = false;
+            }
+        })
+        .withFailureHandler(function(err) {
+            Swal.fire({
+                title: '🚨 FALLO CRÍTICO DE RED',
+                text: 'Error en la conexión remota de Google Apps Script: ' + (err.message || err),
+                icon: 'error',
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#c2902e'
+            });
+            btnProcesar.disabled = false;
+        })
+        .procesarArchivoVentas(archivoVentasBase64, nombreArchivoVentas);
+};

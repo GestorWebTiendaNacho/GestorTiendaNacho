@@ -167,8 +167,58 @@
 
 
 
-<div id="modal-ventas" class="fixed inset-0 hidden items-center justify-center z-[10000] bg-slate-950/80 backdrop-blur-xl"></div>
+<div id="modal-ventas" class="fixed inset-0 hidden items-center justify-center z-[10000] bg-slate-950/80 backdrop-blur-xl overflow-y-auto px-4">
+    <div class="p-8 max-w-2xl w-full border border-gold/20 rounded-[40px] bg-slate-900 shadow-[0_0_50px_rgba(0,0,0,0.5)] text-white">
+        
+        <h2 class="text-2xl font-bold text-center tracking-tight mb-6 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent uppercase">
+            Sistema de Actualización de Ventas
+        </h2>
+        
+        <div class="space-y-4 text-sm text-slate-300 mb-8 border border-slate-800/80 p-5 rounded-2xl bg-slate-950/40 leading-relaxed text-left">
+            <div>
+                <span class="text-gold font-black tracking-wider block mb-1">1.- PREPARATIVOS:</span> 
+                Antes de comenzar debe tener en cuenta que deberá contar con el archivo histórico de ventas descargado localmente de la web Contabilium. 
+                Al cual podrá acceder a través del siguiente link: 
+                <a href="https://app.contabilium.com/modulos/reportes/historicoStock.aspx" target="_blank" class="text-blue-400 font-mono underline hover:text-blue-300 transition-colors break-all">
+                    https://app.contabilium.com/modulos/reportes/historicoStock.aspx
+                </a> 
+                Debiendo colocar la fecha de inicio y de fin para la confección del mismo.-
+            </div>
+            <div>
+                <span class="text-gold font-black tracking-wider block mb-1">2.- SELECCIÓN DE ARCHIVO:</span> 
+                Si ya cuenta con el archivo descrito en el punto anterior, deberá presionar sobre el botón de "Cargar Documento", y seleccionar el archivo correcto.
+            </div>
+            <div>
+                <span class="text-gold font-black tracking-wider block mb-1">3.- PROCESAMIENTO DE DATOS:</span> 
+                Una vez finalizada la carga, presione sobre el botón de "Procesar Archivo", esto extraerá los datos necesarios del mismo. Esta operación puede llegar a tardar varios minutos. Aguarde por favor!.-
+            </div>
+            <div>
+                <span class="text-gold font-black tracking-wider block mb-1">4.- FINALIZACIÓN:</span> 
+                Una vez finalizado, el sistema le arrojará un mensaje de éxito, y podrá cerrar esta ventana.-
+            </div>
+        </div>
 
+        <div class="flex flex-col items-center justify-center gap-4 mb-8">
+            <input type="file" id="input-archivo-ventas" accept=".xlsx, .xls" class="hidden" onchange="window.manejarSeleccionArchivoVentas(this)">
+            
+            <button onclick="document.getElementById('input-archivo-ventas').click()" class="px-6 py-4 border border-dashed border-slate-700 hover:border-gold/40 rounded-xl bg-slate-950/60 flex items-center gap-3 transition-all cursor-pointer group w-full max-w-md justify-center">
+                <i class="bi bi-file-earmark-spreadsheet text-xl text-slate-500 group-hover:text-gold transition-colors"></i>
+                <span id="label-archivo-ventas" class="text-slate-400 group-hover:text-slate-200 font-medium transition-colors truncate">
+                    Seleccionar Documento (.xlsx)
+                </span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 max-w-md mx-auto">
+            <button id="btn-procesar-ventas" onclick="window.ejecutarProcesamientoVentas()" disabled class="w-full py-4 rounded-2xl bg-gold text-slate-950 font-bold hover:scale-[1.02] active:scale-95 transition-all duration-200 shadow-lg shadow-gold/20 disabled:opacity-20 disabled:pointer-events-none disabled:scale-100 cursor-pointer text-center">
+                PROCESAR ARCHIVO
+            </button>
+            <button onclick="window.cerrarModalVenta()" class="w-full py-4 rounded-2xl border border-slate-700 text-slate-400 font-bold hover:bg-slate-800 hover:text-white active:scale-95 transition-all duration-200 cursor-pointer text-center">
+                CERRAR VENTANA
+            </button>
+        </div>
+        
+    </div>
 </div>
 
 
