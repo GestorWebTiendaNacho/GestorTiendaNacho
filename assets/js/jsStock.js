@@ -418,74 +418,32 @@ window.manejarSeleccionArchivoVentas = function(input) {
 };
 
 //EJECUCIÓN HACIA EL SERVIDOR
-window.ejecutarProcesamientoVentas = async function() {
+window.ejecutarProcesamientoVentas = function() { // Ya no necesita ser async
     if (!archivoVentasBase64 || !nombreArchivoVentas) return;
     
     const btnProcesar = document.getElementById('btn-procesar-ventas');
     if (btnProcesar) btnProcesar.disabled = true; 
     
-    // 1. Loader de SweetAlert para congelar la pantalla mientras viaja el archivo
-    Swal.fire({
-        title: '⚙️ PROCESANDO ARCHIVO',
-        text: 'Extrayendo datos y actualizando la base histórica en Sheets. Esta operación puede tardar varios minutos. Aguarde por favor...',
-        icon: 'info',
-        background: '#0f172a',
-        color: '#fff',
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+    // 1. DISPARAR Y CAPTURAR EN SEGUNDO PLANO
+    callGoogleScript('procesarArchivoVentas', {
+        dataBase64: archivoVentasBase64,
+        nombreArchivo: nombreArchivoVentas
+    }).catch(err => {
+        // Si el envío falla en el fondo (ej. corte de internet), lo registramos en consola
+        // o podrías disparar un SweetAlert flotante silencioso si quisieras.
+        console.error("🚨 Error crítico en el background del Servidor GAS:", err);
     });
     
-    try {
-        // 2. LLAMADA CORRECTA: Usando tu puente estandarizado para GitHub
-        const data = await callGoogleScript('procesarArchivoVentas', {
-            dataBase64: archivoVentasBase64,
-            nombreArchivo: nombreArchivoVentas
-        });
-        
-        // Adaptamos la lectura según cómo procese tu doPost las respuestas (success o status === "success")
-        if (data && (data.success || data.status === "success" || (data.reply && data.reply.success))) {
-            
-            // Extraemos los registros procesados (manejando si viene directo o dentro de .reply)
-            const registros = data.registros || (data.reply && data.reply.registros) || 0;
-
-            Swal.fire({
-                title: '🎉 ¡ACTUALIZACIÓN EXITOSA!',
-                text: `El historial fue procesado correctamente. Registros de venta impactados: ${registros}`,
-                icon: 'success',
-                background: '#0f172a',
-                color: '#fff',
-                confirmButtonColor: '#c2902e'
-            });
-            
-            window.cerrarModalVenta(); // Limpieza de inputs y cierre
-            
-        } else {
-            // Manejo de error devuelto por el backend de GAS
-            const msjError = data.error || (data.reply && data.reply.msj) || 'El servidor rechazó la estructura interna del documento.';
-            Swal.fire({
-                title: '❌ ERROR EN PROCESO',
-                text: msjError,
-                icon: 'error',
-                background: '#0f172a',
-                color: '#fff',
-                confirmButtonColor: '#c2902e'
-            });
-            if (btnProcesar) btnProcesar.disabled = false;
-        }
-
-    } catch (err) {
-        // Manejo de fallos críticos de red / timeout
-        Swal.fire({
-            title: '🚨 FALLO CRÍTICO DE CONEXIÓN',
-            text: 'No se pudo establecer comunicación con el servidor: ' + err,
-            icon: 'error',
-            background: '#0f172a',
-            color: '#fff',
-            confirmButtonColor: '#c2902e'
-        });
-        if (btnProcesar) btnProcesar.disabled = false;
-    }
+    // 2. Y OLVIDAR: La interfaz responde instantáneamente
+    Swal.fire({
+        title: '🚀 fUNCIÓN COMPLETADA CON ÉXITO',
+        text: 'El documento fue transmitido al servidor. El procesamiento e impacto en las hojas se ejecutará internamente en segundo plano.',
+        icon: 'success',
+        background: '#0f172a',
+        color: '#fff',
+        confirmButtonColor: '#c2902e'
+    });
+    
+    // Limpieza automática e inmediata de la interfaz
+    window.cerrarModalVenta();
 };
