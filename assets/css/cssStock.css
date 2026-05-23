@@ -8,6 +8,19 @@
     --neon-green: #00BF9C; 
     --neon-purple: #653EE6;
     --neon-red: #CB1735;
+
+    /* Variables para modales */
+    --mv-bg-main: #0b0f19;          
+    --mv-bg-card: rgba(15, 23, 42, 0.4); 
+    --mv-border-gold: rgba(194, 144, 46, 0.2); 
+    
+    /* Configuración Neón Rojo (Cerrar) */
+    --mv-neon-red: #ff2a4b;
+    --mv-neon-red-glow: rgba(255, 42, 75, 0.45);
+    
+    /* Configuración Neón Verde (Procesar) */
+    --mv-neon-green: #10b981;
+    --mv-neon-green-glow: rgba(16, 185, 129, 0.5);
 }
 
 * {
@@ -221,4 +234,36 @@
 
 
 
+/*----SECCIÓN VENTAS---*/
 
+.btn-neon-close {
+    border: 1px solid rgba(255, 42, 75, 0.3) !important;
+    color: #fca5a5 !important;
+    background: rgba(255, 42, 75, 0.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-neon-close:hover {
+    background: rgba(255, 42, 75, 0.1) !important;
+    color: #ffffff !important;
+    border-color: var(--mv-neon-red) !important;
+    box-shadow: 0 0 20px var(--mv-neon-red-glow), inset 0 0 8px rgba(255, 42, 75, 0.2);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.btn-neon-process {
+    background: var(--mv-neon-green) !important;
+    color: #022c22 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-neon-process:not(:disabled):hover {
+    background: #34d399 !important;
+    box-shadow: 0 0 25px var(--mv-neon-green-glow);
+    transform: scale(1.02);
+}
+.btn-neon-process:disabled {
+    background: #1e293b !important;
+    color: #475569 !important;
+    box-shadow: none !important;
+    opacity: 0.35;
+    cursor: not-allowed;
+}

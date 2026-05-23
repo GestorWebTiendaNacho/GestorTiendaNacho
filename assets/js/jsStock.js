@@ -418,13 +418,13 @@ window.manejarSeleccionArchivoVentas = function(input) {
 };
 
 //EJECUCIÓN HACIA EL SERVIDOR
-window.ejecutarProcesamientoVentas = function() {
+window.ejecutarProcesamientoVentas = async function() {
     if (!archivoVentasBase64 || !nombreArchivoVentas) return;
     
     const btnProcesar = document.getElementById('btn-procesar-ventas');
-    btnProcesar.disabled = true; 
+    if (btnProcesar) btnProcesar.disabled = true; 
     
-    // Lanzamos SweetAlert de espera
+    // 1. Loader de SweetAlert para congelar la pantalla mientras viaja el archivo
     Swal.fire({
         title: '⚙️ PROCESANDO ARCHIVO',
         text: 'Extrayendo datos y actualizando la base histórica en Sheets. Esta operación puede tardar varios minutos. Aguarde por favor...',
@@ -438,42 +438,54 @@ window.ejecutarProcesamientoVentas = function() {
         }
     });
     
-    // Disparo estratégico hacia GAS
-    google.script.run
-        .withSuccessHandler(function(response) {
-            if (response && response.success) {
-                // Notificación Premium de finalización exitosa
-                Swal.fire({
-                    title: '🎉 ¡ACTUALIZACIÓN EXITOSA!',
-                    text: `El historial fue procesado correctamente. Registros de venta impactados: ${response.registros}`,
-                    icon: 'success',
-                    background: '#0f172a',
-                    color: '#fff',
-                    confirmButtonColor: '#c2902e'
-                });
-                window.cerrarModalVenta(); // Limpieza e inmunidad total del modal
-            } else {
-                Swal.fire({
-                    title: '❌ ERROR EN PROCESO',
-                    text: response.error || 'El servidor rechazó la estructura interna del documento.',
-                    icon: 'error',
-                    background: '#0f172a',
-                    color: '#fff',
-                    confirmButtonColor: '#c2902e'
-                });
-                btnProcesar.disabled = false;
-            }
-        })
-        .withFailureHandler(function(err) {
+    try {
+        // 2. LLAMADA CORRECTA: Usando tu puente estandarizado para GitHub
+        const data = await callGoogleScript('procesarArchivoVentas', {
+            dataBase64: archivoVentasBase64,
+            nombreArchivo: nombreArchivoVentas
+        });
+        
+        // Adaptamos la lectura según cómo procese tu doPost las respuestas (success o status === "success")
+        if (data && (data.success || data.status === "success" || (data.reply && data.reply.success))) {
+            
+            // Extraemos los registros procesados (manejando si viene directo o dentro de .reply)
+            const registros = data.registros || (data.reply && data.reply.registros) || 0;
+
             Swal.fire({
-                title: '🚨 FALLO CRÍTICO DE RED',
-                text: 'Error en la conexión remota de Google Apps Script: ' + (err.message || err),
+                title: '🎉 ¡ACTUALIZACIÓN EXITOSA!',
+                text: `El historial fue procesado correctamente. Registros de venta impactados: ${registros}`,
+                icon: 'success',
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#c2902e'
+            });
+            
+            window.cerrarModalVenta(); // Limpieza de inputs y cierre
+            
+        } else {
+            // Manejo de error devuelto por el backend de GAS
+            const msjError = data.error || (data.reply && data.reply.msj) || 'El servidor rechazó la estructura interna del documento.';
+            Swal.fire({
+                title: '❌ ERROR EN PROCESO',
+                text: msjError,
                 icon: 'error',
                 background: '#0f172a',
                 color: '#fff',
                 confirmButtonColor: '#c2902e'
             });
-            btnProcesar.disabled = false;
-        })
-        .procesarArchivoVentas(archivoVentasBase64, nombreArchivoVentas);
+            if (btnProcesar) btnProcesar.disabled = false;
+        }
+
+    } catch (err) {
+        // Manejo de fallos críticos de red / timeout
+        Swal.fire({
+            title: '🚨 FALLO CRÍTICO DE CONEXIÓN',
+            text: 'No se pudo establecer comunicación con el servidor: ' + err,
+            icon: 'error',
+            background: '#0f172a',
+            color: '#fff',
+            confirmButtonColor: '#c2902e'
+        });
+        if (btnProcesar) btnProcesar.disabled = false;
+    }
 };
