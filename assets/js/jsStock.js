@@ -418,32 +418,47 @@ window.manejarSeleccionArchivoVentas = function(input) {
 };
 
 //EJECUCIÓN HACIA EL SERVIDOR
-window.ejecutarProcesamientoVentas = function() { // Ya no necesita ser async
+window.ejecutarProcesamientoVentas = function() {
     if (!archivoVentasBase64 || !nombreArchivoVentas) return;
     
     const btnProcesar = document.getElementById('btn-procesar-ventas');
     if (btnProcesar) btnProcesar.disabled = true; 
     
-    // 1. DISPARAR Y CAPTURAR EN SEGUNDO PLANO
-    callGoogleScript('procesarArchivoVentas', {
-        dataBase64: archivoVentasBase64,
-        nombreArchivo: nombreArchivoVentas
-    }).catch(err => {
-        // Si el envío falla en el fondo (ej. corte de internet), lo registramos en consola
-        // o podrías disparar un SweetAlert flotante silencioso si quisieras.
-        console.error("🚨 Error crítico en el background del Servidor GAS:", err);
+    // URL exacta de tu última implementación de GAS
+    const urlGAS = "https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec";
+
+    // Reemplazamos la pasarela global por un Fetch directo blindado
+    fetch(urlGAS, {
+        method: 'POST',
+        mode: 'no-cors', // <-- LE DICE AL NAVEGADOR: "Dispará y no preguntes por políticas de origen"
+        headers: {
+            'Content-Type': 'text/plain' // Evita que el navegador intente un preflight (OPTIONS)
+        },
+        body: JSON.stringify({
+            action: 'procesarArchivoVentas', // Tu enrutador de GAS leerá esto en el doPost
+            dataBase64: archivoVentasBase64,
+            nombreArchivo: nombreArchivoVentas
+        })
+    })
+    .then(() => {
+        // En modo no-cors siempre entra acá si el paquete físico salió del navegador
+        console.log("🚀 Paquete binario despachado exitosamente hacia el entorno de ejecución de GAS.");
+    })
+    .catch(err => {
+        // Esto solo ocurrirá si el usuario se quedó sin internet en el milisegundo del clic
+        console.error("🚨 Error físico de red al intentar despachar:", err);
     });
     
-    // 2. Y OLVIDAR: La interfaz responde instantáneamente
+    // RESPUESTA INSTANTÁNEA EN UI (El usuario no espera al servidor)
     Swal.fire({
-        title: '🚀 fUNCIÓN COMPLETADA CON ÉXITO',
-        text: 'El documento fue transmitido al servidor. El procesamiento e impacto en las hojas se ejecutará internamente en segundo plano.',
+        title: '🚀 ENVÍO EXITOSO',
+        text: 'El documento fue transmitido al servidor central de GAS. El procesamiento e impacto en las hojas se ejecutará internamente en segundo plano.',
         icon: 'success',
         background: '#0f172a',
         color: '#fff',
         confirmButtonColor: '#c2902e'
     });
     
-    // Limpieza automática e inmediata de la interfaz
+    // Limpieza automática de la interfaz
     window.cerrarModalVenta();
 };
