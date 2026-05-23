@@ -424,32 +424,41 @@ window.ejecutarProcesamientoVentas = function() {
     const btnProcesar = document.getElementById('btn-procesar-ventas');
     if (btnProcesar) btnProcesar.disabled = true; 
     
-    // URL exacta de tu última implementación de GAS
     const urlGAS = "https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec";
 
-    // Reemplazamos la pasarela global por un Fetch directo blindado
     fetch(urlGAS, {
         method: 'POST',
-        mode: 'no-cors', // <-- LE DICE AL NAVEGADOR: "Dispará y no preguntes por políticas de origen"
+        mode: 'no-cors',
         headers: {
-            'Content-Type': 'text/plain' // Evita que el navegador intente un preflight (OPTIONS)
+            'Content-Type': 'text/plain'
         },
         body: JSON.stringify({
-            action: 'procesarArchivoVentas', // Tu enrutador de GAS leerá esto en el doPost
+            // 1. Por si tu doPost busca las variables directamente en la raíz:
+            action: 'procesarArchivoVentas',
             dataBase64: archivoVentasBase64,
-            nombreArchivo: nombreArchivoVentas
+            nombreArchivo: nombreArchivoVentas,
+            
+            // 2. Por si tu doPost busca dentro de un objeto llamado 'data':
+            data: {
+                dataBase64: archivoVentasBase64,
+                nombreArchivo: nombreArchivoVentas
+            },
+            
+            // 3. Por si tu doPost busca dentro de un objeto llamado 'params' o 'payload':
+            params: {
+                dataBase64: archivoVentasBase64,
+                nombreArchivo: nombreArchivoVentas
+            }
         })
     })
     .then(() => {
-        // En modo no-cors siempre entra acá si el paquete físico salió del navegador
-        console.log("🚀 Paquete binario despachado exitosamente hacia el entorno de ejecución de GAS.");
+        console.log("🚀 Paquete blindado despachado exitosamente hacia GAS.");
     })
     .catch(err => {
-        // Esto solo ocurrirá si el usuario se quedó sin internet en el milisegundo del clic
         console.error("🚨 Error físico de red al intentar despachar:", err);
     });
     
-    // RESPUESTA INSTANTÁNEA EN UI (El usuario no espera al servidor)
+    // RESPUESTA INSTANTÁNEA EN UI
     Swal.fire({
         title: '🚀 ENVÍO EXITOSO',
         text: 'El documento fue transmitido al servidor central de GAS. El procesamiento e impacto en las hojas se ejecutará internamente en segundo plano.',
@@ -459,6 +468,5 @@ window.ejecutarProcesamientoVentas = function() {
         confirmButtonColor: '#c2902e'
     });
     
-    // Limpieza automática de la interfaz
     window.cerrarModalVenta();
 };
