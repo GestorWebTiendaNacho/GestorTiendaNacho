@@ -387,70 +387,49 @@ window.cerrarModalVenta = function() {
 window.manejarSeleccionArchivoVentas = function(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
-        nombreArchivoVentas = file.name;
         
-        // Renderizamos estado de lectura rápida
-        document.getElementById('label-archivo-ventas').innerText = `Leyendo: ${file.name}...`;
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const dataURL = e.target.result;
-            // Extraemos puramente el string binario base64 del dataUrl de JavaScript
-            archivoVentasBase64 = dataURL.split(',')[1];
-            
-            // Actualizamos la UI liberando el botón de acción masiva
-            document.getElementById('label-archivo-ventas').innerText = `📄 Carga lista: ${file.name}`;
-            document.getElementById('btn-procesar-ventas').disabled = false;
-        };
-        
-        reader.onerror = function() {
-            Swal.fire({
-                title: '❌ ERROR DE LECTURA',
-                text: 'El navegador no pudo procesar el archivo local. Intente nuevamente.',
-                icon: 'error',
-                background: '#0f172a',
-                color: '#fff'
-            });
-        };
-        
-        reader.readAsDataURL(file); // Dispara la conversión asíncrona interna
+        // Actualizamos la UI liberando el botón de acción masiva al instante
+        document.getElementById('label-archivo-ventas').innerText = `📄 Carga lista: ${file.name}`;
+        document.getElementById('btn-procesar-ventas').disabled = false;
     }
 };
 
-//EJECUCIÓN HACIA EL SERVIDOR
+// 2. EJECUCIÓN HACIA EL SERVIDOR: Captura el binario puro y lo despacha
 window.ejecutarProcesamientoVentas = function() {
-    if (!archivoVentasBase64 || !nombreArchivoVentas) return;
+    const inputArchivo = document.getElementById('input-archivo-ventas'); 
+    const archivoBlob = inputArchivo && inputArchivo.files[0] ? inputArchivo.files[0] : null;
+
+    if (!archivoBlob) {
+        console.error("🚨 No se encontró el archivo físico en el input.");
+        return;
+    }
     
     const btnProcesar = document.getElementById('btn-procesar-ventas');
     if (btnProcesar) btnProcesar.disabled = true; 
     
-    // 🌟 SANITIZACIÓN: Quitamos el encabezado del dataURL si existe
-    const base64Puro = archivoVentasBase64.includes(",") 
-        ? archivoVentasBase64.split(",")[1] 
-        : archivoVentasBase64;
+    // Pasamos los metadatos por URL params
+    const urlGAS = `https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec?action=procesarArchivoVentas&nombre=${encodeURIComponent(archivoBlob.name)}`;
 
-    // 🌟 PASAMOS LOS METADATOS POR URL (Query Parameters)
-    const urlGAS = `https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec?action=procesarArchivoVentas&nombre=${encodeURIComponent(nombreArchivoVentas)}`;
-
+    // ENVIAMOS EL BLOB BINARIO PURO (Sin sobrecarga de strings en JS)
     fetch(urlGAS, {
         method: 'POST',
         mode: 'no-cors',
         headers: {
-            'Content-Type': 'text/plain' // Texto plano directo
+            'Content-Type': archivoBlob.type || 'application/octet-stream'
         },
-        body: base64Puro // 🌟 MANDAMOS EL STRING PURO, SIN JSON.stringify
+        body: archivoBlob 
     })
     .then(() => {
-        console.log("🚀 Paquete de datos puro enviado con éxito a la pasarela de GAS.");
+        console.log("🚀 Flujo binario inyectado con éxito en el servidor de GAS.");
     })
     .catch(err => {
         console.error("🚨 Error físico de red al intentar despachar:", err);
     });
     
-    // UI INSTANTÁNEA
+    // UI INSTANTÁNEA (Excelente UX para el enfoque fire-and-forget)
     Swal.fire({
         title: '🚀 ENVÍO EXITOSO',
-        text: 'El documento fue transmitido al servidor central de GAS. El procesamiento de los 200k registros se ejecutará internamente en segundo plano.',
+        text: 'El documento binario fue transmitido al servidor central de GAS. El procesamiento de los registros se ejecutará internamente en segundo plano.',
         icon: 'success',
         background: '#0f172a',
         color: '#fff',
