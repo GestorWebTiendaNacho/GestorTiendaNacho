@@ -426,6 +426,11 @@ window.ejecutarProcesamientoVentas = function() {
     
     const urlGAS = "https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec";
 
+    // 🌟 SANITIZACIÓN CRÍTICA: Quitamos el prefijo "data:...;base64," si existe
+    const base64Puro = archivoVentasBase64.includes(",") 
+        ? archivoVentasBase64.split(",")[1] 
+        : archivoVentasBase64;
+
     fetch(urlGAS, {
         method: 'POST',
         mode: 'no-cors',
@@ -433,32 +438,22 @@ window.ejecutarProcesamientoVentas = function() {
             'Content-Type': 'text/plain'
         },
         body: JSON.stringify({
-            // 1. Por si tu doPost busca las variables directamente en la raíz:
             action: 'procesarArchivoVentas',
-            dataBase64: archivoVentasBase64,
-            nombreArchivo: nombreArchivoVentas,
-            
-            // 2. Por si tu doPost busca dentro de un objeto llamado 'data':
+            // Enviamos un único objeto simplificado que matchee con "contents.data" de tu doPost
             data: {
-                dataBase64: archivoVentasBase64,
-                nombreArchivo: nombreArchivoVentas
-            },
-            
-            // 3. Por si tu doPost busca dentro de un objeto llamado 'params' o 'payload':
-            params: {
-                dataBase64: archivoVentasBase64,
+                dataBase64: base64Puro,
                 nombreArchivo: nombreArchivoVentas
             }
         })
     })
     .then(() => {
-        console.log("🚀 Paquete blindado despachado exitosamente hacia GAS.");
+        console.log("🚀 El proceso se disparó exitosamente en el servidor de GAS.");
     })
     .catch(err => {
         console.error("🚨 Error físico de red al intentar despachar:", err);
     });
     
-    // RESPUESTA INSTANTÁNEA EN UI
+    // RESPUESTA INSTANTÁNEA EN UI (Excelente UX)
     Swal.fire({
         title: '🚀 ENVÍO EXITOSO',
         text: 'El documento fue transmitido al servidor central de GAS. El procesamiento e impacto en las hojas se ejecutará internamente en segundo plano.',
