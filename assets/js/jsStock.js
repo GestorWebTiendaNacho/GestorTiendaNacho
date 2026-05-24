@@ -392,7 +392,6 @@ window.manejarSeleccionArchivoVentas = function(input) {
     }
 };
 
-// 2. PROCESAMIENTO SEGMENTADO: El motor principal
 window.ejecutarProcesamientoVentas = function() {
     const inputArchivo = document.getElementById('input-archivo-ventas'); 
     const archivoBlob = inputArchivo && inputArchivo.files[0] ? inputArchivo.files[0] : null;
@@ -405,10 +404,9 @@ window.ejecutarProcesamientoVentas = function() {
     const btnProcesar = document.getElementById('btn-procesar-ventas');
     if (btnProcesar) btnProcesar.disabled = true; 
 
-    // Inicializamos un modal de carga con progreso interactivo
     Swal.fire({
         title: '⏳ Procesando Base de Datos',
-        html: 'Leyendo archivo de ventas localmente... <b>0%</b>',
+        html: 'Leyendo y filtrando archivo de ventas localmente... <b>0%</b>',
         allowOutsideClick: false,
         background: '#0f172a',
         color: '#fff',
@@ -425,29 +423,37 @@ window.ejecutarProcesamientoVentas = function() {
             const nombreHoja = workbook.SheetNames[0];
             const hoja = workbook.Sheets[nombreHoja];
             
-            // Convertimos la hoja a una matriz pura de datos (Filas y Columnas)
-            const filas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
-            const totalFilas = filas.length;
+            // Convertimos la hoja a una matriz de datos pura
+            const rawFilas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
             
-            // Configuración de bloques (7000 filas por envío es el punto óptimo para GAS)
-            const TAMANIO_BLOQUE = 7000;
-           // const urlGAS = "https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec";
+            // --- FILTRADO Y EXTRACCIÓN DE LAS 4 COLUMNAS EXCLUSIVAS ---
+            // Removemos la cabecera con slice(1) e iteramos extrayendo los índices exactos
+            const filasProcesadas = rawFilas.slice(1)
+                .filter(fila => fila && fila[0] !== "" && fila[0] !== undefined)
+                .map(fila => [
+                    fila[0],                                 // Columna A: Fecha venta
+                    fila[3] !== undefined ? fila[3] : "",    // Columna D: SKU
+                    fila[4] !== undefined ? fila[4] : "",    // Columna E: NOMBRE
+                    Math.abs(parseFloat(fila[5]) || 0)       // Columna F: Cantidad
+                ]);
 
-            console.log(`[LexTech-Client] Total de filas detectadas: ${totalFilas}. Iniciando envío por bloques...`);
+            const totalFilas = filasProcesadas.length;
+            
+            // Definimos bloques estables de 5000 registros para optimizar la red
+            const TAMANIO_BLOQUE = 5000;
+
+            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío por bloques de 4 columnas...`);
 
             for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
-                const bloque = filas.slice(i, i + TAMANIO_BLOQUE);
+                const bloque = filasProcesadas.slice(i, i + TAMANIO_BLOQUE);
                 const esPrimerBloque = (i === 0);
-                
-                // Calculamos el porcentaje de avance
                 const progreso = Math.min(100, Math.round((i / totalFilas) * 100));
                 
-                // Actualizamos la UI en tiempo real
                 Swal.update({
                     html: `Enviando registros ${i} al ${Math.min(totalFilas, i + TAMANIO_BLOQUE)} de ${totalFilas}... <b>${progreso}%</b>`
                 });
 
-                // Enviamos la porción como un JSON estándar y liviano
+                // Petición POST utilizando tu constante global centralizada
                 const respuesta = await fetch(URL_GAS_GLOBAL, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -464,10 +470,9 @@ window.ejecutarProcesamientoVentas = function() {
                 }
             }
 
-            // UI de Éxito Total al terminar el bucle
             Swal.fire({
                 title: '🚀 PROCESAMIENTO COMPLETADO',
-                text: `Se cargaron con éxito las ${totalFilas} filas en la base central sin saturar el servidor.`,
+                text: `Se cargaron con éxito las ${totalFilas} filas filtradas (4 columnas) en Historial_Ventas.`,
                 icon: 'success',
                 background: '#0f172a',
                 color: '#fff',
@@ -489,6 +494,5 @@ window.ejecutarProcesamientoVentas = function() {
         }
     };
 
-    // Dispara la lectura local del array buffer
     reader.readAsArrayBuffer(archivoBlob);
 };
