@@ -424,39 +424,33 @@ window.ejecutarProcesamientoVentas = function() {
     const btnProcesar = document.getElementById('btn-procesar-ventas');
     if (btnProcesar) btnProcesar.disabled = true; 
     
-    const urlGAS = "https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec";
-
-    // 🌟 SANITIZACIÓN CRÍTICA: Quitamos el prefijo "data:...;base64," si existe
+    // 🌟 SANITIZACIÓN: Quitamos el encabezado del dataURL si existe
     const base64Puro = archivoVentasBase64.includes(",") 
         ? archivoVentasBase64.split(",")[1] 
         : archivoVentasBase64;
+
+    // 🌟 PASAMOS LOS METADATOS POR URL (Query Parameters)
+    const urlGAS = `https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec?action=procesarArchivoVentas&nombre=${encodeURIComponent(nombreArchivoVentas)}`;
 
     fetch(urlGAS, {
         method: 'POST',
         mode: 'no-cors',
         headers: {
-            'Content-Type': 'text/plain'
+            'Content-Type': 'text/plain' // Texto plano directo
         },
-        body: JSON.stringify({
-            action: 'procesarArchivoVentas',
-            // Enviamos un único objeto simplificado que matchee con "contents.data" de tu doPost
-            data: {
-                dataBase64: base64Puro,
-                nombreArchivo: nombreArchivoVentas
-            }
-        })
+        body: base64Puro // 🌟 MANDAMOS EL STRING PURO, SIN JSON.stringify
     })
     .then(() => {
-        console.log("🚀 El proceso se disparó exitosamente en el servidor de GAS.");
+        console.log("🚀 Paquete de datos puro enviado con éxito a la pasarela de GAS.");
     })
     .catch(err => {
         console.error("🚨 Error físico de red al intentar despachar:", err);
     });
     
-    // RESPUESTA INSTANTÁNEA EN UI (Excelente UX)
+    // UI INSTANTÁNEA
     Swal.fire({
         title: '🚀 ENVÍO EXITOSO',
-        text: 'El documento fue transmitido al servidor central de GAS. El procesamiento e impacto en las hojas se ejecutará internamente en segundo plano.',
+        text: 'El documento fue transmitido al servidor central de GAS. El procesamiento de los 200k registros se ejecutará internamente en segundo plano.',
         icon: 'success',
         background: '#0f172a',
         color: '#fff',
