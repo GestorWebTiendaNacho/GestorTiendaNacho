@@ -387,54 +387,108 @@ window.cerrarModalVenta = function() {
 window.manejarSeleccionArchivoVentas = function(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
-        
-        // Actualizamos la UI liberando el botón de acción masiva al instante
         document.getElementById('label-archivo-ventas').innerText = `📄 Carga lista: ${file.name}`;
         document.getElementById('btn-procesar-ventas').disabled = false;
     }
 };
 
-// 2. EJECUCIÓN HACIA EL SERVIDOR: Captura el binario puro y lo despacha
+// 2. PROCESAMIENTO SEGMENTADO: El motor principal
 window.ejecutarProcesamientoVentas = function() {
     const inputArchivo = document.getElementById('input-archivo-ventas'); 
     const archivoBlob = inputArchivo && inputArchivo.files[0] ? inputArchivo.files[0] : null;
 
     if (!archivoBlob) {
-        console.error("🚨 No se encontró el archivo físico en el input.");
+        console.error("🚨 No se encontró el archivo físico.");
         return;
     }
     
     const btnProcesar = document.getElementById('btn-procesar-ventas');
     if (btnProcesar) btnProcesar.disabled = true; 
-    
-    // Pasamos los metadatos por URL params
-    const urlGAS = `https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec?action=procesarArchivoVentas&nombre=${encodeURIComponent(archivoBlob.name)}`;
 
-    // ENVIAMOS EL BLOB BINARIO PURO (Sin sobrecarga de strings en JS)
-    fetch(urlGAS, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-            'Content-Type': archivoBlob.type || 'application/octet-stream'
-        },
-        body: archivoBlob 
-    })
-    .then(() => {
-        console.log("🚀 Flujo binario inyectado con éxito en el servidor de GAS.");
-    })
-    .catch(err => {
-        console.error("🚨 Error físico de red al intentar despachar:", err);
-    });
-    
-    // UI INSTANTÁNEA (Excelente UX para el enfoque fire-and-forget)
+    // Inicializamos un modal de carga con progreso interactivo
     Swal.fire({
-        title: '🚀 ENVÍO EXITOSO',
-        text: 'El documento binario fue transmitido al servidor central de GAS. El procesamiento de los registros se ejecutará internamente en segundo plano.',
-        icon: 'success',
+        title: '⏳ Procesando Base de Datos',
+        html: 'Leyendo archivo de ventas localmente... <b>0%</b>',
+        allowOutsideClick: false,
         background: '#0f172a',
         color: '#fff',
-        confirmButtonColor: '#c2902e'
+        didOpen: () => {
+            Swal.showLoading();
+        }
     });
-    
-    window.cerrarModalVenta();
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const nombreHoja = workbook.SheetNames[0];
+            const hoja = workbook.Sheets[nombreHoja];
+            
+            // Convertimos la hoja a una matriz pura de datos (Filas y Columnas)
+            const filas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
+            const totalFilas = filas.length;
+            
+            // Configuración de bloques (7000 filas por envío es el punto óptimo para GAS)
+            const TAMANIO_BLOQUE = 7000;
+           // const urlGAS = "https://script.google.com/macros/s/AKfycbwvueBIC53kWm8st00kJwTdYUgomkqR_acpdZozcZNO17kYCRWpQHMdFj1GmPY2DAo/exec";
+
+            console.log(`[LexTech-Client] Total de filas detectadas: ${totalFilas}. Iniciando envío por bloques...`);
+
+            for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
+                const bloque = filas.slice(i, i + TAMANIO_BLOQUE);
+                const esPrimerBloque = (i === 0);
+                
+                // Calculamos el porcentaje de avance
+                const progreso = Math.min(100, Math.round((i / totalFilas) * 100));
+                
+                // Actualizamos la UI en tiempo real
+                Swal.update({
+                    html: `Enviando registros ${i} al ${Math.min(totalFilas, i + TAMANIO_BLOQUE)} de ${totalFilas}... <b>${progreso}%</b>`
+                });
+
+                // Enviamos la porción como un JSON estándar y liviano
+                const respuesta = await fetch(URL_GAS_GLOBAL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'procesarBloqueVentas',
+                        data: {
+                            valores: bloque,
+                            esPrimerBloque: esPrimerBloque
+                        }
+                    })
+                });
+
+                if (!respuesta.ok) {
+                    throw new Error(`Error en el servidor en el bloque que inicia en la fila ${i}`);
+                }
+            }
+
+            // UI de Éxito Total al terminar el bucle
+            Swal.fire({
+                title: '🚀 PROCESAMIENTO COMPLETADO',
+                text: `Se cargaron con éxito las ${totalFilas} filas en la base central sin saturar el servidor.`,
+                icon: 'success',
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#c2902e'
+            });
+
+            window.cerrarModalVenta();
+
+        } catch (err) {
+            console.error("🚨 Error procesando bloques:", err);
+            Swal.fire({
+                title: '❌ ERROR DE PROCESAMIENTO',
+                text: err.message || 'Ocurrió un problema al fragmentar los datos.',
+                icon: 'error',
+                background: '#0f172a',
+                color: '#fff'
+            });
+            if (btnProcesar) btnProcesar.disabled = false;
+        }
+    };
+
+    // Dispara la lectura local del array buffer
+    reader.readAsArrayBuffer(archivoBlob);
 };
