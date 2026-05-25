@@ -2173,55 +2173,157 @@ window.avatarPensar = () => window.NicoController && NicoController.cambiarA("PE
 window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ESPERANDO");
 window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
 
-/*const btnVoz = document.getElementById('btn-nico-voz');*/
 
-/*btnVoz.onclick = () => {
-    const input = document.getElementById("user-input");
-    input.value = "";
-    input.placeholder = "ESCUCHANDO... (Usa Super+S o habla)";
-    input.focus();
+// Elementos del DOM
+const btnVoz = document.getElementById('btn-nico-voz');
+const userInput = document.getElementById('user-input');
+const chatContainer = document.getElementById('chat-messages');
 
-    window.avatarIdle();
-    btnVoz.classList.replace('text-slate-500', 'text-red-500');
+// Inicialización de Web Speech API
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let estaEscuchando = false;
 
-    input.onblur = () => {
-        if(input.value.length > 2) {
-           enviarPrompt();
-           btnVoz.classList.replace('text-red-500', 'text-slate-500');
-           input.placeholder = "Comando de sistema...";
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'es-AR'; // Adaptable a tu región (es-ES, es-MX, etc.)
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    // Eventos del reconocimiento de voz
+    recognition.onstart = () => {
+        estaEscuchando = true;
+        userInput.value = "";
+        userInput.placeholder = "ESCUCHANDO... (Habla ahora)";
+        userInput.focus();
+        btnVoz.classList.replace('text-slate-500', 'text-red-500');
+        btnVoz.classList.add('animate-pulse');
+        if (typeof window.avatarIdle === "function") window.avatarIdle();
+    };
+
+    recognition.onresult = (event) => {
+        const textoDetectado = event.results[0][0].transcript;
+        userInput.value = textoDetectado;
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Error en reconocimiento de voz:", event.error);
+        restablecerUIEstadoMic();
+    };
+
+    recognition.onend = () => {
+        restablecerUIEstadoMic();
+        if (userInput.value.trim().length > 2) {
+            enviarPrompt();
         }
     };
-};*/
+} else {
+    console.warn("Este navegador no soporta Web Speech API de forma nativa.");
+    btnVoz.title = "Reconocimiento de voz no soportado en este navegador";
+    btnVoz.disabled = true;
+}
 
+// Restablecer estilos del micrófono
+function restablecerUIEstadoMic() {
+    estaEscuchando = false;
+    btnVoz.classList.replace('text-red-500', 'text-slate-500');
+    btnVoz.classList.remove('animate-pulse');
+    userInput.placeholder = "Comando de sistema...";
+}
 
-
-function enviarPrompt() {
-    const inputElement = document.getElementById("user-input");
-    if (!inputElement) return;
-    const userInput = inputElement.value;
-    if (!userInput) return;
-
-    mostrarMensajeUsuario(userInput); 
-    inputElement.value = "";
-    window.avatarPensar();
-
-    google.script.run
-    .withSuccessHandler((respuesta) => {
-        window.avatarHablar();
-        if (typeof mostrarRespuestaEnChat === "function") {
-            mostrarRespuestaEnChat(respuesta);
+// Acción del Botón de Voz (Toggle Inteligente Click/Hold)
+if (btnVoz && recognition) {
+    btnVoz.addEventListener('click', () => {
+        if (estaEscuchando) {
+            recognition.stop();
+        } else {
+            recognition.start();
         }
-        setTimeout(() => window.avatarIdle(), 4000);
-    })
-    .withFailureHandler((err) => {
-        window.avatarIdle();
-        console.error("Error en Nico:", err);
-    })
-    .procesarPrompt(userInput);
+    });
+}
+
+// Atajo de teclado: Super + S (Meta/Win + S) o Alt + S como alternativa segura
+window.addEventListener('keydown', (e) => {
+    // Nota: La tecla 'Super' (Windows/Meta) suele abrir el menú del sistema operativo.
+    // Usamos e.altKey o e.metaKey + 's' como un fallback seguro y accesible.
+    if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault(); // Evitamos acciones nativas del OS o navegador
+        if (recognition && !estaEscuchando) {
+            recognition.start();
+        }
+    }
+});
+
+// Captura de Enter en el input de texto clásico
+if (userInput) {
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            enviarPrompt();
+        }
+    });
+}
+
+async function enviarPrompt() {
+    if (!userInput) return;
+    const promptText = userInput.value.trim();
+    if (!promptText) return;
+
+    mostrarMensajeUsuario(promptText); 
+    userInput.value = "";
+    if (typeof window.avatarPensar === "function") window.avatarPensar();
+
+    try {
+        const response = await fetch(URL_GLOBAL_GAS, {
+            method: 'POST',
+            mode: 'cors', 
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ 
+                action: "procesarPromptNico",
+                params: { prompt: promptText }
+            })
+        });
+
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        
+        const dataRespuesta = await response.json(); 
+
+        if (dataRespuesta.status === "success") {
+            if (typeof window.avatarHablar === "function") window.avatarHablar();
+            
+            // 1. Renderizado clásico en la burbuja del chat
+            if (typeof mostrarRespuestaEnChat === "function" && dataRespuesta.reply) {
+                mostrarRespuestaEnChat(dataRespuesta.reply); 
+            }
+
+            // 2. DETECCIÓN INTERACTIVA DE SWEETALERT (Nuevo)
+            if (dataRespuesta.swal && typeof Swal !== "undefined") {
+                Swal.fire({
+                    title: dataRespuesta.swal.title,
+                    html: dataRespuesta.swal.html,
+                    icon: dataRespuesta.swal.icon || 'info',
+                    background: '#1e293b', // Fondo slate-800 a tono con tu interfaz
+                    color: '#f1f5f9',
+                    confirmButtonColor: '#0e7490', // Cyan-700
+                    confirmButtonText: 'Entendido'
+                });
+            }
+        } else {
+            throw new Error(dataRespuesta.message || "Error interno en el núcleo operativo.");
+        }
+
+        setTimeout(() => {
+            if (typeof window.avatarIdle === "function") window.avatarIdle();
+        }, 4000);
+
+    } catch (err) {
+        if (typeof window.avatarIdle === "function") window.avatarIdle();
+        console.error("Error en la conexión con el núcleo de Nico:", err);
+        mostrarRespuestaEnChat("❌ Error de enlace: No pude conectar con mi núcleo operativo.");
+    }
 }
 
 function mostrarMensajeUsuario(texto) {
-    const chatContainer = document.getElementById("chat-messages");
     if (!chatContainer) return;
     const div = document.createElement("div");
     div.className = "flex flex-col items-end message-fade mb-4 transition-all duration-500";
@@ -2236,7 +2338,6 @@ function mostrarMensajeUsuario(texto) {
 }
 
 function mostrarRespuestaEnChat(texto) {
-    const chatContainer = document.getElementById("chat-messages");
     if (!chatContainer) return;
     const div = document.createElement("div");
     div.className = "flex flex-col items-start message-fade mb-4";
@@ -2253,9 +2354,7 @@ function mostrarRespuestaEnChat(texto) {
     }
 }
 
-
- function ejecutarScrollYLimpieza() {
-    const chatContainer = document.getElementById("chat-messages");
+function ejecutarScrollYLimpieza() {
     if (!chatContainer) return;
     const mensajes = chatContainer.getElementsByClassName("message-fade");
     if (mensajes.length > 6) {

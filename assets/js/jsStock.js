@@ -404,8 +404,10 @@ window.ejecutarProcesamientoVentas = function() {
     const btnProcesar = document.getElementById('btn-procesar-ventas');
     if (btnProcesar) btnProcesar.disabled = true; 
 
+    // Capturamos tu contenedor del loader personalizado
     const overlayCarga = document.getElementById('overlay-carga');
     
+    // Encendemos tu loader en pantalla completa inmediatamente al iniciar el proceso
     if (overlayCarga) overlayCarga.style.display = 'flex';
 
     const reader = new FileReader();
@@ -419,14 +421,26 @@ window.ejecutarProcesamientoVentas = function() {
             // Convertimos la hoja a una matriz de datos pura
             const rawFilas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
             
-            // --- FILTRADO Y EXTRACCIÓN DE LAS 4 COLUMNAS EXCLUSIVAS ---
+            // --- GENERACIÓN DE LA MARCA DE TIEMPO (TIMESTAMP) FIJA ---
+            const ahora = new Date();
+            const dd = String(ahora.getDate()).padStart(2, '0');
+            const mm = String(ahora.getMonth() + 1).padStart(2, '0');
+            const hh = String(ahora.getHours()).padStart(2, '0');
+            const min = String(ahora.getMinutes()).padStart(2, '0');
+            
+            // Construcción exacta del formato pedido: ACT: dd/mm hh:mm
+            const marcaImpacto = `ACT: ${dd}/${mm} ${hh}:${min}`;
+            
+            // --- FILTRADO Y EXTRACCIÓN DE LAS COLUMNAS ---
+            // Removemos la cabecera con slice(1) e inyectamos la marca temporal en la última posición
             const filasProcesadas = rawFilas.slice(1)
                 .filter(fila => fila && fila[0] !== "" && fila[0] !== undefined)
                 .map(fila => [
                     fila[0],                                 // Columna A: Fecha venta
                     fila[3] !== undefined ? fila[3] : "",    // Columna D: SKU
                     fila[4] !== undefined ? fila[4] : "",    // Columna E: NOMBRE
-                    Math.abs(parseFloat(fila[5]) || 0)       // Columna F: Cantidad (Absoluto)
+                    Math.abs(parseFloat(fila[5]) || 0),      // Columna F: Cantidad (Absoluto)
+                    marcaImpacto                             // Reemplaza fila[6] por la marca estática calculada
                 ]);
 
             const totalFilas = filasProcesadas.length;
@@ -434,7 +448,7 @@ window.ejecutarProcesamientoVentas = function() {
             // Definimos bloques estables de 5000 registros para optimizar la red
             const TAMANIO_BLOQUE = 5000;
 
-            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío por bloques de 4 columnas...`);
+            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío por bloques de 5 columnas...`);
 
             // Bucle asincrónico secuencial por bloques
             for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
@@ -460,9 +474,6 @@ window.ejecutarProcesamientoVentas = function() {
                 if (!respuesta.ok) {
                     throw new Error(`Error en el servidor en el bloque que inicia en la fila ${i}`);
                 }
-                
-                // Opcional: Podés descomentar la siguiente línea si tu GAS retorna respuestas por bloque para control en consola
-                // const resJson = await respuesta.json();
             }
 
             // --- ÉXITO: Apagamos tu loader antes de mostrar el SweetAlert de éxito ---
@@ -503,3 +514,4 @@ window.ejecutarProcesamientoVentas = function() {
 
     reader.readAsArrayBuffer(archivoBlob);
 };
+
