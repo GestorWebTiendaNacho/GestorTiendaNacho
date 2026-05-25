@@ -2172,7 +2172,7 @@ if (!window.NicoController) {
 window.avatarPensar = () => window.NicoController && NicoController.cambiarA("PENSANDO");
 window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ESPERANDO");
 window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
-//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
+//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 Creo que debemos probar todo
 
 
 
