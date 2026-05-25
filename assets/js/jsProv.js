@@ -2418,18 +2418,6 @@ function ejecutarScrollYLimpieza() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar-nico');
     const overlay = document.getElementById('sidebar-overlay');
