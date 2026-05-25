@@ -2172,174 +2172,193 @@ if (!window.NicoController) {
 window.avatarPensar = () => window.NicoController && NicoController.cambiarA("PENSANDO");
 window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ESPERANDO");
 window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
+//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
 
 
+
+const HUGGINGFACE_TOKEN = "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";
+
+// Captura centralizada de elementos del DOM
 const chatContainer = document.getElementById("chat-messages");
 const userInput = document.getElementById("user-input");
 const prenderMicBtn = document.getElementById("btn-nico-voz");
 
-// Variables de estado global de la interfaz
-let estaEscuchando = false;
+// Variables globales para la captura de audio
+let mediaRecorder = null;
+let chunksAudio = [];
+let estaGrabando = false;
 
-// 2. CONFIGURACIÓN COMPLETA DEL MOTOR DE VOZ (SpeechRecognition)
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = null;
-
-if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;     // Captura ráfagas de comandos cortas
-    recognition.interimResults = false;  // Solo procesa el resultado final cerrado
-    recognition.lang = 'es-AR';          // Forzar idioma local para mitigar error 'network' en Linux/Zorin
-
-    recognition.onstart = () => {
-        console.log("🎙️ Micrófono activo: Escuchando orden para NICO...");
-        estaEscuchando = true;
-        
-        // Feedback visual en el botón de tu HTML (Se vuelve rojo y titila)
-        if (prenderMicBtn) {
-            prenderMicBtn.classList.remove('text-slate-500');
-            prenderMicBtn.classList.add('text-red-500', 'animate-pulse');
+// 1. CONTROL DE HARDWARE MULTINAVEGADOR
+async function alternarMicrofono() {
+    if (estaGrabando) {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
         }
-        if (typeof window.avatarPensar === "function") window.avatarPensar();
-    };
-
-    recognition.onerror = (event) => {
-        console.error("❌ Error en reconocimiento de voz:", event.error);
-        estaEscuchando = false;
-        
-        if (event.error === 'network') {
-            mostrarRespuestaEnChat("🤖 NICO: Hubo un microcorte en el motor de voz de Google. No te preocupes, podés escribirme la orden o volver a presionar el mic.");
-        } else if (event.error === 'not-allowed') {
-            mostrarRespuestaEnChat("❌ Permiso denegado: Revisa los candados de privacidad de tu navegador.");
-        }
-        
+        estaGrabando = false;
         APAGAR_VISUAL_MIC();
-    };
-
-    recognition.onend = () => {
-        console.log("🎙️ Micrófono cerrado de forma segura.");
-        estaEscuchando = false;
-        APAGAR_VISUAL_MIC();
-    };
-
-    recognition.onresult = (event) => {
-        const vozMapeada = event.results[0][0].transcript;
-        console.log("🗣️ Texto capturado por voz:", vozMapeada);
-        
-        if (userInput) {
-            userInput.value = vozMapeada;
-            enviarPrompt(); // Despacha automáticamente la orden procesada al backend GAS
+    } else {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("Tu navegador no soporta la captura nativa de audio.");
+            return;
         }
-    };
-} else {
-    console.warn("⚠️ Este navegador no soporta la API nativa de SpeechRecognition.");
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            chunksAudio = [];
+            
+            // Compatibilidad de formatos entre Brave, Chrome y Firefox
+            const opcionesMime = MediaRecorder.isTypeSupported("audio/webm") 
+                ? { mimeType: "audio/webm" } 
+                : { mimeType: "audio/ogg" };
+
+            mediaRecorder = new MediaRecorder(stream, opcionesMime);
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) chunksAudio.push(e.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                stream.getTracks().forEach(track => track.stop()); // Liberar mic inmediatamente
+                
+                if (HUGGINGFACE_TOKEN === "tu_token_gratuito_de_hf_aqui") {
+                    mostrarRespuestaEnChat("❌ Configuración incompleta: Por favor, introduce tu token gratuito de Hugging Face en el código.");
+                    return;
+                }
+
+                mostrarRespuestaEnChat("🤖 NICO: Procesando y transcribiendo tu voz de forma gratuita...");
+                
+                const blobAudio = new Blob(chunksAudio, { type: opcionesMime.mimeType });
+                await transcribirAudioGratis(blobAudio);
+            };
+
+            mediaRecorder.start();
+            estaGrabando = true;
+            ENCENDER_VISUAL_MIC();
+
+        } catch (err) {
+            console.error("Error de hardware:", err);
+            mostrarRespuestaEnChat("❌ Error: No se pudo acceder al micrófono. Revisa los permisos en la barra de Brave.");
+            APAGAR_VISUAL_MIC();
+        }
+    }
 }
 
-// Función auxiliar para restaurar el estilo original de Tailwind en tu botón
-function APAGAR_VISUAL_MIC() {
-    if (prenderMicBtn) {
-        prenderMicBtn.classList.remove('text-red-500', 'animate-pulse');
-        prenderMicBtn.classList.add('text-slate-500');
-    }
-    if (typeof window.avatarIdle === "function") window.avatarIdle();
-}
-
-// Función asignada al evento click de tu botón de micrófono
-function alternarMicrofono() {
-    if (!recognition) {
-        alert("Tu navegador actual no soporta control por voz.");
-        return;
-    }
+// 2. CONEXIÓN AL MOTOR DE IA GRATUITO (Whisper-Large-V3-Turbo Serverless)
+async function transcribirAudioGratis(blobAudio) {
     try {
-        if (estaEscuchando) {
-            recognition.stop();
+        const respuesta = await fetch(
+            "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo",
+            {
+                headers: { 
+                    "Authorization": `Bearer ${HUGGINGFACE_TOKEN}`,
+                    "Content-Type": blobAudio.type
+                },
+                method: "POST",
+                body: blobAudio,
+            }
+        );
+
+        if (!respuesta.ok) throw new Error(`Error en servidor HF: ${respuesta.status}`);
+        
+        const resultado = await respuesta.json();
+        const textoTranscripto = resultado.text;
+
+        if (textoTranscripto && textoTranscripto.trim() !== "") {
+            console.log("🗣️ Transcripción exitosa:", textoTranscripto);
+            if (userInput) {
+                userInput.value = textoTranscripto;
+                enviarPrompt(); // Envía el texto plano automáticamente a tu GAS actual
+            }
         } else {
-            recognition.start();
+            mostrarRespuestaEnChat("🤖 NICO: No capté ningún sonido claro, por favor intenta hablar de nuevo.");
         }
-    } catch (e) {
-        console.log("El motor de voz ya se encuentra inicializado o procesando en segundo plano.");
+
+    } catch (err) {
+        console.error("Error en la API de Hugging Face:", err);
+        mostrarRespuestaEnChat("❌ Error de transcripción: El motor gratuito está saturado o el token es inválido.");
+    } finally {
+        if (typeof window.avatarIdle === "function") window.avatarIdle();
     }
 }
 
-// Vinculación dinámica del evento click al botón de tu HTML
-if (prenderMicBtn) {
-    prenderMicBtn.addEventListener('click', alternarMicrofono);
-}
-
-// 3. DESPACHO CENTRALIZADO HACIA EL NÚCLEO OPERATIVO DE GAS
+// 3. ENVÍO DE TEXTO ESTÁNDAR A TU GOOGLE APPS SCRIPT ACTUAL
 async function enviarPrompt() {
     if (!userInput) return;
-    
     const promptText = userInput.value.trim();
     if (!promptText) return;
 
-    // Dibujar el mensaje en la pantalla del operador y limpiar caja de entrada
-    mostrarMensajeUsuario(promptText); 
+    mostrarMensajeUsuario(promptText);
     userInput.value = "";
-    
     if (typeof window.avatarPensar === "function") window.avatarPensar();
 
     try {
-        // Conexión directa a tu constante global de main.js
-        const response = await fetch(window.URL_GAS_GLOBAL, {
+        const response = await fetch(window.URL_GLOBAL_GAS || window.URL_GAS_GLOBAL, {
             method: 'POST',
-            mode: 'cors', 
+            mode: 'cors',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 action: "procesarPromptNico",
                 params: { prompt: promptText }
             })
         });
 
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        const dataRespuesta = await response.json();
         
-        const dataRespuesta = await response.json(); 
-
         if (dataRespuesta.status === "success") {
             if (typeof window.avatarHablar === "function") window.avatarHablar();
-            
-            // 1. Renderizado en la burbuja del chat
-            if (dataRespuesta.reply) {
-                mostrarRespuestaEnChat(dataRespuesta.reply); 
-            }
+            if (dataRespuesta.reply) mostrarRespuestaEnChat(dataRespuesta.reply);
 
-            // 2. Inyección dinámica de SweetAlert estructurado para la confirmación
             if (dataRespuesta.swal && typeof Swal !== "undefined") {
                 Swal.fire({
                     title: dataRespuesta.swal.title,
                     html: dataRespuesta.swal.html,
                     icon: dataRespuesta.swal.icon || 'info',
-                    background: '#1e293b', 
+                    background: '#1e293b',
                     color: '#f1f5f9',
-                    confirmButtonColor: '#0e7490', 
+                    confirmButtonColor: '#0e7490',
                     confirmButtonText: 'Entendido'
                 });
             }
         } else {
-            throw new Error(dataRespuesta.message || "Error interno devuelto por Nico.");
+            mostrarRespuestaEnChat("❌ Error interno: " + (dataRespuesta.message || "Falla de ejecución."));
         }
 
+    } catch (err) {
+        console.error("Error enviando datos a GAS:", err);
+        mostrarRespuestaEnChat("❌ Error de enlace: No se pudo conectar con el servidor central de Google.");
+    } finally {
         setTimeout(() => {
             if (typeof window.avatarIdle === "function") window.avatarIdle();
         }, 4000);
-
-    } catch (err) {
-        if (typeof window.avatarIdle === "function") window.avatarIdle();
-        console.error("Error en la conexión con el núcleo de Nico:", err);
-        mostrarRespuestaEnChat("❌ Error de enlace: No pude conectar con mi núcleo operativo en Google.");
     }
 }
 
-// 4. ESCUCHADORES DE EVENTOS DE TECLADO Y ENTRADAS
-// Atajo de teclado global: Super + S o Alt + S
+// 4. VINCULACIONES DE INTERFAZ Y ESTILOS TAILWIND
+if (prenderMicBtn) prenderMicBtn.addEventListener('click', alternarMicrofono);
+
+function ENCENDER_VISUAL_MIC() {
+    if (prenderMicBtn) {
+        prenderMicBtn.classList.remove('text-slate-500');
+        prenderMicBtn.classList.add('text-red-500', 'animate-pulse');
+    }
+    if (typeof window.avatarPensar === "function") window.avatarPensar();
+}
+
+function APAGAR_VISUAL_MIC() {
+    if (prenderMicBtn) {
+        prenderMicBtn.classList.remove('text-red-500', 'animate-pulse');
+        prenderMicBtn.classList.add('text-slate-500');
+    }
+}
+
 window.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault(); 
+        e.preventDefault();
         alternarMicrofono();
     }
 });
 
-// Captura de tecla Enter en tu barra de comandos de terminal
 if (userInput) {
     userInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -2349,7 +2368,6 @@ if (userInput) {
     });
 }
 
-// 5. COMPONENTES RENDERIZADORES DE RENDER VIVA EN PANTALLA
 function mostrarMensajeUsuario(texto) {
     if (!chatContainer) return;
     const div = document.createElement("div");
@@ -2376,9 +2394,6 @@ function mostrarRespuestaEnChat(texto) {
     `;
     chatContainer.appendChild(div);
     ejecutarScrollYLimpieza();
-    if (typeof ejecutarScriptsInyectados === "function") {
-        ejecutarScriptsInyectados(div);
-    }
 }
 
 function ejecutarScrollYLimpieza() {
@@ -2393,6 +2408,18 @@ function ejecutarScrollYLimpieza() {
         chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     }, 50);
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 function toggleSidebar() {
