@@ -404,16 +404,9 @@ window.ejecutarProcesamientoVentas = function() {
     const btnProcesar = document.getElementById('btn-procesar-ventas');
     if (btnProcesar) btnProcesar.disabled = true; 
 
-    Swal.fire({
-        title: '⏳ Procesando Base de Datos',
-        html: 'Leyendo y filtrando archivo de ventas localmente... <b>0%</b>',
-        allowOutsideClick: false,
-        background: '#0f172a',
-        color: '#fff',
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
+    const overlayCarga = document.getElementById('overlay-carga');
+    
+    if (overlayCarga) overlayCarga.style.display = 'flex';
 
     const reader = new FileReader();
     reader.onload = async function(e) {
@@ -427,14 +420,13 @@ window.ejecutarProcesamientoVentas = function() {
             const rawFilas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
             
             // --- FILTRADO Y EXTRACCIÓN DE LAS 4 COLUMNAS EXCLUSIVAS ---
-            // Removemos la cabecera con slice(1) e iteramos extrayendo los índices exactos
             const filasProcesadas = rawFilas.slice(1)
                 .filter(fila => fila && fila[0] !== "" && fila[0] !== undefined)
                 .map(fila => [
                     fila[0],                                 // Columna A: Fecha venta
                     fila[3] !== undefined ? fila[3] : "",    // Columna D: SKU
                     fila[4] !== undefined ? fila[4] : "",    // Columna E: NOMBRE
-                    Math.abs(parseFloat(fila[5]) || 0)       // Columna F: Cantidad
+                    Math.abs(parseFloat(fila[5]) || 0)       // Columna F: Cantidad (Absoluto)
                 ]);
 
             const totalFilas = filasProcesadas.length;
@@ -444,18 +436,18 @@ window.ejecutarProcesamientoVentas = function() {
 
             console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío por bloques de 4 columnas...`);
 
+            // Bucle asincrónico secuencial por bloques
             for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
                 const bloque = filasProcesadas.slice(i, i + TAMANIO_BLOQUE);
                 const esPrimerBloque = (i === 0);
-                const progreso = Math.min(100, Math.round((i / totalFilas) * 100));
                 
-                Swal.update({
-                    html: `Enviando registros ${i} al ${Math.min(totalFilas, i + TAMANIO_BLOQUE)} de ${totalFilas}... <b>${progreso}%</b>`
-                });
-
-                // Petición POST utilizando tu constante global centralizada
+                // Petición POST utilizando tu constante global centralizada y tu estructura de payload exacta
                 const respuesta = await fetch(URL_GAS_GLOBAL, {
                     method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
                     body: JSON.stringify({
                         action: 'procesarBloqueVentas',
                         data: {
@@ -468,11 +460,17 @@ window.ejecutarProcesamientoVentas = function() {
                 if (!respuesta.ok) {
                     throw new Error(`Error en el servidor en el bloque que inicia en la fila ${i}`);
                 }
+                
+                // Opcional: Podés descomentar la siguiente línea si tu GAS retorna respuestas por bloque para control en consola
+                // const resJson = await respuesta.json();
             }
+
+            // --- ÉXITO: Apagamos tu loader antes de mostrar el SweetAlert de éxito ---
+            if (overlayCarga) overlayCarga.style.display = 'none';
 
             Swal.fire({
                 title: '🚀 PROCESAMIENTO COMPLETADO',
-                text: `Se cargaron con éxito las ${totalFilas} filas filtradas (4 columnas) en Historial_Ventas.`,
+                text: `Se cargaron con éxito las ${totalFilas} filas filtradas en Historial_Ventas.`,
                 icon: 'success',
                 background: '#0f172a',
                 color: '#fff',
@@ -483,6 +481,10 @@ window.ejecutarProcesamientoVentas = function() {
 
         } catch (err) {
             console.error("🚨 Error procesando bloques:", err);
+            
+            // --- ERROR: Apagamos tu loader antes de mostrar el SweetAlert de error ---
+            if (overlayCarga) overlayCarga.style.display = 'none';
+            
             Swal.fire({
                 title: '❌ ERROR DE PROCESAMIENTO',
                 text: err.message || 'Ocurrió un problema al fragmentar los datos.',
@@ -490,7 +492,12 @@ window.ejecutarProcesamientoVentas = function() {
                 background: '#0f172a',
                 color: '#fff'
             });
+            
+            // Re-habilitamos el botón para permitirle al usuario reintentar
             if (btnProcesar) btnProcesar.disabled = false;
+        } finally {
+            // Limpieza preventiva del valor del input para permitir subir el mismo archivo consecutivamente si se desea
+            if (inputArchivo) inputArchivo.value = "";
         }
     };
 
