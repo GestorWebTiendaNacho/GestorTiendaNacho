@@ -2174,9 +2174,6 @@ window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ES
 window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
 
 
-
-
-
 const chatContainer = document.getElementById("chat-messages");
 const userInput = document.getElementById("user-input");
 const prenderMicBtn = document.getElementById("btn-nico-voz");
@@ -2378,7 +2375,7 @@ if (userInput) {
     });
 }
 
-// 5. INYECCIÓN DINÁMICA DE INTERFAZ EN EL CHAT
+
 function mostrarMensajeUsuario(texto) {
     if (!chatContainer) return;
     const div = document.createElement("div");
