@@ -2174,72 +2174,138 @@ window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ES
 window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
 
 
-// Elementos del DOM
-const btnVoz = document.getElementById('btn-nico-voz');
-const userInput = document.getElementById('user-input');
-const chatContainer = document.getElementById('chat-messages');
-
-// Inicialización de Web Speech API
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
-let estaEscuchando = false;
+let prenderMicBtn = document.getElementById("tu-boton-mic-id"); // Cambialo por el ID real de tu botón si difiere
 
 if (SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.lang = 'es-AR'; // Adaptable a tu región (es-ES, es-MX, etc.)
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = false;   // Captura ráfagas de comandos cortas e interactivas
+    recognition.interimResults = false; // Solo procesa el resultado final cerrado
+    
+    // CRÍTICO PARA EVITAR ERROR 'NETWORK' EN LINUX/ZORIN: 
+    // Forzar el idioma local evita que Chromium intente adivinar y rompa el hilo de red
+    recognition.lang = 'es-AR'; 
 
-    // Eventos del reconocimiento de voz
     recognition.onstart = () => {
-        estaEscuchando = true;
-        userInput.value = "";
-        userInput.placeholder = "ESCUCHANDO... (Habla ahora)";
-        userInput.focus();
-        btnVoz.classList.replace('text-slate-500', 'text-red-500');
-        btnVoz.classList.add('animate-pulse');
+        console.log("🎙️ Micrófono activo: Escuchando orden para NICO...");
+        if (typeof window.avatarPensar === "function") window.avatarPensar();
+    };
+
+    recognition.onerror = (event) => {
+        console.error("❌ Error en reconocimiento de voz:", event.error);
+        
+        // Mitigación del error 'network': Ocurre por microcortes con el servidor de Google STT
+        if (event.error === 'network') {
+            mostrarRespuestaEnChat("🤖 NICO: Hubo un microcorte en el motor de voz de Google. No te preocupes, podés escribirme la orden o volver a presionar el mic.");
+        } else if (event.error === 'not-allowed') {
+            mostrarRespuestaEnChat("❌ Permiso denegado: Revisa los candados de privacidad de tu navegador.");
+        }
+        
+        if (typeof window.avatarIdle === "function") window.avatarIdle();
+    };
+
+    recognition.onend = () => {
+        console.log("🎙️ Micrófono cerrado de forma segura.");
         if (typeof window.avatarIdle === "function") window.avatarIdle();
     };
 
     recognition.onresult = (event) => {
-        const textoDetectado = event.results[0][0].transcript;
-        userInput.value = textoDetectado;
-    };
-
-    recognition.onerror = (event) => {
-        console.error("Error en reconocimiento de voz:", event.error);
-        restablecerUIEstadoMic();
-    };
-
-    recognition.onend = () => {
-        restablecerUIEstadoMic();
-        if (userInput.value.trim().length > 2) {
-            enviarPrompt();
+        const vozMapeada = event.results[0][0].transcript;
+        console.log("🗣️ Texto capturado por voz:", vozMapeada);
+        
+        // Inyectar el texto capturado en el input visible del usuario y disparar el flujo
+        const userInput = document.getElementById("userInput"); // ID de tu caja de texto
+        if (userInput) {
+            userInput.value = vozMapeada;
+            enviarPrompt(); // Despacha automáticamente la orden procesada por voz
         }
     };
 } else {
-    console.warn("Este navegador no soporta Web Speech API de forma nativa.");
-    btnVoz.title = "Reconocimiento de voz no soportado en este navegador";
-    btnVoz.disabled = true;
+    console.warn("⚠️ Este navegador no soporta la API nativa de SpeechRecognition.");
 }
 
-// Restablecer estilos del micrófono
-function restablecerUIEstadoMic() {
-    estaEscuchando = false;
-    btnVoz.classList.replace('text-red-500', 'text-slate-500');
-    btnVoz.classList.remove('animate-pulse');
-    userInput.placeholder = "Comando de sistema...";
+// Función asignada al evento click de tu botón de micrófono
+function alternarMicrofono() {
+    if (!recognition) {
+        alert("Tu navegador actual no soporta control por voz.");
+        return;
+    }
+    try {
+        recognition.start();
+    } catch (e) {
+        // Evita caídas si el usuario presiona dos veces seguidas el botón mientras ya escucha
+        console.log("El motor de voz ya se encuentra inicializado de fondo.");
+    }
 }
 
-// Acción del Botón de Voz (Toggle Inteligente Click/Hold)
-if (btnVoz && recognition) {
-    btnVoz.addEventListener('click', () => {
-        if (estaEscuchando) {
-            recognition.stop();
+// 2. DESPACHO CENTRALIZADO HACIA EL NÚCLEO OPERATIVO DE GAS
+async function enviarPrompt() {
+    const userInput = document.getElementById("userInput");
+    if (!userInput) return;
+    
+    const promptText = userInput.value.trim();
+    if (!promptText) return;
+
+    // Dibujar el mensaje en la pantalla del operador y limpiar caja de entrada
+    if (typeof mostrarMensajeUsuario === "function") {
+        mostrarMensajeUsuario(promptText); 
+    }
+    userInput.value = "";
+    
+    if (typeof window.avatarPensar === "function") window.avatarPensar();
+
+    try {
+        // Enlace corregido a tu constante global absoluta alojada en main.js
+        const response = await fetch(window.URL_GAS_GLOBAL, {
+            method: 'POST',
+            mode: 'cors', 
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ 
+                action: "procesarPromptNico",
+                params: { prompt: promptText }
+            })
+        });
+
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        
+        const dataRespuesta = await response.json(); 
+
+        if (dataRespuesta.status === "success") {
+            if (typeof window.avatarHablar === "function") window.avatarHablar();
+            
+            // 1. Renderizado clásico en la burbuja del chat
+            if (typeof mostrarRespuestaEnChat === "function" && dataRespuesta.reply) {
+                mostrarRespuestaEnChat(dataRespuesta.reply); 
+            }
+
+            // 2. DETECCIÓN INTERACTIVA DE SWEETALERT
+            if (dataRespuesta.swal && typeof Swal !== "undefined") {
+                Swal.fire({
+                    title: dataRespuesta.swal.title,
+                    html: dataRespuesta.swal.html,
+                    icon: dataRespuesta.swal.icon || 'info',
+                    background: '#1e293b', // Combinación estética Slate-800
+                    color: '#f1f5f9',
+                    confirmButtonColor: '#0e7490', // Cyan-700
+                    confirmButtonText: 'Entendido'
+                });
+            }
         } else {
-            recognition.start();
+            throw new Error(dataRespuesta.message || "Error interno devuelto por Nico.");
         }
-    });
+
+        setTimeout(() => {
+            if (typeof window.avatarIdle === "function") window.avatarIdle();
+        }, 4000);
+
+    } catch (err) {
+        if (typeof window.avatarIdle === "function") window.avatarIdle();
+        console.error("Error en la conexión con el núcleo de Nico:", err);
+        if (typeof mostrarRespuestaEnChat === "function") {
+            mostrarRespuestaEnChat("❌ Error de enlace: No pude conectar con mi núcleo operativo en Google.");
+        }
+    }
 }
 
 // Atajo de teclado: Super + S (Meta/Win + S) o Alt + S como alternativa segura
@@ -2264,64 +2330,7 @@ if (userInput) {
     });
 }
 
-async function enviarPrompt() {
-    if (!userInput) return;
-    const promptText = userInput.value.trim();
-    if (!promptText) return;
 
-    mostrarMensajeUsuario(promptText); 
-    userInput.value = "";
-    if (typeof window.avatarPensar === "function") window.avatarPensar();
-
-    try {
-        const response = await fetch(URL_GLOBAL_GAS, {
-            method: 'POST',
-            mode: 'cors', 
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ 
-                action: "procesarPromptNico",
-                params: { prompt: promptText }
-            })
-        });
-
-        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-        
-        const dataRespuesta = await response.json(); 
-
-        if (dataRespuesta.status === "success") {
-            if (typeof window.avatarHablar === "function") window.avatarHablar();
-            
-            // 1. Renderizado clásico en la burbuja del chat
-            if (typeof mostrarRespuestaEnChat === "function" && dataRespuesta.reply) {
-                mostrarRespuestaEnChat(dataRespuesta.reply); 
-            }
-
-            // 2. DETECCIÓN INTERACTIVA DE SWEETALERT (Nuevo)
-            if (dataRespuesta.swal && typeof Swal !== "undefined") {
-                Swal.fire({
-                    title: dataRespuesta.swal.title,
-                    html: dataRespuesta.swal.html,
-                    icon: dataRespuesta.swal.icon || 'info',
-                    background: '#1e293b', // Fondo slate-800 a tono con tu interfaz
-                    color: '#f1f5f9',
-                    confirmButtonColor: '#0e7490', // Cyan-700
-                    confirmButtonText: 'Entendido'
-                });
-            }
-        } else {
-            throw new Error(dataRespuesta.message || "Error interno en el núcleo operativo.");
-        }
-
-        setTimeout(() => {
-            if (typeof window.avatarIdle === "function") window.avatarIdle();
-        }, 4000);
-
-    } catch (err) {
-        if (typeof window.avatarIdle === "function") window.avatarIdle();
-        console.error("Error en la conexión con el núcleo de Nico:", err);
-        mostrarRespuestaEnChat("❌ Error de enlace: No pude conectar con mi núcleo operativo.");
-    }
-}
 
 function mostrarMensajeUsuario(texto) {
     if (!chatContainer) return;
