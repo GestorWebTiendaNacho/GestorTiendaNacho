@@ -2176,19 +2176,18 @@ window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RE
 
 
 
-const HUGGINGFACE_TOKEN = "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";
 
-// Captura centralizada de elementos del DOM
+
 const chatContainer = document.getElementById("chat-messages");
 const userInput = document.getElementById("user-input");
 const prenderMicBtn = document.getElementById("btn-nico-voz");
 
-// Variables globales para la captura de audio
+// Variables globales de grabación
 let mediaRecorder = null;
 let chunksAudio = [];
 let estaGrabando = false;
 
-// 1. CONTROL DE HARDWARE MULTINAVEGADOR
+// 1. MANEJO DEL MICRÓFONO MULTINAVEGADOR (BRAVE, CHROME, LINUX)
 async function alternarMicrofono() {
     if (estaGrabando) {
         if (mediaRecorder && mediaRecorder.state !== "inactive") {
@@ -2206,7 +2205,7 @@ async function alternarMicrofono() {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             chunksAudio = [];
             
-            // Compatibilidad de formatos entre Brave, Chrome y Firefox
+            // Selección de formato compatible
             const opcionesMime = MediaRecorder.isTypeSupported("audio/webm") 
                 ? { mimeType: "audio/webm" } 
                 : { mimeType: "audio/ogg" };
@@ -2218,17 +2217,22 @@ async function alternarMicrofono() {
             };
 
             mediaRecorder.onstop = async () => {
-                stream.getTracks().forEach(track => track.stop()); // Liberar mic inmediatamente
+                stream.getTracks().forEach(track => track.stop()); // Apaga el hardware inmediatamente
                 
-                if (HUGGINGFACE_TOKEN === "tu_token_gratuito_de_hf_aqui") {
-                    mostrarRespuestaEnChat("❌ Configuración incompleta: Por favor, introduce tu token gratuito de Hugging Face en el código.");
-                    return;
-                }
-
-                mostrarRespuestaEnChat("🤖 NICO: Procesando y transcribiendo tu voz de forma gratuita...");
+                mostrarRespuestaEnChat("🤖 NICO: Subiendo audio al servidor central...");
                 
                 const blobAudio = new Blob(chunksAudio, { type: opcionesMime.mimeType });
-                await transcribirAudioGratis(blobAudio);
+                
+                // Convertimos el audio binario a Base64 antes de enviarlo a GAS
+                const lectorSencillo = new FileReader();
+                lectorSencillo.readAsDataURL(blobAudio);
+                lectorSencillo.onloadend = async () => {
+                    const datosBase64Completo = lectorSencillo.result;
+                    // Removemos el prefijo "data:audio/webm;base64," para enviar solo el string crudo
+                    const stringBase64Crudo = datosBase64Completo.split(',')[1];
+                    
+                    await enviarAudioAServidorGAS(stringBase64Crudo);
+                };
             };
 
             mediaRecorder.start();
@@ -2237,51 +2241,70 @@ async function alternarMicrofono() {
 
         } catch (err) {
             console.error("Error de hardware:", err);
-            mostrarRespuestaEnChat("❌ Error: No se pudo acceder al micrófono. Revisa los permisos en la barra de Brave.");
+            mostrarRespuestaEnChat("❌ Error: Acceso denegado al micrófono. Revisa los permisos en Brave.");
             APAGAR_VISUAL_MIC();
         }
     }
 }
 
-// 2. CONEXIÓN AL MOTOR DE IA GRATUITO (Whisper-Large-V3-Turbo Serverless)
-async function transcribirAudioGratis(blobAudio) {
+// 2. ENVÍO DEL BUFFER DE AUDIO A GOOGLE APPS SCRIPT
+async function enviarAudioAServidorGAS(base64Audio) {
+    if (typeof window.avatarPensar === "function") window.avatarPensar();
+    
     try {
-        const respuesta = await fetch(
-            "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo",
-            {
-                headers: { 
-                    "Authorization": `Bearer ${HUGGINGFACE_TOKEN}`,
-                    "Content-Type": blobAudio.type
-                },
-                method: "POST",
-                body: blobAudio,
-            }
-        );
+        const urlDestino = window.URL_GLOBAL_GAS || window.URL_GAS_GLOBAL;
+        const response = await fetch(urlDestino, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: "procesarAudioNico", // Asegúrate de que tu doPost en GAS escuche este action
+                params: { audioBase64: base64Audio }
+            })
+        });
 
-        if (!respuesta.ok) throw new Error(`Error en servidor HF: ${respuesta.status}`);
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        const dataRespuesta = await response.json();
         
-        const resultado = await respuesta.json();
-        const textoTranscripto = resultado.text;
+        // Al recibir la respuesta con el texto ya transcribido y procesado por GAS
+        if (dataRespuesta.status === "success") {
+            if (typeof window.avatarHablar === "function") window.avatarHablar();
+            
+            // Si el backend te devuelve el texto de lo que interpretó, lo mostramos como mensaje del usuario
+            if (dataRespuesta.transcripcion) {
+                mostrarMensajeUsuario(dataRespuesta.transcripcion);
+            }
+            
+            // Respuesta hablada/escrita de NICO
+            if (dataRespuesta.reply) mostrarRespuestaEnChat(dataRespuesta.reply);
 
-        if (textoTranscripto && textoTranscripto.trim() !== "") {
-            console.log("🗣️ Transcripción exitosa:", textoTranscripto);
-            if (userInput) {
-                userInput.value = textoTranscripto;
-                enviarPrompt(); // Envía el texto plano automáticamente a tu GAS actual
+            // Alertas visuales de stock/órdenes si aplican
+            if (dataRespuesta.swal && typeof Swal !== "undefined") {
+                Swal.fire({
+                    title: dataRespuesta.swal.title,
+                    html: dataRespuesta.swal.html,
+                    icon: dataRespuesta.swal.icon || 'info',
+                    background: '#1e293b',
+                    color: '#f1f5f9',
+                    confirmButtonColor: '#0e7490',
+                    confirmButtonText: 'Entendido'
+                });
             }
         } else {
-            mostrarRespuestaEnChat("🤖 NICO: No capté ningún sonido claro, por favor intenta hablar de nuevo.");
+            mostrarRespuestaEnChat("❌ Error en el motor de voz: " + (dataRespuesta.message || "Falla de procesamiento."));
         }
 
     } catch (err) {
-        console.error("Error en la API de Hugging Face:", err);
-        mostrarRespuestaEnChat("❌ Error de transcripción: El motor gratuito está saturado o el token es inválido.");
+        console.error("Error enviando flujo de audio:", err);
+        mostrarRespuestaEnChat("❌ Error de enlace: No se pudo conectar con el servidor central.");
     } finally {
-        if (typeof window.avatarIdle === "function") window.avatarIdle();
+        setTimeout(() => {
+            if (typeof window.avatarIdle === "function") window.avatarIdle();
+        }, 3000);
     }
 }
 
-// 3. ENVÍO DE TEXTO ESTÁNDAR A TU GOOGLE APPS SCRIPT ACTUAL
+// 3. ENVÍO DE TEXTO MANUAL ESTÁNDAR (Mantiene compatibilidad con teclado)
 async function enviarPrompt() {
     if (!userInput) return;
     const promptText = userInput.value.trim();
@@ -2308,33 +2331,20 @@ async function enviarPrompt() {
         if (dataRespuesta.status === "success") {
             if (typeof window.avatarHablar === "function") window.avatarHablar();
             if (dataRespuesta.reply) mostrarRespuestaEnChat(dataRespuesta.reply);
-
-            if (dataRespuesta.swal && typeof Swal !== "undefined") {
-                Swal.fire({
-                    title: dataRespuesta.swal.title,
-                    html: dataRespuesta.swal.html,
-                    icon: dataRespuesta.swal.icon || 'info',
-                    background: '#1e293b',
-                    color: '#f1f5f9',
-                    confirmButtonColor: '#0e7490',
-                    confirmButtonText: 'Entendido'
-                });
-            }
         } else {
-            mostrarRespuestaEnChat("❌ Error interno: " + (dataRespuesta.message || "Falla de ejecución."));
+            mostrarRespuestaEnChat("❌ Error interno: " + (dataRespuesta.message || "Falla."));
         }
-
     } catch (err) {
-        console.error("Error enviando datos a GAS:", err);
-        mostrarRespuestaEnChat("❌ Error de enlace: No se pudo conectar con el servidor central de Google.");
+        console.error("Error enviando prompt:", err);
+        mostrarRespuestaEnChat("❌ Error de comunicación.");
     } finally {
         setTimeout(() => {
             if (typeof window.avatarIdle === "function") window.avatarIdle();
-        }, 4000);
+        }, 3000);
     }
 }
 
-// 4. VINCULACIONES DE INTERFAZ Y ESTILOS TAILWIND
+// 4. ESCUCHADORES DE EVENTOS Y EFECTOS VISUALES
 if (prenderMicBtn) prenderMicBtn.addEventListener('click', alternarMicrofono);
 
 function ENCENDER_VISUAL_MIC() {
@@ -2352,6 +2362,7 @@ function APAGAR_VISUAL_MIC() {
     }
 }
 
+// Atajo de teclado (Alt + S) para grabar rápido
 window.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -2368,6 +2379,7 @@ if (userInput) {
     });
 }
 
+// 5. INYECCIÓN DINÁMICA DE INTERFAZ EN EL CHAT
 function mostrarMensajeUsuario(texto) {
     if (!chatContainer) return;
     const div = document.createElement("div");
