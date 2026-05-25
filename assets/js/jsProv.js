@@ -2174,55 +2174,74 @@ window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ES
 window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
 
 
+const chatContainer = document.getElementById("chat-messages");
+const userInput = document.getElementById("user-input");
+const prenderMicBtn = document.getElementById("btn-nico-voz");
+
+// Variables de estado global de la interfaz
+let estaEscuchando = false;
+
+// 2. CONFIGURACIÓN COMPLETA DEL MOTOR DE VOZ (SpeechRecognition)
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
-let prenderMicBtn = document.getElementById("tu-boton-mic-id"); // Cambialo por el ID real de tu botón si difiere
 
 if (SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.continuous = false;   // Captura ráfagas de comandos cortas e interactivas
-    recognition.interimResults = false; // Solo procesa el resultado final cerrado
-    
-    // CRÍTICO PARA EVITAR ERROR 'NETWORK' EN LINUX/ZORIN: 
-    // Forzar el idioma local evita que Chromium intente adivinar y rompa el hilo de red
-    recognition.lang = 'es-AR'; 
+    recognition.continuous = false;     // Captura ráfagas de comandos cortas
+    recognition.interimResults = false;  // Solo procesa el resultado final cerrado
+    recognition.lang = 'es-AR';          // Forzar idioma local para mitigar error 'network' en Linux/Zorin
 
     recognition.onstart = () => {
         console.log("🎙️ Micrófono activo: Escuchando orden para NICO...");
+        estaEscuchando = true;
+        
+        // Feedback visual en el botón de tu HTML (Se vuelve rojo y titila)
+        if (prenderMicBtn) {
+            prenderMicBtn.classList.remove('text-slate-500');
+            prenderMicBtn.classList.add('text-red-500', 'animate-pulse');
+        }
         if (typeof window.avatarPensar === "function") window.avatarPensar();
     };
 
     recognition.onerror = (event) => {
         console.error("❌ Error en reconocimiento de voz:", event.error);
+        estaEscuchando = false;
         
-        // Mitigación del error 'network': Ocurre por microcortes con el servidor de Google STT
         if (event.error === 'network') {
             mostrarRespuestaEnChat("🤖 NICO: Hubo un microcorte en el motor de voz de Google. No te preocupes, podés escribirme la orden o volver a presionar el mic.");
         } else if (event.error === 'not-allowed') {
             mostrarRespuestaEnChat("❌ Permiso denegado: Revisa los candados de privacidad de tu navegador.");
         }
         
-        if (typeof window.avatarIdle === "function") window.avatarIdle();
+        APAGAR_VISUAL_MIC();
     };
 
     recognition.onend = () => {
         console.log("🎙️ Micrófono cerrado de forma segura.");
-        if (typeof window.avatarIdle === "function") window.avatarIdle();
+        estaEscuchando = false;
+        APAGAR_VISUAL_MIC();
     };
 
     recognition.onresult = (event) => {
         const vozMapeada = event.results[0][0].transcript;
         console.log("🗣️ Texto capturado por voz:", vozMapeada);
         
-        // Inyectar el texto capturado en el input visible del usuario y disparar el flujo
-        const userInput = document.getElementById("userInput"); // ID de tu caja de texto
         if (userInput) {
             userInput.value = vozMapeada;
-            enviarPrompt(); // Despacha automáticamente la orden procesada por voz
+            enviarPrompt(); // Despacha automáticamente la orden procesada al backend GAS
         }
     };
 } else {
     console.warn("⚠️ Este navegador no soporta la API nativa de SpeechRecognition.");
+}
+
+// Función auxiliar para restaurar el estilo original de Tailwind en tu botón
+function APAGAR_VISUAL_MIC() {
+    if (prenderMicBtn) {
+        prenderMicBtn.classList.remove('text-red-500', 'animate-pulse');
+        prenderMicBtn.classList.add('text-slate-500');
+    }
+    if (typeof window.avatarIdle === "function") window.avatarIdle();
 }
 
 // Función asignada al evento click de tu botón de micrófono
@@ -2232,31 +2251,36 @@ function alternarMicrofono() {
         return;
     }
     try {
-        recognition.start();
+        if (estaEscuchando) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
     } catch (e) {
-        // Evita caídas si el usuario presiona dos veces seguidas el botón mientras ya escucha
-        console.log("El motor de voz ya se encuentra inicializado de fondo.");
+        console.log("El motor de voz ya se encuentra inicializado o procesando en segundo plano.");
     }
 }
 
-// 2. DESPACHO CENTRALIZADO HACIA EL NÚCLEO OPERATIVO DE GAS
+// Vinculación dinámica del evento click al botón de tu HTML
+if (prenderMicBtn) {
+    prenderMicBtn.addEventListener('click', alternarMicrofono);
+}
+
+// 3. DESPACHO CENTRALIZADO HACIA EL NÚCLEO OPERATIVO DE GAS
 async function enviarPrompt() {
-    const userInput = document.getElementById("userInput");
     if (!userInput) return;
     
     const promptText = userInput.value.trim();
     if (!promptText) return;
 
     // Dibujar el mensaje en la pantalla del operador y limpiar caja de entrada
-    if (typeof mostrarMensajeUsuario === "function") {
-        mostrarMensajeUsuario(promptText); 
-    }
+    mostrarMensajeUsuario(promptText); 
     userInput.value = "";
     
     if (typeof window.avatarPensar === "function") window.avatarPensar();
 
     try {
-        // Enlace corregido a tu constante global absoluta alojada en main.js
+        // Conexión directa a tu constante global de main.js
         const response = await fetch(window.URL_GAS_GLOBAL, {
             method: 'POST',
             mode: 'cors', 
@@ -2274,20 +2298,20 @@ async function enviarPrompt() {
         if (dataRespuesta.status === "success") {
             if (typeof window.avatarHablar === "function") window.avatarHablar();
             
-            // 1. Renderizado clásico en la burbuja del chat
-            if (typeof mostrarRespuestaEnChat === "function" && dataRespuesta.reply) {
+            // 1. Renderizado en la burbuja del chat
+            if (dataRespuesta.reply) {
                 mostrarRespuestaEnChat(dataRespuesta.reply); 
             }
 
-            // 2. DETECCIÓN INTERACTIVA DE SWEETALERT
+            // 2. Inyección dinámica de SweetAlert estructurado para la confirmación
             if (dataRespuesta.swal && typeof Swal !== "undefined") {
                 Swal.fire({
                     title: dataRespuesta.swal.title,
                     html: dataRespuesta.swal.html,
                     icon: dataRespuesta.swal.icon || 'info',
-                    background: '#1e293b', // Combinación estética Slate-800
+                    background: '#1e293b', 
                     color: '#f1f5f9',
-                    confirmButtonColor: '#0e7490', // Cyan-700
+                    confirmButtonColor: '#0e7490', 
                     confirmButtonText: 'Entendido'
                 });
             }
@@ -2302,25 +2326,20 @@ async function enviarPrompt() {
     } catch (err) {
         if (typeof window.avatarIdle === "function") window.avatarIdle();
         console.error("Error en la conexión con el núcleo de Nico:", err);
-        if (typeof mostrarRespuestaEnChat === "function") {
-            mostrarRespuestaEnChat("❌ Error de enlace: No pude conectar con mi núcleo operativo en Google.");
-        }
+        mostrarRespuestaEnChat("❌ Error de enlace: No pude conectar con mi núcleo operativo en Google.");
     }
 }
 
-// Atajo de teclado: Super + S (Meta/Win + S) o Alt + S como alternativa segura
+// 4. ESCUCHADORES DE EVENTOS DE TECLADO Y ENTRADAS
+// Atajo de teclado global: Super + S o Alt + S
 window.addEventListener('keydown', (e) => {
-    // Nota: La tecla 'Super' (Windows/Meta) suele abrir el menú del sistema operativo.
-    // Usamos e.altKey o e.metaKey + 's' como un fallback seguro y accesible.
     if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault(); // Evitamos acciones nativas del OS o navegador
-        if (recognition && !estaEscuchando) {
-            recognition.start();
-        }
+        e.preventDefault(); 
+        alternarMicrofono();
     }
 });
 
-// Captura de Enter en el input de texto clásico
+// Captura de tecla Enter en tu barra de comandos de terminal
 if (userInput) {
     userInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -2330,8 +2349,7 @@ if (userInput) {
     });
 }
 
-
-
+// 5. COMPONENTES RENDERIZADORES DE RENDER VIVA EN PANTALLA
 function mostrarMensajeUsuario(texto) {
     if (!chatContainer) return;
     const div = document.createElement("div");
