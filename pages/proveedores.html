@@ -88,13 +88,15 @@
         </div>
     </main>
 
-    <aside class="w-80 lg:w-96 shrink-0 bg-slate-900 border-l border-slate-800 flex flex-col z-30 relative h-full">
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900">
+    <aside class="w-80 lg:w-96 shrink-0 bg-slate-900 border-l border-slate-800 flex flex-col relative h-full overflow-hidden z-30">
+        
+        <div id="chat-messages" class="absolute inset-0 overflow-y-auto p-4 pb-48 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900 z-10">
             </div>
         
-        <div class="contenedor-nico-flotante p-4 bg-slate-950 border-t border-slate-800 flex justify-center items-center">
-            <canvas id="canvas-nico" class="w-full max-h-36 bg-slate-900/30 rounded"></canvas>
+        <div class="contenedor-nico-flotante absolute bottom-0 left-0 right-0 p-4 bg-slate-950/95 backdrop-blur-sm border-t border-slate-800 flex justify-center items-center z-20">
+            <canvas id="canvas-nico" class="h-36 max-w-full bg-slate-900/30 rounded shadow-2xl transition-all"></canvas>
         </div>
+
     </aside>
 
 </div>
