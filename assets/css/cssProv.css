@@ -1101,7 +1101,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: flex-start; 
   flex-direction: column;
   border-radius: 0px 24px 24px 0px; 
-  padding: 16px 10px 16px 6px;      
+  padding: 16px 10px 16px 10px;      
   background-color: #af40ff;   
   gap: 20px;               
   width: max-content;
