@@ -1093,7 +1093,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 
 
-/* From Uiverse.io by ilkhoeri */ 
+/* menu nico */ 
 .action-wrap {
   position: relative;
   display: flex;
@@ -1101,8 +1101,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: center;
   flex-direction: column;
   border-radius: 9999px;
+  padding: 12px; /* Espaciado interno para albergar los botones */
 }
 
+/* Fondo Violeta Fijo Solicitado */
 .backdrop {
   position: absolute;
   width: 100%;
@@ -1114,15 +1116,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: center;
   overflow: hidden;
 }
+
 .backdrop::before {
   content: "";
   position: absolute;
-  height: 10.5rem;
-  width: 10.5rem;
+  height: 100%; /* Escalado al 100% para cubrir todo el contenedor */
+  width: 100%;
   border-radius: 9999px;
-  background: linear-gradient(144deg, #af40ff, #4f46e5);
-  animation: rotate 1.5s linear infinite;
+  background: linear-gradient(144deg, #af40ff, #4f46e5); /* Tu violeta original */
+  /* Se eliminó la animación de rotación para dejarlo FIJO */
 }
+
 .backdrop::after {
   content: "";
   position: absolute;
@@ -1133,90 +1137,118 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   z-index: 1;
 }
 
+/* ASIGNACIÓN DE VARIABLES DE COLORES NEÓN (Para cada botón en orden) */
+.action:nth-of-type(1) { --neon-cl: #00ff88; } /* SEMANAL: Verde Neón */
+.action:nth-of-type(2) { --neon-cl: #ff3366; } /* PEDIDOS: Rojo/Fucsia Neón */
+.action:nth-of-type(3) { --neon-cl: #ff7700; } /* RECEPCIÓN: Naranja Neón */
+.action:nth-of-type(4) { --neon-cl: #00ccff; } /* PROVEEDORES: Azul Neón */
+.action:nth-of-type(5) { --neon-cl: #ffea00; } /* HISTORIAL: Amarillo Neón */
+
 .action {
   --sz-light-hover: 60px;
   --rd-light-hover: 9999px;
   --l-light-hover: 14px;
   --cl-light: #0000;
-  --cr-light: #af40ff;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition:
-    transform,
-    color,
-    background-color,
-    300ms ease;
+  transition: transform 300ms ease, color 300ms ease;
   height: 3.5rem;
   width: 3.5rem;
   border: none;
-  color: #444444;
   background: none transparent;
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 9999px;
+  z-index: 10;
 }
 
-.action-icon {
+/* Corrección de Selector: apuntando directamente al <i> del HTML */
+.action i {
   height: 100%;
   width: 100%;
   position: relative;
   z-index: 9;
-  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
   border-radius: 9999px;
-  background-color: #f1f1f1;
-  transition:
-    transform,
-    color,
-    background,
-    300ms ease;
+  color: #94a3b8; /* Color gris apagado inicial */
+  background-color: #0f172a; /* Fondo oscuro para que resalte el neón */
+  border: 1px solid #334155;
+  transition: transform 300ms ease, color 300ms ease, background-color 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
 }
 
+/* COMPORTAMIENTO HOVER: Expansión, Desplazamiento Lateral e Iluminación Neón */
+.action:hover i {
+  color: var(--neon-cl); /* Toma su color neón asignado */
+  border-color: var(--neon-cl);
+  background-color: #1e1b4b; /* Violeta muy oscuro interno */
+  
+  /* Mantiene tu desplazamiento lateral (12px) y escala (1.4) original */
+  transform: scale(1.4) translate3d(12px, 0px, 12px); 
+  
+  /* Efecto de Iluminación Glow */
+  box-shadow: 0 0 15px var(--neon-cl), inset 0 0 8px var(--neon-cl);
+  text-shadow: 0 0 8px var(--neon-cl);
+}
+
+/* Carteles Desplegables (Tooltips) Ajustados al Estilo */
 .action-content {
   --sz-light-hover: 100px;
   --rd-light-hover: 6px;
   --l-light-hover: 0px;
   --cl-light: #fff;
-  --cr-light: #af40ff;
-  transition:
-    transform,
-    400ms ease;
+  transition: transform 400ms ease, opacity 300ms ease;
   opacity: 0;
   font-size: 1.25rem;
   line-height: 1.5;
-  background-color: inherit;
   border-radius: 6px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: nowrap;
-  flex-direction: row;
   width: max-content;
   height: 1.75rem;
   padding: 8px 1px;
   position: absolute;
   left: 0;
   z-index: -1;
-  border: 1px solid #ccc;
+  border: 1px solid #334155;
+  background-color: #0f172a;
 }
 
 .action-content::before {
   content: attr(data-content);
-  transition:
-    transform,
-    300ms ease;
+  transition: transform 300ms ease;
   text-transform: capitalize;
-  font-size: medium;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
   z-index: 1;
   transform: translateX(-100%);
-  background-color: #fff;
+  color: #ffffff;
+  background-color: #0f172a;
   border-radius: calc(var(--rd-light-hover) - 2px);
-  padding-inline: 4px;
+  padding-inline: 8px;
 }
 
+.action:hover .action-content {
+  opacity: 1;
+  width: max-content;
+  left: calc(100% + 24px); /* Desplazamiento hacia el lateral */
+  z-index: 20;
+  border-color: var(--neon-cl);
+  box-shadow: 0 0 10px var(--neon-cl);
+}
+
+.action:hover .action-content::before {
+  transform: translateX(0px);
+}
+
+/* Efecto de anillo cónico trasero adaptado dinámicamente */
 .action::after,
 .action-content::after {
   content: "";
@@ -1224,52 +1256,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
   border-radius: var(--rd-light-hover);
   transition: all 50ms ease 200ms;
-  background: conic-gradient(
-    from 45deg at 50% 50%,
-    var(--cl-light),
-    var(--cr-light),
-    var(--cl-light),
-    var(--cl-light),
-    var(--cl-light),
-    var(--cr-light),
-    var(--cl-light),
-    var(--cl-light),
-    var(--cl-light)
-  );
+  background: conic-gradient(from 45deg at 50% 50%, #0000, var(--neon-cl), #0000);
 }
 
-.action:hover .action-icon {
-  color: #000;
-  background-color: #fff;
-  transform: scale(1.4) translate3d(12px, 0px, 12px);
-}
-
-.action:hover::after,
-.action-content::after {
+.action:hover::after {
   height: var(--sz-light-hover);
   width: var(--sz-light-hover);
   left: var(--l-light-hover);
-  opacity: 1;
+  opacity: 0.4;
   animation: rotate 4s linear infinite;
 }
+
 @keyframes rotate {
-  from {
-    transform: rotate(0);
-  }
-  to {
-    transform: rotate(1turn);
-  }
-}
-
-.action:hover .action-content {
-  color: #000;
-  background-color: #fff;
-  opacity: 1;
-  width: max-content;
-  left: calc(100% + 24px);
-  z-index: 9;
-}
-
-.action:hover .action-content::before {
-  transform: translateX(0px);
+  from { transform: rotate(0); }
+  to { transform: rotate(1turn); }
 }
