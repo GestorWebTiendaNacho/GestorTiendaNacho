@@ -1115,6 +1115,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background-color: #af40ff; /* Fondo oscuro para resaltar el efecto de neón */
 }
 
 .backdrop::before {
@@ -1154,8 +1155,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   justify-content: center;
   transition: transform 300ms ease, color 300ms ease;
-  height: 3.5rem;
-  width: 3.5rem;
+  height: 5.5rem;
+  width: 5.5rem;
   border: none;
   background: none transparent;
   cursor: pointer;
@@ -1185,10 +1186,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .action:hover i {
   color: var(--neon-cl); /* Toma su color neón asignado */
   border-color: var(--neon-cl);
-  background-color: #1e1b4b; /* Violeta muy oscuro interno */
+  background-color: #b02ebf; 
   
   /* Mantiene tu desplazamiento lateral (12px) y escala (1.4) original */
-  transform: scale(1.4) translate3d(12px, 0px, 12px); 
+  transform: scale(1.4) translate3d(16px, 0px, 16px); 
   
   /* Efecto de Iluminación Glow */
   box-shadow: 0 0 15px var(--neon-cl), inset 0 0 8px var(--neon-cl);
@@ -1203,7 +1204,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   --cl-light: #fff;
   transition: transform 400ms ease, opacity 300ms ease;
   opacity: 0;
-  font-size: 1.25rem;
+  font-size: 2.25rem;
   line-height: 1.5;
   border-radius: 6px;
   overflow: hidden;
@@ -1211,7 +1212,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   justify-content: center;
   width: max-content;
-  height: 1.75rem;
+  height: 2.75rem;
   padding: 8px 1px;
   position: absolute;
   left: 0;
@@ -1224,8 +1225,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   content: attr(data-content);
   transition: transform 300ms ease;
   text-transform: capitalize;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 900;
   letter-spacing: 1px;
   z-index: 1;
   transform: translateX(-100%);
@@ -1238,7 +1239,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .action:hover .action-content {
   opacity: 1;
   width: max-content;
-  left: calc(100% + 24px); /* Desplazamiento hacia el lateral */
+  left: calc(100% + 30px); /* Desplazamiento hacia el lateral */
   z-index: 20;
   border-color: var(--neon-cl);
   box-shadow: 0 0 10px var(--neon-cl);
