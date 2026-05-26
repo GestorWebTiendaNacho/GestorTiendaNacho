@@ -1097,48 +1097,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .action-wrap {
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;    /* CAMBIO: Ubicado completamente a la IZQUIERDA */
+  justify-content: flex-start; /* CAMBIO: Todo el flujo inicia a la izquierda */
   flex-direction: column;
-  border-radius: 9999px;
-  padding: 12px; /* Espaciado interno para albergar los botones */
+  border-radius: 32px;         /* Ajustado el radio para un contenedor más grande y estilizado */
+  padding: 24px 16px;          /* CAMBIO: Más grande y espaciado interno */
+  background-color: #af40ff;   /* CAMBIO: Base del contenedor del color VIOLETA FIJO solicitado */
+  gap: 20px;                   /* Separación vertical inicial entre botones */
+  width: max-content;
 }
 
-/* Fondo Violeta Fijo Solicitado */
+/* Removido el backdrop dinámico viejo ya que fijamos el color violeta en el wrap principal */
 .backdrop {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background-color: #af40ff; /* Fondo oscuro para resaltar el efecto de neón */
+  display: none; 
 }
 
-.backdrop::before {
-  content: "";
-  position: absolute;
-  height: 100%; /* Escalado al 100% para cubrir todo el contenedor */
-  width: 100%;
-  border-radius: 9999px;
-  background: linear-gradient(144deg, #af40ff, #4f46e5); /* Tu violeta original */
-  /* Se eliminó la animación de rotación para dejarlo FIJO */
-}
-
-.backdrop::after {
-  content: "";
-  position: absolute;
-  height: 100%;
-  width: 100%;
-  backdrop-filter: blur(8px);
-  border-radius: 9999px;
-  z-index: 1;
-}
-
-/* ASIGNACIÓN DE VARIABLES DE COLORES NEÓN (Para cada botón en orden) */
+/* ASIGNACIÓN DE VARIABLES DE COLORES NEÓN */
 .action:nth-of-type(1) { --neon-cl: #00ff88; } /* SEMANAL: Verde Neón */
 .action:nth-of-type(2) { --neon-cl: #ff3366; } /* PEDIDOS: Rojo/Fucsia Neón */
 .action:nth-of-type(3) { --neon-cl: #ff7700; } /* RECEPCIÓN: Naranja Neón */
@@ -1146,26 +1120,25 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .action:nth-of-type(5) { --neon-cl: #ffea00; } /* HISTORIAL: Amarillo Neón */
 
 .action {
-  --sz-light-hover: 60px;
+  --sz-light-hover: 80px;
   --rd-light-hover: 9999px;
   --l-light-hover: 14px;
-  --cl-light: #0000;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 300ms ease, color 300ms ease;
-  height: 5.5rem;
-  width: 5.5rem;
+  transition: transform 300ms ease;
+  height: 5.5rem;             /* Mantiene tu tamaño GRANDE */
+  width: 5.5rem;              /* Mantiene tu tamaño GRANDE */
   border: none;
-  background: none transparent;
+  background: transparent !important; /* CAMBIO: Botón base 100% Transparente */
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 9999px;
   z-index: 10;
 }
 
-/* Corrección de Selector: apuntando directamente al <i> del HTML */
+/* Estilos del ícono interno <i> */
 .action i {
   height: 100%;
   width: 100%;
@@ -1174,101 +1147,104 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 2rem;            /* CAMBIO: Íconos mucho más GRANDES y legibles */
   border-radius: 9999px;
-  color: #94a3b8; /* Color gris apagado inicial */
-  background-color: #0f172a; /* Fondo oscuro para que resalte el neón */
-  border: 1px solid #334155;
-  transition: transform 300ms ease, color 300ms ease, background-color 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
+  color: #ffffff;             /* Blanco para que resalte sobre el violeta de fondo */
+  background-color: transparent !important; /* CAMBIO: Fondo del ícono TRANSPARENTE */
+  border: 2px solid rgba(255, 255, 255, 0.2); /* Borde sutil inicial */
+  transition: transform 350ms cubic-bezier(0.175, 0.885, 0.32, 1.275), color 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
 }
 
-/* COMPORTAMIENTO HOVER: Expansión, Desplazamiento Lateral e Iluminación Neón */
+/* COMPORTAMIENTO HOVER: Mayor desplazamiento lateral e iluminaciones nítidas sin opacar el fondo */
 .action:hover i {
-  color: var(--neon-cl); /* Toma su color neón asignado */
+  color: var(--neon-cl); 
   border-color: var(--neon-cl);
-  background-color: #b02ebf; 
+  background-color: transparent !important; /* CAMBIO: Se mantiene TRANSPARENTE al pasar el mouse */
   
-  /* Mantiene tu desplazamiento lateral (12px) y escala (1.4) original */
-  transform: scale(1.4) translate3d(16px, 0px, 16px); 
+  /* CAMBIO: Mayor efecto de separación y desplazamiento hacia el lateral derecho (40px) */
+  transform: scale(1.25) translate3d(40px, 0px, 0px); 
   
-  /* Efecto de Iluminación Glow */
-  box-shadow: 0 0 15px var(--neon-cl), inset 0 0 8px var(--neon-cl);
-  text-shadow: 0 0 8px var(--neon-cl);
+  /* Iluminación Neón nítida perimetral */
+  box-shadow: 0 0 20px var(--neon-cl), inset 0 0 10px var(--neon-cl);
+  text-shadow: 0 0 10px var(--neon-cl);
 }
 
-/* Carteles Desplegables (Tooltips) Ajustados al Estilo */
+/* =============================================================================
+   EFECTO: CARTELES DESPLEGABLES CON HAZ DE LUZ ROTATIVO EN EL BORDE
+   ============================================================================= */
+
 .action-content {
-  --sz-light-hover: 100px;
-  --rd-light-hover: 6px;
-  --l-light-hover: 0px;
-  --cl-light: #fff;
-  transition: transform 400ms ease, opacity 300ms ease;
+  position: absolute;
   opacity: 0;
-  font-size: 2.25rem;
-  line-height: 1.5;
-  border-radius: 6px;
-  overflow: hidden;
+  pointer-events: none;
+  overflow: hidden;           /* CRÍTICO: Recorta el haz de luz giratorio interno para simular el borde */
+  padding: 2px;               /* CAMBIO: Este padding define el grosor del haz de luz del borde (2px) */
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   width: max-content;
-  height: 2.75rem;
-  padding: 8px 1px;
-  position: absolute;
+  height: auto;
   left: 0;
   z-index: -1;
-  border: 1px solid #334155;
-  background-color: #0f172a;
+  background-color: rgba(15, 23, 42, 0.6); /* Fondo base del borde antes del hover */
+  transition: transform 400ms ease, opacity 300ms ease, left 400ms ease;
 }
 
+/* El cuerpo interno del texto (Tapa el centro del haz de luz para que solo se vea el borde) */
 .action-content::before {
   content: attr(data-content);
-  transition: transform 300ms ease;
-  text-transform: capitalize;
-  font-size: 12px;
+  display: block;
+  position: relative;
+  z-index: 5;                 /* Por encima del haz de luz trasero */
+  text-transform: uppercase;
+  font-size: 14px;            /* CAMBIO: Tipografía más GRANDE */
   font-weight: 900;
-  letter-spacing: 1px;
-  z-index: 1;
-  transform: translateX(-100%);
+  letter-spacing: 2px;
   color: #ffffff;
-  background-color: #0f172a;
-  border-radius: calc(var(--rd-light-hover) - 2px);
-  padding-inline: 8px;
+  background-color: #0f172a;  /* Fondo oscuro sólido para legibilidad perfecta del cartel */
+  border-radius: 6px;         /* Levemente menor que el contenedor para encajar */
+  padding: 10px 20px;         /* CAMBIO: Cartel más grande e imponente */
+  transform: translateX(-100%);
+  transition: transform 350ms ease;
 }
 
+/* EL AS DE LUZ (Efecto Láser Conic-Gradient que gira al fondo del cartel) */
+.action-content::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  /* Dimensiones gigantes para cubrir la rotación completa de la caja estirada */
+  top: -150%; 
+  left: -150%;
+  width: 400%;
+  height: 400%;
+  /* CAMBIO: Define un "As de luz" ultra definido (un hilo de color neón del 80% al 100%) */
+  background: conic-gradient(from 0deg, transparent 75%, var(--neon-cl) 100%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+/* ACTIVACIÓN SIMULTÁNEA AL PASAR EL MOUSE */
 .action:hover .action-content {
   opacity: 1;
-  width: max-content;
-  left: calc(100% + 30px); /* Desplazamiento hacia el lateral */
+  /* CAMBIO: Mayor separación del cartel respecto a la base del menú izquierdo */
+  left: calc(100% + 55px); 
   z-index: 20;
-  border-color: var(--neon-cl);
-  box-shadow: 0 0 10px var(--neon-cl);
 }
 
 .action:hover .action-content::before {
-  transform: translateX(0px);
+  transform: translateX(0px); /* Libera el texto */
 }
 
-/* Efecto de anillo cónico trasero adaptado dinámicamente */
-.action::after,
-.action-content::after {
-  content: "";
-  opacity: 0;
-  position: absolute;
-  border-radius: var(--rd-light-hover);
-  transition: all 50ms ease 200ms;
-  background: conic-gradient(from 45deg at 50% 50%, #0000, var(--neon-cl), #0000);
+.action:hover .action-content::after {
+  opacity: 1;
+  /* CAMBIO: Activa la rotación del as de luz de forma infinita alrededor de la caja */
+  animation: rotateBeam 1.8s linear infinite; 
 }
 
-.action:hover::after {
-  height: var(--sz-light-hover);
-  width: var(--sz-light-hover);
-  left: var(--l-light-hover);
-  opacity: 0.4;
-  animation: rotate 4s linear infinite;
-}
-
-@keyframes rotate {
-  from { transform: rotate(0); }
-  to { transform: rotate(1turn); }
+/* Animación a 360 grados del haz de luz */
+@keyframes rotateBeam {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
