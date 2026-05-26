@@ -19,10 +19,10 @@
     <!-- CUERPO DE LA APP -->
     <div class="flex flex-1 overflow-hidden relative">
         
-        <!-- OVERLAY -->
+        <!-- OVERLAY 
         <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 z-[45] hidden backdrop-blur-sm"></div>
 
-        <!-- SIDEBAR -->
+         SIDEBAR 
         <aside id="sidebar-nico" class="absolute top-4 left-4 z-[50] w-64 bg-slate-900/95 border border-slate-800 flex flex-col transition-all duration-300 transform -translate-x-[120%] shadow-[0_0_50px_rgba(0,0,0,0.8)] h-fit max-h-[85%] rounded-2xl overflow-hidden backdrop-blur-xl">
             
             <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
@@ -52,7 +52,7 @@
                     <i class="fi fi-ts-task-calendar icon-hist"></i> <span class="link-text"> HISTORIAL </span>
                 </a>
             </nav>
-        </aside>
+        </aside> -->
 
         <main class="flex-1 overflow-hidden p-6 bg-slate-950 relative flex flex-col items-center">
             <div class="container-deposito"><h1 class="mb-4">GESTOR CENTRAL DE DEPÓSITO</h1></div>
@@ -102,6 +102,16 @@
                 </div>
             </div>
         </main>
+
+        <aside class="w-180 lg:w-96 bg-slate-900 border-l border-slate-800 flex flex-col z-30 relative h-full">
+            <div class="p-4 border id="panel-informes-nico" border-slate-800 flex items-center justify-between bg-slate-900/50">
+                <span class="font-bold text-slate-100 text-[10px] tracking-widest uppercase flex items-center gap-2">
+                    <div class="w-2 h-2 bg-lex-gold rounded-full animate-pulse"></div>
+                    PANEL DE INFORMES NICO
+                </span>
+
+            </div>    
+        </aside>
 
         <!-- ASIDE CHAT NICO -->
         <aside class="w-80 lg:w-96 bg-slate-900 border-l border-slate-800 flex flex-col z-30 relative h-full">
