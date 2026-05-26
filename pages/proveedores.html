@@ -18,7 +18,38 @@
 <div class="flex flex-1 overflow-hidden relative w-full h-[calc(100vh-5rem)]">
 
     <section class="w-80 shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col items-center justify-center p-6 relative overflow-visible">
-        <div class="menu-radial" id="mainMenu">
+            <div class="action-wrap">
+            <button class="action" type="button" onclick="abrirModalSemanal()">
+                <i class="fi fi-rs-daily-calendar"></i>
+                <span class="action-content" data-content="SEMANAL"></span>
+            </button>
+
+            <button class="action" type="button" onclick="abrirModal('PEDIDOS')">
+                <i class="fi fi-rr-quick-box"></i>
+                <span class="action-content" data-content="PEDIDOS"></span>
+            </button>
+
+            <button class="action" type="button" onclick="verEstadoPedidos()">
+                <i class="fi fi-rs-package"></i>    
+                <span class="action-content" data-content="RECEPCIÓN"></span>
+            </button>
+
+            <button class="action" type="button" onclick="abrirModal('PROVEEDORES')">
+                <i class="fi fi-ts-holding-hand-delivery"></i>
+                <span class="action-content" data-content="PROVEEDORES"></span>
+            </button>
+
+            <button class="action" type="button" onclick="abrirModal('HISTORIAL')">
+                <i class="fi fi-rs-time-past"></i>
+                <span class="action-content" data-content="HISTORIAL"></span>
+            </button>
+            <div class="backdrop"></div>
+            </div>
+
+        
+        
+        
+        <!--<div class="menu-radial" id="mainMenu">
             <div class="icons-wrapper">
                 <div class="rotater">
                     <button onclick="abrirModalSemanal()" class="btn-radial btn-icon blue-glow">
@@ -57,7 +88,7 @@
                     <span class="line"></span>
                 </div>
             </div>
-        </div>
+        </div>-->
     </section>
 
     <main class="flex-1 overflow-y-auto p-6 bg-slate-900/20 flex flex-col gap-4">
