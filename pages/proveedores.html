@@ -12,8 +12,9 @@
 
 <div class="flex flex-1 overflow-hidden relative w-full h-[calc(100vh-5rem)]">
 
-    <section class="w-80 shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col items-right justify-right p-6 relative overflow-visible">
-            <div class="action-wrap">
+    <section class="columna-menu-izquierdo w-[76px] shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col items-start p-0 py-4 relative overflow-visible">
+        
+        <div class="action-wrap">
             <button class="action" type="button" onclick="abrirModalSemanal()">
                 <i class="fi fi-rs-daily-calendar"></i>
                 <span class="action-content" data-content="SEMANAL"></span>
@@ -38,55 +39,12 @@
                 <i class="fi fi-rs-time-past"></i>
                 <span class="action-content" data-content="HISTORIAL"></span>
             </button>
-            <div class="backdrop"></div>
-            </div>
+        </div>
 
-        
-        
-        
-        <!--<div class="menu-radial" id="mainMenu">
-            <div class="icons-wrapper">
-                <div class="rotater">
-                    <button onclick="abrirModalSemanal()" class="btn-radial btn-icon blue-glow">
-                        <i class="fi fi-rs-daily-calendar"></i>
-                        <span class="label-radial">SEMANAL</span>
-                    </button>
-                </div>
-                <div class="rotater">
-                    <button onclick="abrirModal('PEDIDOS')" class="btn-radial btn-icon gold-glow">
-                        <i class="fi fi-rr-quick-box"></i>
-                        <span class="label-radial">PEDIDOS</span>
-                    </button>
-                </div>
-                <div class="rotater">
-                    <button onclick="verEstadoPedidos()" class="btn-radial btn-icon purple-glow">
-                        <i class="fi fi-rs-package"></i>
-                        <span class="label-radial">RECEPCIÓN</span>
-                    </button>
-                </div>
-                <div class="rotater">
-                    <button onclick="abrirModal('PROVEEDORES')" class="btn-radial btn-icon orange-glow">
-                        <i class="fi fi-ts-holding-hand-delivery"></i>
-                        <span class="label-radial">PROVEEDORES</span>
-                    </button>
-                </div>
-                <div class="rotater">
-                    <button onclick="abrirModal('HISTORIAL')" class="btn-radial btn-icon green-glow">
-                         <i class="fi fi-rs-time-past"></i>
-                         <span class="label-radial">HISTORIAL</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="btn-radial trigger" id="btn-trigger-main" onclick="toggleMenu()">
-                <div class="line-container">
-                    <span class="line"></span>
-                </div>
-            </div>
-        </div>-->
     </section>
 
-    <main class="flex-1 overflow-y-auto p-6 bg-slate-900/20 flex flex-col gap-4">
+    <main class="panel-central-datos flex-1 overflow-y-auto p-6 bg-slate-900/20 flex flex-col gap-4">
+        
         <div id="panel-informes-nico" class="p-4 border border-slate-800 flex items-center justify-between bg-slate-900/50 rounded-lg shrink-0">
             <span class="font-bold text-slate-100 text-[10px] tracking-widest uppercase flex items-center gap-2">
                 <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div> PANEL DE INFORMES NICO
@@ -112,16 +70,18 @@
                 </tbody>
             </table>
         </div>
+        
     </main>
 
-    <aside class="w-80 lg:w-96 shrink-0 bg-slate-900 border-l border-slate-800 flex flex-col relative h-full overflow-hidden z-30">
+    <aside class="columna-chat-nico w-64 shrink-0 bg-slate-900 border-l border-slate-800 flex flex-col relative h-full overflow-hidden z-30">
         
         <div id="chat-messages" class="absolute inset-0 overflow-y-auto p-4 pb-48 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900 z-10">
-            </div>
+        </div>
         
         <div class="contenedor-nico-flotante absolute bottom-0 left-0 right-0 p-2 bg-slate-950/95 backdrop-blur-sm border-t border-slate-800 flex justify-center items-center z-20">
             <canvas id="canvas-nico" class="h-36 max-w-full bg-slate-900/30 rounded shadow-2xl transition-all"></canvas>
         </div>
+        
     </aside>
 
 </div>
