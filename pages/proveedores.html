@@ -3,16 +3,17 @@
 <div class="h-screen w-full bg-slate-950 text-slate-200 overflow-hidden font-mono flex flex-col">
 
     <!-- HEADER (NAVBAR) -->
-<header class="h-20 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md flex justify-between items-center px-6 z-40 shrink-0">
+<div class="flex flex-1 overflow-hidden relative w-full h-[calc(100vh-5rem)]"></div>
+<header class="head-nico shrink-0">
         <div class="container-deposito">
             <h1 class="text-xl font-bold text-slate-100 tracking-wide">GESTOR CENTRAL DE DEPÓSITO</h1>
             <p class="text-[9px] text-slate-500 font-sans uppercase tracking-[2px] mt-1">Terminal Inteligente de Compras y Operaciones</p>
         </div>
 </header>
 
-<div class="flex flex-1 overflow-hidden relative w-full h-[calc(100vh-5rem)]">
 
-    <section class="columna-menu-izquierdo w-[76px] shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col items-start p-0 py-4 relative overflow-visible">
+
+    <section class="columna-menu-izquierdo shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col items-start p-0 py-4 relative overflow-visible">
         
         <div class="action-wrap">
             <button class="action" type="button" onclick="abrirModalSemanal()">
@@ -73,12 +74,12 @@
         
     </main>
 
-    <aside class="columna-chat-nico w-64 shrink-0 bg-slate-900 border-l border-slate-800 flex flex-col relative h-full overflow-hidden z-30">
+    <aside class="columna-chat-nico  shrink-0 bg-slate-900 border-l border-slate-800 flex flex-col relative h-full overflow-hidden z-30">
         
-        <div id="chat-messages" class="absolute inset-0 overflow-y-auto p-4 pb-48 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900 z-10">
+        <div id="chat-messages" class="absolute inset-0 overflow-y-auto p-2 pb-48 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900 z-10">
         </div>
         
-        <div class="contenedor-nico-flotante absolute bottom-0 left-0 right-0 p-2 bg-slate-950/95 backdrop-blur-sm border-t border-slate-800 flex justify-center items-center z-20">
+        <div class="contenedor-nico-flotante absolute bottom-0 left-0 right-0 p-2 bg-slate-950/95 backdrop-blur-sm border-t  flex justify-center items-center z-20">
             <canvas id="canvas-nico" class="h-36 max-w-full bg-slate-900/30 rounded shadow-2xl transition-all"></canvas>
         </div>
         

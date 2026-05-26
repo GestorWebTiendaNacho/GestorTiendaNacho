@@ -24,7 +24,7 @@
 
 
 .columna-menu-izquierdo {
-  width: 76px !important;  
+  width: 85px !important;  
 }
 
 .columna-chat-nico {
@@ -1109,7 +1109,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 
 /* menu nico */ 
-
+.head-nico{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
 
 .action-wrap {
   position: relative;
