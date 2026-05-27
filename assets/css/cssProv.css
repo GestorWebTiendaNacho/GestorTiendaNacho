@@ -1262,7 +1262,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
-    height: 100vh !important; /* Copia el alto del contenedor donde se inyecta */
+    height: 100vh !important; 
     overflow: hidden !important;
     position: relative !important;
     margin: 0 !important;
@@ -1287,10 +1287,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     position: relative !important;
     width: 100% !important;
     display: flex !important;
-    flex-direction: column !important;    /* LÍNEA 1 ARRIBA, LÍNEA 2 ABAJO */
-    align-items: flex-start !important;    /* Alineado limpio a la izquierda */
+    flex-direction: column !important;    
+    align-items: flex-start !important;   
     justify-content: center !important;
-    padding: 12px 16px !important;         /* Espaciado interno sutil */
+    padding: 12px 16px !important;        
     margin: 0 !important;
     box-sizing: border-box !important;
 }
@@ -1300,7 +1300,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     display: flex !important;
     flex-direction: row !important;
     flex: 1 !important;
-    min-height: 0 !important; /* Crucial para que el flex-1 no desborde el alto de pantalla */
+    min-height: 0 !important;
     width: 100% !important;
     overflow: hidden !important;
     position: relative !important;
@@ -1310,7 +1310,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     box-sizing: border-box !important;
 }
 
-/* Normalización de columnas: Quita cualquier absolute heredado de archivos externos */
 .columna-menu-izquierdo, 
 .panel-central-datos, 
 .columna-chat-nico {
@@ -1323,7 +1322,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Corrección del "Desierto": Eliminamos el padding superior excesivo */
 .panel-central-datos {
-    padding: 12px 24px 24px 24px !important; /* Reducido arriba (12px) para pegarse armónicamente al header */
+    padding: 12px 24px 24px 24px !important; 
 }
 
 /* REESTRUCTURACIÓN DEL CHAT: Torre Flexbox perfecta sin encimamientos */
@@ -1331,6 +1330,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     width: 360px !important;
     flex-shrink: 0 !important;
     display: flex !important;
-    flex-direction: column !important; /* Apila mensajes, nico flotante e input en ese orden */
+    flex-direction: column !important; 
     overflow: hidden !important;
 }
