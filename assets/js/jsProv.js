@@ -2270,10 +2270,6 @@ async function enviarAudioAServidorGAS(base64Audio) {
             
             // Respuesta hablada/escrita de NICO
             if (dataRespuesta.reply) mostrarRespuestaEnChat(dataRespuesta.reply);
-
-            // =========================================================================
-            // INYECCIÓN VISUAL POR VOZ (Faltaba esto):
-            // =========================================================================
             if (dataRespuesta.productos) {
                 renderizarTablaInformesNico(dataRespuesta.productos);
             }
@@ -2335,17 +2331,11 @@ async function enviarPrompt() {
             if (dataRespuesta.reply) {
                 mostrarRespuestaEnChat(dataRespuesta.reply);
             }
-            
-            // =========================================================================
-            // INYECCIÓN VISUAL: Renderizamos los productos críticos en la tabla de Tailwind
-            // =========================================================================
+
             if (dataRespuesta.productos) {
                 renderizarTablaInformesNico(dataRespuesta.productos);
             }
 
-            // =========================================================================
-            // ALERTAS ESTRUCTURALES: Si NICO devuelve un SweetAlert dinámico, lo ejecutamos
-            // =========================================================================
             if (dataRespuesta.swal && typeof Swal !== "undefined") {
                 Swal.fire(dataRespuesta.swal);
             }
