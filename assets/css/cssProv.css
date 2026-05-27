@@ -1267,7 +1267,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     z-index: 1000 !important;
     box-sizing: border-box !important;
     overflow-y: auto !important; 
-    overscroll-behavior: contain;
+    /*overscroll-behavior: contain;*/
 }
 
 /* El Header: Dueño absoluto de la parte superior, intocable */
@@ -1278,6 +1278,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     flex-shrink: 0 !important;
     box-sizing: border-box !important;
     margin-top: 125px !important; /* Empuja el header hacia abajo si hay espacio extra */
+}
+
+.container-deposito{
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9998 !important; /* Justo debajo del header */
 }
 
 /* El contenedor de las 3 secciones: Se amolda al espacio que sobra */
