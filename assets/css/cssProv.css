@@ -1266,6 +1266,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     left: 0 !important;
     z-index: 1000 !important;
     box-sizing: border-box !important;
+    overflow-y: auto !important; 
+    overscroll-behavior: contain;
 }
 
 /* El Header: Dueño absoluto de la parte superior, intocable */
@@ -1275,6 +1277,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     width: 100% !important;
     flex-shrink: 0 !important;
     box-sizing: border-box !important;
+    margin-top: auto !important; /* Empuja el header hacia abajo si hay espacio extra */
 }
 
 /* El contenedor de las 3 secciones: Se amolda al espacio que sobra */
