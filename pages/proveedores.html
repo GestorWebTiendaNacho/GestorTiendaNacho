@@ -2,90 +2,86 @@
 <link rel="stylesheet" href="assets/css/cssMenuProv.css">
 <div class="h-screen w-full bg-slate-950 text-slate-200 overflow-hidden font-mono flex flex-col">
 
-    <!-- HEADER (NAVBAR) -->
-<div class="flex flex-1 overflow-hidden absolute w-full">
-<header class="head-nico shrink-0">
-        <div class="container-deposito">
+    <!-- SECCIONES NICO -->
+<div class="flex flex-col h-screen w-full overflow-hidden bg-slate-950">
+
+    <header class="head-nico shrink-0 w-full">
+        <div class="container-deposito w-full p-4 border-b border-slate-800 bg-slate-900/40">
             <h1 class="text-xl font-bold text-slate-100 tracking-wide">GESTOR CENTRAL DE DEPÓSITO</h1>
             <p class="text-[9px] text-slate-500 font-sans uppercase tracking-[2px] mt-1">Terminal Inteligente de Compras y Operaciones</p>
         </div>
-</header>
-</div>
+    </header>
 
-<div class="flex flex-1 overflow-hidden relative w-full h-[calc(100vh-5rem)]">
-    <section class="columna-menu-izquierdo shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col items-start p-0 py-4 relative overflow-visible">
+    <div class="flex flex-1 overflow-hidden relative w-full">
         
-        <div class="action-wrap">
-            <button class="action" type="button" onclick="abrirModalSemanal()">
-                <i class="fi fi-rs-daily-calendar"></i>
-                <span class="action-content" data-content="SEMANAL"></span>
-            </button>
+        <section class="columna-menu-izquierdo shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col items-start p-0 py-4 relative overflow-visible">
+            <div class="action-wrap">
+                <button class="action" type="button" onclick="abrirModalSemanal()">
+                    <i class="fi fi-rs-daily-calendar"></i>
+                    <span class="action-content" data-content="SEMANAL"></span>
+                </button>
 
-            <button class="action" type="button" onclick="abrirModal('PEDIDOS')">
-                <i class="fi fi-rr-quick-box"></i>
-                <span class="action-content" data-content="PEDIDOS"></span>
-            </button>
+                <button class="action" type="button" onclick="abrirModal('PEDIDOS')">
+                    <i class="fi fi-rr-quick-box"></i>
+                    <span class="action-content" data-content="PEDIDOS"></span>
+                </button>
 
-            <button class="action" type="button" onclick="verEstadoPedidos()">
-                <i class="fi fi-rs-package"></i>    
-                <span class="action-content" data-content="RECEPCIÓN"></span>
-            </button>
+                <button class="action" type="button" onclick="verEstadoPedidos()">
+                    <i class="fi fi-rs-package"></i>    
+                    <span class="action-content" data-content="RECEPCIÓN"></span>
+                </button>
 
-            <button class="action" type="button" onclick="abrirModal('PROVEEDORES')">
-                <i class="fi fi-ts-holding-hand-delivery"></i>
-                <span class="action-content" data-content="PROVEEDORES"></span>
-            </button>
+                <button class="action" type="button" onclick="abrirModal('PROVEEDORES')">
+                    <i class="fi fi-ts-holding-hand-delivery"></i>
+                    <span class="action-content" data-content="PROVEEDORES"></span>
+                </button>
 
-            <button class="action" type="button" onclick="abrirModal('HISTORIAL')">
-                <i class="fi fi-rs-time-past"></i>
-                <span class="action-content" data-content="HISTORIAL"></span>
-            </button>
-        </div>
+                <button class="action" type="button" onclick="abrirModal('HISTORIAL')">
+                    <i class="fi fi-rs-time-past"></i>
+                    <span class="action-content" data-content="HISTORIAL"></span>
+                </button>
+            </div>
+        </section>
 
-    </section>
+        <main class="panel-central-datos flex-1 overflow-y-auto p-6 bg-slate-900/20 flex flex-col gap-4">
+            <div id="panel-informes-nico" class="p-4 border border-slate-800 flex items-center justify-between bg-slate-900/50 rounded-lg shrink-0">
+                <span class="font-bold text-slate-100 text-[10px] tracking-widest uppercase flex items-center gap-2">
+                    <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div> PANEL DE INFORMES NICO
+                </span>
+            </div> 
 
-    <main class="panel-central-datos flex-1 overflow-y-auto p-6 bg-slate-900/20 flex flex-col gap-4">
-        
-        <div id="panel-informes-nico" class="p-4 border border-slate-800 flex items-center justify-between bg-slate-900/50 rounded-lg shrink-0">
-            <span class="font-bold text-slate-100 text-[10px] tracking-widest uppercase flex items-center gap-2">
-                <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div> PANEL DE INFORMES NICO
-            </span>
-        </div> 
+            <div class="flex-1 border border-slate-800 bg-slate-950/40 rounded-lg p-4 overflow-x-auto">
+                <table class="w-full text-left border-collapse text-slate-300 text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs uppercase tracking-wider">
+                            <th class="p-3 font-semibold text-center w-12">SEL.</th>
+                            <th class="p-3 font-semibold">SKU</th>
+                            <th class="p-3 font-semibold">Detalle del Producto</th>
+                            <th class="p-3 font-semibold text-right">Stock / Mínimo</th>
+                            <th class="p-3 font-semibold">Proveedor / Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-informes-cuerpo">
+                        <tr id="fila-espera-nico" class="border-b border-slate-900/50 hover:bg-slate-900/20 transition-colors">
+                            <td class="p-3 font-mono text-slate-500 text-center py-10" colspan="5">
+                                <i class="fi fi-rr-chart-connected mr-2"></i> Aguardando procesamiento de órdenes o dictados de voz...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
 
-        <div class="flex-1 border border-slate-800 bg-slate-950/40 rounded-lg p-4 overflow-x-auto">
-            <table class="w-full text-left border-collapse text-slate-300 text-sm">
-                <thead>
-                    <tr class="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs uppercase tracking-wider">
-                        <th class="p-3 font-semibold text-center w-12">SEL.</th>
-                        <th class="p-3 font-semibold">SKU</th>
-                        <th class="p-3 font-semibold">Detalle del Producto</th>
-                        <th class="p-3 font-semibold text-right">Stock / Mínimo</th>
-                        <th class="p-3 font-semibold">Proveedor / Estado</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-informes-cuerpo">
-                    <tr id="fila-espera-nico" class="border-b border-slate-900/50 hover:bg-slate-900/20 transition-colors">
-                        <td class="p-3 font-mono text-slate-500 text-center py-10" colspan="5">
-                            <i class="fi fi-rr-chart-connected mr-2"></i> Aguardando procesamiento de órdenes o dictados de voz...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-    </main>
+        <aside class="columna-chat-nico shrink-0 bg-slate-900 border-l border-slate-800 flex flex-col relative h-full overflow-hidden z-30">
+            <div id="chat-messages" class="absolute inset-0 overflow-y-auto p-2 pb-48 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900 z-10">
+            </div>
+            
+            <div class="contenedor-nico-flotante absolute bottom-0 left-0 right-0 p-2 bg-slate-950/95 backdrop-blur-sm flex justify-center items-center z-20">
+                <canvas id="canvas-nico" class="h-36 max-w-full bg-slate-900/30 rounded shadow-2xl transition-all"></canvas>
+            </div>
+        </aside>
 
-    <aside class="columna-chat-nico  shrink-0 bg-slate-900 border-l border-slate-800 flex flex-col relative h-full overflow-hidden z-30">
-        
-        <div id="chat-messages" class="absolute inset-0 overflow-y-auto p-2 pb-48 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900 z-10">
-        </div>
-        
-        <div class="contenedor-nico-flotante absolute bottom-0 left-0 right-0 p-2 bg-slate-950/95 backdrop-blur-sm border-t  flex justify-center items-center z-20">
-            <canvas id="canvas-nico" class="h-36 max-w-full bg-slate-900/30 rounded shadow-2xl transition-all"></canvas>
-        </div>
-        
-    </aside>
-
+    </div>
 </div>
 
 
