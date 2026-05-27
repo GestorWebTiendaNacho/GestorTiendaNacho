@@ -2261,7 +2261,6 @@ async function enviarAudioAServidorGAS(base64Audio) {
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
         const dataRespuesta = await response.json();
         
-        // Al recibir la respuesta con el texto ya transcribido y procesado por GAS
         if (dataRespuesta.status === "success") {
             if (typeof window.avatarHablar === "function") window.avatarHablar();
             
@@ -2271,6 +2270,13 @@ async function enviarAudioAServidorGAS(base64Audio) {
             
             // Respuesta hablada/escrita de NICO
             if (dataRespuesta.reply) mostrarRespuestaEnChat(dataRespuesta.reply);
+
+            // =========================================================================
+            // INYECCIÓN VISUAL POR VOZ (Faltaba esto):
+            // =========================================================================
+            if (dataRespuesta.productos) {
+                renderizarTablaInformesNico(dataRespuesta.productos);
+            }
 
             // Alertas visuales de stock/órdenes si aplican
             if (dataRespuesta.swal && typeof Swal !== "undefined") {
@@ -2289,7 +2295,7 @@ async function enviarAudioAServidorGAS(base64Audio) {
         }
 
     } catch (err) {
-        console.error("Error enviando flujo de audio:", err);
+        console.error("ErrorBox enviando flujo de audio:", err);
         mostrarRespuestaEnChat("❌ Error de enlace: No se pudo conectar con el servidor central.");
     } finally {
         setTimeout(() => {
