@@ -2324,7 +2324,26 @@ async function enviarPrompt() {
         
         if (dataRespuesta.status === "success") {
             if (typeof window.avatarHablar === "function") window.avatarHablar();
-            if (dataRespuesta.reply) mostrarRespuestaEnChat(dataRespuesta.reply);
+            
+            // 1. Pintamos el texto explicativo de NICO en la burbuja del chat
+            if (dataRespuesta.reply) {
+                mostrarRespuestaEnChat(dataRespuesta.reply);
+            }
+            
+            // =========================================================================
+            // INYECCIÓN VISUAL: Renderizamos los productos críticos en la tabla de Tailwind
+            // =========================================================================
+            if (dataRespuesta.productos) {
+                renderizarTablaInformesNico(dataRespuesta.productos);
+            }
+
+            // =========================================================================
+            // ALERTAS ESTRUCTURALES: Si NICO devuelve un SweetAlert dinámico, lo ejecutamos
+            // =========================================================================
+            if (dataRespuesta.swal && typeof Swal !== "undefined") {
+                Swal.fire(dataRespuesta.swal);
+            }
+            
         } else {
             mostrarRespuestaEnChat("❌ Error interno: " + (dataRespuesta.message || "Falla."));
         }
