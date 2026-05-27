@@ -2434,3 +2434,94 @@ function toggleSidebar() {
         if (overlay) overlay.classList.add('hidden');
     }
 }
+
+
+function renderizarTablaInformesNico(productosFiltrados) {
+    const tbody = document.getElementById('tabla-informes-cuerpo');
+    if (!tbody) return;
+
+    if (!productosFiltrados || productosFiltrados.length === 0) {
+        tbody.innerHTML = `
+            <tr class="border-b border-slate-900/50">
+                <td class="p-3 font-mono text-amber-500 text-center py-10" colspan="5">
+                    <i class="fi fi-rr-exclamation mr-2"></i> N.I.C.O. no encontró coincidencias para este reporte.
+                </td>
+            </tr>`;
+        return;
+    }
+
+    let html = "";
+
+    productosFiltrados.forEach(prod => {
+        // Sanitizar nombres por las comillas
+        const nombreLimpio = String(prod.nombre || prod.detalle || "").replace(/'/g, "").replace(/"/g, "");
+        const alertarStock = parseInt(prod.stock || 0) <= parseInt(prod.stockMinimo || 0);
+        
+        // Verificar si el item ya estaba seleccionado previamente en el carrito global
+        const yaSeleccionado = window.carritoPedidos && window.carritoPedidos.some(p => p.sku === prod.sku);
+
+        html += `
+            <tr class="border-b border-slate-900/40 hover:bg-slate-900/40 transition-colors duration-200" data-sku="${prod.sku}">
+                <td class="p-3 text-center">
+                    <input type="checkbox" 
+                           id="chk-central-${prod.sku}"
+                           class="w-4 h-4 accent-cyan-500 cursor-pointer" 
+                           ${yaSeleccionado ? 'checked' : ''}
+                           onclick="toggleSeleccion(this, '${prod.id || prod.sku}', '${nombreLimpio}', '${prod.precio || 0}', '${prod.sku}', '${prod.stock || 0}', '${prod.proveedor || 'General'}', '${prod.stockMinimo || 0}')">
+                </td>
+                <td class="p-3 font-mono text-cyan-500 font-bold text-xs">${prod.sku}</td>
+                <td class="p-3">
+                    <b class="text-slate-200">${prod.nombre || prod.detalle}</b>
+                </td>
+                <td class="p-3 text-right font-mono">
+                    <span class="${alertarStock ? 'text-red-500 font-bold animate-pulse' : 'text-slate-400'}">${prod.stock || 0}</span>
+                    <span class="text-slate-600 text-xs"> / ${prod.stockMinimo || 0}</span>
+                </td>
+                <td class="p-3 text-xs">
+                    <span class="text-slate-400 block font-semibold uppercase">${prod.proveedor || 'Sin Asignar'}</span>
+                    <span class="${alertarStock ? 'text-red-400/80 text-[10px]' : 'text-emerald-500/80 text-[10px]'} font-mono">
+                        ${alertarStock ? 'CRÍTICO: REPONER' : 'STOCK SEGURO'}
+                    </span>
+                </td>
+            </tr>`;
+    });
+
+    tbody.innerHTML = html;
+}
+
+
+function seleccionarSkusPorVoz(skusASeleccionar) {
+    if (!skusASeleccionar || skusASeleccionar.length === 0) return;
+
+    let itemsProcesados = 0;
+
+    skusASeleccionar.forEach(sku => {
+        // Buscamos el checkbox específico generado en la tabla central
+        const checkbox = document.getElementById(`chk-central-${sku.trim().toUpperCase()}`);
+        
+        if (checkbox && !checkbox.checked) {
+            checkbox.checked = true;
+            // Disparamos manualmente el evento onclick nativo para que se ejecute tu lógica de 'toggleSeleccion'
+            checkbox.onclick();
+            itemsProcesados++;
+        }
+    });
+
+    if (itemsProcesados > 0) {
+        // Alerta estética sutil de interfaz inteligente
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2500,
+            background: '#0f172a',
+            color: '#0ea5e9'
+        });
+        Toast.fire({
+            icon: 'success',
+            title: `N.I.C.O: Se tildaron ${itemsProcesados} items vía comando de voz.`
+        });
+    } else {
+        console.warn("N.I.C.O: Los SKUs dictados no se encuentran en la grilla visual actual.");
+    }
+}
