@@ -1261,54 +1261,69 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .contenedor-maestro-nico {
     display: flex !important;
     flex-direction: column !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    overflow: hidden !important; /* OJO: El contenedor principal NUNCA debe scrolear */
-    position: fixed !important;
-    top: 0 !important;         /* Pegado arriba */
-    left: 0 !important;        /* Pegado a la izquierda */
-    margin: 0 !important;      /* Eliminamos el margin-top invasivo */
-    z-index: 10000 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100vh !important; /* Asegura todo el alto si el padre no lo define */
+    overflow: hidden !important;
+    position: relative !important; /* Cambiado de fixed a relative para no romper la app principal */
+    margin: 0 !important;
+    padding: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* 2. El Header: Fluye naturalmente y empuja al cuerpo hacia abajo */
+/* El Header: Bloque rígido arriba */
 .head-nico {
+    display: block !important;
     position: relative !important;
-    z-index: 9999 !important; /* Capa superior absoluta */
     width: 100% !important;
-    flex-shrink: 0 !important; /* Bloquea para que el cuerpo no lo achique */
-    box-sizing: border-box !important;
-    margin: 0 !important; 
+    height: auto !important;
+    flex-shrink: 0 !important;
+    z-index: 50 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-/* El contenedor interno del header (Normalizado, NO absoluto) */
 .container-deposito {
-    position: relative !important; /* Cambiado de absolute a relative para que tenga volumen real */
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
     width: 100% !important;
-    height: auto !important;       /* Se amolda al tamaño de tu H1 y P */
-    display: flex !important;
-    flex-direction: column !important;
+    padding: 16px !important; /* Control de espacio interno controlado */
     box-sizing: border-box !important;
 }
 
-/* 3. El contenedor de las 3 secciones: Ocupa el resto de la pantalla exacta */
+/* El cuerpo: Contiene las 3 secciones alineadas horizontalmente */
 .cuerpo-aplicacion-nico {
     display: flex !important;
     flex-direction: row !important;
-    flex: 1 !important;         /* Toma el 100% del espacio vertical que dejó el header */
-    min-height: 0 !important;   /* Secreto Flexbox: evita que los hijos agranden este contenedor más allá de la pantalla */
+    flex: 1 !important;
+    min-height: 0 !important; /* Evita desbordes verticales */
     width: 100% !important;
-    overflow: hidden !important; /* Mantiene las columnas encerradas */
+    overflow: hidden !important;
     position: relative !important;
-    z-index: 100 !important;
+    z-index: 10 !important;
     box-sizing: border-box !important;
 }
 
-/* 4. Columna de Chat: Excelente contenedor para el posicionamiento absolute de sus hijos */
+/* FUERZA REGLA: Anula cualquier absolute raro de cssProv.css o cssMenuProv.css */
+.columna-menu-izquierdo, 
+.panel-central-datos, 
 .columna-chat-nico {
-    height: 100% !important;
     position: relative !important;
-    width: 360px !important; /* Ajustá este ancho al diseño que más te guste */
+    top: auto !important;
+    left: auto !important;
+    bottom: auto !important;
+    height: 100% !important;
+}
+
+/* Ajustes finos de padding para matar el "desierto" de 30px */
+.panel-central-datos {
+    padding: 16px !important; /* Reducido para evitar el hueco gigante arriba de la tabla */
+}
+
+.columna-chat-nico {
+    width: 360px !important;
     flex-shrink: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
 }

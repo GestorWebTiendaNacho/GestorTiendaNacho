@@ -75,7 +75,18 @@
                 
                 <div class="contenedor-nico-flotante absolute bottom-0 left-0 right-0 p-2 bg-slate-950/95 backdrop-blur-sm flex justify-center items-center z-20">
                     <canvas id="canvas-nico" class="h-36 max-w-full bg-slate-900/30 rounded shadow-2xl transition-all"></canvas>
+                </div>
+                <div class="p-4 bg-slate-950 border-t border-slate-800 z-40">
+                    <div class="flex bg-slate-900 border border-slate-700 rounded-md p-1 focus-within:border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                        <button id="btn-nico-voz" 
+                                class="px-3 text-slate-500 hover:text-red-400 transition-colors"
+                                title="Mantén para hablar">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <input type="text" id="user-input" placeholder="Comando de sistema..." class="flex-1 bg-transparent py-2 px-3 text-xs text-cyan-100 focus:outline-none">
+                        <button onclick="enviarPrompt()" class="px-3 text-cyan-600 hover:text-cyan-400"><i class="fas fa-terminal"></i></button>
                     </div>
+                </div>
             </aside>
 
         </div>
