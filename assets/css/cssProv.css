@@ -1277,7 +1277,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     width: 100% !important;
     flex-shrink: 0 !important;
     box-sizing: border-box !important;
-    margin-top: 85px !important; /* Empuja el header hacia abajo si hay espacio extra */
+    margin-top: 125px !important; /* Empuja el header hacia abajo si hay espacio extra */
 }
 
 /* El contenedor de las 3 secciones: Se amolda al espacio que sobra */
