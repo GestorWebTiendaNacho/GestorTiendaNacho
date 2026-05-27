@@ -1262,16 +1262,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
-    height: 100% !important;
-    min-height: 100vh !important; /* Asegura todo el alto si el padre no lo define */
+    height: 100vh !important; /* Copia el alto del contenedor donde se inyecta */
     overflow: hidden !important;
-    position: relative !important; /* Cambiado de fixed a relative para no romper la app principal */
+    position: relative !important;
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* El Header: Bloque rígido arriba */
+/* El Header: Bloque rígido superior */
 .head-nico {
     display: block !important;
     position: relative !important;
@@ -1283,29 +1282,35 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     padding: 0 !important;
 }
 
+/* Fuerza al título a estar arriba y la descripción abajo en líneas separadas */
 .container-deposito {
     position: relative !important;
-    top: auto !important;
-    left: auto !important;
     width: 100% !important;
-    padding: 16px !important; /* Control de espacio interno controlado */
+    display: flex !important;
+    flex-direction: column !important;    /* LÍNEA 1 ARRIBA, LÍNEA 2 ABAJO */
+    align-items: flex-start !important;    /* Alineado limpio a la izquierda */
+    justify-content: center !important;
+    padding: 12px 16px !important;         /* Espaciado interno sutil */
+    margin: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* El cuerpo: Contiene las 3 secciones alineadas horizontalmente */
+/* El cuerpo: Contiene las 3 columnas de trabajo */
 .cuerpo-aplicacion-nico {
     display: flex !important;
     flex-direction: row !important;
     flex: 1 !important;
-    min-height: 0 !important; /* Evita desbordes verticales */
+    min-height: 0 !important; /* Crucial para que el flex-1 no desborde el alto de pantalla */
     width: 100% !important;
     overflow: hidden !important;
     position: relative !important;
     z-index: 10 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* FUERZA REGLA: Anula cualquier absolute raro de cssProv.css o cssMenuProv.css */
+/* Normalización de columnas: Quita cualquier absolute heredado de archivos externos */
 .columna-menu-izquierdo, 
 .panel-central-datos, 
 .columna-chat-nico {
@@ -1316,14 +1321,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     height: 100% !important;
 }
 
-/* Ajustes finos de padding para matar el "desierto" de 30px */
+/* Corrección del "Desierto": Eliminamos el padding superior excesivo */
 .panel-central-datos {
-    padding: 16px !important; /* Reducido para evitar el hueco gigante arriba de la tabla */
+    padding: 12px 24px 24px 24px !important; /* Reducido arriba (12px) para pegarse armónicamente al header */
 }
 
+/* REESTRUCTURACIÓN DEL CHAT: Torre Flexbox perfecta sin encimamientos */
 .columna-chat-nico {
     width: 360px !important;
     flex-shrink: 0 !important;
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: column !important; /* Apila mensajes, nico flotante e input en ese orden */
+    overflow: hidden !important;
 }
