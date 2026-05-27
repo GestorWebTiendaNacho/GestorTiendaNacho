@@ -2215,7 +2215,7 @@ async function alternarMicrofono() {
             mediaRecorder.onstop = async () => {
                 stream.getTracks().forEach(track => track.stop()); // Apaga el hardware inmediatamente
                 
-                mostrarRespuestaEnChat("🤖 NICO: Subiendo audio al servidor central...");
+                mostrarRespuestaEnChat("🤖 NICO: Reconociendo el comando...");
                 
                 const blobAudio = new Blob(chunksAudio, { type: opcionesMime.mimeType });
                 
@@ -2224,7 +2224,6 @@ async function alternarMicrofono() {
                 lectorSencillo.readAsDataURL(blobAudio);
                 lectorSencillo.onloadend = async () => {
                     const datosBase64Completo = lectorSencillo.result;
-                    // Removemos el prefijo "data:audio/webm;base64," para enviar solo el string crudo
                     const stringBase64Crudo = datosBase64Completo.split(',')[1];
                     
                     await enviarAudioAServidorGAS(stringBase64Crudo);
@@ -2254,7 +2253,7 @@ async function enviarAudioAServidorGAS(base64Audio) {
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
-                action: "procesarAudioNico", // Asegúrate de que tu doPost en GAS escuche este action
+                action: "procesarAudioNico",
                 params: { audioBase64: base64Audio }
             })
         });
@@ -2266,7 +2265,6 @@ async function enviarAudioAServidorGAS(base64Audio) {
         if (dataRespuesta.status === "success") {
             if (typeof window.avatarHablar === "function") window.avatarHablar();
             
-            // Si el backend te devuelve el texto de lo que interpretó, lo mostramos como mensaje del usuario
             if (dataRespuesta.transcripcion) {
                 mostrarMensajeUsuario(dataRespuesta.transcripcion);
             }
