@@ -1336,91 +1336,164 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 
 
-/* CONTENEDOR GENERAL */
-.container {
+/* CONTENEDOR */
+.wrapper {
   display: flex;
   flex-direction: column;
-  gap: 60px;
+  gap: 70px;
 }
 
-/* ITEM */
-.item {
+/* FILAS */
+.row {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 40px;
 }
 
-.item.reverse {
+.row.right {
   flex-direction: row-reverse;
 }
 
-/* CÍRCULO */
+/* CÍRCULO BASE */
 .circle {
-  width: 180px;
-  height: 180px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 
-  background: #2a2e38;
-  box-shadow: 
-    10px 10px 20px #16181d,
-    -10px -10px 20px #2e323d;
+  background: linear-gradient(145deg, #2b2f38, #1e222a);
+
+  box-shadow:
+    15px 15px 30px #14161b,
+    -10px -10px 25px #2e3340;
 }
 
-/* BORDE LUMINOSO */
+/* ARO INTERNO */
 .circle::before {
   content: "";
   position: absolute;
-  width: 140px;
-  height: 140px;
+  inset: 25px;
   border-radius: 50%;
-  border: 4px solid;
+  border: 3px solid;
+}
+
+/* GLOW */
+.circle::after {
+  content: "";
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0.6;
 }
 
 /* COLORES */
-.orange::before { border-color: orange; }
-.green::before { border-color: #00ff88; }
-.pink::before { border-color: #ff3ea5; }
-.blue::before { border-color: #00bfff; }
+.orange::before { border-color: #ff9800; }
+.orange::after  { background: #ff9800; }
 
-/* INTERIOR */
-.inner {
+.green::before { border-color: #00e676; }
+.green::after  { background: #00e676; }
+
+.pink::before { border-color: #ff4081; }
+.pink::after  { background: #ff4081; }
+
+.blue::before { border-color: #00b0ff; }
+.blue::after  { background: #00b0ff; }
+
+/* CONTENIDO */
+.content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
   text-align: center;
-  color: white;
 }
 
-.inner h3 {
+.content h3 {
   margin-top: 5px;
+  font-size: 18px;
+}
+
+.content p {
+  font-size: 11px;
+  opacity: 0.6;
 }
 
 .icon {
-  font-size: 28px;
+  font-size: 22px;
 }
 
-/* ETIQUETA */
+/* LABEL (PÍLDORA) */
 .label {
-  background: #2a2e38;
+  position: relative;
+  background: linear-gradient(145deg, #2b2f38, #1e222a);
   padding: 15px 20px;
-  border-radius: 12px;
-  color: #ccc;
+  border-radius: 30px;
+  min-width: 260px;
+  color: #cfcfcf;
 
-  box-shadow: 
-    8px 8px 15px #16181d,
-    -5px -5px 15px #2e323d;
+  box-shadow:
+    10px 10px 20px #14161b,
+    -5px -5px 15px #2e3340;
 }
 
 .label h4 {
-  color: white;
-  margin-bottom: 5px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.label p {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+/* PUNTA */
+.label::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: inherit;
+  transform: rotate(45deg);
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+/* LADO IZQUIERDO */
+.row.left .label::after {
+  right: -10px;
+}
+
+/* LADO DERECHO */
+.row.right .label::after {
+  left: -10px;
+}
+
+/* ICONO LABEL */
+.label .icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.6;
+}
+
+.row.right .label .icon {
+  right: auto;
+  left: 15px;
 }
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
-  .item, .item.reverse {
+  .row, .row.right {
     flex-direction: column;
     text-align: center;
+  }
+
+  .label::after {
+    display: none;
   }
 }
