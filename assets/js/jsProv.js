@@ -2576,3 +2576,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+elementoCirculo.classList.remove('explode');
+void elementoCirculo.offsetWidth; // Truco de reflujo para resetear la animación CSS
+elementoCirculo.classList.add('explode');
