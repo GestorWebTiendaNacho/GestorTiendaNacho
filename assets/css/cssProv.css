@@ -1340,68 +1340,59 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .wrapper {
   display: flex;
   flex-direction: column;
-  gap: 70px;
+  gap: 80px;
 }
 
 /* FILAS */
 .row {
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: 50px;
 }
 
 .row.right {
   flex-direction: row-reverse;
 }
 
-/* CÍRCULO BASE */
+/* ===================== */
+/* 🔵 CIRCLE PRO */
+/* ===================== */
+
 .circle {
-  width: 200px;
-  height: 200px;
+  width: 210px;
+  height: 210px;
   border-radius: 50%;
   position: relative;
-
-  background: linear-gradient(145deg, #2b2f38, #1e222a);
+  background: linear-gradient(145deg, #2b2f38, #1c1f26);
 
   box-shadow:
-    15px 15px 30px #14161b,
-    -10px -10px 25px #2e3340;
+    20px 20px 40px #111317,
+    -10px -10px 30px #2e3440;
 }
 
-/* ARO INTERNO */
+/* aro */
 .circle::before {
   content: "";
   position: absolute;
-  inset: 25px;
+  inset: 28px;
   border-radius: 50%;
   border: 3px solid;
+  animation: pulse 2.5s infinite ease-in-out;
 }
 
-/* GLOW */
+/* glow */
 .circle::after {
   content: "";
   position: absolute;
   inset: 20px;
   border-radius: 50%;
-  filter: blur(10px);
-  opacity: 0.6;
+  filter: blur(14px);
+  opacity: 0.7;
+  animation: glow 3s infinite alternate;
 }
 
-/* COLORES */
-.orange::before { border-color: #ff9800; }
-.orange::after  { background: #ff9800; }
-
-.green::before { border-color: #00e676; }
-.green::after  { background: #00e676; }
-
-.pink::before { border-color: #ff4081; }
-.pink::after  { background: #ff4081; }
-
-.blue::before { border-color: #00b0ff; }
-.blue::after  { background: #00b0ff; }
-
-/* CONTENIDO */
-.content {
+/* contenido */
+.inner {
   position: absolute;
   inset: 0;
   display: flex;
@@ -1409,91 +1400,137 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: center;
   align-items: center;
   color: #fff;
-  text-align: center;
 }
 
-.content h3 {
-  margin-top: 5px;
+.inner h3 {
+  margin-top: 6px;
   font-size: 18px;
 }
 
-.content p {
+.inner p {
   font-size: 11px;
   opacity: 0.6;
 }
 
-.icon {
-  font-size: 22px;
-}
+/* ===================== */
+/* 🎨 COLORES DINÁMICOS */
+/* ===================== */
 
-/* LABEL (PÍLDORA) */
-.label {
+.orange .circle::before { border-color: #ff9800; }
+.orange .circle::after  { background: #ff9800; }
+
+.green .circle::before { border-color: #00e676; }
+.green .circle::after  { background: #00e676; }
+
+.pink .circle::before { border-color: #ff4081; }
+.pink .circle::after  { background: #ff4081; }
+
+.blue .circle::before { border-color: #00b0ff; }
+.blue .circle::after  { background: #00b0ff; }
+
+/* ===================== */
+/* 💊 PILL PERFECTA */
+/* ===================== */
+
+.pill {
   position: relative;
-  background: linear-gradient(145deg, #2b2f38, #1e222a);
-  padding: 15px 20px;
-  border-radius: 30px;
-  min-width: 260px;
-  color: #cfcfcf;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 300px;
+  padding: 16px 20px;
+  border-radius: 40px;
+
+  background: linear-gradient(145deg, #2b2f38, #1c1f26);
 
   box-shadow:
-    10px 10px 20px #14161b,
-    -5px -5px 15px #2e3340;
+    15px 15px 30px #111317,
+    -6px -6px 18px #2e3440;
+
+  transition: 0.3s;
 }
 
-.label h4 {
+/* borde interno sutil */
+.pill::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 40px;
+  background: linear-gradient(145deg, transparent, rgba(255,255,255,0.05));
+}
+
+/* punta REAL (mejor que rombo) */
+.pill::after {
+  content: "";
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background: inherit;
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+}
+
+/* posición punta */
+.row.left .pill::after {
+  right: -18px;
+}
+
+.row.right .pill::after {
+  left: -18px;
+  transform: rotate(180deg);
+}
+
+/* contenido */
+.pill-content h4 {
   color: #fff;
   font-size: 14px;
 }
 
-.label p {
+.pill-content p {
   font-size: 11px;
-  opacity: 0.6;
+  color: #aaa;
 }
 
-/* PUNTA */
-.label::after {
-  content: "";
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  background: inherit;
-  transform: rotate(45deg);
-  top: 50%;
-  transform: translateY(-50%) rotate(45deg);
+/* icono */
+.pill-icon {
+  font-size: 18px;
+  opacity: 0.7;
 }
 
-/* LADO IZQUIERDO */
-.row.left .label::after {
-  right: -10px;
+/* ===================== */
+/* ✨ ANIMACIONES */
+/* ===================== */
+
+@keyframes glow {
+  from { opacity: 0.4; }
+  to { opacity: 0.8; }
 }
 
-/* LADO DERECHO */
-.row.right .label::after {
-  left: -10px;
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
-/* ICONO LABEL */
-.label .icon {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0.6;
+/* hover pro */
+.row:hover .circle {
+  transform: translateY(-5px);
+  transition: 0.3s;
 }
 
-.row.right .label .icon {
-  right: auto;
-  left: 15px;
+.row:hover .pill {
+  transform: translateY(-3px);
 }
 
-/* RESPONSIVE */
+/* ===================== */
+/* 📱 RESPONSIVE */
+/* ===================== */
+
 @media (max-width: 768px) {
   .row, .row.right {
     flex-direction: column;
-    text-align: center;
   }
 
-  .label::after {
+  .pill::after {
     display: none;
   }
 }
