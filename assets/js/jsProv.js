@@ -2538,3 +2538,41 @@ function seleccionarSkusPorVoz(skusASeleccionar) {
         console.warn("N.I.C.O: Los SKUs dictados no se encuentran en la grilla visual actual.");
     }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Cambia '.tabla-nico' por la clase o ID real de tu etiqueta <table>
+  const tabla = document.querySelector(".tabla-nico"); 
+  if (!tabla) return;
+
+  tabla.querySelectorAll("th").forEach((headerCell, index) => {
+    headerCell.style.cursor = "pointer";
+    
+    headerCell.addEventListener("click", () => {
+      const tbody = tabla.querySelector("tbody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const isAscending = !headerCell.classList.contains("sort-asc");
+      
+      // Resetear estados visuales en otros encabezados
+      tabla.querySelectorAll("th").forEach(th => th.classList.remove("sort-asc", "sort-desc"));
+      
+      // Ordenar filas de forma inteligente (detecta números automáticamente)
+      const sortedRows = rows.sort((a, b) => {
+        const cellA = a.children[index].textContent.trim();
+        const cellB = b.children[index].textContent.trim();
+        
+        const numA = parseFloat(cellA.replace(/[^0-9.-]+/g, ""));
+        const numB = parseFloat(cellB.replace(/[^0-9.-]+/g, ""));
+        
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return isAscending ? numA - numB : numB - numA;
+        }
+        return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+      });
+      
+      // Reinyectar al DOM
+      tbody.append(...sortedRows);
+      headerCell.classList.toggle("sort-asc", isAscending);
+      headerCell.classList.toggle("sort-desc", !isAscending);
+    });
+  });
+});
