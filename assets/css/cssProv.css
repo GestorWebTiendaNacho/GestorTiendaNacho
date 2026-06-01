@@ -1350,15 +1350,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* CONTENEDOR */
 
 
+@property --nm-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* --- Contenedor Raíz Escopado --- */
 .neon-menu-wrapper {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 20px;
+  padding: 30px 20px;
   box-sizing: border-box;
   
-  /* Variables locales de color */
-  --nm-bg-dark: #151619;
+  /* Paleta Maestra Neón */
   --nm-clr-orange: #ff9f43;
   --nm-clr-green: #2ed573;
   --nm-clr-pink: #ff4757;
@@ -1366,23 +1372,27 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   --nm-clr-purple: #a55eea;
 }
 
-/* Forzar box-sizing solo dentro del componente para evitar conflictos */
 .neon-menu-wrapper *, 
 .neon-menu-wrapper *::before, 
 .neon-menu-wrapper *::after {
   box-sizing: border-box;
 }
 
-/* --- Cuerpo Interno del Menú --- */
+/* --- Mapeo de colores dinámicos por Ítem --- */
+.neon-menu-wrapper .item-orange { --item-clr: var(--nm-clr-orange); }
+.neon-menu-wrapper .item-green  { --item-clr: var(--nm-clr-green); }
+.neon-menu-wrapper .item-pink   { --item-clr: var(--nm-clr-pink); }
+.neon-menu-wrapper .item-blue   { --item-clr: var(--nm-clr-blue); }
+.neon-menu-wrapper .item-purple { --item-clr: var(--nm-clr-purple); }
+
 .neon-menu-wrapper .nm-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 30px;
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
 }
 
-/* --- Fila de cada Ítem --- */
 .neon-menu-wrapper .nm-item {
   display: flex;
   align-items: center;
@@ -1392,40 +1402,48 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   position: relative;
 }
 
-/* Alternancia automática para el efecto Zig-Zag */
+/* Alternancia de lado (Zig-Zag) */
 .neon-menu-wrapper .nm-item:nth-child(even) {
   flex-direction: row-reverse;
 }
 
-/* --- 1. Círculo Exterior (Volumen Neumórfico) --- */
+/* --- 1. Círculos con Efecto Cristal Traslúcido --- */
 .neon-menu-wrapper .nm-circle-outer {
-  width: 140px;
-  height: 140px;
-  background: inherit; /* Toma el color de fondo de tu página base */
+  width: 135px;
+  height: 135px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
-  box-shadow: 9px 9px 16px rgba(0, 0, 0, 0.55), 
-              -9px -9px 16px rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Aura de neón exterior muy suave */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5),
+              0 0 25px color-mix(in srgb, var(--item-clr) 15%, transparent);
   z-index: 2;
   flex-shrink: 0;
 }
 
-/* --- Botón Interno (Efecto Cavidad Inset) --- */
 .neon-menu-wrapper .nm-circle-inner {
-  width: 108px;
-  height: 108px;
-  background: var(--nm-bg-dark);
+  width: 105px;
+  height: 105px;
+  background: rgba(15, 16, 19, 0.4);
+  backdrop-filter: blur(8px);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 4px;
-  border: 3px solid transparent;
-  transition: transform 0.3s ease;
+  border: 2px solid var(--item-clr);
+  color: var(--item-clr);
+  /* Resplandor interno y externo del anillo central */
+  box-shadow: inset 0 0 15px color-mix(in srgb, var(--item-clr) 40%, transparent),
+              0 0 15px color-mix(in srgb, var(--item-clr) 30%, transparent);
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .neon-menu-wrapper .nm-circle-inner h2 {
@@ -1439,51 +1457,85 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 1.8rem;
 }
 
-/* --- 2. Cápsulas de Texto (Efecto Glasmorfismo) --- */
+/* --- 2. Píldoras Ultra-Glassmorphism --- */
 .neon-menu-wrapper .nm-capsule {
   flex-grow: 1;
-  max-width: 340px;
-  padding: 16px 22px;
-  background: rgba(20, 21, 23, 0.65);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  max-width: 350px;
+  padding: 18px 24px;
+  background: rgba(20, 22, 26, 0.45); /* Base oscura pero muy transparente */
+  backdrop-filter: blur(20px);         /* Desenfoque aumentado para el efecto vidrio */
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 15px;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
   position: relative;
-  transition: background 0.3s ease;
+  transition: all 0.4s ease;
 }
 
+/* --- 3. RECORRIDO DE LUZ NEÓN (Efecto Contorno Animado) --- */
+.neon-menu-wrapper .nm-capsule::before {
+  content: '';
+  position: absolute;
+  inset: -1px; /* Se posiciona exactamente sobre el borde */
+  border-radius: 40px;
+  padding: 2px; /* Grosor del haz de luz */
+  
+  /* Degradado cónico que genera la "estela" de luz */
+  background: conic-gradient(
+    from var(--nm-angle), 
+    transparent 40%, 
+    var(--item-clr) 85%, 
+    transparent 100__% /* nota: el escape se normaliza a 100% */
+  );
+  background: conic-gradient(from var(--nm-angle), transparent 40%, var(--item-clr) 85%, transparent 100%);
+  
+  /* Truco maestro de máscara: oculta el centro del degradado manteniendo el fondo transparente */
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  
+  animation: nm-laser-flow 3.5s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* --- Textos e Iconos internos de la Píldora --- */
 .neon-menu-wrapper .nm-capsule-text {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  z-index: 2;
 }
 
 .neon-menu-wrapper .nm-capsule h3 {
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.5px;
+  color: var(--item-clr);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--item-clr) 40%, transparent);
   margin: 0;
 }
 
 .neon-menu-wrapper .nm-capsule p {
   font-size: 0.72rem;
-  color: #9aa0a6;
-  line-height: 1.3;
+  color: #b0b6c2;
+  line-height: 1.35;
   margin: 0;
 }
 
 .neon-menu-wrapper .nm-capsule .nm-icon {
-  font-size: 1.7rem;
-  opacity: 0.75;
+  font-size: 1.8rem;
+  color: var(--item-clr);
+  opacity: 0.9;
+  z-index: 2;
+  filter: drop-shadow(0 0 5px var(--item-clr));
 }
 
-/* --- Triángulos Indicadores (Flechas) --- */
+/* --- Triángulos / Flechas Indicadoras de Cristal --- */
 .neon-menu-wrapper .nm-capsule::after {
   content: '';
   position: absolute;
@@ -1491,74 +1543,34 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transform: translateY(-50%);
   border-width: 8px;
   border-style: solid;
+  z-index: 2;
 }
 
-/* Flecha a la derecha en impares */
 .neon-menu-wrapper .nm-item:nth-child(odd) .nm-capsule::after {
   right: -16px;
-  border-color: transparent transparent transparent rgba(20, 21, 23, 0.65);
+  border-color: transparent transparent transparent rgba(20, 22, 26, 0.45);
 }
 
-/* Flecha a la izquierda en pares */
 .neon-menu-wrapper .nm-item:nth-child(even) .nm-capsule::after {
   left: -16px;
-  border-color: transparent rgba(20, 21, 23, 0.65) transparent transparent;
+  border-color: transparent rgba(20, 22, 26, 0.45) transparent transparent;
 }
 
-
-/* --- 3. Inyección Temática de Colores Neón --- */
-
-/* NARANJA */
-.neon-menu-wrapper .item-orange .nm-circle-inner {
-  border-color: var(--nm-clr-orange);
-  box-shadow: inset 0 0 10px rgba(255, 159, 67, 0.35), 0 0 12px rgba(255, 159, 67, 0.25);
-}
-.neon-menu-wrapper .item-orange .nm-circle-inner, .neon-menu-wrapper .item-orange .nm-capsule h3, .neon-menu-wrapper .item-orange .nm-capsule .nm-icon {
-  color: var(--nm-clr-orange);
+/* --- Animación de rotación del ángulo --- */
+@keyframes nm-laser-flow {
+  0% { --nm-angle: 0deg; }
+  100% { --nm-angle: 360deg; }
 }
 
-/* VERDE */
-.neon-menu-wrapper .item-green .nm-circle-inner {
-  border-color: var(--nm-clr-green);
-  box-shadow: inset 0 0 10px rgba(46, 213, 115, 0.35), 0 0 12px rgba(46, 213, 115, 0.25);
-}
-.neon-menu-wrapper .item-green .nm-circle-inner, .neon-menu-wrapper .item-green .nm-capsule h3, .neon-menu-wrapper .item-green .nm-capsule .nm-icon {
-  color: var(--nm-clr-green);
-}
-
-/* ROSA */
-.neon-menu-wrapper .item-pink .nm-circle-inner {
-  border-color: var(--nm-clr-pink);
-  box-shadow: inset 0 0 10px rgba(255, 71, 87, 0.35), 0 0 12px rgba(255, 71, 87, 0.25);
-}
-.neon-menu-wrapper .item-pink .nm-circle-inner, .neon-menu-wrapper .item-pink .nm-capsule h3, .neon-menu-wrapper .item-pink .nm-capsule .nm-icon {
-  color: var(--nm-clr-pink);
-}
-
-/* CELESTE */
-.neon-menu-wrapper .item-blue .nm-circle-inner {
-  border-color: var(--nm-clr-blue);
-  box-shadow: inset 0 0 10px rgba(0, 210, 211, 0.35), 0 0 12px rgba(0, 210, 211, 0.25);
-}
-.neon-menu-wrapper .item-blue .nm-circle-inner, .neon-menu-wrapper .item-blue .nm-capsule h3, .neon-menu-wrapper .item-blue .nm-capsule .nm-icon {
-  color: var(--nm-clr-blue);
-}
-
-/* VIOLETA */
-.neon-menu-wrapper .item-purple .nm-circle-inner {
-  border-color: var(--nm-clr-purple);
-  box-shadow: inset 0 0 10px rgba(165, 94, 234, 0.35), 0 0 12px rgba(165, 94, 234, 0.25);
-}
-.neon-menu-wrapper .item-purple .nm-circle-inner, .neon-menu-wrapper .item-purple .nm-capsule h3, .neon-menu-wrapper .item-purple .nm-capsule .nm-icon {
-  color: var(--nm-clr-purple);
-}
-
-
-/* --- Hover Micro-interacciones --- */
+/* --- Efectos de Interacción (Hover) --- */
 .neon-menu-wrapper .nm-item:hover .nm-circle-inner {
-  transform: scale(1.04);
+  transform: scale(1.05);
+  box-shadow: inset 0 0 20px color-mix(in srgb, var(--item-clr) 60%, transparent),
+              0 0 25px color-mix(in srgb, var(--item-clr) 50%, transparent);
 }
+
 .neon-menu-wrapper .nm-item:hover .nm-capsule {
-  background: rgba(28, 30, 33, 0.85);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(25, 28, 33, 0.6);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
+              0 0 15px color-mix(in srgb, var(--item-clr) 20%, transparent);
 }
