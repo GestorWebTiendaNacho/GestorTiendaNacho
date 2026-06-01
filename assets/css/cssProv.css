@@ -1347,195 +1347,218 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 
 
-/* CONTENEDOR 
-background: radial-gradient(circle at top left, var(--bg2), var(--bg1));
-  font-family: "Segoe UI", sans-serif;
+/* CONTENEDOR */
+
+
+.neon-menu-wrapper {
+  width: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
-  height: 100vh;*/
+  padding: 20px;
+  box-sizing: border-box;
+  
+  /* Variables locales de color */
+  --nm-bg-dark: #151619;
+  --nm-clr-orange: #ff9f43;
+  --nm-clr-green: #2ed573;
+  --nm-clr-pink: #ff4757;
+  --nm-clr-blue: #00d2d3;
+  --nm-clr-purple: #a55eea;
+}
 
-.wrapper {
+/* Forzar box-sizing solo dentro del componente para evitar conflictos */
+.neon-menu-wrapper *, 
+.neon-menu-wrapper *::before, 
+.neon-menu-wrapper *::after {
+  box-sizing: border-box;
+}
+
+/* --- Cuerpo Interno del Menú --- */
+.neon-menu-wrapper .nm-container {
   display: flex;
   flex-direction: column;
-  gap: 80px;
-  background: radial-gradient(circle at top left, var(--bg2), var(--bg1));
+  gap: 24px;
+  width: 100%;
+  max-width: 680px;
+}
+
+/* --- Fila de cada Ítem --- */
+.neon-menu-wrapper .nm-item {
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  height: 100vh;
-
+  gap: 35px;
+  width: 100%;
+  position: relative;
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: 50px;
-}
-
-.row.right {
+/* Alternancia automática para el efecto Zig-Zag */
+.neon-menu-wrapper .nm-item:nth-child(even) {
   flex-direction: row-reverse;
 }
 
-/* ================= */
-/* 🔵 CIRCLE */
-/* ================= */
-
-.circle {
-  width: 210px;
-  height: 210px;
+/* --- 1. Círculo Exterior (Volumen Neumórfico) --- */
+.neon-menu-wrapper .nm-circle-outer {
+  width: 140px;
+  height: 140px;
+  background: inherit; /* Toma el color de fondo de tu página base */
   border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: relative;
-  background: linear-gradient(145deg, var(--card1), var(--card2));
-
-  box-shadow:
-    20px 20px 40px #111317,
-    -10px -10px 30px #2e3440;
+  box-shadow: 9px 9px 16px rgba(0, 0, 0, 0.55), 
+              -9px -9px 16px rgba(255, 255, 255, 0.03);
+  z-index: 2;
+  flex-shrink: 0;
 }
 
-.circle::before {
-  content: "";
-  position: absolute;
-  inset: 28px;
+/* --- Botón Interno (Efecto Cavidad Inset) --- */
+.neon-menu-wrapper .nm-circle-inner {
+  width: 108px;
+  height: 108px;
+  background: var(--nm-bg-dark);
   border-radius: 50%;
-  border: 3px solid currentColor;
-  animation: pulse 2.5s infinite;
-}
-
-.circle::after {
-  content: "";
-  position: absolute;
-  inset: 20px;
-  border-radius: 50%;
-  background: currentColor;
-  filter: blur(15px);
-  opacity: 0.6;
-  animation: glow 3s infinite alternate;
-}
-
-.inner {
-  position: absolute;
-  inset: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  color: white;
-}
-
-.inner svg {
-  width: 26px;
-  height: 26px;
-  fill: currentColor;
-}
-
-/* ================= */
-/* 💊 PILL */
-/* ================= */
-
-.pill {
-  position: relative;
-  width: 320px;
-  padding: 16px 20px;
-  border-radius: 40px;
-
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-
-  background: linear-gradient(145deg, var(--card1), var(--card2));
-
-  box-shadow:
-    15px 15px 30px #111317,
-    -6px -6px 18px #2e3440;
-
-  transition: 0.3s;
+  gap: 4px;
+  border: 3px solid transparent;
+  transition: transform 0.3s ease;
 }
 
-.pill::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
+.neon-menu-wrapper .nm-circle-inner h2 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.neon-menu-wrapper .nm-circle-inner .nm-icon-main {
+  font-size: 1.8rem;
+}
+
+/* --- 2. Cápsulas de Texto (Efecto Glasmorfismo) --- */
+.neon-menu-wrapper .nm-capsule {
+  flex-grow: 1;
+  max-width: 340px;
+  padding: 16px 22px;
+  background: rgba(20, 21, 23, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 40px;
-  background: linear-gradient(145deg, transparent, rgba(255,255,255,0.05));
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+  position: relative;
+  transition: background 0.3s ease;
 }
 
-.pill::after {
-  content: "";
+.neon-menu-wrapper .nm-capsule-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.neon-menu-wrapper .nm-capsule h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.neon-menu-wrapper .nm-capsule p {
+  font-size: 0.72rem;
+  color: #9aa0a6;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.neon-menu-wrapper .nm-capsule .nm-icon {
+  font-size: 1.7rem;
+  opacity: 0.75;
+}
+
+/* --- Triángulos Indicadores (Flechas) --- */
+.neon-menu-wrapper .nm-capsule::after {
+  content: '';
   position: absolute;
-  width: 26px;
-  height: 26px;
-  background: inherit;
-  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 8px;
+  border-style: solid;
 }
 
-.row.left .pill::after {
-  right: -18px;
+/* Flecha a la derecha en impares */
+.neon-menu-wrapper .nm-item:nth-child(odd) .nm-capsule::after {
+  right: -16px;
+  border-color: transparent transparent transparent rgba(20, 21, 23, 0.65);
 }
 
-.row.right .pill::after {
-  left: -18px;
-  transform: rotate(180deg);
+/* Flecha a la izquierda en pares */
+.neon-menu-wrapper .nm-item:nth-child(even) .nm-capsule::after {
+  left: -16px;
+  border-color: transparent rgba(20, 21, 23, 0.65) transparent transparent;
 }
 
-.pill-content h4 {
-  color: white;
-  font-size: 14px;
+
+/* --- 3. Inyección Temática de Colores Neón --- */
+
+/* NARANJA */
+.neon-menu-wrapper .item-orange .nm-circle-inner {
+  border-color: var(--nm-clr-orange);
+  box-shadow: inset 0 0 10px rgba(255, 159, 67, 0.35), 0 0 12px rgba(255, 159, 67, 0.25);
+}
+.neon-menu-wrapper .item-orange .nm-circle-inner, .neon-menu-wrapper .item-orange .nm-capsule h3, .neon-menu-wrapper .item-orange .nm-capsule .nm-icon {
+  color: var(--nm-clr-orange);
 }
 
-.pill-content p {
-  color: #aaa;
-  font-size: 11px;
+/* VERDE */
+.neon-menu-wrapper .item-green .nm-circle-inner {
+  border-color: var(--nm-clr-green);
+  box-shadow: inset 0 0 10px rgba(46, 213, 115, 0.35), 0 0 12px rgba(46, 213, 115, 0.25);
+}
+.neon-menu-wrapper .item-green .nm-circle-inner, .neon-menu-wrapper .item-green .nm-capsule h3, .neon-menu-wrapper .item-green .nm-capsule .nm-icon {
+  color: var(--nm-clr-green);
 }
 
-.pill-icon svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
-  opacity: 0.7;
+/* ROSA */
+.neon-menu-wrapper .item-pink .nm-circle-inner {
+  border-color: var(--nm-clr-pink);
+  box-shadow: inset 0 0 10px rgba(255, 71, 87, 0.35), 0 0 12px rgba(255, 71, 87, 0.25);
+}
+.neon-menu-wrapper .item-pink .nm-circle-inner, .neon-menu-wrapper .item-pink .nm-capsule h3, .neon-menu-wrapper .item-pink .nm-capsule .nm-icon {
+  color: var(--nm-clr-pink);
 }
 
-/* ================= */
-/* 🎨 COLORS */
-/* ================= */
-
-.orange { color: var(--orange); }
-.green { color: var(--green); }
-.pink { color: var(--pink); }
-.blue { color: var(--blue); }
-
-/* ================= */
-/* ✨ ANIMATIONS */
-/* ================= */
-
-@keyframes glow {
-  from { opacity: 0.4; }
-  to { opacity: 0.8; }
+/* CELESTE */
+.neon-menu-wrapper .item-blue .nm-circle-inner {
+  border-color: var(--nm-clr-blue);
+  box-shadow: inset 0 0 10px rgba(0, 210, 211, 0.35), 0 0 12px rgba(0, 210, 211, 0.25);
+}
+.neon-menu-wrapper .item-blue .nm-circle-inner, .neon-menu-wrapper .item-blue .nm-capsule h3, .neon-menu-wrapper .item-blue .nm-capsule .nm-icon {
+  color: var(--nm-clr-blue);
 }
 
-@keyframes pulse {
-  0%,100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+/* VIOLETA */
+.neon-menu-wrapper .item-purple .nm-circle-inner {
+  border-color: var(--nm-clr-purple);
+  box-shadow: inset 0 0 10px rgba(165, 94, 234, 0.35), 0 0 12px rgba(165, 94, 234, 0.25);
+}
+.neon-menu-wrapper .item-purple .nm-circle-inner, .neon-menu-wrapper .item-purple .nm-capsule h3, .neon-menu-wrapper .item-purple .nm-capsule .nm-icon {
+  color: var(--nm-clr-purple);
 }
 
-.row:hover .circle {
-  transform: translateY(-6px);
+
+/* --- Hover Micro-interacciones --- */
+.neon-menu-wrapper .nm-item:hover .nm-circle-inner {
+  transform: scale(1.04);
 }
-
-.row:hover .pill {
-  transform: translateY(-3px);
-}
-
-/* ================= */
-/* 📱 RESPONSIVE */
-/* ================= */
-
-@media (max-width: 768px) {
-  .row, .row.right {
-    flex-direction: column;
-  }
-
-  .pill::after {
-    display: none;
-  }
+.neon-menu-wrapper .nm-item:hover .nm-capsule {
+  background: rgba(28, 30, 33, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
 }
