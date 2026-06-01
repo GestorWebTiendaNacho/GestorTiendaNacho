@@ -4,6 +4,17 @@
     --neon-blue: #00f2ff;
     --bg-dark: #020617;
     --card-dark: rgba(15, 23, 42, 0.8);
+
+
+        --bg1: #1b1e24;
+        --bg2: #232730;
+        --card1: #2b2f38;
+        --card2: #1c1f26;
+
+        --orange: #ff9800;
+        --green: #00e676;
+        --pink: #ff4081;
+        --blue: #00b0ff;
 }
 
     * { box-sizing: border-box; 
@@ -1336,14 +1347,26 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 
 
-/* CONTENEDOR */
+/* CONTENEDOR 
+background: radial-gradient(circle at top left, var(--bg2), var(--bg1));
+  font-family: "Segoe UI", sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;*/
+
 .wrapper {
   display: flex;
   flex-direction: column;
   gap: 80px;
+  background: radial-gradient(circle at top left, var(--bg2), var(--bg1));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+
 }
 
-/* FILAS */
 .row {
   display: flex;
   align-items: center;
@@ -1354,95 +1377,73 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   flex-direction: row-reverse;
 }
 
-/* ===================== */
-/* 🔵 CIRCLE PRO */
-/* ===================== */
+/* ================= */
+/* 🔵 CIRCLE */
+/* ================= */
 
 .circle {
   width: 210px;
   height: 210px;
   border-radius: 50%;
   position: relative;
-  background: linear-gradient(145deg, #2b2f38, #1c1f26);
+  background: linear-gradient(145deg, var(--card1), var(--card2));
 
   box-shadow:
     20px 20px 40px #111317,
     -10px -10px 30px #2e3440;
 }
 
-/* aro */
 .circle::before {
   content: "";
   position: absolute;
   inset: 28px;
   border-radius: 50%;
-  border: 3px solid;
-  animation: pulse 2.5s infinite ease-in-out;
+  border: 3px solid currentColor;
+  animation: pulse 2.5s infinite;
 }
 
-/* glow */
 .circle::after {
   content: "";
   position: absolute;
   inset: 20px;
   border-radius: 50%;
-  filter: blur(14px);
-  opacity: 0.7;
+  background: currentColor;
+  filter: blur(15px);
+  opacity: 0.6;
   animation: glow 3s infinite alternate;
 }
 
-/* contenido */
 .inner {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  color: #fff;
+  justify-content: center;
+  color: white;
 }
 
-.inner h3 {
-  margin-top: 6px;
-  font-size: 18px;
+.inner svg {
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
 }
 
-.inner p {
-  font-size: 11px;
-  opacity: 0.6;
-}
-
-/* ===================== */
-/* 🎨 COLORES DINÁMICOS */
-/* ===================== */
-
-.orange .circle::before { border-color: #ff9800; }
-.orange .circle::after  { background: #ff9800; }
-
-.green .circle::before { border-color: #00e676; }
-.green .circle::after  { background: #00e676; }
-
-.pink .circle::before { border-color: #ff4081; }
-.pink .circle::after  { background: #ff4081; }
-
-.blue .circle::before { border-color: #00b0ff; }
-.blue .circle::after  { background: #00b0ff; }
-
-/* ===================== */
-/* 💊 PILL PERFECTA */
-/* ===================== */
+/* ================= */
+/* 💊 PILL */
+/* ================= */
 
 .pill {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  width: 300px;
+  width: 320px;
   padding: 16px 20px;
   border-radius: 40px;
 
-  background: linear-gradient(145deg, #2b2f38, #1c1f26);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: linear-gradient(145deg, var(--card1), var(--card2));
 
   box-shadow:
     15px 15px 30px #111317,
@@ -1451,7 +1452,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: 0.3s;
 }
 
-/* borde interno sutil */
 .pill::before {
   content: "";
   position: absolute;
@@ -1460,7 +1460,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: linear-gradient(145deg, transparent, rgba(255,255,255,0.05));
 }
 
-/* punta REAL (mejor que rombo) */
 .pill::after {
   content: "";
   position: absolute;
@@ -1470,7 +1469,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   clip-path: polygon(0 50%, 100% 0, 100% 100%);
 }
 
-/* posición punta */
 .row.left .pill::after {
   right: -18px;
 }
@@ -1480,26 +1478,35 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transform: rotate(180deg);
 }
 
-/* contenido */
 .pill-content h4 {
-  color: #fff;
+  color: white;
   font-size: 14px;
 }
 
 .pill-content p {
-  font-size: 11px;
   color: #aaa;
+  font-size: 11px;
 }
 
-/* icono */
-.pill-icon {
-  font-size: 18px;
+.pill-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
   opacity: 0.7;
 }
 
-/* ===================== */
-/* ✨ ANIMACIONES */
-/* ===================== */
+/* ================= */
+/* 🎨 COLORS */
+/* ================= */
+
+.orange { color: var(--orange); }
+.green { color: var(--green); }
+.pink { color: var(--pink); }
+.blue { color: var(--blue); }
+
+/* ================= */
+/* ✨ ANIMATIONS */
+/* ================= */
 
 @keyframes glow {
   from { opacity: 0.4; }
@@ -1511,19 +1518,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   50% { transform: scale(1.05); }
 }
 
-/* hover pro */
 .row:hover .circle {
-  transform: translateY(-5px);
-  transition: 0.3s;
+  transform: translateY(-6px);
 }
 
 .row:hover .pill {
   transform: translateY(-3px);
 }
 
-/* ===================== */
+/* ================= */
 /* 📱 RESPONSIVE */
-/* ===================== */
+/* ================= */
 
 @media (max-width: 768px) {
   .row, .row.right {
