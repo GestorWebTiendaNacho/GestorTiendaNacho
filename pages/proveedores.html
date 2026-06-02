@@ -94,91 +94,95 @@
 
         </div>-->
     
-<div class="neon-menu-wrapper">
-  <nav class="nm-container">
-    
-    <div class="nm-item item-orange">
-      <div class="nm-capsule">
-        <div class="nm-capsule-text">
-          <h3>DATA 01</h3>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod.</p>
-        </div>
-        <span class="material-symbols-outlined nm-icon">campaign</span>
-      </div>
-      <div class="nm-circle-outer">
-        <div class="nm-circle-inner">
-          <span class="material-symbols-outlined nm-icon-main">campaign</span>
-          <h2>DATA 01</h2>
-        </div>
-      </div>
-    </div>
+        <div class="neon-menu-wrapper">
+        <nav class="nm-container">
+            
+            <!-- Elemento 01 - Naranja -->
+            <div class="nm-item item-orange">
+            <div class="nm-capsule">
+                <div class="nm-capsule-text">
+                <h3>SEMANAL</h3>
+                <p>Informe semanal de proveedores.</p>
+                </div>
+                <span class="fi fi-rs-calendar"></span>
+            </div>
+            <div class="nm-circle-outer">
+                <div class="nm-circle-inner">
+                <span class="fi fi-rs-calendar" onclick="abrirModalSemanal()"></span>
+                <h2>SEMANAL</h2>
+                </div>
+            </div>
+            </div>
 
-    <div class="nm-item item-green">
-      <div class="nm-capsule">
-        <div class="nm-capsule-text">
-          <h3>DATA 02</h3>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod.</p>
-        </div>
-        <span class="material-symbols-outlined nm-icon">person</span>
-      </div>
-      <div class="nm-circle-outer">
-        <div class="nm-circle-inner">
-          <span class="material-symbols-outlined nm-icon-main">person</span>
-          <h2>DATA 02</h2>
-        </div>
-      </div>
-    </div>
+            <!-- Elemento 02 - Verde -->
+            <div class="nm-item item-green">
+            <div class="nm-capsule">
+                <div class="nm-capsule-text">
+                <h3>PEDIDOS</h3>
+                <p>Gestión de pedidos de proveedores.</p>
+                </div>
+                <span class="fi fi-rr-quick-box"></span>
+            </div>
+            <div class="nm-circle-outer">
+                <div class="nm-circle-inner">
+                <span class="fi fi-rr-quick-box" onclick="abrirModal('PEDIDOS')"></span>
+                <h2>PEDIDOS</h2>
+                </div>
+            </div>
+            </div>
 
-    <div class="nm-item item-pink">
-      <div class="nm-capsule">
-        <div class="nm-capsule-text">
-          <h3>DATA 03</h3>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod.</p>
-        </div>
-        <span class="material-symbols-outlined nm-icon">trending_up</span>
-      </div>
-      <div class="nm-circle-outer">
-        <div class="nm-circle-inner">
-          <span class="material-symbols-outlined nm-icon-main">trending_up</span>
-          <h2>DATA 03</h2>
-        </div>
-      </div>
-    </div>
+            <!-- Elemento 03 - Rosa -->
+            <div class="nm-item item-pink">
+            <div class="nm-capsule">
+                <div class="nm-capsule-text">
+                <h3>RECEPCIÓN</h3>
+                <p>Gestión de recepción de mercancía de proveedores.</p>
+                </div>
+                <span class="fi fi-rs-package"></span>
+            </div>
+            <div class="nm-circle-outer">
+                <div class="nm-circle-inner">
+                <span class="fi fi-rs-package" onclick="verEstadoPedidos()"></span>
+                <h2>RECEPCIÓN</h2>
+                </div>
+            </div>
+            </div>
 
-    <div class="nm-item item-blue">
-      <div class="nm-capsule">
-        <div class="nm-capsule-text">
-          <h3>DATA 04</h3>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod.</p>
-        </div>
-        <span class="material-symbols-outlined nm-icon">handshake</span>
-      </div>
-      <div class="nm-circle-outer">
-        <div class="nm-circle-inner">
-          <span class="material-symbols-outlined nm-icon-main">handshake</span>
-          <h2>DATA 04</h2>
-        </div>
-      </div>
-    </div>
+            <!-- Elemento 04 - Celeste -->
+            <div class="nm-item item-blue">
+            <div class="nm-capsule">
+                <div class="nm-capsule-text">
+                <h3>PROVEEDORES</h3>
+                <p>Información y gestión de proveedores.</p>
+                </div>
+                <span class="fi fi-ts-holding-hand-delivery"></span>
+            </div>
+            <div class="nm-circle-outer">
+                <div class="nm-circle-inner">
+                <span class="fi fi-ts-holding-hand-delivery" onclick="abrirModal('PROVEEDORES')"></span>
+                <h2>PROVEEDORES</h2>
+                </div>
+            </div>
+            </div>
 
-    <div class="nm-item item-purple">
-      <div class="nm-capsule">
-        <div class="nm-capsule-text">
-          <h3>DATA 05</h3>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod.</p>
+            <!-- Elemento 05 - Violeta -->
+            <div class="nm-item item-purple">
+            <div class="nm-capsule">
+                <div class="nm-capsule-text">
+                <h3>HISTORIAL</h3>
+                <p>Control de historial de compras a proveedores.</p>
+                </div>
+                <span class="fi fi-rs-time-past"></span>
+            </div>
+            <div class="nm-circle-outer">
+                <div class="nm-circle-inner">
+                <span class="fi fi-rs-time-past" onclick="abrirModal('HISTORIAL')"></span>
+                <h2>HISTORIAL</h2>
+                </div>
+            </div>
+            </div>
+        </nav>
         </div>
-        <span class="material-symbols-outlined nm-icon">monitoring</span>
-      </div>
-      <div class="nm-circle-outer">
-        <div class="nm-circle-inner">
-          <span class="material-symbols-outlined nm-icon-main">monitoring</span>
-          <h2>DATA 05</h2>
-        </div>
-      </div>
-    </div>
-
-  </nav>
-</div>
             
             
             
