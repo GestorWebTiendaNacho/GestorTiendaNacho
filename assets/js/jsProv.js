@@ -3,7 +3,7 @@ console.log("🚀 N.I.C.O. Terminal: Iniciando carga de scripts...");
 
 function cerrarModalYRegresar() {
     // 1. Localizamos los elementos del DOM
-    const modal = document.getElementById('modal-maestro');
+    const modal = document.getElementById('modal-pedidos');
     const contenido = document.getElementById('modal-contenido');
 
     // 2. Ocultamos el modal con las clases que ya manejas
@@ -103,9 +103,9 @@ async function cargarTablaGenerica(nombreHoja) {
 
 
 
-async function abrirModal(tipo) {
+async function abrirModal_Pedidos(tipo) {
     console.log("N.I.C.O. Dashboard - Iniciando modal:", tipo);
-    const modal = document.getElementById('modal-maestro');
+    const modal = document.getElementById('modal-pedidos');
     const contenido = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
     
@@ -205,7 +205,7 @@ function renderTableNico(selector, data, nombreHojaReal) {
         return { 
             targets: i, 
             className: "p-3 dt-nowrap font-mono text-[10px]",
-            defaultContent: "---" // CRÍTICO: Evita el error "Unknown Parameter"
+            defaultContent: "---"
         };
     });
 
@@ -249,8 +249,8 @@ function escapingForOption(str) {
 
 
 
-function cerrarModal() {
-    const modal = document.getElementById('modal-maestro');
+function cerrarModal_Pedidos() {
+    const modal = document.getElementById('modal-pedidos');
     const contenido = document.getElementById('modal-contenido');
     if (modal) {
 	modal.classList.add('hidden');
@@ -273,7 +273,6 @@ function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov
     let encabezados = [];
     
     try {
-        // AJUSTE: Ahora los datos pueden venir como objeto (desde DataTables) o como string
         datos = (typeof datosRaw === 'string') ? JSON.parse(datosRaw) : (datosRaw || []);
         encabezados = (typeof encabezadosRaw === 'string') ? JSON.parse(encabezadosRaw) : (encabezadosRaw || []);
     } catch (e) {
@@ -281,7 +280,6 @@ function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov
         return;
     }
 
-    // AJUSTE: Título dinámico más limpio
     const tituloDisplay = prov || nombreHoja;
     
     // Construcción del formulario
@@ -294,7 +292,7 @@ function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="inputs-dinamicos">`;
 
     encabezados.forEach((nombreColumna, i) => {
-        const valor = datos[i] !== undefined ? datos[i] : ""; // Evita que aparezca 'undefined' en los inputs
+        const valor = datos[i] !== undefined ? datos[i] : "";
         const nombreLower = nombreColumna.toLowerCase().trim();
         
         // Bloqueo de campos críticos (ID, Códigos, etc.)
@@ -796,7 +794,7 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
             // Limpieza y cierre
             carritoPedidos = [];
             if (typeof actualizarContadorVisual === "function") actualizarContadorVisual();
-            document.getElementById('modal-maestro').classList.add('hidden');
+            document.getElementById('page-principal-depos').classList.add('hidden'); // ACÁ CAMBIAR TAMBIÉN MODAL//
             
         } else {
             throw new Error(res.message || "Error desconocido en el servidor");
@@ -1030,7 +1028,7 @@ function setCalidad(valor) {
 }
 
 async function verEstadoPedidos() {
-    const modal = document.getElementById('modal-maestro');
+    const modal = document.getElementById('page-principal-depos'); //--- ACÁ CAMBIAR EL MODAL AL QUE APUNTA---//
     const contenedor = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
 
@@ -2075,14 +2073,14 @@ window.changeActive = function() {
 
 
 // ----------------------------- NICO CONTROLLER -----------------//
-function abrirModalPedidos() {
+function abrirModalPedidos_Autoasist() {
     const modal = document.getElementById('modal-pedidos-autoasistidos');
     console.log("🚀 Módulo de Pedidos cargado correctamente.");
 
     if (modal) modal.style.display = 'flex';
 }
 
-function cerrarModalPedidos() {
+function cerrarModalPedidos_Autoasist() {
     const modal = document.getElementById('modal-pedidos-autoasistidos');
     
     if (modal) {
@@ -2641,6 +2639,94 @@ document.addEventListener("DOMContentLoaded", () => {
             runAction();
           }
         }, 400);
+      });
+    }
+  });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const circles = document.querySelectorAll(".neon-menu-wrapper .nm-circle-outer");
+
+  circles.forEach(circle => {
+    // Comprobamos si este nodo en particular posee sub-opciones adentro
+    const miniCircles = circle.querySelectorAll(".nm-mini-circle");
+
+    if (miniCircles.length > 0) {
+
+      circle.style.cursor = "pointer";
+
+      circle.addEventListener("click", (e) => {
+        // Si el click fue en un mini-círculo, frenamos para que no interfiera con el padre
+        if (e.target.closest(".nm-mini-circle")) return;
+        
+        e.preventDefault();
+        // Conmutamos la clase expanded para abrir/cerrar
+        circle.classList.toggle("expanded");
+      });
+
+      // Configuración de eventos para cada mini círculo
+      miniCircles.forEach(mini => {
+        mini.addEventListener("click", (e) => {
+          e.stopPropagation(); // Evita que el contenedor padre procese el click
+          
+          // Lanzamos explosión neón miniatura
+          mini.classList.remove("explode");
+          void mini.offsetWidth;
+          mini.classList.add("explode");
+
+          const targetModal = mini.getAttribute("data-modal");
+
+          // Delay controlado para disfrutar del destello visual
+          setTimeout(() => {
+            circle.classList.remove("expanded"); // Cerramos el sub-menú analgésicamente
+            
+            // Disparamos los llamados de tus modales específicos
+            if (targetModal === "modal-pedidos-autoasistidos") {
+              if (typeof abrirModalPedidos === "function") {
+                abrirModalPedidos(); // Tu función verificada del panel inteligente
+              } else {
+                const m = document.getElementById('modal-pedidos-autoasistidos');
+                if (m) m.style.display = 'flex';
+              }
+            } else if (targetModal === "modal-pedidos") {
+              // Llamado al modal clásico/manual
+              const modalManual = document.getElementById('modal-pedidos');
+              if (modalManual) modalManual.style.display = 'flex';
+            }
+          }, 400);
+        });
+      });
+
+    } else {
+
+      const targetSpan = circle.querySelector(".nm-circle-inner span[onclick]");
+      if (targetSpan) {
+        const originalAction = targetSpan.getAttribute("onclick");
+        targetSpan.removeAttribute("onclick");
+        circle.style.cursor = "pointer";
+
+        circle.addEventListener("click", (e) => {
+          e.preventDefault();
+          
+          circle.classList.remove("explode");
+          void circle.offsetWidth;
+          circle.classList.add("explode");
+
+          setTimeout(() => {
+            if (originalAction) {
+              const runAction = new Function(originalAction);
+              runAction();
+            }
+          }, 400);
+        });
+      }
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".nm-circle-outer")) {
+      document.querySelectorAll(".nm-circle-outer.expanded").forEach(openCircle => {
+        openCircle.classList.remove("expanded");
       });
     }
   });

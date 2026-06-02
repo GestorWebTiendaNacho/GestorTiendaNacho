@@ -1645,3 +1645,103 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     filter: blur(8px);
   }
 }
+
+.neon-menu-wrapper .nm-mini-circle {
+  position: absolute;
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  background: rgba(12, 14, 18, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid var(--item-clr);
+  box-shadow: 0 0 15px var(--item-clr-glow), inset 0 0 10px var(--item-clr-glow-soft);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0) translate(0, 0);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease, background 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+.neon-menu-wrapper .nm-mini-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--item-clr);
+  gap: 2px;
+  transition: transform 0.3s ease;
+}
+
+.neon-menu-wrapper .nm-mini-inner span {
+  font-size: 1.2rem;
+}
+
+.neon-menu-wrapper .nm-mini-inner p {
+  font-size: 0.55rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* --- Despliegue en filas PARES (Hacia la izquierda) --- */
+.neon-menu-wrapper .nm-item:nth-child(even) .nm-circle-outer.expanded .mini-manual {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translate(-145px, -55px);
+}
+
+.neon-menu-wrapper .nm-item:nth-child(even) .nm-circle-outer.expanded .mini-auto {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translate(-145px, 55px);
+}
+
+/* --- Despliegue de respaldo por si usás la clase en filas IMPARES (Hacia la derecha) --- */
+.neon-menu-wrapper .nm-item:nth-child(odd) .nm-circle-outer.expanded .mini-manual {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translate(145px, -55px);
+}
+
+.neon-menu-wrapper .nm-item:nth-child(odd) .nm-circle-outer.expanded .mini-auto {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translate(145px, 55px);
+}
+
+/* --- Hovers e Iluminación Individual --- */
+.neon-menu-wrapper .nm-mini-circle:hover {
+  box-shadow: 0 0 25px var(--item-clr), inset 0 0 15px var(--item-clr-glow-high);
+  background: rgba(22, 25, 31, 0.95);
+}
+
+.neon-menu-wrapper .nm-mini-circle:hover .nm-mini-inner {
+  transform: scale(1.1); /* Escala interna limpia sin romper el translate del padre */
+}
+
+/* --- Onda expansiva miniatura --- */
+.neon-menu-wrapper .nm-mini-circle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--item-clr);
+  box-shadow: 0 0 20px var(--item-clr);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.neon-menu-wrapper .nm-mini-circle.explode::after {
+  animation: nm-shockwave-mini 0.45s ease-out forwards;
+}
+
+@keyframes nm-shockwave-mini {
+  0% { transform: scale(1); opacity: 1; filter: blur(0px); }
+  100% { transform: scale(1.4); opacity: 0; filter: blur(4px); }
+}
