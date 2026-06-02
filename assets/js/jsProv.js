@@ -2579,37 +2579,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Seleccionamos todos los círculos exteriores del menú
   const circles = document.querySelectorAll(".neon-menu-wrapper .nm-circle-outer");
 
   circles.forEach(circle => {
-    // Buscamos el span interno que tiene la función de redirección/modal original
     const targetSpan = circle.querySelector(".nm-circle-inner span[onclick]");
     
     if (targetSpan) {
-      // Guardamos la acción original (ej: "abrirModalSemanal()" o "abrirModal('PEDIDOS')")
       const originalAction = targetSpan.getAttribute("onclick");
       
-      // Removemos el atributo del span para evitar que se ejecute de inmediato al tocar el icono
       targetSpan.removeAttribute("onclick");
       
-      // Le damos estilo de cursor pointer a todo el círculo exterior
       circle.style.cursor = "pointer";
       
-      // Manejador del click para todo el conjunto del círculo
       circle.addEventListener("click", (e) => {
         e.preventDefault();
         
-        // 🔥 TRUCO DE REFLUJO: Resetea la animación por si el usuario hace clicks seguidos
         circle.classList.remove("explode");
         void circle.offsetWidth; 
         circle.classList.add("explode");
         
-        // ⏱️ Delay calibrado: Espera 400ms (de los 0.55s de la animación) 
-        // para que la onda expansiva se luzca antes de abrir el modal o cambiar de sección
+
         setTimeout(() => {
           if (originalAction) {
-            // Evaluamos y ejecutamos la función guardada en el entorno global
             const runAction = new Function(originalAction);
             runAction();
           }
