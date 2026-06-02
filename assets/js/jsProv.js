@@ -2612,7 +2612,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-document.addEventListener("DOMContentLoaded", () => {
+/*document.addEventListener("DOMContentLoaded", () => {
   const circles = document.querySelectorAll(".neon-menu-wrapper .nm-circle-outer");
 
   circles.forEach(circle => {
@@ -2642,7 +2642,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   });
-});
+});*/
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const circles = document.querySelectorAll(".neon-menu-wrapper .nm-circle-outer");
@@ -2667,29 +2668,26 @@ document.addEventListener("DOMContentLoaded", () => {
       // Configuración de eventos para cada mini círculo
       miniCircles.forEach(mini => {
         mini.addEventListener("click", (e) => {
-          e.stopPropagation(); // Evita que el contenedor padre procese el click
+          e.stopPropagation(); 
           
-          // Lanzamos explosión neón miniatura
           mini.classList.remove("explode");
           void mini.offsetWidth;
           mini.classList.add("explode");
 
           const targetModal = mini.getAttribute("data-modal");
 
-          // Delay controlado para disfrutar del destello visual
           setTimeout(() => {
-            circle.classList.remove("expanded"); // Cerramos el sub-menú analgésicamente
+            circle.classList.remove("expanded"); 
             
             // Disparamos los llamados de tus modales específicos
             if (targetModal === "modal-pedidos-autoasistidos") {
               if (typeof abrirModalPedidos === "function") {
-                abrirModalPedidos(); // Tu función verificada del panel inteligente
+                abrirModalPedidos(); 
               } else {
                 const m = document.getElementById('modal-pedidos-autoasistidos');
                 if (m) m.style.display = 'flex';
               }
             } else if (targetModal === "modal-pedidos") {
-              // Llamado al modal clásico/manual
               const modalManual = document.getElementById('modal-pedidos');
               if (modalManual) modalManual.style.display = 'flex';
             }
