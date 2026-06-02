@@ -2074,7 +2074,44 @@ window.changeActive = function() {
 };
 
 
-// ----------------------------- NICO CONTROLLER -----------------
+// ----------------------------- NICO CONTROLLER -----------------//
+function abrirModalPedidos() {
+    const modal = document.getElementById('modal-pedidos-autoasistidos');
+    console.log("🚀 Módulo de Pedidos cargado correctamente.");
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function cerrarModalPedidos() {
+    const modal = document.getElementById('modal-pedidos-autoasistidos');
+    
+    if (modal) {
+        modal.style.display = 'none';
+        
+        // 1. Limpiamos el historial de mensajes del chat
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) chatMessages.innerHTML = '';
+        
+        // 2. Limpiamos la tabla y le devolvemos su estado de espera original
+        const tablaCuerpo = document.getElementById('tabla-informes-cuerpo');
+        if (tablaCuerpo) {
+            tablaCuerpo.innerHTML = `
+                <tr id="fila-espera-nico" class="border-b border-slate-900/50 hover:bg-slate-900/20 transition-colors">
+                    <td class="p-3 font-mono text-slate-500 text-center py-10" colspan="5">
+                        <i class="fi fi-rr-chart-connected mr-2"></i> Aguardando procesamiento de órdenes o dictados de voz...
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // 3. Opcional: Limpiar el input de texto por si quedó algo escrito
+        const userInput = document.getElementById('user-input');
+        if (userInput) userInput.value = '';
+    }
+}
+
+// ---------- CONTROLADOR DE NICO Y ANIMACIONES ---------------- //
+
 if (!window.NicoController) {
     window.NicoController = (function() {
         const ESTADOS = {
@@ -2540,7 +2577,6 @@ function seleccionarSkusPorVoz(skusASeleccionar) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Cambia '.tabla-nico' por la clase o ID real de tu etiqueta <table>
   const tabla = document.querySelector(".tabla-nico"); 
   if (!tabla) return;
 

@@ -1,100 +1,14 @@
 <link rel="stylesheet" href="assets/css/cssProv.css">
 <link rel="stylesheet" href="assets/css/cssMenuProv.css">
-
-
-
-    <!-- SECCIONES NICO -->
-    <div class="contenedor-maestro-nico bg-slate-950">
-
-        <header class="head-nico w-full">
-            <div class="container-deposito w-full">
-                <h1 class="text-xl font-bold text-slate-100 tracking-wide">GESTOR CENTRAL DE DEPÓSITO</h1>
-                <p class="text-[9px] text-slate-500 font-sans uppercase tracking-[2px] mt-1">Terminal Inteligente de Compras y Operaciones</p>
-            </div>
-        </header>
-
-        <!--<div class="cuerpo-aplicacion-nico">
-            
-            <section class="columna-menu-izquierdo shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col items-start p-0 py-4 relative overflow-visible">
-                <div class="action-wrap">
-                    <button class="action" type="button" onclick="abrirModalSemanal()">
-                        <i class="fi fi-rs-daily-calendar"></i>
-                        <span class="action-content" data-content="SEMANAL"></span>
-                    </button>
-                    <button class="action" type="button" onclick="abrirModal('PEDIDOS')">
-                        <i class="fi fi-rr-quick-box"></i>
-                        <span class="action-content" data-content="PEDIDOS"></span>
-                    </button>
-                    <button class="action" type="button" onclick="verEstadoPedidos()">
-                        <i class="fi fi-rs-package"></i>    
-                        <span class="action-content" data-content="RECEPCIÓN"></span>
-                    </button>
-                    <button class="action" type="button" onclick="abrirModal('PROVEEDORES')">
-                        <i class="fi fi-ts-holding-hand-delivery"></i>
-                        <span class="action-content" data-content="PROVEEDORES"></span>
-                    </button>
-                    <button class="action" type="button" onclick="abrirModal('HISTORIAL')">
-                        <i class="fi fi-rs-time-past"></i>
-                        <span class="action-content" data-content="HISTORIAL"></span>
-                    </button>
+    <!-- INICIO DEPOSITO NICO -->
+ 
+    <div class="neon-menu-wrapper">
+            <header class="head-nico w-full">
+                <div class="container-deposito w-full">
+                    <h1 class="text-xl font-bold text-slate-100 tracking-wide">GESTOR CENTRAL DE DEPÓSITO</h1>
+                    <p class="text-[9px] text-slate-500 font-sans uppercase tracking-[2px] mt-1">Terminal Inteligente de Compras y Operaciones</p>
                 </div>
-            </section>
-
-            <main class="panel-central-datos flex-1 overflow-y-auto p-6 bg-slate-900/20 flex flex-col gap-4">
-                <div id="panel-informes-nico" class="p-4 border border-slate-800 flex items-center justify-between bg-slate-900/50 rounded-lg shrink-0">
-                    <span class="font-bold text-slate-100 text-[10px] tracking-widest uppercase flex items-center gap-2">
-                        <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div> PANEL DE INFORMES NICO
-                    </span>
-                </div> 
-
-                <div class="flex-1 border border-slate-800 bg-slate-950/40 rounded-lg p-4 overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-slate-300 text-sm" id="tabla-nico">
-                        <thead>
-                            <tr class="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs uppercase tracking-wider">
-                                <th class="p-3 font-semibold text-center w-12">SEL.</th>
-                                <th class="p-3 font-semibold">SKU</th>
-                                <th class="p-3 font-semibold">Detalle del Producto</th>
-                                <th class="p-3 font-semibold text-right">Stock / Mínimo</th>
-                                <th class="p-3 font-semibold">Proveedor / Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-informes-cuerpo">
-                            <tr id="fila-espera-nico" class="border-b border-slate-900/50 hover:bg-slate-900/20 transition-colors">
-                                <td class="p-3 font-mono text-slate-500 text-center py-10" colspan="5">
-                                    <i class="fi fi-rr-chart-connected mr-2"></i> Aguardando procesamiento de órdenes o dictados de voz...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </main>
-
-            <aside class="columna-chat-nico shrink-0 bg-slate-900 border-l border-slate-800 z-30">
-                
-                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900">
-                </div>
-                
-                <div class="contenedor-nico-flotante shrink-0 p-2 bg-slate-950/95 backdrop-blur-sm flex justify-center items-center">
-                    <canvas id="canvas-nico" class="h-36 max-w-full bg-slate-900/30 rounded shadow-2xl transition-all"></canvas>
-                </div>
-
-                <div class="p-4 bg-slate-950 border-t border-slate-800 shrink-0 z-40">
-                    <div class="flex bg-slate-900 border border-slate-700 rounded-md p-1 focus-within:border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                        <button id="btn-nico-voz" 
-                                class="px-3 text-slate-500 hover:text-red-400 transition-colors"
-                                title="Mantén para hablar">
-                            <i class="fas fa-microphone"></i>
-                        </button>
-                        <input type="text" id="user-input" placeholder="Comando de systema..." class="flex-1 bg-transparent py-2 px-3 text-xs text-cyan-100 focus:outline-none">
-                        <button onclick="enviarPrompt()" class="px-3 text-cyan-600 hover:text-cyan-400"><i class="fas fa-terminal"></i></button>
-                    </div>
-                </div>
-
-            </aside>
-
-        </div>-->
-    
-        <div class="neon-menu-wrapper">
+            </header>
         <nav class="nm-container">
             
             <!-- Elemento 01 - Naranja -->
@@ -189,19 +103,8 @@
             </div>
             </div>
         </nav>
-        </div>
-            
-            
-            
-            
-            
-            
-            
-            
-            
-        </div>  <!---cierra DIV CONTAINER NICO -->
-
-
+    </div>
+  
 
 <!-- MODAL MAESTRO -->
 <div id="modal-maestro" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[9999] hidden items-center justify-center p-2 lg:p-6">
@@ -327,7 +230,7 @@
 </div>
 
 
-<!-- MODAL historial -->
+<!-- MODAL HISTORIAL -->
 <div id="modalDetalleHistorial" class="lex-modal-overlay">
   <div class="lex-modal-content">
     
@@ -394,6 +297,67 @@
         </div>
     </div>
 </div>
+
+<!-- MODAL PEDIDOS -->
+<div class="contenedor-maestro-nico bg-slate-950" id="modal-pedidos-autoasistidos">
+           <div class="cuerpo-aplicacion-nico">
+            
+            <main class="panel-central-datos flex-1 overflow-y-auto p-6 bg-slate-900/20 flex flex-col gap-4">
+                <div id="panel-informes-nico" class="p-4 border border-slate-800 flex items-center justify-between bg-slate-900/50 rounded-lg shrink-0">
+                    <span class="font-bold text-slate-100 text-[10px] tracking-widest uppercase flex items-center gap-2">
+                        <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div> PANEL DE INFORMES NICO
+                    </span>
+                </div> 
+
+                <div class="flex-1 border border-slate-800 bg-slate-950/40 rounded-lg p-4 overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-slate-300 text-sm" id="tabla-nico">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs uppercase tracking-wider">
+                                <th class="p-3 font-semibold text-center w-12">SEL.</th>
+                                <th class="p-3 font-semibold">SKU</th>
+                                <th class="p-3 font-semibold">Detalle del Producto</th>
+                                <th class="p-3 font-semibold text-right">Stock / Mínimo</th>
+                                <th class="p-3 font-semibold">Proveedor / Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-informes-cuerpo">
+                            <tr id="fila-espera-nico" class="border-b border-slate-900/50 hover:bg-slate-900/20 transition-colors">
+                                <td class="p-3 font-mono text-slate-500 text-center py-10" colspan="5">
+                                    <i class="fi fi-rr-chart-connected mr-2"></i> Aguardando procesamiento de órdenes o dictados de voz...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+
+            <aside class="columna-chat-nico shrink-0 bg-slate-900 border-l border-slate-800 z-30">
+                
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900">
+                </div>
+                
+                <div class="contenedor-nico-flotante shrink-0 p-2 bg-slate-950/95 backdrop-blur-sm flex justify-center items-center">
+                    <canvas id="canvas-nico" class="h-36 max-w-full bg-slate-900/30 rounded shadow-2xl transition-all"></canvas>
+                </div>
+
+                <div class="p-4 bg-slate-950 border-t border-slate-800 shrink-0 z-40">
+                    <div class="flex bg-slate-900 border border-slate-700 rounded-md p-1 focus-within:border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                        <button id="btn-nico-voz" 
+                                class="px-3 text-slate-500 hover:text-red-400 transition-colors"
+                                title="Mantén para hablar">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <input type="text" id="user-input" placeholder="Comando de systema..." class="flex-1 bg-transparent py-2 px-3 text-xs text-cyan-100 focus:outline-none">
+                        <button onclick="enviarPrompt()" class="px-3 text-cyan-600 hover:text-cyan-400"><i class="fas fa-terminal"></i></button>
+                    </div>
+                </div>
+
+            </aside>
+
+        </div>
+
+</div>
+
 
 <script src="https://unpkg.com/@rive-app/canvas@latest"></script>
 <script src="assets/js/main.js"></script>
