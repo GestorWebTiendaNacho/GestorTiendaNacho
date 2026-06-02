@@ -1413,23 +1413,35 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   flex-direction: column;
   gap: 40px; 
   width: 100%;
-  max-width: 760px;
+  max-width: 760px; /* Ancho máximo de la cuadrícula central */
 }
 
+/* 2. CONFIGURACIÓN DEL EFECTO ZIG-ZAG INTERNO */
 .neon-menu-wrapper .nm-item {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 40px;
   width: 100%;
+  max-width: 550px; /* Tamaño total justo (Cápsula 290px + Gap 40px + Círculo 220px) */
   position: relative;
   perspective: 1200px;
 }
 
+/* Impares alineados a la izquierda */
+.neon-menu-wrapper .nm-item:nth-child(odd) {
+  margin-right: auto;
+  margin-left: 0;
+  flex-direction: row;
+}
+
+/* Pares alineados a la derecha */
 .neon-menu-wrapper .nm-item:nth-child(even) {
+  margin-left: auto;
+  margin-right: 0;
   flex-direction: row-reverse;
 }
 
+/* --- Círculos --- */
 .neon-menu-wrapper .nm-circle-outer {
   width: 220px;  
   height: 220px; 
@@ -1472,10 +1484,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin: 0;
 }
 
-.neon-menu-wrapper .nm-circle-inner .nm-icon-main {
+.neon-menu-wrapper .nm-circle-inner .fi {
   font-size: 2rem;
 }
 
+/* --- Píldoras --- */
 .neon-menu-wrapper .nm-capsule {
   flex-grow: 1;
   max-width: 290px; 
@@ -1494,7 +1507,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   z-index: 1;
 }
 
-/* Luz perimetral laser */
 .neon-menu-wrapper .nm-capsule::before {
   content: '';
   position: absolute;
@@ -1536,7 +1548,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   text-overflow: ellipsis; 
 }
 
-.neon-menu-wrapper .nm-capsule .nm-icon {
+.neon-menu-wrapper .nm-capsule .nm-icon-main {
   font-size: 1.6rem;
   color: var(--item-clr);
   opacity: 0.9;
@@ -1544,7 +1556,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   filter: drop-shadow(0 0 5px var(--item-clr));
 }
 
-/* Flechas Indicadoras */
+/* Flechas Indicadoras Dinámicas */
 .neon-menu-wrapper .nm-capsule::after {
   content: '';
   position: absolute;
@@ -1568,15 +1580,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   100% { --nm-angle: 360deg; }
 }
 
-
-
-
+/* --- Hovers de Despegue --- */
 .neon-menu-wrapper .nm-item:nth-child(odd) .nm-capsule:hover {
   background: rgba(30, 35, 42, 0.7);
   border-color: rgba(255, 255, 255, 0.25);
-  
   transform: translateX(-65px) scale(1.08); 
-  
   box-shadow: -35px 30px 60px rgba(0, 0, 0, 0.75),
               0 0 40px var(--item-clr-glow);
 }
@@ -1584,19 +1592,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .neon-menu-wrapper .nm-item:nth-child(even) .nm-capsule:hover {
   background: rgba(30, 35, 42, 0.7);
   border-color: rgba(255, 255, 255, 0.25);
-  
   transform: translateX(65px) scale(1.08); 
-  
   box-shadow: 35px 30px 60px rgba(0, 0, 0, 0.75),
               0 0 40px var(--item-clr-glow);
 }
 
 .neon-menu-wrapper .nm-capsule:hover::before {
-  animation-duration: 1.2s; /* Acelera la estela de luz */
+  animation-duration: 1.2s;
 }
-
-
-
 
 .neon-menu-wrapper .nm-item:nth-child(odd) .nm-circle-outer:hover {
   transform: translateX(30px);
@@ -1612,8 +1615,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
               0 0 35px var(--item-clr-glow);
 }
 
-
-
+/* --- Efecto Shockwave --- */
 .neon-menu-wrapper .nm-circle-outer::after {
   content: '';
   position: absolute;
@@ -1638,7 +1640,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     filter: blur(0px);
   }
   100% {
-    transform: scale(1.7); /* Escalado aumentado por el nuevo tamaño del círculo */
+    transform: scale(1.7); 
     opacity: 0;
     filter: blur(8px);
   }

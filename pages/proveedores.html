@@ -1,110 +1,102 @@
 <link rel="stylesheet" href="assets/css/cssProv.css">
 <link rel="stylesheet" href="assets/css/cssMenuProv.css">
     <!-- INICIO DEPOSITO NICO -->
- 
+
+<div class="contenedor-inicial-nico bg-slate-950 flex flex-col items-center w-full">
+    
+    <header class="head-nico w-full text-center py-8 border-b border-slate-900">
+        <div class="container-deposito w-full px-4">
+            <h1 class="text-xl font-bold text-slate-100 tracking-wide">GESTOR CENTRAL DE DEPÓSITO</h1>
+            <p class="text-[9px] text-slate-500 font-sans uppercase tracking-[2px] mt-1">Terminal Inteligente de Compras y Operaciones</p>
+        </div>
+    </header>
+
     <div class="neon-menu-wrapper">
-            <header class="head-nico w-full">
-                <div class="container-deposito w-full">
-                    <h1 class="text-xl font-bold text-slate-100 tracking-wide">GESTOR CENTRAL DE DEPÓSITO</h1>
-                    <p class="text-[9px] text-slate-500 font-sans uppercase tracking-[2px] mt-1">Terminal Inteligente de Compras y Operaciones</p>
-                </div>
-            </header>
         <nav class="nm-container">
             
-            <!-- Elemento 01 - Naranja -->
             <div class="nm-item item-orange">
-            <div class="nm-capsule">
-                <div class="nm-capsule-text">
-                <h3>SEMANAL</h3>
-                <p>Informe semanal de proveedores.</p>
+                <div class="nm-capsule">
+                    <div class="nm-capsule-text">
+                        <h3>SEMANAL</h3>
+                        <p>Informe semanal de proveedores.</p>
+                    </div>
+                    <span class="fi fi-rs-calendar nm-icon-main"></span>
                 </div>
-                <span class="fi fi-rs-calendar nm-icon-main"></span>
-            </div>
-            <div class="nm-circle-outer">
-                <div class="nm-circle-inner">
-                <span class="fi fi-rs-calendar" onclick="abrirModalSemanal()">
-                    <h2>SEMANAL</h2>
-                </span>
+                <div class="nm-circle-outer">
+                    <div class="nm-circle-inner">
+                        <span class="fi fi-rs-calendar" onclick="abrirModalSemanal()"></span>
+                        <h2>SEMANAL</h2>
+                    </div>
                 </div>
-            </div>
             </div>
 
-            <!-- Elemento 02 - Verde -->
             <div class="nm-item item-green">
-            <div class="nm-capsule">
-                <div class="nm-capsule-text">
-                <h3>PEDIDOS</h3>
-                <p>Gestión de pedidos de proveedores.</p>
+                <div class="nm-capsule">
+                    <div class="nm-capsule-text">
+                        <h3>PEDIDOS</h3>
+                        <p>Gestión de pedidos de proveedores.</p>
+                    </div>
+                    <span class="fi fi-rr-quick-box nm-icon-main"></span>
                 </div>
-                <span class="fi fi-rr-quick-box nm-icon-main"></span>
-            </div>
-            <div class="nm-circle-outer">
-                <div class="nm-circle-inner">
-                <span class="fi fi-rr-quick-box" onclick="abrirModal('PEDIDOS')">
-                    <h2>PEDIDOS</h2>
-                </span>
-
+                <div class="nm-circle-outer">
+                    <div class="nm-circle-inner">
+                        <span class="fi fi-rr-quick-box" onclick="abrirModal('PEDIDOS')"></span>
+                        <h2>PEDIDOS</h2>
+                    </div>
                 </div>
-            </div>
             </div>
 
-            <!-- Elemento 03 - Rosa -->
             <div class="nm-item item-pink">
-            <div class="nm-capsule">
-                <div class="nm-capsule-text">
-                <h3>RECEPCIÓN</h3>
-                <p>Recepción de compras.</p>
+                <div class="nm-capsule">
+                    <div class="nm-capsule-text">
+                        <h3>RECEPCIÓN</h3>
+                        <p>Recepción de compras.</p>
+                    </div>
+                    <span class="fi fi-rs-package nm-icon-main"></span>
                 </div>
-                <span class="fi fi-rs-package nm-icon-main"></span>
-            </div>
-            <div class="nm-circle-outer">
-                <div class="nm-circle-inner">
-                <span class="fi fi-rs-package" onclick="verEstadoPedidos()">
-                    <h2>RECEPCIÓN</h2>
-                </span>
-
+                <div class="nm-circle-outer">
+                    <div class="nm-circle-inner">
+                        <span class="fi fi-rs-package" onclick="verEstadoPedidos()"></span>
+                        <h2>RECEPCIÓN</h2>
+                    </div>
                 </div>
-            </div>
             </div>
 
-            <!-- Elemento 04 - Celeste -->
             <div class="nm-item item-blue">
-            <div class="nm-capsule">
-                <div class="nm-capsule-text">
-                <h3>PROVEEDORES</h3>
-                <p>Base de datos proveedores.</p>
+                <div class="nm-capsule">
+                    <div class="nm-capsule-text">
+                        <h3>PROVEEDORES</h3>
+                        <p>Base de datos proveedores.</p>
+                    </div>
+                    <span class="fi fi-ts-holding-hand-delivery nm-icon-main"></span>
                 </div>
-                <span class="fi fi-ts-holding-hand-delivery nm-icon-main"></span>
-            </div>
-            <div class="nm-circle-outer">
-                <div class="nm-circle-inner">
-                <span class="fi fi-ts-holding-hand-delivery" onclick="abrirModal('PROVEEDORES')">
-                    <h2>PROVEEDORES</h2>
-                </span>
+                <div class="nm-circle-outer">
+                    <div class="nm-circle-inner">
+                        <span class="fi fi-ts-holding-hand-delivery" onclick="abrirModal('PROVEEDORES')"></span>
+                        <h2>PROVEEDORES</h2>
+                    </div>
                 </div>
-            </div>
             </div>
 
-            <!-- Elemento 05 - Violeta -->
             <div class="nm-item item-purple">
-            <div class="nm-capsule">
-                <div class="nm-capsule-text">
-                <h3>HISTORIAL</h3>
-                <p>Historial de compras.</p>
+                <div class="nm-capsule">
+                    <div class="nm-capsule-text">
+                        <h3>HISTORIAL</h3>
+                        <p>Historial de compras.</p>
+                    </div>
+                    <span class="fi fi-rs-time-past nm-icon-main"></span>
                 </div>
-                <span class="fi fi-rs-time-past nm-icon-main"></span>
-            </div>
-            <div class="nm-circle-outer">
-                <div class="nm-circle-inner">
-                <span class="fi fi-rs-time-past" onclick="abrirModal('HISTORIAL')">
-                    <h2>HISTORIAL</h2>
-                </span>
+                <div class="nm-circle-outer">
+                    <div class="nm-circle-inner">
+                        <span class="fi fi-rs-time-past" onclick="abrirModal('HISTORIAL')"></span>
+                        <h2>HISTORIAL</h2>
+                    </div>
                 </div>
             </div>
-            </div>
+
         </nav>
     </div>
-  
+</div>
 
 <!-- MODAL MAESTRO -->
 <div id="modal-maestro" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[9999] hidden items-center justify-center p-2 lg:p-6">
