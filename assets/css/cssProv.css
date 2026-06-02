@@ -1430,8 +1430,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .neon-menu-wrapper .nm-circle-outer {
-  width: 290px;  
-  height: 290px; 
+  width: 220px;  
+  height: 220px; 
   background: rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -1448,8 +1448,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .neon-menu-wrapper .nm-circle-inner {
-  width: 126px;  
-  height: 126px; 
+  width: 200px;  
+  height: 200px; 
   background: rgba(15, 16, 19, 0.5);
   backdrop-filter: blur(8px);
   border-radius: 50%;
