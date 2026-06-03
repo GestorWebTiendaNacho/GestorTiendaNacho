@@ -1708,9 +1708,138 @@ document.addEventListener("DOMContentLoaded", () => {
  * @param {Array} datos 
  * @param {number|string} fila  */
 
+const CONFIG_RECEPCION = {
+    HOJA_GAS: 'Estado_Pedidos',
+    ENCABEZADOS: ['ID PEDIDO', 'FECHA PEDIDO', 'PROVEEDOR', 'ESTATUS', 'SKU', 'PRODUCTO', 'COSTO UNIT.', 'NUEVA FECHA', 'OBSERVACIONES', 'ACCIONES']
+};
+
+window.verEstadoPedidos = async function() {
+    const workspace = document.getElementById('modal-contenido'); // Tu contenedor principal de trabajo
+    const tituloPantalla = document.getElementById('modal-titulo');
+
+    if (!workspace) {
+        console.error("❌ Error de Nodo: No se encontró el espacio de trabajo activo.");
+        return;
+    }
+
+    if (tituloPantalla) tituloPantalla.innerText = "SISTEMA DE CONTROL DE RECEPCIÓN";
+
+    // Loader de Sincronización Estilo Cyberpunk
+    workspace.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-20 w-full bg-slate-950/20 rounded-xl border border-slate-900">
+        <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-cyan-500 font-mono text-[10px] uppercase tracking-[0.3em] animate-pulse">
+            CONECTANDO CON ARCHIVO MAESTRO: ESTADO_PEDIDOS...
+        </p>
+    </div>`;
+
+    try {
+        // Consumo directo del wrapper optimizado para Recepción
+        const res = await callGoogleScript('obtenerTablaGenerica', { tipo: 'RECEPCION' });
+        
+        if (res && res.status === "success" && res.reply && res.reply.success) {
+            const dataServidor = res.reply.data || [];
+            
+            workspace.innerHTML = `
+                <div class="w-full flex justify-between items-end mb-4 px-4 pt-2 animate-fadeIn">
+                    <div class="flex flex-col">
+                        <span class="text-[8px] text-cyan-500/40 font-mono italic tracking-widest">STREAM: ESTADO_PEDIDOS.DAT</span>
+                        <span class="text-[14px] text-white font-black tracking-tighter uppercase">ORDENES DE COMPRA EN TRÁNSITO</span>
+                    </div>
+                    <div class="text-[9px] text-slate-500 font-mono bg-slate-900/80 px-3 py-1.5 border border-slate-800/60 rounded">
+                        ÚLTIMA SYNC: <span class="text-cyan-400 font-bold">${res.reply.ultimaActualizacion || 'ONLINE'}</span>
+                    </div>
+                </div>
+                <div class="wrapper-tabla-final overflow-x-auto border border-slate-800 bg-slate-950/60 rounded-lg mx-4 mb-4 shadow-2xl">
+                    <table id="tabla-recepcion-exclusiva" class="tabla-premium w-full text-left border-collapse"></table>
+                </div>`;
+
+            // Renderizar la tabla usando el motor aislado de recepción
+            renderTablaRecepcion('#tabla-recepcion-exclusiva', dataServidor);
+
+        } else {
+            throw new Error(res?.reply?.error || "El puente de datos retornó un estado vacío.");
+        }
+    } catch (err) {
+        workspace.innerHTML = `
+        <div class="p-10 text-red-500 font-mono text-center text-[10px] flex flex-col items-center justify-center gap-2 border border-red-900/30 bg-red-950/10 rounded-lg mx-4">
+            <i class="fas fa-exclamation-triangle text-xl text-red-500/70 animate-bounce"></i>
+            <span class="uppercase font-bold tracking-widest text-red-400">Falla de Enlace Remoto</span>
+            <span class="text-slate-400 bg-red-950/40 px-4 py-2 border border-red-900/40 rounded mt-2 font-sans">${err.message}</span>
+        </div>`;
+    }
+};
+
+function renderTablaRecepcion(selector, data) {
+    if (!$.fn.DataTable) {
+        console.error("Falta la biblioteca DataTables en el ecosistema.");
+        return;
+    }
+
+    const cabecera = CONFIG_RECEPCION.ENCABEZADOS;
+
+    if ($.fn.DataTable.isDataTable(selector)) {
+        $(selector).DataTable().clear().destroy();
+        $(selector).empty(); 
+    }
+    
+    // Inyección limpia de estructura de cabecera
+    let theadHtml = `
+        <thead>
+            <tr>${cabecera.map(h => `<th class="p-4 text-left uppercase tracking-widest text-[10px]">${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody></tbody>`;
+    $(selector).html(theadHtml);
+
+    const indexAcciones = cabecera.length - 1;
+    
+    // Configuración estructural de columnas mapeando las 9 columnas que provee el backend de GAS
+    const configDefs = cabecera.map((titulo, i) => {
+        if (i === indexAcciones) {
+            return {
+                targets: i,
+                orderable: false,
+                searchable: false,
+                className: "text-center align-middle py-2 px-4 w-[120px]",
+                render: function(val, type, row, meta) {
+                    const filaIndex = meta.row + 2; // Corrección de índice para coincidir con la fila física de Sheets
+                    const rowJson = JSON.stringify(row).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    
+                    return `
+                        <button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' 
+                                class='btn-accion-nico px-3 py-1 text-[9px] font-black tracking-widest bg-cyan-600/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500 hover:text-slate-950 transition-all rounded-md shadow-[0_0_10px_rgba(6,182,212,0.1)] active:scale-95'
+                                aria-label='Gestionar pedido fila ${filaIndex}'>
+                            GESTIONAR
+                        </button>`;
+                }
+            };
+        }
+        
+        return { 
+            targets: i, 
+            className: "p-3 dt-nowrap font-mono text-[10px] text-slate-300 border-b border-slate-900/60 align-middle",
+            defaultContent: "<span class='text-slate-700 font-sans'>---</span>"
+        };
+    });
+
+    // Instanciación limpia de DataTable
+    $(selector).DataTable({
+        data: data || [],
+        dom: 'rtip', 
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
+        pageLength: 15,
+        scrollX: true,
+        autoWidth: false,
+        columnDefs: configDefs,
+        headerCallback: function(thead) {
+            $(thead).find('th').addClass('text-cyan-500 font-black uppercase tracking-widest text-[10px] p-4 bg-slate-950/80 border-b border-slate-800');
+        }
+    });
+}
+
 async function abrirRecepcion(datos, fila) {
     if (!datos || datos.length === 0) {
-        console.error("❌ N.I.C.O. Error: No se suministraron datos válidos para la orden.");
+        console.error("❌ Error: No se suministraron datos válidos.");
         return;
     }
 
@@ -1718,53 +1847,46 @@ async function abrirRecepcion(datos, fila) {
     const modal = document.getElementById('modalRecepcion');
     
     if (!modal) {
-        console.error("❌ N.I.C.O. DOM Error: El contenedor base con ID 'modalRecepcion' NO existe en el HTML.");
-        Swal.fire({
-            title: 'ERROR DE INTERFAZ',
-            text: "No se encontró el elemento raíz '#modalRecepcion'. Revisa tu estructura HTML.",
-            icon: 'error',
-            background: '#0f172a',
-            color: '#f1f5f9'
-        });
+        console.error("❌ DOM Error: El contenedor independiente 'modalRecepcion' no existe.");
         return;
     }
 
-    const inputID = document.getElementById('recepcionID');
-    const inputFila = document.getElementById('recepcionFila');
-    if (inputID) inputID.value = idPedido;
-    if (inputFila) inputFila.value = fila;
+    // Setear valores de control en los inputs ocultos
+    document.getElementById('recepcionID').value = idPedido;
+    document.getElementById('recepcionFila').value = fila;
 
-    const modalInterno = document.querySelector('#modalRecepcion > div');
-    if (modalInterno) modalInterno.className = "modal-recep-content"; 
-
+    // Poblar Resumen de Cabecera del Modal con desestructuración segura de la fila de GAS
     const resumen = document.getElementById('resumenPedido');
     if (resumen) {
         resumen.innerHTML = `
-        <div class="flex justify-between items-center w-full">
+        <div class="flex justify-between items-center w-full bg-slate-900/40 p-3 rounded border border-slate-800/80">
             <div>
-                <h2 class="text-cyan-400 font-bold text-xs uppercase tracking-widest">ORDEN: ${idPedido}</h2>
-                <p class="text-[10px] text-slate-500 uppercase">${datos[2] || 'Sin Proveedor asignado'}</p>
+                <h2 class="text-cyan-400 font-bold text-xs uppercase tracking-widest font-mono">ID ORDEN: ${idPedido}</h2>
+                <p class="text-[10px] text-slate-400 uppercase font-bold mt-0.5">${datos[2] || 'PROVEEDOR INDEFINIDO'}</p>
             </div>
-            <div class="text-right">
-                <p class="text-cyan-500 font-bold text-xs">$${Number(datos[5] || 0).toLocaleString()}</p>
-                <p class="text-[9px] text-orange-500 uppercase">Arribo: ${datos[6] || '---'}</p>
+            <div class="text-right font-mono">
+                <p class="text-emerald-400 font-bold text-xs">SKU: ${datos[4] || '---'}</p>
+                <p class="text-[9px] text-slate-500 uppercase">F. PEDIDO: ${datos[1] ? datos[1].split('T')[0] : '---'}</p>
             </div>
         </div>`;
     }
 
-    const contenedor = document.getElementById('contenedorItemsRecepcion');
-    if (contenedor) {
-        contenedor.innerHTML = `<div class="py-20 text-center text-cyan-500 text-[10px] font-mono animate-pulse">SOLICITANDO DESGLOSE A N.I.C.O...</div>`;
+    const contenedorItems = document.getElementById('contenedorItemsRecepcion');
+    if (contenedorItems) {
+        contenedorItems.innerHTML = `<div class="py-12 text-center text-cyan-500 text-[10px] font-mono animate-pulse tracking-widest">SOLICITANDO DESGLOSE DE PRODUCTOS...</div>`;
     }
 
+    // Desplegar Modal de Recepción
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.style.setProperty('display', 'flex', 'important');
     document.body.style.overflow = 'hidden';
 
+    // Establecer modo por defecto de forma segura
     cambiarModoGestion('RECIBIDO'); 
 
     try {
+        // Buscar desglose en el servidor
         const res = await callGoogleScript('obtenerItemsPedido', { idPedido: idPedido });
         
         if (res.status === "success" && res.reply && res.reply.success) {
@@ -1772,12 +1894,12 @@ async function abrirRecepcion(datos, fila) {
             const titulo = document.getElementById('recepcionTitulo');
             if (titulo) titulo.focus();
         } else {
-            throw new Error(res.message || (res.reply && res.reply.error) || "Falla en comunicación remota.");
+            throw new Error(res.message || res.reply?.error || "Falla de comunicación interna.");
         }
     } catch (err) {
-        console.error("❌ Error al desglosar los ítems de la orden:", err);
-        if (contenedor) {
-            contenedor.innerHTML = `<div class="text-red-500 text-[10px] p-4 text-center font-mono">ERROR AL CARGAR ITEMS: ${err.message}</div>`;
+        console.error("❌ Error al desglosar ítems:", err);
+        if (contenedorItems) {
+            contenedorItems.innerHTML = `<div class="text-red-500 text-[10px] p-4 text-center font-mono border border-red-900/30 bg-red-950/10 rounded">ERROR AL CARGAR SUB-ITEMS: ${err.message}</div>`;
         }
     }
 }
@@ -1792,16 +1914,16 @@ function renderizarItemsDesgloseEspecial(items, idContenedor) {
     }
 
     let html = `
-    <div class="overflow-x-auto max-h-[350px] overflow-y-auto custom-scrollbar">
-        <table class="w-full text-[11px] border-collapse mb-4">
-            <thead class="sticky top-0 bg-[#0f172a] z-30 shadow-md">
-                <tr class="text-left text-slate-500 border-b border-cyan-900/50">
-                    <th class="p-3 uppercase tracking-wider">SKU / Producto</th>
-                    <th class="p-3 text-center uppercase tracking-wider">Pedida</th>
-                    <th class="p-3 text-right uppercase tracking-wider">Recibida</th>
+    <div class="overflow-x-auto max-h-[300px] overflow-y-auto custom-scrollbar">
+        <table class="w-full text-[11px] border-collapse">
+            <thead class="sticky top-0 bg-[#0c1324] z-30 shadow-md">
+                <tr class="text-left text-slate-500 border-b border-cyan-900/30">
+                    <th class="p-3 uppercase tracking-wider text-[9px] font-bold">SKU / Producto</th>
+                    <th class="p-3 text-center uppercase tracking-wider text-[9px] font-bold">Pedida</th>
+                    <th class="p-3 text-right uppercase tracking-wider text-[9px] font-bold">A Recibir</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/60">`;
+            <tbody class="divide-y divide-slate-900/60">`;
 
     items.forEach(item => {
         html += `
@@ -1813,11 +1935,12 @@ function renderizarItemsDesgloseEspecial(items, idContenedor) {
             <td class="p-3 text-center text-white font-mono font-bold text-xs">${item.cantidadPedida || 0}</td>
             <td class="p-3 text-right">
                 <input type="number" 
-                       class="input-recibido-item w-20 bg-slate-950 border border-slate-700/80 rounded p-1 text-right text-cyan-400 font-bold outline-none focus:border-cyan-500 transition-colors" 
+                       class="input-recibido-item w-20 bg-slate-950 border border-slate-800 rounded p-1 text-right text-cyan-400 font-bold outline-none focus:border-cyan-500 transition-colors text-xs" 
                        data-sku="${item.sku || ''}" 
                        data-original="${item.cantidadPedida || 0}" 
                        data-nombre="${item.nombre || ''}" 
-                       value="${item.cantidadPedida || 0}"        
+                       data-precio="${item.precio || 0}"
+                       value="${item.cantidadPedida || 0}"         
                        min="0"
                        oninput="recalcularPorcentajeDesdeItems()">
             </td>
@@ -1846,8 +1969,7 @@ function recalcularPorcentajeDesdeItems() {
     if (totalPedido === 0) return;
 
     let porcentaje = Math.round((totalRecibido / totalPedido) * 100);
-    if (porcentaje > 100) porcentaje = 100; 
-    if (porcentaje < 0) porcentaje = 0;
+    porcentaje = Math.max(0, Math.min(porcentaje, 100)); // Clampeado entre 0 y 100
 
     const slider = document.getElementById('inputPorcentaje');
     const display = document.getElementById('valorPorcentaje');
@@ -1859,57 +1981,67 @@ function recalcularPorcentajeDesdeItems() {
 async function confirmarGestionFinal() {
     const btn = document.getElementById('btnConfirmarGestion');
     const listaInputs = document.querySelectorAll('.input-recibido-item');
-    
+    const accionActual = document.getElementById('accionActual').value;
+    const inputObsValue = document.getElementById('inputObservaciones').value.trim();
+
+    // Validar restricción estricta de cancelación
+    if (accionActual === 'CANCELADO' && !inputObsValue) {
+        Swal.fire({ title: 'MOTIVO REQUERIDO', text: 'Es obligatorio registrar el motivo del colapso del pedido.', icon: 'warning', background: '#0f172a', color: '#fff' });
+        return;
+    }
+
     let itemsRecibidos = [];
     listaInputs.forEach(input => {
         itemsRecibidos.push({
             sku: input.getAttribute('data-sku') || "",
             nombre: input.getAttribute('data-nombre') || "",
+            precio: parseFloat(input.getAttribute('data-precio')) || 0,
             cantidadRecibida: parseFloat(input.value) || 0,
-            platilloPedido: parseFloat(input.getAttribute('data-original')) || 0 
+            cantidadPedida: parseFloat(input.getAttribute('data-original')) || 0 
         });
     });
 
-    const recepcionIDNode = document.getElementById('recepcionID');
-    const recepcionFilaNode = document.getElementById('recepcionFila');
-    const accionActualNode = document.getElementById('accionActual');
-    const inputPorcentajeNode = document.getElementById('inputPorcentaje');
-    const inputObservacionesNode = document.getElementById('inputObservaciones');
-
-    const config = {
-        idPedido: recepcionIDNode ? recepcionIDNode.value : "",
-        filaEstado: recepcionFilaNode ? recepcionFilaNode.value : "",
-        accion: accionActualNode ? accionActualNode.value : "RECIBIDO",
-        porcentaje: inputPorcentajeNode ? inputPorcentajeNode.value : "100",
-        calidad: typeof calidadSeleccionada !== 'undefined' ? calidadSeleccionada : 0,
-        observaciones: inputObservacionesNode ? inputObservacionesNode.value.trim() : "",
-        esCausaProveedor: document.getElementById('inputCausa') ? document.getElementById('inputCausa').value === 'proveedor' : false,
-        nuevaFecha: document.getElementById('inputNuevaFecha') ? document.getElementById('inputNuevaFecha').value : "",
-        itemsRecibidos: itemsRecibidos 
+    const configPayload = {
+        idPedido: document.getElementById('recepcionID').value,
+        filaEstado: document.getElementById('recepcionFila').value,
+        accion: accionActual,
+        porcentaje: document.getElementById('inputPorcentaje').value,
+        calidad: window.calidadSeleccionada || 0,
+        observaciones: inputObsValue,
+        esCausaProveedor: document.getElementById('inputCausa')?.value === 'proveedor',
+        nuevaFecha: document.getElementById('inputNuevaFecha')?.value || ""
     };
 
-    if (config.accion === 'REPROGRAMADO' && !config.nuevaFecha) {
-        Swal.fire({ title: 'FECHA REQUERIDA', text: 'Indique el nuevo día estimado de arribo.', icon: 'warning', background: '#0f172a', color: '#fff' });
+    // Si se cancela o reprograma en caliente y la lista de ítems no se cargó, reconstruimos con datos del resumen
+    if (itemsRecibidos.length === 0) {
+        configPayload.itemsRecibidos = [{ sku: "N/A", nombre: "PROCESO EXTRAPOLADO", cantidadRecibida: 0 }];
+    } else {
+        configPayload.itemsRecibidos = itemsRecibidos;
+    }
+
+    if (accionActual === 'REPROGRAMADO' && !configPayload.nuevaFecha) {
+        Swal.fire({ title: 'FECHA FALTANTE', text: 'Indique la nueva fecha programada en el calendario.', icon: 'warning', background: '#0f172a', color: '#fff' });
         return;
     }
 
     if (btn) {
-        btn.innerText = "PROCESANDO IMPACTO...";
+        btn.innerText = "SINKRONIZANDO CON N.I.C.O...";
         btn.disabled = true;
     }
 
     try {
-        const res = await callGoogleScript('gestionarEstadoPedidoServidor', config);
+        const res = await callGoogleScript('gestionarEstadoPedidoServidor', configPayload);
         
         if (res.status === "success" && res.reply && res.reply.success) {
             cerrarModalRecepcion();
-            Swal.fire({ title: 'ÉXITO', text: 'El estado de la orden fue actualizado en el servidor.', icon: 'success', timer: 1500, showConfirmButton: false })
-            .then(() => verEstadoPedidos());
+            Swal.fire({ title: 'IMPACTO EXITOSO', text: 'Los registros e historiales han sido actualizados.', icon: 'success', timer: 1500, showConfirmButton: false });
+            // Refrescar la tabla exclusiva de recepción inmediatamente
+            verEstadoPedidos();
         } else {
-            throw new Error(res.message || (res.reply && res.reply.error) || "Error al actualizar.");
+            throw new Error(res.message || res.reply?.error || "Error indeterminado en el servidor.");
         }
     } catch (err) {
-        Swal.fire({ title: 'FALLA DE COMUNICACIÓN', text: err.message, icon: 'error', background: '#0f172a', color: '#fff' });
+        Swal.fire({ title: 'FALLA DE ESCRITURA', text: err.message, icon: 'error', background: '#0f172a', color: '#fff' });
         if (btn) {
             btn.innerText = "CONFIRMAR GESTIÓN"; 
             btn.disabled = false;
@@ -1917,7 +2049,7 @@ async function confirmarGestionFinal() {
     }
 }
 
-function setCalidad(valor) {
+window.setCalidad = function(valor) {
     window.calidadSeleccionada = valor;
     const inputCalidad = document.getElementById('inputCalidad');
     if (inputCalidad) inputCalidad.value = valor;
@@ -1932,163 +2064,89 @@ function setCalidad(valor) {
             estrella.style.textShadow = "none";
         }
     });
-}
-
-window.verEstadoPedidos = async function() {
-    const modal = document.getElementById('page-principal-depos');
-    const contenedor = document.getElementById('modal-contenido');
-    const titulo = document.getElementById('modal-titulo');
-
-    if (!modal || !contenedor) return;
-
-    if (titulo) titulo.innerText = "GESTIÓN DE RECEPCIÓN";
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    contenedor.innerHTML = `
-    <div class="flex flex-col items-center justify-center py-20">
-        <div class="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p class="text-cyan-500 animate-pulse font-mono text-xs uppercase tracking-widest">Sincronizando Mapeo con N.I.C.O...</p>
-    </div>`;
-
-    try {
-        const res = await callGoogleScript('obtenerTablaGenerica', { tipo: 'RECEPCION' });
-        
-        if (res.status === "success" && res.reply && res.reply.success) {
-            const data = res.reply;
-            const nombreHojaReal = 'Estado_Pedidos';
-            const columnasCabecera = (typeof ENCABEZADOS_SISTEMA !== 'undefined' ? ENCABEZADOS_SISTEMA[nombreHojaReal] : []) || [];
-
-            contenedor.innerHTML = `
-                <div class="wrapper-tabla-final px-2 w-full overflow-x-auto">
-                    <table id="tabla-maestra-generica" class="tabla-premium w-full text-xs">
-                        <thead>
-                            <tr class="bg-slate-900 text-slate-400 font-mono text-left">
-                                ${columnasCabecera.map(h => `<th class="p-3 uppercase font-bold">${h}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>`;
-
-            if (typeof renderTableNico === 'function') {
-                renderTableNico('#tabla-maestra-generica', data.data, nombreHojaReal);
-            }
-        } else {
-            throw new Error((res.reply && res.reply.error) || "Falla de mapeo de respuesta.");
-        }
-    } catch (err) {
-        contenedor.innerHTML = `<div class="p-4 text-red-400 text-xs font-mono bg-red-950/20 border border-red-900 rounded-lg">❌ ERROR CRÍTICO: ${err.message}</div>`;
-    }
 };
 
 function cambiarModoGestion(modo) {
-    const inputAccion = document.getElementById('accionActual');
-    if (inputAccion) inputAccion.value = modo;
+    document.getElementById('accionActual').value = modo;
 
     const secRecibido = document.getElementById('section-RECIBIDO');
+    const wrapperReprog = document.getElementById('wrapper-reprogramacion');
+    const wrapperCausa = document.getElementById('wrapper-causa-cancelacion');
     const btnFinal = document.getElementById('btnConfirmarGestion');
     const inputObs = document.getElementById('inputObservaciones');
-    const wrapperCausa = document.getElementById('wrapper-causa-cancelacion');
-    const footer = document.querySelector('.sect-footer');
 
     if (!btnFinal || !inputObs) return;
 
+    // 1. Alternar estado activo en las pestañas superiores
+    ['RECIBIDO', 'REPROGRAMADO', 'CANCELADO'].forEach(m => {
+        document.getElementById(`tab-${m}`)?.classList.remove('active-tab-recep');
+    });
+    document.getElementById(`tab-${modo}`)?.classList.add('active-tab-recep');
+
+    // 2. Limpiar modificadores semánticos previos del botón de confirmación sin romper su base
+    btnFinal.classList.remove('confirmar-recibir', 'confirmar-reprogramar', 'confirmar-cancelar');
+
+    // 3. Modificación del comportamiento y adición de subclases estéticas nativas
     switch (modo) {
         case 'RECIBIDO':
             if (secRecibido) secRecibido.style.display = 'block';
+            if (wrapperReprog) wrapperReprog.classList.add('hidden');
             if (wrapperCausa) wrapperCausa.classList.add('hidden'); 
             
-            btnFinal.innerText = "PROCESAR RECEPCIÓN";
-            btnFinal.style.background = "#10b981";
-            btnFinal.style.borderColor = "#059669";
-            inputObs.placeholder = "Notas generales de la recepción física (opcional)...";
+            btnFinal.innerText = "PROCESAR RECEPCIÓN FÍSICA";
+            btnFinal.classList.add('confirmar-recibir');
+            inputObs.placeholder = "Notas generales del estado de arribo del material (opcional)...";
             break;
 
         case 'REPROGRAMADO':
             if (secRecibido) secRecibido.style.display = 'none';
+            if (wrapperReprog) wrapperReprog.classList.remove('hidden'); 
             if (wrapperCausa) wrapperCausa.classList.add('hidden'); 
             
-            btnFinal.innerText = "CONFIRMAR REPROGRAMACIÓN";
-            btnFinal.style.background = "#f59e0b"; 
-            btnFinal.style.borderColor = "#d97706";
-            inputObs.value = ""; 
-            inputObs.placeholder = "Esperando asignación de fecha mediante calendario...";
+            btnFinal.innerText = "CONFIRMAR NUEVA FECHA";
+            btnFinal.classList.add('confirmar-reprogramar');
+            inputObs.placeholder = "Indique detalles de la justificación del transportista o proveedor...";
             solicitarFechaReprogramacion();
             break;
 
         case 'CANCELADO':
             if (secRecibido) secRecibido.style.display = 'none';
+            if (wrapperReprog) wrapperReprog.classList.add('hidden');
             if (wrapperCausa) wrapperCausa.classList.remove('hidden'); 
             
-            btnFinal.innerText = "CONFIRMAR ANULACIÓN";
-            btnFinal.style.background = "#ef4444"; 
-            btnFinal.style.borderColor = "#dc2626";
-            inputObs.placeholder = "INGRESE MOTIVO DE CANCELACIÓN DE MANERA OBLIGATORIA...";
+            btnFinal.innerText = "CONFIRMAR ANULACIÓN TOTAL";
+            btnFinal.classList.add('confirmar-cancelar');
+            inputObs.placeholder = "INGRESE EL MOTIVO DE LA CANCELACIÓN OBLIGATORIAMENTE...";
             inputObs.focus(); 
             break;
     }
-    
-    if (footer) footer.style.pointerEvents = 'auto';
-    console.log("🛠️ N.I.C.O. Terminal: Contexto de recepción conmutado a -> " + modo);
-}
-
-function cerrarModalRecepcion() {
-    const modal = document.getElementById('modalRecepcion');
-    if (!modal) return;
-
-    const titulo = document.getElementById('recepcionTitulo');
-    const tabsModo = document.querySelector('.modal-body-recep .flex.gap-4');
-    const footerAction = document.getElementById('section-footer');
-    const obs = document.getElementById('inputObservaciones');
-
-    if (titulo) titulo.innerText = "GESTIÓN DE RECEPCIÓN";
-    if (tabsModo) tabsModo.classList.remove('hidden');
-    if (footerAction) footerAction.style.display = 'flex';
-    if (obs) {
-        obs.disabled = false;
-        obs.value = "";
-    }
-
-    modal.classList.remove('flex');
-    modal.classList.add('hidden');
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-    
-    const mainContent = document.getElementById('content');
-    if (mainContent) mainContent.removeAttribute('inert');
 }
 
 async function solicitarFechaReprogramacion() {
-    const mainContent = document.getElementById('content');
-    if (mainContent) mainContent.removeAttribute('aria-hidden');
-
     const { value: fecha } = await Swal.fire({
         title: 'REPROGRAMAR ARRIBO',
         input: 'date',
-        inputLabel: 'Indique la nueva fecha estimada de descarga:',
+        inputLabel: 'Nueva fecha estimada de llegada a depósito:',
         background: '#0f172a',
         color: '#f1f5f9',
         confirmButtonColor: '#f59e0b',
-        confirmButtonText: 'ASIGNAR FECHA',
+        confirmButtonText: 'FIJAR FECHA',
         showCancelButton: true,
-        cancelButtonText: 'VOLVER',
+        cancelButtonText: 'CANCELAR',
         returnFocus: false,
         didOpen: () => {
             const container = Swal.getContainer();
-            if (container) container.style.zIndex = '35000';
+            if (container) container.style.zIndex = '35000'; // Asegurar que pase por encima del modal
         }
     });
 
     if (fecha) {
         let inputF = document.getElementById('inputNuevaFecha');
-        const formRecepcion = document.getElementById('formRecepcion') || document.body;
-
         if (!inputF) {
             inputF = document.createElement('input');
             inputF.type = 'hidden';
             inputF.id = 'inputNuevaFecha';
-            formRecepcion.appendChild(inputF);
+            document.getElementById('formRecepcion').appendChild(inputF);
         }
         inputF.value = fecha;
 
@@ -2096,12 +2154,30 @@ async function solicitarFechaReprogramacion() {
         if (display) display.innerText = fecha.split('-').reverse().join('/');
 
         const obs = document.getElementById('inputObservaciones');
-        if (obs) obs.value = `REPROGRAMADO PARA EL: ${fecha.split('-').reverse().join('/')}`;
-        console.log("✅ Fecha asignada correctamente:", fecha);
+        if (obs) obs.value = `REPROGRAMADO DE FORMA OFICIAL PARA EL: ${fecha.split('-').reverse().join('/')}`;
     }
 }
 
+function cerrarModalRecepcion() {
+    const modal = document.getElementById('modalRecepcion');
+    if (!modal) return;
 
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+
+    // Limpieza de campos del formulario
+    document.getElementById('formRecepcion').reset();
+    window.calidadSeleccionada = 0;
+    setCalidad(0);
+    
+    const displayFecha = document.getElementById('display-fecha-reprogramada');
+    if (displayFecha) displayFecha.innerText = "Sin seleccionar";
+    
+    const inputF = document.getElementById('inputNuevaFecha');
+    if (inputF) inputF.remove();
+}
 
 /*--------------SECCION HISTORIAL-----------------------*/
 
@@ -2109,25 +2185,32 @@ async function solicitarFechaReprogramacion() {
 
 async function verDetalleHistorial(idPedido) {
     const modal = document.getElementById('modalDetalleHistorial');
-    const contenedor = document.getElementById('contenedorItemsHistorial');
+    const cabeceraInfo = document.getElementById('lex-cabecera-historial');
+    const contenedorTabla = document.getElementById('contenedorItemsHistorial');
+    const obsBox = document.getElementById('obsHistorial');
     const subtitulo = document.getElementById('historialSubtitulo');
     
-    if (!modal || !contenedor) {
+    // Verificación unificada de cimientos del DOM
+    if (!modal || !contenedorTabla || !cabeceraInfo || !obsBox) {
         console.error("❌ N.I.C.O. DOM Error: Elementos críticos del Historial no encontrados.");
         return;
     }
 
     if (subtitulo) subtitulo.innerText = `EXPEDIENTE: ${idPedido}`;
     
-    contenedor.innerHTML = `
+    // Loader inicial limpio directo en la zona de carga de la tabla
+    contenedorTabla.innerHTML = `
         <div class="flex flex-col items-center justify-center py-12">
             <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
             <p class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest italic animate-pulse">Accediendo al archivo central...</p>
         </div>`;
     
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    modal.style.setProperty('display', 'flex', 'important');
+    // Limpieza de estados anteriores
+    cabeceraInfo.innerHTML = '';
+    obsBox.innerText = "Cargando observaciones...";
+    
+    // Apertura nativa limpia coherente con tu CSS
+    modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
     try {
@@ -2136,11 +2219,10 @@ async function verDetalleHistorial(idPedido) {
         if (res.status === "success" && res.reply && res.reply.success) {
             const data = res.reply;
             
-            if (!data.info) {
-                throw new Error("El servidor no retornó la cabecera informativa (info).");
-            }
+            if (!data.info) throw new Error("El servidor no retornó la cabecera informativa (info).");
 
-            let html = `
+            // 1. Inyección Limpia en la Cabecera Dedicada del HTML
+            cabeceraInfo.innerHTML = `
             <div class="grid grid-cols-2 gap-3 p-4 mb-4 bg-slate-950/50 border border-slate-800/60 rounded-lg text-[10px]">
                 <div class="space-y-2">
                     <div>
@@ -2169,42 +2251,37 @@ async function verDetalleHistorial(idPedido) {
                         </p>
                     </div>
                 </div>
-                <div class="col-span-2 pt-2 border-t border-slate-800/40 mt-1">
-                    <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Observaciones de Gestión</p>
-                    <p class="text-slate-400 italic mt-0.5 bg-slate-900/40 p-2 rounded border border-slate-900 font-sans">
-                        ${data.info.observaciones ? `"${data.info.observaciones}"` : '"Sin novedades registradas en la recepción."'}
-                    </p>
-                </div>
             </div>`;
 
-
+            // 2. Inyección Exclusiva de la Tabla en su contenedor correspondiente
             if (data.items && data.items.length > 0 && 'precio' in data.items[0]) {
-                html += renderizarTablaItemsHistorial(data.items);
+                contenedorTabla.innerHTML = renderizarTablaItemsHistorial(data.items);
             } else {
-                html += renderizarTablaInversionPlana(data.items || []);
+                contenedorTabla.innerHTML = renderizarTablaInversionPlana(data.items || []);
             }
 
-            contenedor.innerHTML = html;
+            // 3. Inyección de Notas en la Caja de Observaciones Dedicada del HTML
+            obsBox.innerHTML = data.info.observaciones 
+                ? `"${data.info.observaciones}"` 
+                : `"Sin novedades registradas en la recepción."`;
 
         } else {
             throw new Error((res.reply && res.reply.error) || "No se pudo recuperar la información del archivo.");
         }
     } catch (err) {
         console.error("❌ Error en Módulo Historial:", err);
-        contenedor.innerHTML = `
+        contenedorTabla.innerHTML = `
             <div class="p-10 text-center bg-red-950/10 border border-red-900/30 rounded-xl mt-2">
                 <div class="text-red-500 text-xl mb-2">⚠️</div>
                 <p class="text-red-400 uppercase text-[10px] font-mono tracking-wide">Falla de Indexación: ${err.message}</p>
             </div>`;
+        obsBox.innerText = "Error al mapear las notas.";
     }
 }
 
 function cerrarModalHistorial() {
     const modal = document.getElementById('modalDetalleHistorial');
     if (!modal) return;
-
-    modal.classList.remove('flex');
-    modal.classList.add('hidden');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
 }
@@ -2213,7 +2290,7 @@ function renderizarTablaInversionPlana(items) {
     if (items.length === 0) return `<p class="text-[10px] text-slate-500 font-mono text-center py-4">S/D ÍTEMS</p>`;
 
     let html = `
-    <div class="overflow-hidden rounded-lg border border-slate-800 max-h-[280px] overflow-y-auto custom-scrollbar">
+    <div class="overflow-hidden rounded-lg border border-slate-800 max-h-[280px] overflow-y-auto custom-scroll">
         <table class="w-full text-[11px] border-collapse">
             <thead class="sticky top-0 bg-[#0f172a] z-10 shadow">
                 <tr class="bg-slate-900/90 text-slate-500 text-left border-b border-slate-800">
@@ -2252,7 +2329,7 @@ function renderizarTablaInversionPlana(items) {
 
 function renderizarTablaItemsHistorial(items) {
     let html = `
-    <div class="overflow-hidden rounded-lg border border-slate-800 max-h-[280px] overflow-y-auto custom-scrollbar">
+    <div class="overflow-hidden rounded-lg border border-slate-800 max-h-[280px] overflow-y-auto custom-scroll">
         <table class="w-full text-left text-[11px] border-collapse">
             <thead class="sticky top-0 bg-[#0f172a] z-10 shadow">
                 <tr class="bg-slate-900/90 text-slate-500 border-b border-slate-800 text-[8px] font-black tracking-wider">
@@ -2296,11 +2373,7 @@ function renderizarTablaItemsHistorial(items) {
 function generarEstrellasVisuales(valor) {
     const num = parseInt(valor) || 0;
     if (num === 0) return '⭐ 0/5';
-    let estrellas = '';
-    for(let i = 0; i < 5; i++) {
-        estrellas += i < num ? '★' : '☆';
-    }
-    return estrellas;
+    return '★'.repeat(num) + '☆'.repeat(5 - num); // Sintaxis optimizada nativa de JS
 }
 
 
