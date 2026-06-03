@@ -1,7 +1,7 @@
 console.log("🚀 N.I.C.O. Terminal: Iniciando carga de scripts...");
 //-------------------jsProv------------------//
 
-
+var _tablaProveedoresInstance = null;
 window.estadoEdicion = { esNuevo: false, fila: null };
 window.carritoPedidos = window.carritoPedidos || [];
 window.calidadSeleccionada = window.calidadSeleccionada || 0;
@@ -292,7 +292,7 @@ function escapingForOption(str) {
 }
 
 /* ---SECCION DE EDICION DE TABLA PROVEEDORES--- */
-let _tablaProveedoresInstance = null;
+
 
 // Estructura de datos local (Encabezados internos de la isla de proveedores)
 const _ENCABEZADOS_PROVEEDORES = ['ID','RAZÓN SOCIAL','CIUDAD','DOMICILIO','TELÉFONO','EMAIL','CODIGO PROV','PROVINCIA','ACCIONES'];

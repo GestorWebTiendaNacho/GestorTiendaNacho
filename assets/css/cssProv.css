@@ -1192,7 +1192,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /*---seccion nico --*/
 
-
 .contenedor-maestro-nico {
     display: none; 
     flex-direction: column !important;
