@@ -2310,17 +2310,6 @@ let navegacionSemanal = {
     diaActual: null
 };
 
-function abrirModalReportes() {
-    const modal = document.getElementById('modal-reportes-lex');
-    console.log("🚀 Módulo de Reportes Semanales cargado correctamente.");
-
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        modal.style.setProperty('display', 'flex', 'important');
-        document.body.style.overflow = 'hidden';
-    }
-}
 
 function cerrarModalReportes() {
     const modal = document.getElementById('modal-reportes-lex');
