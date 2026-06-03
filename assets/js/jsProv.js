@@ -455,7 +455,7 @@ async function ejecutarGuardado() {
 
 window.abrirModalPedidosManual = function() {
     console.log("Cargando entorno de Pedidos Manuales...");
-    const modal = document.getElementById('modal-maestro');
+    const modal = document.getElementById('modal-pedidos');
     const contenido = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
     
