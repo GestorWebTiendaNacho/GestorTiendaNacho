@@ -341,13 +341,6 @@ table.dataTable.no-footer {
     padding: 0 !important;
     box-sizing: border-box !important;
     z-index: 9999 !important; 
-    background: rgba(2, 6, 23, 0.95) !important;
-    backdrop-filter: blur(10px) !important;
-    z-index: 20001 !important;
-    display: none; 
-    align-items: center;
-    justify-content: center;
-    padding: 5px;
 }
 
 /*CONTENIDO DEL MODAL*/
