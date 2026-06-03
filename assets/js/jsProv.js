@@ -591,11 +591,30 @@ window.abrirModalPedidosManual = async function() {
         </div>`;
 
     try {
+        // Llamada al puente de red externo hacia GAS
         const res = await callGoogleScript('obtenerListaProveedoresUnicos', {});
+        
+        // 🔍 PUNTO DE INSPECCIÓN: Veremos exactamente cómo viajan tus datos por GitHub Pages
+        console.log("📦 [Debug NICO] Respuesta completa de la API:", res);
 
-        if (res && res.status === "success" && res.reply) {
-            const lista = Array.isArray(res.reply) ? res.reply : (res.reply.data || []);
+        let lista = null;
+
+        // Algoritmo de extracción adaptativa de datos
+        if (Array.isArray(res)) {
+            // Caso 1: El puente devuelve directamente el array limpio
+            lista = res;
+        } else if (res && typeof res === 'object') {
+            // Caso 2: El objeto viene envuelto en estructuras clásicas de API JSON
+            lista = res.data || res.reply || res.proveedores || res.lista;
             
+            // Caso 3: Doble envoltura profunda (ej: res.reply.data)
+            if (lista && typeof lista === 'object' && !Array.isArray(lista)) {
+                lista = lista.data || lista.proveedores || Object.values(lista);
+            }
+        }
+
+        // Si logramos capturar o resolver un array válido procedemos al render
+        if (Array.isArray(lista)) {
             const container = document.getElementById('selector-proveedor-container');
             if (!container) return;
             
@@ -616,7 +635,7 @@ window.abrirModalPedidosManual = async function() {
                     </button>
                 </div>`;
         } else {
-            throw new Error(res?.reply?.error || "Estructura de datos inválida de la API externa.");
+            throw new Error("La API no retornó un formato de lista reconocible. Revisa el log de la consola.");
         }
 
     } catch (err) {
@@ -624,9 +643,9 @@ window.abrirModalPedidosManual = async function() {
         const container = document.getElementById('selector-proveedor-container');
         if (container) {
             container.innerHTML = `
-                <div class="p-2 border border-red-900/50 bg-red-950/20 rounded max-w-xs">
+                <div class="p-2 border border-red-900/50 bg-red-950/20 rounded max-w-xs mx-auto">
                     <p class="text-red-500 font-mono text-[9px] uppercase tracking-wider font-bold">
-                        ⚠️ FALLA DE ENLACE API
+                        ⚠️ FALLA DE CONFIGURACIÓN API
                     </p>
                     <span class="text-slate-400 text-[9px] font-sans block mt-1">${err.message}</span>
                 </div>`;
