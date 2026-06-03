@@ -567,7 +567,7 @@ async function ejecutarGuardadoProveedor() {
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
 /** @param {string} tipo - Tipo de flujo. Si es 'PEDIDOS' activa el flujo manual. */
 
-window.abrirModalPedidosManual = function() {
+window.abrirModalPedidosManual = async function() {
     console.log("Cargando entorno de Pedidos Manuales...");
     const modal = document.getElementById('modal-pedidos');
     const contenido = document.getElementById('modal-contenido');
@@ -590,12 +590,16 @@ window.abrirModalPedidosManual = function() {
             </div>
         </div>`;
 
-    google.script.run
-        .withSuccessHandler(lista => {
+    try {
+        const res = await callGoogleScript('obtenerListaProveedoresUnicos', {});
+
+        if (res && res.status === "success" && res.reply) {
+            const lista = Array.isArray(res.reply) ? res.reply : (res.reply.data || []);
+            
             const container = document.getElementById('selector-proveedor-container');
             if (!container) return;
             
-            let options = (lista || []).map(p => {
+            let options = lista.map(p => {
                 const nombre = p ? String(p).trim() : "";
                 const nombreEscapado = nombre.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 return `<option value="${nombreEscapado}">${nombreEscapado}</option>`;
@@ -611,9 +615,23 @@ window.abrirModalPedidosManual = function() {
                         CARGAR CATÁLOGO
                     </button>
                 </div>`;
-        })
-        .withFailureHandler(err => console.error("Error al pedir proveedores:", err))
-        .obtenerListaProveedoresUnicos();
+        } else {
+            throw new Error(res?.reply?.error || "Estructura de datos inválida de la API externa.");
+        }
+
+    } catch (err) {
+        console.error("❌ Error al pedir proveedores desde la terminal externa:", err);
+        const container = document.getElementById('selector-proveedor-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="p-2 border border-red-900/50 bg-red-950/20 rounded max-w-xs">
+                    <p class="text-red-500 font-mono text-[9px] uppercase tracking-wider font-bold">
+                        ⚠️ FALLA DE ENLACE API
+                    </p>
+                    <span class="text-slate-400 text-[9px] font-sans block mt-1">${err.message}</span>
+                </div>`;
+        }
+    }
 };
 
 
@@ -1229,7 +1247,6 @@ function actualizarProveedorCarrito(nuevoProveedor) {
     }
 }
 
-
 /*----------- FUNCIONES DEL PEDIDOS AUTO ASISTIDOS-----------*/
 window.speed = window.speed || 0;
 window.prevSpeed = window.prevSpeed || 0;
@@ -1262,7 +1279,6 @@ window.changeActive = function() {
     const el = document.getElementsByClassName(nombreClaseBusqueda)[0];
     if (el) el.classList.toggle("active");
 };
-
 
 // ------- NICO CONTROLLER --------//
 window.abrirModalPedidos_Autoasist = function() {
@@ -1302,7 +1318,6 @@ window.cerrarModalPedidos_Autoasist = function() {
 };
 
 // ---------- CONTROLADOR DE NICO Y ANIMACIONES ---------------- //
-
 if (!window.NicoController) {
     window.NicoController = (function() {
         const ESTADOS = {
@@ -1339,7 +1354,6 @@ if (!window.NicoController) {
             nico.img.src = ESTADOS.SALUDANDO;
             nico.frame = 0;
             
-            // Evitamos duplicaciones del loop lógico
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             animationFrameId = requestAnimationFrame(draw);
             
@@ -1415,11 +1429,6 @@ window.avatarPensar = () => window.NicoController && NicoController.cambiarA("PE
 window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ESPERANDO");
 window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
 
-
-const chatContainer = document.getElementById("chat-messages");
-const userInput = document.getElementById("user-input");
-const prenderMicBtn = document.getElementById("btn-nico-voz");
-
 // Variables globales de grabación
 let mediaRecorder = null;
 let chunksAudio = [];
@@ -1443,7 +1452,6 @@ async function alternarMicrofono() {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             chunksAudio = [];
             
-            // Selección de formato compatible
             const opcionesMime = MediaRecorder.isTypeSupported("audio/webm") 
                 ? { mimeType: "audio/webm" } 
                 : { mimeType: "audio/ogg" };
@@ -1455,19 +1463,15 @@ async function alternarMicrofono() {
             };
 
             mediaRecorder.onstop = async () => {
-                stream.getTracks().forEach(track => track.stop()); // Apaga el hardware inmediatamente
-                
+                stream.getTracks().forEach(track => track.stop());
                 mostrarRespuestaEnChat("🤖 NICO: Reconociendo el comando...");
                 
                 const blobAudio = new Blob(chunksAudio, { type: opcionesMime.mimeType });
-                
-                // Convertimos el audio binario a Base64 antes de enviarlo a GAS
                 const lectorSencillo = new FileReader();
                 lectorSencillo.readAsDataURL(blobAudio);
                 lectorSencillo.onloadend = async () => {
                     const datosBase64Completo = lectorSencillo.result;
                     const stringBase64Crudo = datosBase64Completo.split(',')[1];
-                    
                     await enviarAudioAServidorGAS(stringBase64Crudo);
                 };
             };
@@ -1478,7 +1482,7 @@ async function alternarMicrofono() {
 
         } catch (err) {
             console.error("Error de hardware:", err);
-            mostrarRespuestaEnChat("❌ Error: Acceso denegado al micrófono. Revisa los permisos en Brave.");
+            mostrarRespuestaEnChat("❌ Error: Acceso denegado al micrófono. Revisa los permisos.");
             APAGAR_VISUAL_MIC();
         }
     }
@@ -1490,6 +1494,8 @@ async function enviarAudioAServidorGAS(base64Audio) {
     
     try {
         const urlDestino = window.URL_GLOBAL_GAS || window.URL_GAS_GLOBAL;
+        if (!urlDestino) throw new Error("URL de servidor Apps Script no definida.");
+
         const response = await fetch(urlDestino, {
             method: 'POST',
             mode: 'cors',
@@ -1505,18 +1511,10 @@ async function enviarAudioAServidorGAS(base64Audio) {
         
         if (dataRespuesta.status === "success") {
             if (typeof window.avatarHablar === "function") window.avatarHablar();
-            
-            if (dataRespuesta.transcripcion) {
-                mostrarMensajeUsuario(dataRespuesta.transcripcion);
-            }
-            
-            // Respuesta hablada/escrita de NICO
+            if (dataRespuesta.transcripcion) mostrarMensajeUsuario(dataRespuesta.transcripcion);
             if (dataRespuesta.reply) mostrarRespuestaEnChat(dataRespuesta.reply);
-            if (dataRespuesta.productos) {
-                renderizarTablaInformesNico(dataRespuesta.productos);
-            }
+            if (dataRespuesta.productos) renderizarTablaInformesNico(dataRespuesta.productos);
 
-            // Alertas visuales de stock/órdenes si aplican
             if (dataRespuesta.swal && typeof Swal !== "undefined") {
                 Swal.fire({
                     title: dataRespuesta.swal.title,
@@ -1542,8 +1540,9 @@ async function enviarAudioAServidorGAS(base64Audio) {
     }
 }
 
-// 3. ENVÍO DE TEXTO MANUAL ESTÁNDAR (Mantiene compatibilidad con teclado)
+// 3. ENVÍO DE TEXTO MANUAL ESTÁNDAR
 async function enviarPrompt() {
+    const userInput = document.getElementById("user-input");
     if (!userInput) return;
     const promptText = userInput.value.trim();
     if (!promptText) return;
@@ -1553,7 +1552,8 @@ async function enviarPrompt() {
     if (typeof window.avatarPensar === "function") window.avatarPensar();
 
     try {
-        const response = await fetch(window.URL_GLOBAL_GAS || window.URL_GAS_GLOBAL, {
+        const urlDestino = window.URL_GLOBAL_GAS || window.URL_GAS_GLOBAL;
+        const response = await fetch(urlDestino, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain' },
@@ -1568,20 +1568,9 @@ async function enviarPrompt() {
         
         if (dataRespuesta.status === "success") {
             if (typeof window.avatarHablar === "function") window.avatarHablar();
-            
-            // 1. Pintamos el texto explicativo de NICO en la burbuja del chat
-            if (dataRespuesta.reply) {
-                mostrarRespuestaEnChat(dataRespuesta.reply);
-            }
-
-            if (dataRespuesta.productos) {
-                renderizarTablaInformesNico(dataRespuesta.productos);
-            }
-
-            if (dataRespuesta.swal && typeof Swal !== "undefined") {
-                Swal.fire(dataRespuesta.swal);
-            }
-            
+            if (dataRespuesta.reply) mostrarRespuestaEnChat(dataRespuesta.reply);
+            if (dataRespuesta.productos) renderizarTablaInformesNico(dataRespuesta.productos);
+            if (dataRespuesta.swal && typeof Swal !== "undefined") Swal.fire(dataRespuesta.swal);
         } else {
             mostrarRespuestaEnChat("❌ Error interno: " + (dataRespuesta.message || "Falla."));
         }
@@ -1595,10 +1584,9 @@ async function enviarPrompt() {
     }
 }
 
-// 4. ESCUCHADORES DE EVENTOS Y EFECTOS VISUALES
-if (prenderMicBtn) prenderMicBtn.addEventListener('click', alternarMicrofono);
-
+// 4. ESCUCHADORES DE EVENTOS Y EFECTOS VISUALES DINÁMICOS
 function ENCENDER_VISUAL_MIC() {
+    const prenderMicBtn = document.getElementById("btn-nico-voz");
     if (prenderMicBtn) {
         prenderMicBtn.classList.remove('text-slate-500');
         prenderMicBtn.classList.add('text-red-500', 'animate-pulse');
@@ -1607,13 +1595,30 @@ function ENCENDER_VISUAL_MIC() {
 }
 
 function APAGAR_VISUAL_MIC() {
+    const prenderMicBtn = document.getElementById("btn-nico-voz");
     if (prenderMicBtn) {
         prenderMicBtn.classList.remove('text-red-500', 'animate-pulse');
         prenderMicBtn.classList.add('text-slate-500');
     }
 }
 
-// Atajo de teclado (Alt + S) para grabar rápido
+// Inicializador seguro de eventos del DOM
+document.addEventListener("DOMContentLoaded", () => {
+    const prenderMicBtn = document.getElementById("btn-nico-voz");
+    if (prenderMicBtn) prenderMicBtn.addEventListener('click', alternarMicrofono);
+
+    const userInput = document.getElementById("user-input");
+    if (userInput) {
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                enviarPrompt();
+            }
+        });
+    }
+});
+
+// Atajo de teclado (Alt + S)
 window.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.altKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -1621,17 +1626,8 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-if (userInput) {
-    userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            enviarPrompt();
-        }
-    });
-}
-
-
 function mostrarMensajeUsuario(texto) {
+    const chatContainer = document.getElementById("chat-messages");
     if (!chatContainer) return;
     const div = document.createElement("div");
     div.className = "flex flex-col items-end message-fade mb-4 transition-all duration-500";
@@ -1646,6 +1642,7 @@ function mostrarMensajeUsuario(texto) {
 }
 
 function mostrarRespuestaEnChat(texto) {
+    const chatContainer = document.getElementById("chat-messages");
     if (!chatContainer) return;
     const div = document.createElement("div");
     div.className = "flex flex-col items-start message-fade mb-4";
@@ -1660,6 +1657,7 @@ function mostrarRespuestaEnChat(texto) {
 }
 
 function ejecutarScrollYLimpieza() {
+    const chatContainer = document.getElementById("chat-messages");
     if (!chatContainer) return;
     const mensajes = chatContainer.getElementsByClassName("message-fade");
     if (mensajes.length > 6) {
@@ -1671,7 +1669,6 @@ function ejecutarScrollYLimpieza() {
         chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     }, 50);
 }
-
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar-nico');
@@ -1690,7 +1687,6 @@ function toggleSidebar() {
     }
 }
 
-
 function renderizarTablaInformesNico(productosFiltrados) {
     const tbody = document.getElementById('tabla-informes-cuerpo');
     if (!tbody) return;
@@ -1706,13 +1702,9 @@ function renderizarTablaInformesNico(productosFiltrados) {
     }
 
     let html = "";
-
     productosFiltrados.forEach(prod => {
-        // Sanitizar nombres por las comillas
         const nombreLimpio = String(prod.nombre || prod.detalle || "").replace(/'/g, "").replace(/"/g, "");
         const alertarStock = parseInt(prod.stock || 0) <= parseInt(prod.stockMinimo || 0);
-        
-        // Verificar si el item ya estaba seleccionado previamente en el carrito global
         const yaSeleccionado = window.carritoPedidos && window.carritoPedidos.some(p => p.sku === prod.sku);
 
         html += `
@@ -1744,16 +1736,15 @@ function renderizarTablaInformesNico(productosFiltrados) {
     tbody.innerHTML = html;
 }
 
-
 function seleccionarSkusPorVoz(skusASeleccionar) {
     if (!skusASeleccionar || skusASeleccionar.length === 0) return;
     let itemsProcesados = 0;
 
     skusASeleccionar.forEach(sku => {
         const checkbox = document.getElementById(`chk-central-${sku.trim().toUpperCase()}`);
+        // OPTIMIZACIÓN: Cambiado por .click() nativo para asegurar propagación cruzada en Linux/Brave
         if (checkbox && !checkbox.checked) {
-            checkbox.checked = true;
-            checkbox.onclick(); 
+            checkbox.click(); 
             itemsProcesados++;
         }
     });
@@ -1776,12 +1767,13 @@ function seleccionarSkusPorVoz(skusASeleccionar) {
     }
 }
 
+// Lógica de ordenamiento de columnas por cabecera
 document.addEventListener("DOMContentLoaded", () => {
     const tabla = document.querySelector(".tabla-nico"); 
     if (!tabla) return;
 
     tabla.querySelectorAll("th").forEach((headerCell, index) => {
-        if (index === 0) return; // Saltamos la columna del checkbox
+        if (index === 0) return; 
         headerCell.style.cursor = "pointer";
         
         headerCell.addEventListener("click", () => {
@@ -1792,7 +1784,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (rows.length === 0 || rows[0].querySelector("td").getAttribute("colspan")) return;
 
             const isAscending = !headerCell.classList.contains("sort-asc");
-            
             tabla.querySelectorAll("th").forEach(th => th.classList.remove("sort-asc", "sort-desc"));
             
             const sortedRows = rows.sort((a, b) => {
