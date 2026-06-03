@@ -1,5 +1,5 @@
 console.log("🚀 N.I.C.O. Terminal: Iniciando carga de scripts...");
-//-------------------jsProv---
+//-------------------jsProv------------------//
 
 
 window.estadoEdicion = { esNuevo: false, fila: null };
@@ -292,61 +292,196 @@ function escapingForOption(str) {
 }
 
 /* ---SECCION DE EDICION DE TABLA PROVEEDORES--- */
-/** 
- * @param {string} nombreHoja
- * @param {number} numFila 
- * @param {string|Array} datosRaw 
- * @param {string|Array} [encabezadosRaw] 
- * @param {string} [prov] - 
- */
-function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov) {
-    window.estadoEdicion.hoja = nombreHoja;
-    window.estadoEdicion.fila = numFila;
-    
-    let datos = [];
-    let encabezados = [];
-    
+let _tablaProveedoresInstance = null;
+
+// Estructura de datos local (Encabezados internos de la isla de proveedores)
+const _ENCABEZADOS_PROVEEDORES = ['ID','RAZÓN SOCIAL','CIUDAD','DOMICILIO','TELÉFONO','EMAIL','CODIGO PROV','PROVINCIA','ACCIONES'];
+
+
+function _escapeHtmlProveedor(str) {
+    if (str === null || str === undefined) return "";
+    return str.toString()
+              .replace(/&/g, '&amp;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;');
+}
+
+function abrirModuloProveedores() {
+    const modal = document.getElementById('modal-proveedores');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        cargarTablaProveedores();
+    }
+}
+
+function cerrarModuloProveedores() {
+    const modal = document.getElementById('modal-proveedores');
+    if (modal) {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+}
+
+
+async function cargarTablaProveedores() {
+    const contenedor = document.getElementById('modal-proveedores-contenido');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = `
+    <div class="flex flex-col items-center justify-center h-64 w-full">
+        <div class="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-blue-500 font-mono text-[10px] uppercase tracking-[0.3em] animate-pulse">
+            Sincronizando: baseProveedores.DAT ...
+        </p>
+    </div>`;
+
     try {
-        datos = (typeof datosRaw === 'string') ? JSON.parse(datosRaw) : (datosRaw || []);
-        
-        if (encabezadosRaw) {
-            encabezados = (typeof encabezadosRaw === 'string') ? JSON.parse(encabezadosRaw) : encabezadosRaw;
+        const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'PROVEEDORES' });
+
+        if (res && res.status === "success" && res.reply && res.reply.success) {
+            const data = res.reply;
+            
+            contenedor.innerHTML = `
+                <div class="w-full flex justify-between items-end mb-4 px-4 pt-2">
+                    <div class="flex flex-col">
+                        <span class="text-[8px] text-blue-500/40 font-mono italic tracking-widest">FS_STREAM: baseProveedores.DAT</span>
+                        <span class="text-[14px] text-white font-black tracking-tighter uppercase">ARCHIVO MAESTRO DE PROVEEDORES</span>
+                    </div>
+                    <div class="text-[9px] text-slate-500 font-mono bg-slate-900/80 px-2 py-1 border border-slate-800/60 rounded">
+                        ÚLTIMA SYNC: <span class="text-blue-400 font-bold">${data.ultimaActualizacion || 'ONLINE'}</span>
+                    </div>
+                </div>
+                <div class="wrapper-tabla-final overflow-x-auto border border-slate-800 bg-slate-950/60 rounded-lg mx-4 mb-4">
+                    <table id="tabla-proveedores-dedicada" class="tabla-premium w-full text-left border-collapse"></table>
+                </div>`;
+
+            _renderizarTablaInternaProveedores(data.data);
+
+        } else {
+            throw new Error(res?.reply?.error || "El puente devolvió un estado inválido o vacío.");
         }
-    } catch (e) {
-        console.error("❌ N.I.C.O. Error crítico en el parseo de datos del editor:", e);
+    } catch (err) {
+        contenedor.innerHTML = `
+        <div class="p-10 text-red-500 font-mono text-center text-[10px] flex flex-col items-center justify-center gap-2">
+            <i class="fas fa-exclamation-triangle text-xl text-red-500/70 animate-bounce"></i>
+            <span class="uppercase font-bold tracking-widest text-red-400">Falla de Enlace en Nodo Proveedores</span>
+            <span class="text-slate-400 bg-red-950/30 px-4 py-2 border border-red-900/40 rounded mt-2 font-sans">${err.message}</span>
+        </div>`;
+    }
+}
+
+
+function _renderizarTablaInternaProveedores(dataset) {
+    const selector = '#tabla-proveedores-dedicada';
+
+    if (!$.fn.DataTable) {
+        console.error("Critical: DataTables library is missing from the environment.");
         return;
     }
 
-    if (!encabezados || encabezados.length === 0) {
-        const delSistema = ENCABEZADOS_SISTEMA[nombreHoja] || [];
-        encabezados = delSistema.filter(h => h.toUpperCase() !== 'ACCIONES');
+    if ($.fn.DataTable.isDataTable(selector)) {
+        $(selector).DataTable().clear().destroy();
+        $(selector).empty(); 
+    }
+    
+    let theadHtml = `
+        <thead>
+            <tr>${_ENCABEZADOS_PROVEEDORES.map(h => `<th class="text-blue-500 font-black uppercase tracking-widest text-[10px] p-4 bg-slate-950/80 border-b border-slate-800">${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody></tbody>`;
+    $(selector).html(theadHtml);
+
+    const indexAcciones = _ENCABEZADOS_PROVEEDORES.length - 1;
+    const columnDefs = _ENCABEZADOS_PROVEEDORES.map((titulo, i) => {
+        if (i === indexAcciones) {
+            return {
+                targets: i,
+                orderable: false,
+                searchable: false,
+                className: "text-center align-middle py-2 px-4 w-[120px]",
+                render: function(val, type, row, meta) {
+                    const filaIndex = meta.row + 2;
+                    const rowJson = JSON.stringify(row).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    
+                    return `
+                        <button onclick='abrirEditorProveedor(${filaIndex}, "${rowJson}")' 
+                                class='px-3 py-1 text-[9px] font-black tracking-widest bg-blue-600/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500 hover:text-slate-950 transition-all rounded-md shadow-[0_0_10px_rgba(59,130,246,0.1)] active:scale-95'>
+                            EDITAR
+                        </button>`;
+                }
+            };
+        }
+        return { 
+            targets: i, 
+            className: "p-3 dt-nowrap font-mono text-[10px] text-slate-300 border-b border-slate-900/60 align-middle",
+            defaultContent: "<span class='text-slate-700 font-sans'>---</span>"
+        };
+    });
+
+    _tablaProveedoresInstance = $(selector).DataTable({
+        data: dataset || [],
+        dom: 'rtip', 
+        language: { 
+            url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' 
+        },
+        pageLength: 15,
+        scrollX: true,
+        autoWidth: false,
+        columnDefs: columnDefs,
+        drawCallback: function() {
+            console.log(`%c⚡ ISOLATED_CORE: Vista de proveedores renderizada de manera autónoma.`, 'color: #3b82f6; font-weight: bold;');
+        }
+    });
+}
+
+
+function filtrarTablaProveedores() {
+    const inputFiltro = document.getElementById('filtro-proveedores-interno');
+    if (inputFiltro && _tablaProveedoresInstance) {
+        _tablaProveedoresInstance.search(inputFiltro.value).draw();
+    }
+}
+
+function abrirEditorProveedor(numFila, datosRaw) {
+    window.estadoEdicion = window.estadoEdicion || {};
+    window.estadoEdicion.hoja = 'baseProveedores';
+    window.estadoEdicion.fila = numFila;
+    
+    let datos = [];
+    try {
+        datos = (typeof datosRaw === 'string') ? JSON.parse(datosRaw) : (datosRaw || []);
+    } catch (e) {
+        console.error("❌ Error de contingencia: Falla al deserializar fila de proveedor:", e);
+        return;
     }
 
-    const tituloDisplay = prov || getTipoByHoja(nombreHoja);
-    
+    // Descartamos la columna "ACCIONES" del loop
+    const encabezadosForm = _ENCABEZADOS_PROVEEDORES.filter(h => h.toUpperCase() !== 'ACCIONES');
+
     let htmlForm = `
-    <div class="bg-slate-900/90 p-6 rounded-lg border border-cyan-500/35 shadow-[0_0_50px_rgba(6,182,212,0.15)] max-w-4xl mx-auto my-4 backdrop-blur-md">
+    <div class="bg-slate-900/90 p-6 rounded-lg border border-blue-500/35 shadow-[0_0_50px_rgba(59,130,246,0.15)] max-w-4xl mx-auto my-4 backdrop-blur-md">
         <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
-            <h3 class="text-cyan-400 text-xs font-black uppercase tracking-[3px] flex items-center gap-2">
-                <span class="w-1.5 h-3.5 bg-cyan-500 inline-block animate-pulse"></span>
-                MODIFICAR REGISTRO: <span class="text-white font-sans font-bold">${tituloDisplay}</span>
+            <h3 class="text-blue-400 text-xs font-black uppercase tracking-[3px] flex items-center gap-2">
+                <span class="w-1.5 h-3.5 bg-blue-500 inline-block animate-pulse"></span>
+                MODIFICAR REGISTRO: <span class="text-white font-sans font-bold">PROVEEDOR</span>
             </h3>
             <span class="text-slate-500 font-mono text-[10px] bg-slate-950 px-2 py-0.5 border border-slate-800 rounded">
                 GAS_ROW: #${numFila}
             </span>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4" id="inputs-dinamicos">`;
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4" id="inputs-proveedores-dinamicos">`;
 
-    encabezados.forEach((nombreColumna, i) => {
+    encabezadosForm.forEach((nombreColumna, i) => {
         const valor = (datos[i] !== undefined && datos[i] !== null) ? datos[i] : "";
         const nombreLower = nombreColumna.toLowerCase().trim();
         
-        const esBloqueado = ["id", "sku", "codigo", "proveedor"].some(term => {
-            return nombreLower === term || nombreLower.includes(term + " ") || nombreLower.startsWith("id_");
-        });
-        
+        // Reglas de protección de escritura locales
+        const esBloqueado = ["id", "codigo prov", "codigo"].some(term => nombreLower === term || nombreLower.startsWith("id_"));
         const inputAttr = esBloqueado ? `readonly tabindex="-1"` : "";
-        const labelClass = esBloqueado ? "text-cyan-600/60 font-mono italic" : "text-slate-400";
+        const labelClass = esBloqueado ? "text-blue-600/60 font-mono italic" : "text-slate-400";
 
         htmlForm += `
         <div class="flex flex-col space-y-1.5">
@@ -354,95 +489,74 @@ function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov
                 ${nombreColumna} ${esBloqueado ? '<i class="fas fa-lock text-[8px] ml-1 opacity-60"></i>' : ''}
             </label>
             <input type="text" 
-                   value="${escapingForOption(valor)}" 
+                   value="${_escapeHtmlProveedor(valor)}" 
                    ${inputAttr}
-                   class="input-edicion w-full bg-slate-950 border border-slate-800 p-2 text-xs text-slate-200 rounded-md transition-all duration-200
-                   ${esBloqueado ? 'opacity-40 cursor-not-allowed bg-slate-900/50 border-slate-900 text-cyan-500/70 font-mono' : 'hover:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 outline-none'}"
+                   class="input-edicion-proveedor w-full bg-slate-950 border border-slate-800 p-2 text-xs text-slate-200 rounded-md transition-all duration-200
+                   ${esBloqueado ? 'opacity-40 cursor-not-allowed bg-slate-900/50 border-slate-900 text-blue-500/70 font-mono' : 'hover:border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none'}"
                    data-columna="${nombreColumna}">
         </div>`;
     });
 
-    const accionCancelar = `typeof cerrarModal === 'function' ? cerrarModal() : abrirModal('${getTipoByHoja(nombreHoja)}')`;
-
     htmlForm += `
         </div>
         <div class="flex justify-end items-center gap-4 mt-8 pt-6 border-t border-slate-800/80">
-            <button onclick="${accionCancelar}" 
+            <button onclick="cargarTablaProveedores()" 
                     class="text-slate-500 text-[10px] font-black hover:text-red-400 transition-colors tracking-widest uppercase py-2 px-4">
                 ABORTAR
             </button>
-            <button onclick="ejecutarGuardado()" 
-                    class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 hover:text-white px-6 py-2.5 rounded-md text-[10px] font-black shadow-lg shadow-cyan-950/40 transition-all duration-200 active:scale-95 tracking-widest uppercase">
+            <button onclick="ejecutarGuardadoProveedor()" 
+                    class="bg-blue-600 hover:bg-blue-500 text-slate-950 hover:text-white px-6 py-2.5 rounded-md text-[10px] font-black shadow-lg shadow-blue-950/40 transition-all duration-200 active:scale-95 tracking-widest uppercase">
                 GUARDAR CAMBIOS
             </button>
         </div>
     </div>`;
 
-    const contenedor = document.getElementById('modal-contenido');
-    if (contenedor) {
-        contenedor.innerHTML = htmlForm;
-    } else {
-        console.error("Error de renderizado: No se halló el nodo '#modal-contenido'.");
-    }
+    const contenedor = document.getElementById('modal-proveedores-contenido');
+    if (contenedor) contenedor.innerHTML = htmlForm;
 }
 
 
-async function ejecutarGuardado() {
-    const inputs = document.querySelectorAll('.input-edicion');
+async function ejecutarGuardadoProveedor() {
+    const inputs = document.querySelectorAll('.input-edicion-proveedor');
     if (!inputs || inputs.length === 0) return;
 
     const nuevosDatos = Array.from(inputs).map(input => input.value);
-    const modalContenido = document.getElementById('modal-contenido');
-    
+    const modalContenido = document.getElementById('modal-proveedores-contenido');
     if (!modalContenido) return;
     
     const contenidoOriginal = modalContenido.innerHTML;
     
     modalContenido.innerHTML = `
     <div class="flex flex-col items-center justify-center h-64 w-full space-y-4">
-        <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-        <p class="text-cyan-500 font-mono text-[10px] uppercase tracking-[0.25em] animate-pulse">
-            Escribiendo registro en celda maestra...
+        <div class="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+        <p class="text-blue-500 font-mono text-[10px] uppercase tracking-[0.25em] animate-pulse">
+            Escribiendo registro en baseProveedores...
         </p>
     </div>`;
 
     try {
         const res = await callGoogleScript('guardarCambioServidor', {
-            nombreSheet: window.estadoEdicion.hoja,
+            nombreSheet: 'baseProveedores',
             numFila: window.estadoEdicion.fila,
             valores: nuevosDatos
         });
 
-        // Validación exhaustiva del retorno del servidor
         if (res && res.status === "success" && res.reply && res.reply.success) {
-            console.log(`%c✅ Catálogos: Fila ${window.estadoEdicion.fila} de '${window.estadoEdicion.hoja}' actualizada.`, 'color: #22c55e; font-weight: bold;');
-            
-            // Re-renderizado automático de la vista de tabla correspondiente
-            const aliasHoja = getTipoByHoja(window.estadoEdicion.hoja);
-            if (typeof abrirModal === "function") {
-                abrirModal(aliasHoja);
-            } else if (typeof cargarTablaGenerica === "function") {
-                cargarTablaGenerica(window.estadoEdicion.hoja);
-            }
-            
+            console.log(`%c✅ Catálogos: Registro de proveedor guardado con éxito y aislado de fallos.`, 'color: #3b82f6; font-weight: bold;');
+            cargarTablaProveedores(); 
         } else {
             const mensajeError = res?.reply?.mensaje || res?.reply?.error || "Respuesta vacía del servidor.";
             throw new Error(mensajeError);
         }
-
     } catch (err) {
-        console.error("❌ Fallo crítico de escritura en base de datos:", err);
+        console.error("❌ Fallo crítico de escritura encapsulado:", err);
+        alert("ERROR CRÍTICO EN NODO PROVEEDORES: " + err.message);
         
-        // Alerta al operador y restauración segura del formulario sin pérdida de las modificaciones del usuario
-        alert("ERROR EN SERVIDOR: " + err.message);
+        // Restauración local segura del formulario ante fallos de red
         modalContenido.innerHTML = contenidoOriginal;
-        
-        // Re-vinculamos los valores que el usuario ya había escrito para que no tenga que rellenar todo otra vez
-        const reInputs = modalContenido.querySelectorAll('.input-edicion');
+        const reInputs = modalContenido.querySelectorAll('.input-edicion-proveedor');
         if (reInputs && reInputs.length === nuevosDatos.length) {
-            reInputs.forEach((inp, idx) => {
-                inp.value = nuevosDatos[idx];
-            });
+            reInputs.forEach((inp, idx) => { inp.value = nuevosDatos[idx]; });
         }
     }
 }
