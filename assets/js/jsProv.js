@@ -2196,7 +2196,7 @@ async function verDetalleHistorial(idPedido) {
         return;
     }
 
-    if (subtitulo) subtitulo.innerText = `EXPEDIENTE: ${idPedido}`;
+    if (subtitulo) subtitulo.innerText = `PEDIDO: ${idPedido}`;
     
     // Loader inicial limpio directo en la zona de carga de la tabla
     contenedorTabla.innerHTML = `
