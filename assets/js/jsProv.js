@@ -1839,7 +1839,7 @@ const CONFIG_RECEPCION = {
 };
 
 window.verEstadoPedidos = async function() {
-    const workspace = document.getElementById('modal-contenido'); // Tu contenedor principal de trabajo
+    const workspace = document.getElementById('contenedor-inicial-nico');
     const tituloPantalla = document.getElementById('modal-titulo');
 
     if (!workspace) {
