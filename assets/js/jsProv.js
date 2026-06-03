@@ -1,33 +1,8 @@
 console.log("🚀 N.I.C.O. Terminal: Iniciando carga de scripts...");
 //-------------------jsProv---
 
-function cerrarModalYRegresar() {
-    // 1. Localizamos los elementos del DOM
-    const modal = document.getElementById('modal-pedidos');
-    const contenido = document.getElementById('modal-contenido');
 
-    // 2. Ocultamos el modal con las clases que ya manejas
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-
-    // 3. Limpiamos el contenido para liberar memoria y evitar "parpadeos" al reabrir
-    if (contenido) {
-        contenido.innerHTML = "";
-    }
-
-    // 4. Ejecutamos la navegación global a proveedores
-    // Esta instrucción asume que tu función navegar() ya está disponible globalmente
-    if (typeof navegar === "function") {
-        navegar('proveedores');
-    } else {
-        console.warn("La función 'navegar' no está definida.");
-    }
-}
-
-
-window.estadoEdicion = { esNuevo: false, fila: null }; // Sin 'let' para evitar el error de redodeclaración
+window.estadoEdicion = { esNuevo: false, fila: null };
 window.carritoPedidos = window.carritoPedidos || [];
 window.calidadSeleccionada = window.calidadSeleccionada || 0;
 
@@ -38,7 +13,83 @@ var currentScale = typeof currentScale !== 'undefined' ? currentScale : 1;
 window.estadoEdicion = window.estadoEdicion || { hoja: "", fila: null };
 
 
+document.addEventListener("DOMContentLoaded", () => {
+  const circles = document.querySelectorAll(".nm-circle-outer");
 
+  circles.forEach(circle => {
+    const miniCircles = circle.querySelectorAll(".nm-mini-circle");
+
+    if (miniCircles.length > 0) {
+      circle.style.cursor = "pointer";
+
+      circle.addEventListener("click", (e) => {
+        if (e.target.closest(".nm-mini-circle")) return;
+        
+        e.preventDefault();
+        circle.classList.toggle("expanded");
+      });
+
+      miniCircles.forEach(mini => {
+        mini.addEventListener("click", (e) => {
+          e.stopPropagation(); 
+          
+          mini.classList.remove("explode");
+          void mini.offsetWidth;
+          mini.classList.add("explode");
+
+          const targetModal = mini.getAttribute("data-modal");
+
+          setTimeout(() => {
+            circle.classList.remove("expanded"); 
+            
+            if (targetModal === "modal-pedidos-autoasistidos") {
+              if (typeof abrirModalPedidos === "function") {
+                abrirModalPedidos(); 
+              } else {
+                const m = document.getElementById('modal-pedidos-autoasistidos');
+                if (m) m.style.display = 'flex';
+              }
+            } else if (targetModal === "modal-pedidos") {
+              const modalManual = document.getElementById('modal-pedidos');
+              if (modalManual) modalManual.style.display = 'flex';
+            }
+          }, 400);
+        });
+      });
+
+    } else {
+      const targetSpan = circle.querySelector(".nm-circle-inner span[onclick]");
+      if (targetSpan) {
+        const originalAction = targetSpan.getAttribute("onclick");
+        targetSpan.removeAttribute("onclick");
+        circle.style.cursor = "pointer";
+
+        circle.addEventListener("click", (e) => {
+          e.preventDefault();
+          
+          circle.classList.remove("explode");
+          void circle.offsetWidth;
+          circle.classList.add("explode");
+
+          setTimeout(() => {
+            if (originalAction) {
+              const runAction = new Function(originalAction);
+              runAction();
+            }
+          }, 400);
+        });
+      }
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".nm-circle-outer")) {
+      document.querySelectorAll(".nm-circle-outer.expanded").forEach(openCircle => {
+        openCircle.classList.remove("expanded");
+      });
+    }
+  });
+});
 
 
 //-------SECCION DE APERTURA DEL MODAL Y CARGA DE TABLAS------------------------------------
@@ -64,172 +115,170 @@ async function cargarTablaGenerica(nombreHoja) {
     const contenedor = document.getElementById('modal-contenido');
     const nombreHojaReal = MAPA_HOJAS[nombreHoja] || nombreHoja;
     
-    // Loading State
+    if (!contenedor) {
+        console.error("Error crítico de UI: No se encontró el nodo '#modal-contenido'.");
+        return;
+    }
+
     contenedor.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-64">
+    <div class="flex flex-col items-center justify-center h-64 w-full">
         <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-cyan-500 font-mono text-[10px] uppercase tracking-[0.3em]">Sincronizando: ${nombreHojaReal}</p>
+        <p class="text-cyan-500 font-mono text-[10px] uppercase tracking-[0.3em] animate-pulse">
+            Sincronizando: ${nombreHojaReal} ...
+        </p>
     </div>`;
 
     try {
         const res = await callGoogleScript('get_datos_deposito', { nombreSheet: nombreHoja });
 
-        if (res && res.status === "success" && res.reply.success) {
+        if (res && res.status === "success" && res.reply && res.reply.success) {
             const data = res.reply;
             
             contenedor.innerHTML = `
-                <div class="w-full flex justify-between items-end mb-4 px-4">
+                <div class="w-full flex justify-between items-end mb-4 px-4 pt-2">
                     <div class="flex flex-col">
-                        <span class="text-[8px] text-cyan-500/40 font-mono italic">FS_STREAM: ${nombreHojaReal}</span>
-                        <span class="text-[14px] text-white font-black tracking-tighter uppercase">ARCHIVO MAESTRO</span>
+                        <span class="text-[8px] text-cyan-500/40 font-mono italic tracking-widest">FS_STREAM: ${nombreHojaReal}.DAT</span>
+                        <span class="text-[14px] text-white font-black tracking-tighter uppercase">ARCHIVO MAESTRO CENTRAL</span>
                     </div>
-                    <div class="text-[9px] text-slate-500 font-mono">
-                        ÚLTIMA SYNC: <span class="text-cyan-400">${data.ultimaActualizacion}</span>
+                    <div class="text-[9px] text-slate-500 font-mono bg-slate-900/80 px-2 py-1 border border-slate-800/60 rounded">
+                        ÚLTIMA SYNC: <span class="text-cyan-400 font-bold">${data.ultimaActualizacion || 'ONLINE'}</span>
                     </div>
                 </div>
-                <div class="wrapper-tabla-final overflow-hidden border border-slate-800 rounded-lg">
-                    <table id="tabla-maestra-generica" class="tabla-premium w-full">
+                <div class="wrapper-tabla-final overflow-x-auto border border-slate-800 bg-slate-950/60 rounded-lg mx-4 mb-4">
+                    <table id="tabla-maestra-generica" class="tabla-premium w-full text-left border-collapse">
                         </table>
                 </div>`;
 
-            renderTableNico('#tabla-maestra-generica', data.data, nombreHojaReal);
+            if (typeof renderTableNico === "function") {
+                renderTableNico('#tabla-maestra-generica', data.data, nombreHojaReal);
+            } else {
+                throw new Error("El motor core de renderizado 'renderTableNico' no está disponible.");
+            }
         } else {
-            throw new Error(res.reply?.error || "Falla en el enlace");
+            throw new Error(res?.reply?.error || "El puente devolvió un estado inválido o vacío.");
         }
     } catch (err) {
-        contenedor.innerHTML = `<div class="p-10 text-red-500 font-mono text-center text-[10px]">ERROR DE ACCESO: ${err.message}</div>`;
-    }
-}
-
-
-
-async function abrirModal_Pedidos(tipo) {
-    console.log("N.I.C.O. Dashboard - Iniciando modal:", tipo);
-    const modal = document.getElementById('modal-pedidos');
-    const contenido = document.getElementById('modal-contenido');
-    const titulo = document.getElementById('modal-titulo');
-    
-    if (!modal || !contenido || !titulo) return;
-    
-    contenido.innerHTML = "";
-    titulo.innerText = tipo;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    
-    if (tipo === 'PEDIDOS') {
-        contenido.innerHTML = `
-            <div class="p-6 text-center">
-                <h3 class="text-cyan-400 mb-4 font-bold uppercase tracking-widest text-[10px]">Identificar Proveedor para Pedido</h3>
-                <div id="selector-proveedor-container" class="flex flex-col items-center gap-4">
-                    <div class="w-8 h-8 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-                </div>
-            </div>`;
-
-        try {
-            const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'baseProveedores' });
-            
-            if (res.status === "success") {
-                const filas = res.reply.data;
-                const listaUnicos = [...new Set(filas.map(f => f[1]))].sort();
-                
-                const container = document.getElementById('selector-proveedor-container');
-                let options = listaUnicos.map(p => `<option value="${escapingForOption(p)}">${p}</option>`).join('');
-
-                container.innerHTML = `
-                    <select id="prov-seleccionado" class="bg-slate-900 border border-cyan-500/50 text-white p-2 rounded w-64 focus:border-cyan-400 outline-none text-xs font-mono">
-                        <option value="">-- SELECCIONAR PROVEEDOR --</option>
-                        ${options}
-                    </select>
-                    <div class="flex gap-3 mt-4">
-                        <button onclick="cargarProductosPorProveedor()" class="btn-accion-nico h-10 px-6 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-[10px] tracking-widest">
-                            SINCRONIZAR CATÁLOGO
-                        </button>
-                    </div>`;
-            }
-        } catch (err) {
-            console.error("Error cargando proveedores:", err);
-        }
-    } else {
-        cargarTablaGenerica(tipo); 
+        contenedor.innerHTML = `
+        <div class="p-10 text-red-500 font-mono text-center text-[10px] flex flex-col items-center justify-center gap-2">
+            <i class="fas fa-exclamation-triangle text-xl text-red-500/70 animate-bounce"></i>
+            <span class="uppercase font-bold tracking-widest text-red-400">Falla de Enlace en Nodo Central</span>
+            <span class="text-slate-400 bg-red-950/30 px-4 py-2 border border-red-900/40 rounded mt-2 font-sans">${err.message}</span>
+        </div>`;
     }
 }
 
 /**
  * Renderiza DataTables
- * @param {string} selector - El ID de la tabla (ej: '#tabla-maestra-generica')
- * @param {Array} headers - Array de strings con los títulos
- * @param {Array} data - Array de arrays con los registros
- */
+ * @param {Array} headers  */
+
+/**
+ * * @param {string} selector 
+ * @param {Array} data -
+ * @param {string} nombreHojaReal */
 
 function renderTableNico(selector, data, nombreHojaReal) {
-    if (!$.fn.DataTable) return;
-
-    // Obtener configuración de columnas
-    const columnasCabecera = ENCABEZADOS_SISTEMA[nombreHojaReal] || [];
-    if (columnasCabecera.length === 0) {
-        console.error("No se definieron encabezados para:", nombreHojaReal);
+    if (!$.fn.DataTable) {
+        console.error("Falta la biblioteca DataTables en el ecosistema.");
         return;
     }
 
-    // 1. Limpieza y Reconstrucción del DOM
+    const columnasCabecera = ENCABEZADOS_SISTEMA[nombreHojaReal] || [];
+    if (columnasCabecera.length === 0) {
+        console.error(`Estructura inválida: No se definieron encabezados para la hoja: ${nombreHojaReal}`);
+        return;
+    }
+
     if ($.fn.DataTable.isDataTable(selector)) {
-        $(selector).DataTable().destroy();
+        $(selector).DataTable().clear().destroy();
+        $(selector).empty(); 
     }
     
-    // Forzamos el THEAD para que coincida con los encabezados del sistema
-    let theadHtml = `<thead><tr>${columnasCabecera.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody></tbody>`;
+    let theadHtml = `
+        <thead>
+            <tr>${columnasCabecera.map(h => `<th class="p-4 text-left uppercase tracking-widest text-[10px]">${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody></tbody>`;
     $(selector).html(theadHtml);
 
-    // 2. Configuración de Columnas
     const indexAcciones = columnasCabecera.length - 1;
     const configDefs = columnasCabecera.map((titulo, i) => {
+        
         if (i === indexAcciones) {
             return {
                 targets: i,
                 orderable: false,
-                className: "text-center align-middle",
+                searchable: false,
+                className: "text-center align-middle py-2 px-4 w-[120px]",
                 render: function(val, type, row, meta) {
                     const filaIndex = meta.row + 2;
-                    const rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
+                    
+                    const rowJson = JSON.stringify(row).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                     
                     if (nombreHojaReal === "Historial_Compras") {
-                        return `<button onclick='verDetalleHistorial("${row[0]}")' class='btn-accion-nico bg-green-600/20 text-green-400 border-green-500/50 hover:bg-green-600 hover:text-white'>DETALLE</button>`;
+                        return `
+                            <button onclick='verDetalleHistorial("${row[0]}")' 
+                                    class='btn-accion-nico px-3 py-1 text-[9px] font-black tracking-widest bg-green-600/10 text-green-400 border border-green-500/30 hover:bg-green-500 hover:text-slate-950 transition-all rounded-md shadow-[0_0_10px_rgba(34,197,94,0.1)] active:scale-95'
+                                    aria-label='Ver expediente de compra ${row[0]}'>
+                                DETALLE
+                            </button>`;
                     }
+                    
                     if (nombreHojaReal === "Estado_Pedidos") {
-                        return `<button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' class='btn-accion-nico'>GESTIONAR</button>`;
+                        return `
+                            <button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' 
+                                    class='btn-accion-nico px-3 py-1 text-[9px] font-black tracking-widest bg-cyan-600/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500 hover:text-slate-950 transition-all rounded-md shadow-[0_0_10px_rgba(6,182,212,0.1)] active:scale-95'
+                                    aria-label='Gestionar pedido fila ${filaIndex}'>
+                                GESTIONAR
+                            </button>`;
                     }
-                    return `<button onclick='abrirEditorGenerico("${nombreHojaReal}", ${filaIndex}, "${rowJson}")' class='btn-accion-nico'>EDITAR</button>`;
+                    
+                    return `
+                        <button onclick='abrirEditorGenerico("${nombreHojaReal}", ${filaIndex}, "${rowJson}")' 
+                                class='btn-accion-nico px-3 py-1 text-[9px] font-black tracking-widest bg-amber-600/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500 hover:text-slate-950 transition-all rounded-md shadow-[0_0_10px_rgba(245,158,11,0.1)] active:scale-95'
+                                aria-label='Editar fila ${filaIndex}'>
+                            EDITAR
+                        </button>`;
                 }
             };
         }
+        
         return { 
             targets: i, 
-            className: "p-3 dt-nowrap font-mono text-[10px]",
-            defaultContent: "---"
+            className: "p-3 dt-nowrap font-mono text-[10px] text-slate-300 border-b border-slate-900/60 align-middle",
+            defaultContent: "<span class='text-slate-700 font-sans'>---</span>"
         };
     });
 
-    // 3. Inicialización
-    $(selector).DataTable({
+    const tableInstance = $(selector).DataTable({
         data: data || [],
-        dom: 'rtip',
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
+        dom: 'rtip', 
+        language: { 
+            url: 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' 
+        },
         pageLength: 15,
         scrollX: true,
         autoWidth: false,
         columnDefs: configDefs,
         headerCallback: function(thead) {
-            $(thead).find('th').addClass('text-cyan-500 font-black uppercase tracking-widest text-[10px] p-4 bg-slate-900/50');
+            $(thead).find('th').addClass('text-cyan-500 font-black uppercase tracking-widest text-[10px] p-4 bg-slate-950/80 border-b border-slate-800');
         },
         drawCallback: function() {
-            console.log(`✅ Terminal N.I.C.O: Tabla ${nombreHojaReal} lista.`);
+            console.log(`%c✅ Terminal N.I.C.O: Stream de '${nombreHojaReal}' renderizado con éxito.`, 'color: #06b6d4; font-weight: bold;');
         }
     });
+
+    window.filtrarTabla = function() {
+        const inputFiltro = document.getElementById('filtro-tabla-global');
+        if (inputFiltro && tableInstance) {
+            tableInstance.search(inputFiltro.value).draw();
+        }
+    };
 }
 
-
-
-
+/**
+ * * @param {string} hoja -
+ * @returns {string} 
+ */
 function getTipoByHoja(hoja) {
     const nombres = {
         'baseProveedores': 'PROVEEDORES',
@@ -241,82 +290,103 @@ function getTipoByHoja(hoja) {
     return nombres[hoja] || 'SISTEMA';
 }
 
+/**
+ * * @param {any} str - 
+ * @returns {string} */
 
 function escapingForOption(str) {
-    if (!str) return "";
-    return str.toString().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    if (str === null || str === undefined) return "";
+    return str.toString()
+              .replace(/&/g, '&amp;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;');
 }
-
-
-
-function cerrarModal_Pedidos() {
-    const modal = document.getElementById('modal-pedidos');
-    const contenido = document.getElementById('modal-contenido');
-    if (modal) {
-	modal.classList.add('hidden');
-	modal.classList.remove('flex');
-    }
-    if (contenido) {
-	contenido.innerHTML = "";
-    }
-}
-    
-
-
 
 /* ---SECCION DE EDICION DE TABLA PROVEEDORES--- */
+/** 
+ * @param {string} nombreHoja
+ * @param {number} numFila 
+ * @param {string|Array} datosRaw 
+ * @param {string|Array} [encabezadosRaw] 
+ * @param {string} [prov] - 
+ */
 function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov) {
-    estadoEdicion.hoja = nombreHoja;
-    estadoEdicion.fila = numFila;
+    window.estadoEdicion.hoja = nombreHoja;
+    window.estadoEdicion.fila = numFila;
     
     let datos = [];
     let encabezados = [];
     
     try {
         datos = (typeof datosRaw === 'string') ? JSON.parse(datosRaw) : (datosRaw || []);
-        encabezados = (typeof encabezadosRaw === 'string') ? JSON.parse(encabezadosRaw) : (encabezadosRaw || []);
+        
+        if (encabezadosRaw) {
+            encabezados = (typeof encabezadosRaw === 'string') ? JSON.parse(encabezadosRaw) : encabezadosRaw;
+        }
     } catch (e) {
-        console.error("❌ N.I.C.O. Error en parseo de editor:", e);
+        console.error("❌ N.I.C.O. Error crítico en el parseo de datos del editor:", e);
         return;
     }
 
-    const tituloDisplay = prov || nombreHoja;
+    if (!encabezados || encabezados.length === 0) {
+        const delSistema = ENCABEZADOS_SISTEMA[nombreHoja] || [];
+        encabezados = delSistema.filter(h => h.toUpperCase() !== 'ACCIONES');
+    }
+
+    const tituloDisplay = prov || getTipoByHoja(nombreHoja);
     
-    // Construcción del formulario
     let htmlForm = `
-    <div class="bg-slate-800 p-6 rounded border border-cyan-500/30 shadow-2xl">
-        <h3 class="text-cyan-400 mb-6 text-xs font-bold uppercase tracking-widest flex justify-between">
-            <span>MODIFICAR REGISTRO: <span class="text-white">${tituloDisplay}</span></span>
-            <span class="text-slate-500 font-mono italic">FILA #${numFila}</span>
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="inputs-dinamicos">`;
+    <div class="bg-slate-900/90 p-6 rounded-lg border border-cyan-500/35 shadow-[0_0_50px_rgba(6,182,212,0.15)] max-w-4xl mx-auto my-4 backdrop-blur-md">
+        <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
+            <h3 class="text-cyan-400 text-xs font-black uppercase tracking-[3px] flex items-center gap-2">
+                <span class="w-1.5 h-3.5 bg-cyan-500 inline-block animate-pulse"></span>
+                MODIFICAR REGISTRO: <span class="text-white font-sans font-bold">${tituloDisplay}</span>
+            </h3>
+            <span class="text-slate-500 font-mono text-[10px] bg-slate-950 px-2 py-0.5 border border-slate-800 rounded">
+                GAS_ROW: #${numFila}
+            </span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4" id="inputs-dinamicos">`;
 
     encabezados.forEach((nombreColumna, i) => {
-        const valor = datos[i] !== undefined ? datos[i] : "";
+        const valor = (datos[i] !== undefined && datos[i] !== null) ? datos[i] : "";
         const nombreLower = nombreColumna.toLowerCase().trim();
         
-        // Bloqueo de campos críticos (ID, Códigos, etc.)
-        const esBloqueado = ["id", "codigo", "sku", "proveedor"].includes(nombreLower);
+        const esBloqueado = ["id", "sku", "codigo", "proveedor"].some(term => {
+            return nombreLower === term || nombreLower.includes(term + " ") || nombreLower.startsWith("id_");
+        });
         
         const inputAttr = esBloqueado ? `readonly tabindex="-1"` : "";
-        const labelClass = esBloqueado ? "text-cyan-600/50" : "text-slate-500";
+        const labelClass = esBloqueado ? "text-cyan-600/60 font-mono italic" : "text-slate-400";
 
         htmlForm += `
-        <div class="space-y-1">
-            <label class="text-[9px] uppercase font-semibold ${labelClass}">${nombreColumna}</label>
+        <div class="flex flex-col space-y-1.5">
+            <label class="text-[9px] uppercase font-bold tracking-wider ${labelClass}">
+                ${nombreColumna} ${esBloqueado ? '<i class="fas fa-lock text-[8px] ml-1 opacity-60"></i>' : ''}
+            </label>
             <input type="text" 
-                   value="${valor}" 
+                   value="${escapingForOption(valor)}" 
                    ${inputAttr}
-                   class="input-edicion w-full bg-slate-950 border border-slate-700 p-2 text-xs text-white rounded focus:border-cyan-500 outline-none transition-all ${esBloqueado ? 'opacity-50 cursor-not-allowed bg-slate-900' : 'hover:border-slate-600'}">
+                   class="input-edicion w-full bg-slate-950 border border-slate-800 p-2 text-xs text-slate-200 rounded-md transition-all duration-200
+                   ${esBloqueado ? 'opacity-40 cursor-not-allowed bg-slate-900/50 border-slate-900 text-cyan-500/70 font-mono' : 'hover:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 outline-none'}"
+                   data-columna="${nombreColumna}">
         </div>`;
     });
 
+    const accionCancelar = `typeof cerrarModal === 'function' ? cerrarModal() : abrirModal('${getTipoByHoja(nombreHoja)}')`;
+
     htmlForm += `
         </div>
-        <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-700/50">
-            <button onclick="cerrarModal()" class="text-slate-500 text-[10px] font-bold hover:text-white transition-colors tracking-widest">CANCELAR</button>
-            <button onclick="ejecutarGuardado()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded text-[10px] font-bold shadow-lg shadow-cyan-900/20 transition-transform active:scale-95 tracking-widest">
-                CONFIRMAR CAMBIOS
+        <div class="flex justify-end items-center gap-4 mt-8 pt-6 border-t border-slate-800/80">
+            <button onclick="${accionCancelar}" 
+                    class="text-slate-500 text-[10px] font-black hover:text-red-400 transition-colors tracking-widest uppercase py-2 px-4">
+                ABORTAR
+            </button>
+            <button onclick="ejecutarGuardado()" 
+                    class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 hover:text-white px-6 py-2.5 rounded-md text-[10px] font-black shadow-lg shadow-cyan-950/40 transition-all duration-200 active:scale-95 tracking-widest uppercase">
+                GUARDAR CAMBIOS
             </button>
         </div>
     </div>`;
@@ -324,54 +394,69 @@ function abrirEditorGenerico(nombreHoja, numFila, datosRaw, encabezadosRaw, prov
     const contenedor = document.getElementById('modal-contenido');
     if (contenedor) {
         contenedor.innerHTML = htmlForm;
+    } else {
+        console.error("Error de renderizado: No se halló el nodo '#modal-contenido'.");
     }
 }
 
 
-
 async function ejecutarGuardado() {
     const inputs = document.querySelectorAll('.input-edicion');
+    if (!inputs || inputs.length === 0) return;
+
     const nuevosDatos = Array.from(inputs).map(input => input.value);
     const modalContenido = document.getElementById('modal-contenido');
     
-    // Guardamos el estado previo por si hay que volver atrás ante un error
+    if (!modalContenido) return;
+    
     const contenidoOriginal = modalContenido.innerHTML;
     
-    // UI: Loader con estética Terminal N.I.C.O.
     modalContenido.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-full py-10 space-y-4">
-        <div class="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-cyan-500 font-bold animate-pulse text-[10px] uppercase tracking-widest">
-            Sincronizando con Base de Datos...
+    <div class="flex flex-col items-center justify-center h-64 w-full space-y-4">
+        <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
+        <p class="text-cyan-500 font-mono text-[10px] uppercase tracking-[0.25em] animate-pulse">
+            Escribiendo registro en celda maestra...
         </p>
     </div>`;
 
     try {
-        // --- MIGRACIÓN A FETCH API ---
-        // Llamamos a 'guardarCambioServidor' a través de nuestro puente callGoogleScript
         const res = await callGoogleScript('guardarCambioServidor', {
-            nombreSheet: estadoEdicion.hoja,
-            numFila: estadoEdicion.fila,
+            nombreSheet: window.estadoEdicion.hoja,
+            numFila: window.estadoEdicion.fila,
             valores: nuevosDatos
         });
 
-        // Verificamos la respuesta (res.reply es lo que devuelve la función de GAS)
-        if (res && res.status === "success" && res.reply.success) {
-            console.log("✅ Cambio impactado con éxito.");
+        // Validación exhaustiva del retorno del servidor
+        if (res && res.status === "success" && res.reply && res.reply.success) {
+            console.log(`%c✅ Catálogos: Fila ${window.estadoEdicion.fila} de '${window.estadoEdicion.hoja}' actualizada.`, 'color: #22c55e; font-weight: bold;');
             
-            // Refrescamos el modal con la tabla actualizada
-            abrirModal(getTipoByHoja(estadoEdicion.hoja));
+            // Re-renderizado automático de la vista de tabla correspondiente
+            const aliasHoja = getTipoByHoja(window.estadoEdicion.hoja);
+            if (typeof abrirModal === "function") {
+                abrirModal(aliasHoja);
+            } else if (typeof cargarTablaGenerica === "function") {
+                cargarTablaGenerica(window.estadoEdicion.hoja);
+            }
             
         } else {
-            const mensajeError = res.reply ? res.reply.mensaje : "Error desconocido";
+            const mensajeError = res?.reply?.mensaje || res?.reply?.error || "Respuesta vacía del servidor.";
             throw new Error(mensajeError);
         }
 
     } catch (err) {
-        console.error("❌ Fallo en el guardado:", err);
+        console.error("❌ Fallo crítico de escritura en base de datos:", err);
         
-        alert("Fallo de conexión o servidor: " + err.message);
+        // Alerta al operador y restauración segura del formulario sin pérdida de las modificaciones del usuario
+        alert("ERROR EN SERVIDOR: " + err.message);
         modalContenido.innerHTML = contenidoOriginal;
+        
+        // Re-vinculamos los valores que el usuario ya había escrito para que no tenga que rellenar todo otra vez
+        const reInputs = modalContenido.querySelectorAll('.input-edicion');
+        if (reInputs && reInputs.length === nuevosDatos.length) {
+            reInputs.forEach((inp, idx) => {
+                inp.value = nuevosDatos[idx];
+            });
+        }
     }
 }
 
@@ -379,18 +464,101 @@ async function ejecutarGuardado() {
 
 
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
+/** @param {string} tipo - Tipo de flujo. Si es 'PEDIDOS' activa el flujo manual. */
+
+async function abrirModal_Pedidos(tipo) {
+    console.log(`%c📦 Terminal N.I.C.O: Inicializando canal de pedido -> [${tipo}]`, 'color: #06b6d4; font-weight: bold;');
+    
+    const modal = document.getElementById('modal-pedidos');
+    const contenido = document.getElementById('modal-contenido');
+    const titulo = document.getElementById('modal-titulo');
+    
+    if (!modal || !contenido || !titulo) {
+        console.error("Error estructural: No se encontraron los elementos del modal de pedidos.");
+        return;
+    }
+    
+    contenido.innerHTML = "";
+    titulo.innerText = tipo;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    if (tipo === 'PEDIDOS') {
+        contenido.innerHTML = `
+            <div class="p-8 text-center flex flex-col items-center justify-center min-h-[250px] w-full">
+                <h3 class="text-cyan-500 mb-4 font-mono font-bold uppercase tracking-[0.2em] text-[11px] animate-pulse">
+                    IDENTIFICANDO PROVEEDORES HOMOLOGADOS
+                </h3>
+                <div id="selector-proveedor-container" class="flex flex-col items-center gap-4 mt-2">
+                    <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
+                </div>
+            </div>`;
+
+        try {
+            const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'baseProveedores' });
+            
+            if (res && res.status === "success" && res.reply && res.reply.data) {
+                const filas = res.reply.data;
+                
+                const listaUnicos = [...new Set(filas.map(f => f[1]).filter(p => p && p.trim() !== ""))].sort();
+                
+                const container = document.getElementById('selector-proveedor-container');
+                if (!container) return;
+
+                let options = listaUnicos.map(p => `<option value="${escapingForOption(p)}">${p}</option>`).join('');
+
+                container.innerHTML = `
+                    <div class="flex flex-col space-y-4 items-center">
+                        <select id="prov-seleccionado" 
+                                class="bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-lg w-72 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 outline-none text-xs font-mono transition-all">
+                            <option value="">-- SELECCIONAR PROVEEDOR --</option>
+                            ${options}
+                        </select>
+                        <div class="flex gap-3 mt-2">
+                            <button onclick="cargarProductosPorProveedor()" 
+                                    class="btn-accion-nico h-10 px-6 bg-cyan-600/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500 hover:text-slate-950 rounded-md font-black text-[10px] tracking-widest transition-all uppercase duration-200 active:scale-95 shadow-[0_0_15px_rgba(6,182,212,0.05)]">
+                                SINCRONIZAR CATÁLOGO
+                            </button>
+                        </div>
+                    </div>`;
+            } else {
+                throw new Error("No se recibieron registros de proveedores desde la nube.");
+            }
+        } catch (err) {
+            console.error("❌ Error cargando proveedores en modal:", err);
+            const container = document.getElementById('selector-proveedor-container');
+            if (container) {
+                container.innerHTML = `<span class="text-red-500 font-mono text-[10px] uppercase">FALLA DE ENLACE: ${err.message}</span>`;
+            }
+        }
+    } else {
+        if (typeof cargarTablaGenerica === "function") {
+            cargarTablaGenerica(tipo);
+        }
+    }
+}
+
 async function cargarProductosPorProveedor() {
     const selector = document.getElementById('prov-seleccionado');
     const prov = selector ? selector.value.trim() : "";
     const contenedor = document.getElementById('modal-contenido');
 
-    if (!prov) return Swal.fire('AVISO', 'Selecciona un proveedor', 'info');
+    if (!contenedor) return;
+    if (!prov) {
+        if (window.Swal) {
+            Swal.fire('AVISO DEL SISTEMA', 'Por favor, selecciona un proveedor válido de la lista maestro.', 'info');
+        } else {
+            alert("AVISO: Selecciona un proveedor");
+        }
+        return;
+    }
 
-    // Estado de carga visual N.I.C.O.
     contenedor.innerHTML = `
-        <div class="flex flex-col items-center py-20">
-            <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p class="text-[12px] text-cyan-500 uppercase tracking-widest animate-pulse">Sincronizando Catálogo...</p>
+        <div class="flex flex-col items-center justify-center py-20 w-full space-y-4">
+            <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
+            <p class="text-[10px] text-cyan-500 font-mono uppercase tracking-[0.3em] animate-pulse">
+                Descargando catálogo indexado de: ${prov}...
+            </p>
         </div>`;
 
     try {
@@ -399,67 +567,84 @@ async function cargarProductosPorProveedor() {
             proveedorFiltro: prov 
         });
 
-        console.log("Respuesta completa del servidor:", res);
-
         if (!res || res.status !== "success") {
-            throw new Error(res ? res.message : "Sin respuesta del servidor");
+            throw new Error(res ? res.message || "Falla en estructura de respuesta" : "Sin respuesta del servidor central.");
         }
 
         const lista = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
 
         if (lista.length > 0) {
+            window.carritoPedidos = window.carritoPedidos || [];
+
             let tablaHtml = `
-                <div class="mb-4 p-3 bg-slate-900 border border-slate-700 rounded-lg flex justify-between items-center sticky top-0 z-10 shadow-xl">
-                    <div id="contador-items" class="text-[11px] text-slate-400 uppercase">
-                        Items seleccionados: <span class="text-cyan-400 font-bold">${window.carritoPedidos ? window.carritoPedidos.length : 0}</span>
+                <div class="mb-4 p-4 bg-slate-900/90 border border-slate-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-20 backdrop-blur shadow-xl mx-2">
+                    <div id="contador-items" class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">
+                        Items en orden: <span class="text-cyan-400 font-bold bg-slate-950 px-2 py-1 rounded border border-slate-800/80">${window.carritoPedidos.length}</span>
                     </div>
-                    <button onclick="revisarPedido()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[12px] font-bold px-4 py-2 rounded transition-colors uppercase">
+                    
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" id="buscador-productos" onkeyup="filtrarProductosMain()" 
+                               placeholder="FILTRAR PRODUCTOS..." 
+                               class="w-full bg-slate-950 border border-slate-800 p-2 pl-3 text-[10px] text-white rounded-md font-mono focus:border-cyan-500 outline-none placeholder-slate-600 transition-colors">
+                    </div>
+
+                    <button onclick="revisarPedido()" 
+                            class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 hover:text-white text-[10px] font-black tracking-widest px-5 py-2.5 rounded-md transition-all uppercase duration-200 active:scale-95 w-full sm:w-auto">
                         REVISAR PEDIDO →
                     </button>
                 </div>
-                <div class="overflow-x-auto border border-cyan-900/20 rounded">
-                    <table id="tabla-maestra-pedidos" class="tabla-premium">
+                
+                <div class="overflow-x-auto border border-slate-900 bg-slate-950/40 rounded-xl mx-2 mb-4">
+                    <table id="tabla-maestra-pedidos" class="tabla-premium w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-950 text-cyan-500 uppercase">
-                                <th class="p-3 text-center">SEL.</th>
-                                <th class="p-3">ID</th>
-                                <th class="p-3">PRODUCTO</th>
-                                <th class="p-3">CÓDIGO</th>
-                                <th class="p-3">STOCK</th>
-                                <th class="p-3">COSTO</th>
-                                <th class="p-3">STOCK MÍN.</th>
+                            <tr class="bg-slate-950/80 text-cyan-500 border-b border-slate-800 text-[10px] font-black uppercase tracking-wider">
+                                <th class="p-4 text-center w-[60px]">SEL.</th>
+                                <th class="p-4 w-[80px]">ID</th>
+                                <th class="p-4">PRODUCTO</th>
+                                <th class="p-4 w-[120px]">CÓDIGO</th>
+                                <th class="p-4 w-[100px]">STOCK ACTUAL</th>
+                                <th class="p-4 w-[110px]">COSTO UNIT.</th>
+                                <th class="p-4 w-[100px] text-center">STOCK MÍN.</th>
                             </tr>
                         </thead>
-                        <tbody id="body-pedidos" class="divide-y divide-cyan-900/10 text-slate-300">`;
+                        <tbody id="body-pedidos" class="divide-y divide-slate-900/40 text-slate-300 font-mono text-[10px]">`;
 
             lista.forEach(prod => {
+                const idStr = String(prod.id || "").trim();
                 const nombreLimpio = String(prod.nombre || "").replace(/'/g, "").replace(/"/g, "");
-                const alertarStock = parseInt(prod.stock) <= parseInt(prod.stockMinimo);
+                const skuLimpio = String(prod.sku || "").trim();
+                const precioNum = parseFloat(prod.precio || 0);
+                const stockNum = parseInt(prod.stock || 0);
+                const stockMinNum = parseInt(prod.stockMinimo || 0);
+
+                const alertarStock = stockNum <= stockMinNum;
                 
-                // Generamos las celdas exactas para que coincidan con el thead (7 columnas ahora)
+                const yaSeleccionado = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
+                const checkedAttr = yaSeleccionado ? "checked" : "";
+
                 tablaHtml += `
-                    <tr class="hover:bg-cyan-500/5 transition-colors">
-                        <td class="p-3 text-center">
-                            <input type="checkbox" class="w-4 h-4 accent-cyan-500 cursor-pointer" 
-                                onclick="toggleSeleccion(this, '${prod.id}', '${nombreLimpio}', '${prod.precio}', '${prod.sku}', '${prod.stock}', '${prov}', '${prod.stockMinimo}')">
+                    <tr class="hover:bg-cyan-500/5 transition-colors duration-150 ${yaSeleccionado ? 'bg-cyan-950/10' : ''}">
+                        <td class="p-4 text-center">
+                            <input type="checkbox" ${checkedAttr}
+                                   class="w-4 h-4 accent-cyan-500 rounded border-slate-800 bg-slate-900 cursor-pointer shadow-sm transition-transform active:scale-90" 
+                                   onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${escapingForOption(prov)}', '${stockMinNum}')">
                         </td>
-                        <td class="p-3 text-slate-500">${prod.id}</td>
-                        <td class="p-3">
-                            <b class="text-slate-200">${prod.nombre}</b>
+                        <td class="p-4 text-slate-500 font-bold">${idStr}</td>
+                        <td class="p-4 font-sans">
+                            <b class="text-slate-200 tracking-tight block text-[11px]">${prod.nombre || "SIN NOMBRE"}</b>
                         </td>
-                        <td class="p-3 text-cyan-700 font-bold">${prod.sku}</td>
-                        <td class="p-3 ${alertarStock ? 'text-red-500 font-bold animate-pulse' : 'text-slate-400'}">
-                            ${prod.stock}
+                        <td class="p-4 text-cyan-600/80 font-bold">${skuLimpio || "---"}</td>
+                        <td class="p-4 ${alertarStock ? 'text-red-400 font-black animate-pulse bg-red-950/10' : 'text-slate-400'}">
+                            ${stockNum}
                         </td>
-                        <td class="p-3 text-slate-300">$ ${prod.precio}</td>
-                        <td class="p-3 text-slate-500 text-center">${prod.stockMinimo}</td>
+                        <td class="p-4 text-emerald-400 font-bold">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                        <td class="p-4 text-slate-500 text-center">${stockMinNum}</td>
                     </tr>`;
             });
 
             tablaHtml += `</tbody></table></div>`;
             contenedor.innerHTML = tablaHtml;
 
-            // Inicialización de DataTables
             if (window.jQuery && $.fn.DataTable) {
                 setTimeout(() => {
                     if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
@@ -468,37 +653,57 @@ async function cargarProductosPorProveedor() {
                     $('#tabla-maestra-pedidos').DataTable({
                         "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
                         "pageLength": 10,
-                        "dom": 'rtip',
-                        "order": [[2, "asc"]]
+                        "dom": 'rtip', 
+                        "order": [[2, "asc"]],
+                        "autoWidth": false,
+                        "columnDefs": [
+                            { "targets": 0, "orderable": false } 
+                        ]
                     });
-                }, 50);
+                }, 40);
             }
 
         } else {
             contenedor.innerHTML = `
-                <div class="p-10 text-center">
-                    <p class="text-amber-500 uppercase font-bold italic text-xs tracking-widest">Catálogo Vacío</p>
-                    <p class="text-slate-500 text-[10px] mt-2">No se encontraron productos para "${prov}"</p>
+                <div class="p-12 text-center border border-slate-800 rounded-xl bg-slate-950/40 m-2">
+                    <p class="text-amber-500 uppercase font-mono font-bold text-[10px] tracking-[0.25em]">Catálogo No Encontrado</p>
+                    <p class="text-slate-500 text-[10px] mt-2 font-sans">No hay asignación de insumos activos para la entidad "${prov}" en baseProductos.</p>
                 </div>`;
         }
 
     } catch (err) {
-        console.error("Error en proceso:", err);
+        console.error("❌ Error en compilación de catálogo dirigido:", err);
         contenedor.innerHTML = `
-            <div class="p-10 text-red-500 text-xs text-center uppercase font-mono border border-red-900/20 bg-red-900/5">
-                Error de sincronización:<br>${err.message}
+            <div class="p-8 text-red-500 text-[10px] text-center uppercase font-mono border border-red-900/30 bg-red-950/20 rounded-xl mx-2">
+                CRITICAL_SYNC_ERROR:<br><span class="text-slate-300 block mt-2 normal-case font-sans">${err.message}</span>
             </div>`;
     }
 }
 
 
 function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, stockMinimo) {
+    window.carritoPedidos = window.carritoPedidos || [];
+    
+    const idFiltro = String(id).trim();
+    const trPadre = checkbox.closest('tr');
+
     if (checkbox.checked) {
-        if (!carritoPedidos.find(p => p.id === id)) {
-            carritoPedidos.push({ id, nombre, sku, precio: parseFloat(precio), stock, stockMinimo, proveedor, cantidad: 1 });
+        if (!window.carritoPedidos.some(p => String(p.id).trim() === idFiltro)) {
+            window.carritoPedidos.push({ 
+                id: idFiltro, 
+                nombre: nombre, 
+                sku: sku, 
+                precio: parseFloat(precio || 0), 
+                stock: parseInt(stock || 0), 
+                stockMinimo: parseInt(stockMinimo || 0), 
+                proveedor: proveedor, 
+                cantidad: 1 
+            });
         }
+        if (trPadre) trPadre.classList.add('bg-cyan-950/10');
     } else {
-        carritoPedidos = carritoPedidos.filter(p => p.id !== id);
+        window.carritoPedidos = window.carritoPedidos.filter(p => String(p.id).trim() !== idFiltro);
+        if (trPadre) trPadre.classList.remove('bg-cyan-950/10');
     }
     actualizarContadorVisual();
 }
@@ -507,163 +712,220 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
 function actualizarContadorVisual() {
     const contador = document.getElementById('contador-items');
     if (contador) {
-        contador.innerHTML = `Items seleccionados: <span class="text-cyan-400 font-bold">${carritoPedidos.length}</span>`;
+        const totalItems = window.carritoPedidos ? window.carritoPedidos.length : 0;
+        contador.innerHTML = `Items en orden: <span class="text-cyan-400 font-bold bg-slate-950 px-2 py-1 rounded border border-slate-800/80">${totalItems}</span>`;
     }
 }
-
 
 
 function filtrarProductosMain() {
     const input = document.getElementById("buscador-productos");
     if (!input) return;
-    const filter = input.value.toUpperCase();
     
-    // AJUSTE: Ahora busca la tabla del modal o la maestra según cuál esté presente
-    const tabla = document.getElementById("tabla-pedidos-filtrada") || document.getElementById("tabla-maestra-pedidos");
-    if (!tabla) return;
+    const filtroText = input.value;
+    
+    if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
+        $('#tabla-maestra-pedidos').DataTable().search(filtroText).draw();
+    } else {
+        const tabla = document.getElementById("tabla-pedidos-filtrada") || document.getElementById("tabla-maestra-pedidos");
+        if (!tabla) return;
 
-    const tbody = tabla.getElementsByTagName("tbody")[0];
-    const filas = tbody.getElementsByTagName("tr");
-
-    for (let i = 0; i < filas.length; i++) {
-        let visible = false;
-        const celdas = filas[i].getElementsByTagName("td");
+        const tbody = tabla.getElementsByTagName("tbody")[0];
+        if (!tbody) return;
         
-        // Empezamos en j=1 para no filtrar por el checkbox de la columna SEL
-        for (let j = 1; j < celdas.length; j++) {
-            const txtValue = celdas[j].textContent || celdas[j].innerText;
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                visible = true;
-                break;
+        const filas = tbody.getElementsByTagName("tr");
+        const normalizado = filtroText.toUpperCase();
+
+        for (let i = 0; i < filas.length; i++) {
+            let visible = false;
+            const celdas = filas[i].getElementsByTagName("td");
+            
+            for (let j = 1; j < celdas.length; j++) {
+                const textValue = celdas[j].textContent || celdas[j].innerText;
+                if (textValue.toUpperCase().indexOf(normalizado) > -1) {
+                    visible = true;
+                    break;
+                }
             }
+            filas[i].style.display = visible ? "" : "none";
         }
-        filas[i].style.display = visible ? "" : "none";
     }
 }
 
+
+function cerrarModal_Pedidos() {
+    const modal = document.getElementById('modal-pedidos');
+    const contenido = document.getElementById('modal-contenido');
+    const paginaPrincipal = document.getElementById('page-principal-depos');
+
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    if (contenido) {
+        contenido.innerHTML = "";
+    }
+
+    if (paginaPrincipal) {
+        paginaPrincipal.style.display = 'flex';
+    }
+
+    if (typeof navegar === "function") {
+        navegar('proveedores');
+    } else {
+        console.warn("La función global 'navegar' no está configurada en este ecosistema.");
+    }
+}
 
 
 /*------ ARMADO Y CONFIRMACION DEL PEDIDO ----*/
 
 async function revisarPedido() {
-    if (carritoPedidos.length === 0) {
-        Swal.fire({ title: 'CARRITO VACÍO', text: "Selecciona productos primero.", icon: 'info', background: '#0f172a', color: '#fff' });
+    window.carritoPedidos = window.carritoPedidos || [];
+    
+    if (window.carritoPedidos.length === 0) {
+        if (window.Swal) {
+            Swal.fire({ 
+                title: 'CARRITO VACÍO', 
+                text: "Debes seleccionar al menos un producto para confeccionar una orden.", 
+                icon: 'info', 
+                background: '#0f172a', 
+                color: '#f1f5f9',
+                confirmButtonColor: '#0ea5e9'
+            });
+        } else {
+            alert("CARRITO VACÍO: Selecciona productos primero.");
+        }
         return;
     }
 
     const contenido = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
+    if (!contenido || !titulo) return;
     
-    // 1. Obtener proveedores
     let proveedoresHTML = "";
     try {
         const listaProv = (typeof listaProveedoresCache !== 'undefined' && listaProveedoresCache.length > 0) 
                         ? listaProveedoresCache 
                         : await obtenerProveedoresParaSelector();
         
-        const provOriginal = carritoPedidos[0].proveedor;
+        const provOriginal = window.carritoPedidos[0].proveedor;
         
         proveedoresHTML = listaProv.map(p => 
-            `<option value="${p}" ${p === provOriginal ? 'selected' : ''}>${p}</option>`
+            `<option value="${escapingForOption(p)}" ${p === provOriginal ? 'selected' : ''}>${p}</option>`
         ).join('');
-    } catch (e) { console.error("Error al cargar proveedores", e); }
+    } catch (e) { 
+        console.error("❌ N.I.C.O. Error al compilar selector final de proveedores:", e); 
+    }
 
     const ahora = new Date();
-    const idPedido = "PED-" + ahora.getFullYear() + (ahora.getMonth() + 1).toString().padStart(2, '0') + ahora.getDate() + "-" + ahora.getHours() + ahora.getMinutes();
+    const idPedido = "PED-" + ahora.getFullYear() + 
+                     (ahora.getMonth() + 1).toString().padStart(2, '0') + 
+                     ahora.getDate().toString().padStart(2, '0') + "-" + 
+                     ahora.getHours().toString().padStart(2, '0') + 
+                     ahora.getMinutes().toString().padStart(2, '0');
 
-    titulo.innerText = "CONFECCIÓN DE PEDIDO: " + idPedido;
+    titulo.innerHTML = `CONFECCIÓN DE PEDIDO: <span class="text-white font-mono">${idPedido}</span>`;
 
     let html = `
-        <div class="p-4 bg-slate-900/50 rounded-lg border border-cyan-500/20 mb-4 w-full shadow-inner">
+        <div class="p-4 bg-slate-900/90 rounded-xl border border-slate-800 mb-4 w-full shadow-2xl mx-1">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4 text-xs items-center">
                 <div>
-                    <span class="text-slate-500 uppercase text-[9px]">ID OPERACIÓN:</span><br>
-                    <span class="text-cyan-400 font-mono font-bold">${idPedido}</span>
+                    <span class="text-slate-500 uppercase text-[9px] font-bold tracking-wider">ID OPERACIÓN:</span><br>
+                    <span class="text-cyan-400 font-mono font-bold tracking-tight">${idPedido}</span>
                 </div>
                 
                 <div class="col-span-2">
-                    <label class="text-cyan-500 block mb-1 uppercase text-[10px] font-black tracking-tighter">Remitir Pedido a:</label>
+                    <label class="text-cyan-500 block mb-1 uppercase text-[9px] font-black tracking-wider">Remitir Pedido a:</label>
                     <select id="cambiar-proveedor-final" onchange="actualizarProveedorCarrito(this.value)"
-                            class="w-full bg-slate-950 border border-cyan-500/30 text-white rounded p-1.5 font-bold focus:border-cyan-400 outline-none transition-all">
-                        ${proveedoresHTML || `<option>${carritoPedidos[0].proveedor}</option>`}
+                            class="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-md p-2 font-mono text-[11px] font-bold focus:border-cyan-500 outline-none transition-all">
+                        ${proveedoresHTML || `<option value="${escapingForOption(window.carritoPedidos[0].proveedor)}">${window.carritoPedidos[0].proveedor}</option>`}
                     </select>
                 </div>
 
                 <div>
-                    <label class="text-cyan-500 block mb-1 uppercase text-[10px]">Plazo Entrega:</label>
-                    <div class="flex items-center gap-1">
-                        <input type="number" id="tiempo-estimado" min="1" value="3" 
-                               class="w-full bg-slate-800 border border-slate-700 text-white rounded p-1 text-center font-bold outline-none focus:ring-1 focus:ring-cyan-500">
-                        <span class="text-[9px] text-slate-500">DÍAS</span>
+                    <label class="text-cyan-500 block mb-1 uppercase text-[9px] font-black tracking-wider">Plazo Entrega:</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="tiempo-estimated" min="1" value="3" 
+                               class="w-16 bg-slate-950 border border-slate-800 text-cyan-400 rounded-md p-1.5 text-center font-mono font-bold outline-none focus:border-cyan-500">
+                        <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">DÍAS</span>
                     </div>
                 </div>
 
-                <div class="col-span-2 flex gap-2 justify-end">
-                    <button onclick="volverAListaProductos()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded font-bold text-[9px] uppercase tracking-widest transition-all">← EDITAR</button>
-                    <button onclick="prepararEnvioPedido('${idPedido}')" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded font-bold text-[9px] uppercase tracking-widest shadow-lg shadow-green-900/30 transition-all">ENVIAR ORDEN</button>
+                <div class="col-span-2 flex gap-3 justify-end mt-2 md:mt-0">
+                    <button onclick="volverAListaProductos()" 
+                            class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-md font-black text-[10px] uppercase tracking-widest transition-all border border-slate-700/60 active:scale-95">
+                        ← EDITAR LISTA
+                    </button>
+                    <button onclick="prepararEnvioPedido('${idPedido}')" 
+                            class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 hover:text-white px-5 py-2 rounded-md font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-950/40 transition-all active:scale-95">
+                        CONFIRMAR Y ENVIAR
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="wrapper-tabla-final border border-slate-800 rounded-lg overflow-hidden">
+        <div class="border border-slate-900 rounded-xl overflow-hidden mx-1 bg-slate-950/20">
             <table class="w-full text-left border-collapse table-fixed"> 
                 <thead>
-                    <tr class="bg-slate-950 sticky top-0 border-b border-slate-700 text-cyan-500 text-[10px] uppercase z-10">
+                    <tr class="bg-slate-950 text-cyan-500 border-b border-slate-800 text-[9px] font-black uppercase tracking-wider z-10">
                         <th class="p-3 w-1/4">Item / Detalle</th> 
                         <th class="p-3 text-center w-[12%]">Stock Act.</th> 
                         <th class="p-3 text-center w-[12%]">Stock Mín.</th> 
-                        <th class="p-3 text-center w-[15%]">Cantidad</th> 
+                        <th class="p-3 text-center w-[16%]">Cantidad</th> 
                         <th class="p-3 text-right w-[15%]">Costo Unit.</th> 
                         <th class="p-3 text-right w-[15%]">Subtotal</th> 
-                        <th class="p-3 text-center w-[6%] text-red-500 font-black">X</th> 
+                        <th class="p-3 text-center w-[6%] text-red-500"></th> 
                     </tr>
                 </thead>
-                <tbody class="bg-slate-900/20">`;
+                <tbody class="divide-y divide-slate-900/50 font-mono text-[11px]">`;
 
-    carritoPedidos.forEach((item, index) => {
+    window.carritoPedidos.forEach((item, index) => {
         const subtotal = item.precio * item.cantidad;
-        const alertaStock = parseInt(item.stock) <= parseInt(item.stockMinimo);
+        const alertaStock = parseInt(item.stock || 0) <= parseInt(item.stockMinimo || 0);
         
         html += `
-            <tr class="border-b border-slate-800 text-xs hover:bg-cyan-500/5 transition-colors">
-                <td class="p-3">
-                    <div class="text-slate-200 font-bold truncate">${item.nombre}</div>
-                    <div class="text-[9px] text-cyan-700 font-mono tracking-tighter">${item.sku}</div>
-                </td>
-                <td class="p-3 text-center font-mono">
-                    <div class="${alertaStock ? 'text-red-500 font-black animate-pulse' : 'text-slate-400'}">${item.stock}</div>
-                </td>
-                <td class="p-3 text-center text-slate-500 font-mono">
-                    ${item.stockMinimo}
-                </td>
-                <td class="p-3">
-                    <input type="number" min="1" value="${item.cantidad}" 
-                           onchange="actualizarCantidadCarrito(${index}, this.value)"
-                           class="w-full bg-slate-950 border border-slate-800 text-cyan-400 text-center rounded p-1 outline-none font-bold focus:border-cyan-500">
-                </td>
-                <td class="p-3 text-right text-slate-400 font-mono">
-                    $${item.precio.toLocaleString('es-AR')}
-                </td>
-                <td class="p-3 text-right text-white font-bold font-mono" id="subtotal-${index}">
-                    $${subtotal.toLocaleString('es-AR')}
+            <tr class="border-b border-slate-900 text-xs hover:bg-cyan-500/5 transition-colors duration-150">
+                <td class="p-3 font-sans">
+                    <div class="text-slate-200 font-bold truncate text-[11px]">${item.nombre}</div>
+                    <div class="text-[9px] text-cyan-700 font-mono tracking-tighter mt-0.5">${item.sku}</div>
                 </td>
                 <td class="p-3 text-center">
-                    <button onclick="eliminarDelPedido(${index})" class="text-slate-700 hover:text-red-500 transition-transform hover:scale-110">
-                         <i class="fi fi-ss-trash"></i>
+                    <span class="${alertaStock ? 'text-red-400 font-black px-1.5 py-0.5 rounded bg-red-950/20 animate-pulse border border-red-900/30' : 'text-slate-400'}">${item.stock}</span>
+                </td>
+                <td class="p-3 text-center text-slate-500">
+                    ${item.stockMinimo}
+                </td>
+                <td class="p-3 text-center flex justify-center items-center min-h-[50px]">
+                    <input type="number" min="1" value="${item.cantidad}" 
+                           onchange="actualizarCantidadCarrito(${index}, this.value)"
+                           class="w-20 bg-slate-950 border border-slate-800 text-cyan-400 text-center rounded-md p-1 outline-none font-bold focus:border-cyan-500">
+                </td>
+                <td class="p-3 text-right text-slate-400">
+                    $${item.precio.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                </td>
+                <td class="p-3 text-right text-slate-200 font-bold" id="subtotal-${index}">
+                    $${subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                </td>
+                <td class="p-3 text-center">
+                    <button onclick="eliminarDelPedido(${index})" class="text-slate-600 hover:text-red-400 transition-all transform hover:scale-110 p-1">
+                        ✕
                     </button>
                 </td>
             </tr>`;
     });
 
     html += `</tbody></table></div>
-        <div class="mt-4 p-4 bg-slate-950/80 border border-cyan-900/30 rounded-lg flex justify-between items-center w-full shadow-2xl">
+        
+        <div class="mt-4 p-4 bg-slate-950 border border-slate-800 rounded-xl flex justify-between items-center w-full shadow-2xl mx-1">
             <div>
-                <span class="text-slate-500 text-[9px] uppercase tracking-widest font-bold">Inversión Estimada</span>
-                <div id="total-pedido-confirmar" class="text-2xl text-cyan-400 font-black leading-none mt-1 tracking-tighter">$0</div>
+                <span class="text-slate-500 text-[9px] uppercase tracking-widest font-black block">Inversión Bruta Estimada</span>
+                <div id="total-pedido-confirmar" class="text-2xl text-cyan-400 font-black leading-none mt-1.5 tracking-tight">$ 0,00</div>
             </div>
-            <div class="text-right text-[9px] text-slate-700 font-mono uppercase">
-                Status: Awaiting confirmation<br>
-                N.I.C.O. V2.0 - LEXTECH INTERFACE
+            <div class="text-right text-[9px] text-slate-600 font-mono uppercase tracking-wider leading-relaxed hidden sm:block">
+                Status: Awaiting Operator Signature<br>
+                N.I.C.O. V2.0 - COMPILER SECURE
             </div>
         </div>`;
 
@@ -673,66 +935,87 @@ async function revisarPedido() {
 
 
 // --- FUNCIÓN DE ELIMINACIÓN ---
+/** @param {number} index - Índice absoluto del artículo en la matriz carritoPedidos. */
+
 function eliminarDelPedido(index) {
+    if (!window.Swal) {
+        if (confirm("¿Quitar este producto del pedido?")) {
+            ejecutarBajaItemCarrito(index);
+        }
+        return;
+    }
+
     Swal.fire({
         title: '¿QUITAR PRODUCTO?',
-        text: "Se eliminará este item de la lista de confección.",
+        text: "Se eliminará este ítem de la lista de confección actual.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#334155',
-        confirmButtonText: 'SÍ, ELIMINAR',
+        cancelButtonColor: '#1e293b',
+        confirmButtonText: 'SÍ, RETIRAR',
+        cancelButtonText: 'ABORTAR',
         background: '#0f172a',
         color: '#f1f5f9'
     }).then((result) => {
         if (result.isConfirmed) {
-            carritoPedidos.splice(index, 1);
-            // Si el carrito queda vacío, cerramos el modal o volvemos atrás
-            if (carritoPedidos.length === 0) {
-                volverAListaProductos();
-            } else {
-                revisarPedido(); // Refrescamos la tabla de revisión
-            }
-            actualizarContadorVisual();
+            ejecutarBajaItemCarrito(index);
         }
     });
 }
+function ejecutarBajaItemCarrito(index) {
+    window.carritoPedidos.splice(index, 1);
+    if (window.carritoPedidos.length === 0) {
+        volverAListaProductos();
+    } else {
+        revisarPedido();
+    }
+    if (typeof actualizarContadorVisual === "function") actualizarContadorVisual();
+}
 
+
+/** @param {string} idPedido - Identificador único alfanumérico generado para la transacción. */
 
 function prepararEnvioPedido(idPedido) {
-    const inputDias = document.getElementById('tiempo-estimado');
+    const inputDias = document.getElementById('tiempo-estimated');
     const dias = inputDias ? parseInt(inputDias.value) : 0;
+    
     if (isNaN(dias) || dias <= 0) {
-        Swal.fire('ATENCIÓN', 'Por favor, ingresa una estimación de días válida.', 'warning');
+        if (window.Swal) {
+            Swal.fire('ATENCIÓN LOGÍSTICA', 'Por favor, ingresa una estimación de días válida y mayor a cero.', 'warning');
+        } else {
+            alert("ATENCIÓN: Ingresa una estimación de días válida.");
+        }
         return;
     }
     
     ejecutarGeneracionPedido(idPedido, dias);
 }
 
-
 async function obtenerProveedoresParaSelector() {
     try {
         const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'baseProveedores' });
-        // Asumiendo que la columna 1 es el nombre del proveedor
-        const lista = res.reply.data.map(fila => fila[1]);
-        return [...new Set(lista)]; // Eliminamos duplicados
+        if (res && res.status === "success" && res.reply && res.reply.data) {
+            const lista = res.reply.data.map(fila => fila[1]).filter(p => p && p.trim() !== "");
+            return [...new Set(lista)].sort();
+        }
+        throw new Error("Estructura de datos vacía");
     } catch (e) {
-        return [carritoPedidos[0].proveedor]; // Fallback al original
+        console.warn("⚠️ Fallback activado para selector de proveedores:", e);
+        return window.carritoPedidos && window.carritoPedidos.length > 0 
+            ? [window.carritoPedidos[0].proveedor] 
+            : [];
     }
 }
 
 
-
 function actualizarCantidadCarrito(index, valor) {
     const cant = Math.max(1, parseInt(valor) || 1);
-    if (carritoPedidos[index]) {
-        carritoPedidos[index].cantidad = cant;
-        const subtotal = carritoPedidos[index].precio * cant;
+    if (window.carritoPedidos && window.carritoPedidos[index]) {
+        window.carritoPedidos[index].cantidad = cant;
+        const subtotal = window.carritoPedidos[index].precio * cant;
         const celdaSubtotal = document.getElementById(`subtotal-${index}`);
         if (celdaSubtotal) {
-            // Usamos formato moneda local
-            celdaSubtotal.innerText = "$" + subtotal.toLocaleString('es-AR');
+            celdaSubtotal.innerText = "$" + subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 });
         }
         calcularTotalConfirmacion();
     }
@@ -741,39 +1024,45 @@ function actualizarCantidadCarrito(index, valor) {
 
 
 function calcularTotalConfirmacion() {
-    const total = carritoPedidos.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+    if (!window.carritoPedidos) return;
+    const total = window.carritoPedidos.reduce((acc, item) => acc + (item.precio * (item.cantidad || 1)), 0);
     const display = document.getElementById('total-pedido-confirmar');
     if (display) {
-        display.innerText = "$" + total.toLocaleString('es-AR', {minimumFractionDigits: 2});
-        display.classList.add('animate-pulse');
-        setTimeout(() => display.classList.remove('animate-pulse'), 500);
+        display.innerText = "$ " + total.toLocaleString('es-AR', { minimumFractionDigits: 2 });
     }
 }
 
 
 
 async function ejecutarGeneracionPedido(idPedido, dias) {
-    // 1. Mostrar bloqueo de pantalla N.I.C.O.
+    if (!window.Swal) return alert("Procesando orden...");
+
     Swal.fire({
         title: 'PROCESANDO ORDEN',
-        html: '<div class="text-cyan-500 font-mono text-[10px]">Sincronizando con Google Cloud & Actualizando ...</div>',
+        html: `
+            <div class="flex flex-col items-center justify-center p-4 space-y-3">
+                <div class="w-8 h-8 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
+                <div class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest animate-pulse">Sincronizando estructuras con Google Cloud...</div>
+            </div>`,
         background: '#0f172a',
-        color: '#fff',
+        color: '#f1f5f9',
         allowOutsideClick: false,
+        showConfirmButton: false,
         didOpen: () => { Swal.showLoading(); }
     });
 
     try {
-        // 2. Preparar el paquete de datos
+        const proveedorFinalInput = document.getElementById('cambiar-proveedor-final');
+        const proveedorFinal = proveedorFinalInput ? proveedorFinalInput.value : window.carritoPedidos[0].proveedor;
+
         const payload = {
             idPedido: idPedido,
             diasEntrega: dias,
-            items: carritoPedidos,
-            proveedorFinal: document.getElementById('cambiar-proveedor-final').value,
-            fechaActualizacion: new Date().toLocaleString('es-AR') // Esto irá a J2
+            items: window.carritoPedidos,
+            proveedorFinal: proveedorFinal,
+            fechaActualizacion: new Date().toLocaleString('es-AR')
         };
 
-        // 3. Llamada al servidor usando tu puente unificado
         const res = await callGoogleScript('procesarPedidoFinal', payload);
 
         if (res && res.status === "success") {
@@ -781,33 +1070,47 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
                 icon: 'success',
                 title: '¡ORDEN CONFIRMADA!',
                 html: `
-                    <div class="text-slate-300 text-sm mb-4">La operación <b>${idPedido}</b> ha sido registrada.</div>
-                    <a href="${res.url || '#'}" target="_blank" 
-                       class="inline-block bg-cyan-600 text-white px-6 py-2 rounded font-bold text-xs hover:bg-cyan-500 transition-all">
-                       DESCARGAR PDF DE ORDEN
-                    </a>`,
+                    <div class="text-slate-300 text-xs mb-4 font-sans">
+                        La operación de compra <b class="text-cyan-400 font-mono">${idPedido}</b> ha sido impactada con éxito.
+                    </div>
+                    ${res.url ? `
+                    <a href="${res.url}" target="_blank" 
+                       class="inline-block bg-cyan-600 text-slate-950 hover:text-white px-5 py-2.5 rounded-md font-black text-[10px] tracking-widest uppercase transition-all shadow-md shadow-cyan-950/50 hover:bg-cyan-500">
+                        DESCARGAR PDF DE ORDEN
+                    </a>` : ''}`,
                 background: '#0f172a',
-                color: '#fff',
-                confirmButtonColor: '#0ea5e9'
+                color: '#f1f5f9',
+                confirmButtonColor: '#0ea5e9',
+                confirmButtonText: 'ENTENDIDO'
             });
 
-            // Limpieza y cierre
-            carritoPedidos = [];
+            // Purgado completo y restauración limpia de las vistas del sistema
+            window.carritoPedidos = [];
             if (typeof actualizarContadorVisual === "function") actualizarContadorVisual();
-            document.getElementById('page-principal-depos').classList.add('hidden'); // ACÁ CAMBIAR TAMBIÉN MODAL//
+            
+            // Resolución del modal y redirección controlada por interfaz nativa
+            if (typeof cerrarModal_Pedidos === "function") {
+                cerrarModal_Pedidos();
+            } else {
+                const modal = document.getElementById('modal-pedidos');
+                if (modal) modal.classList.add('hidden');
+                const pagPrincipal = document.getElementById('page-principal-depos');
+                if (pagPrincipal) pagPrincipal.style.display = 'flex';
+            }
             
         } else {
-            throw new Error(res.message || "Error desconocido en el servidor");
+            throw new Error(res?.message || "La pasarela de Google Apps Script rechazó el paquete de datos.");
         }
 
     } catch (err) {
-        console.error("Falla en generación:", err);
+        console.error("❌ Fallo crítico en la persistencia del pedido:", err);
         Swal.fire({
             icon: 'error',
             title: 'FALLA DE COMUNICACIÓN',
-            text: 'No se pudo registrar el pedido: ' + err.message,
+            text: 'No se pudo guardar el registro en las celdas maestras: ' + err.message,
             background: '#0f172a',
-            color: '#fff'
+            color: '#f1f5f9',
+            confirmButtonColor: '#ef4444'
         });
     }
 }
@@ -815,1296 +1118,109 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
 
 
 function volverAListaProductos() {
-    cargarProductosPorProveedor();
+    if (!document.getElementById('prov-seleccionado') && window.carritoPedidos && window.carritoPedidos.length > 0) {
+        const provActivo = window.carritoPedidos[0].proveedor;
+        const fakeInput = document.createElement('input');
+        fakeInput.id = 'prov-seleccionado';
+        fakeInput.value = provActivo;
+        fakeInput.type = 'hidden';
+        document.body.appendChild(fakeInput);
+        
+        cargarProductosPorProveedor();
+        
+        fakeInput.remove();
+    } else {
+        abrirModal_Pedidos('PEDIDOS');
+    }
 }
 
 
 function actualizarProveedorCarrito(nuevoProveedor) {
-    if (carritoPedidos.length > 0) {
-        // Actualizamos el proveedor en todos los items del carrito
-        carritoPedidos.forEach(item => {
+    if (window.carritoPedidos && window.carritoPedidos.length > 0) {
+        window.carritoPedidos.forEach(item => {
             item.proveedor = nuevoProveedor;
         });
         
-        // Opcional: Podrías disparar una pequeña notificación visual en la consola N.I.C.O.
-        console.log(`%c N.I.C.O. > Destinatario re-asignado: ${nuevoProveedor}`, "color: #00f2ff");
+        console.log(`%c 🛰️ N.I.C.O. Logística > Mutación de Destino: ${nuevoProveedor}`, "color: #00f2ff; font-weight: bold;");
         
-        // Si quieres que el título del modal cambie dinámicamente:
         const titulo = document.getElementById('modal-titulo');
-        if(titulo) titulo.innerText = titulo.innerText.split('|')[0] + " | DEST: " + nuevoProveedor;
-    }
-}
-
-
-
-/*----------------------------------- FUNCIONES DEL MODAL RECEPCIÓN---------------------------------*/
-async function abrirRecepcion(datos, fila) {
-    const idPedido = String(datos[0]).trim();
-    const modal = document.getElementById('modalRecepcion');
-    
-    document.getElementById('recepcionID').value = idPedido;
-    document.getElementById('recepcionFila').value = fila;
-
-    const modalInterno = document.querySelector('#modalRecepcion > div');
-    if (modalInterno) modalInterno.className = "modal-recep-content"; 
-
-    document.getElementById('resumenPedido').innerHTML = `
-    <div class="flex justify-between items-center w-full">
-        <div>
-            <h2 class="text-cyan-400 font-bold text-xs uppercase tracking-widest">ORDEN: ${idPedido}</h2>
-            <p class="text-[10px] text-slate-500 uppercase">${datos[2]}</p>
-        </div>
-        <div class="text-right">
-            <p class="text-cyan-500 font-bold text-xs">$${Number(datos[5]).toLocaleString()}</p>
-            <p class="text-[9px] text-orange-500 uppercase">Arribo: ${datos[6] || '---'}</p>
-        </div>
-    </div>`;
-
-    const contenedor = document.getElementById('contenedorItemsRecepcion');
-    contenedor.innerHTML = `<div class="py-20 text-center text-cyan-500 text-[10px] animate-pulse">SOLICITANDO DESGLOSE A N.I.C.O...</div>`;
-
-    modal.style.setProperty('display', 'flex', 'important');
-    document.body.style.overflow = 'hidden';
-
-    cambiarModoGestion('RECIBIDO'); 
-
-    try {
-        const res = await callGoogleScript('obtenerItemsPedido', { idPedido: idPedido });
-        
-        if (res.status === "success" && res.reply.success) {
-            renderizarItemsDesgloseEspecial(res.reply.items, 'contenedorItemsRecepcion');
-            const titulo = document.getElementById('recepcionTitulo');
-            if(titulo) titulo.focus();
-        } else {
-            throw new Error(res.message || res.reply.error);
+        if (titulo) {
+            const baseTitulo = titulo.innerText.split('|')[0].trim();
+            titulo.innerHTML = `${baseTitulo} | <span class="text-cyan-400 font-sans font-bold">DEST: ${nuevoProveedor}</span>`;
         }
-    } catch (err) {
-        console.error("Error al cargar items:", err);
-        contenedor.innerHTML = `<div class="text-red-500 text-[10px] p-4 text-center">ERROR AL CARGAR ITEMS: ${err.message}</div>`;
-    }
-}
-    
-
-
-function renderizarItemsDesgloseEspecial(items, idContenedor) {
-    const contenedor = document.getElementById(idContenedor);
-    let html = `
-    <table class="w-full text-[11px] border-collapse mb-4">
-        <thead class="sticky top-0 bg-[#0f172a] z-30 shadow-md">
-            <tr class="text-left text-slate-500 border-b border-cyan-900/50">
-                <th class="p-3 uppercase">SKU / Producto</th>
-                <th class="p-3 text-center uppercase">Pedida</th>
-                <th class="p-3 text-right uppercase">Recibida</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-800">`;
-
-    items.forEach(item => {
-        html += `
-        <tr class="hover:bg-cyan-500/5">
-            <td class="p-3">
-                <div class="font-mono text-cyan-400">${item.sku || 'N/A'}</div>
-                <div class="text-[10px] text-slate-400 uppercase leading-tight">${item.nombre}</div>
-            </td>
-            <td class="p-3 text-center text-white font-mono font-bold">${item.cantidadPedida}</td>
-            <td class="p-3 text-right">
-                <input type="number" class="input-recibido-item w-20 bg-slate-950 border border-slate-700 rounded p-1 text-right text-cyan-400 font-bold outline-none" 
-                        data-sku="${item.sku}" 
-                        data-original="${item.cantidadPedida}" 
-                        data-nombre="${item.nombre}" value="${item.cantidadPedida}"                        
-                        oninput="recalcularPorcentajeDesdeItems()">
-            </td>
-        </tr>`;
-    });
-
-    html += `</tbody></table>`;
-    contenedor.innerHTML = html;
-    
-    // Ejecutamos el cálculo una vez al cargar para que empiece en 100% (o lo que corresponda)
-    recalcularPorcentajeDesdeItems();
-}
-    
-
-
-function recalcularPorcentajeDesdeItems() {
-    const inputs = document.querySelectorAll('.input-recibido-item');
-    let totalPedido = 0;
-    let totalRecibido = 0;
-
-    inputs.forEach(input => {
-        // Obtenemos los valores de los atributos data-original y el value actual
-        const pedido = parseFloat(input.getAttribute('data-original')) || 0;
-        const recibido = parseFloat(input.value) || 0;
-        
-        totalPedido += pedido;
-        totalRecibido += recibido;
-    });
-
-    if (totalPedido === 0) return;
-
-    // Cálculo del porcentaje
-    let porcentaje = Math.round((totalRecibido / totalPedido) * 100);
-    
-    // Limitar a 100 para evitar que pedidos excedentes rompan la métrica
-    if (porcentaje > 100) porcentaje = 100;
-
-    // Actualizar el Slider y el Texto visualmente
-    const slider = document.getElementById('inputPorcentaje');
-    const display = document.getElementById('valorPorcentaje');
-    
-    if (slider) slider.value = porcentaje;
-    if (display) display.innerText = porcentaje + "%";
-}
-    
-
-
-async function confirmarGestionFinal() {
-    const btn = document.getElementById('btnConfirmarGestion');
-    
-    const listaInputs = document.querySelectorAll('.input-recibido-item');
-    let itemsRecibidos = [];
-    listaInputs.forEach(input => {
-        itemsRecibidos.push({
-            sku: input.getAttribute('data-sku') || "",
-            nombre: input.getAttribute('data-nombre') || "",
-            cantidadRecibida: parseFloat(input.value) || 0,
-            cantidadPedida: parseFloat(input.dataset.original) || 0
-        });
-    });
-
-    const config = {
-        idPedido: document.getElementById('recepcionID').value,
-        filaEstado: document.getElementById('recepcionFila').value,
-        accion: document.getElementById('accionActual').value,
-        porcentaje: document.getElementById('inputPorcentaje').value,
-        calidad: typeof calidadSeleccionada !== 'undefined' ? calidadSeleccionada : 0,
-        observaciones: document.getElementById('inputObservaciones').value.trim(),
-        esCausaProveedor: document.getElementById('inputCausa') ? document.getElementById('inputCausa').value === 'proveedor' : false,
-        nuevaFecha: document.getElementById('inputNuevaFecha') ? document.getElementById('inputNuevaFecha').value : "",
-        itemsRecibidos: itemsRecibidos 
-    };
-
-    if (config.accion === 'REPROGRAMADO' && !config.nuevaFecha) {
-        Swal.fire({ title: 'FECHA REQUERIDA', text: 'Indique la nueva fecha.', icon: 'warning' });
-        return;
-    }
-
-    btn.innerText = "PROCESANDO...";
-    btn.disabled = true;
-
-    try {
-        const res = await callGoogleScript('gestionarEstadoPedidoServidor', config);
-        
-        if (res.status === "success" && res.reply.success) {
-            cerrarModalRecepcion();
-            Swal.fire({ title: 'ÉXITO', text: 'Pedido impactado.', icon: 'success', timer: 1500, showConfirmButton: false })
-            .then(() => verEstadoPedidos());
-        } else {
-            throw new Error(res.message || res.reply.error);
-        }
-    } catch (err) {
-        Swal.fire({ title: 'ERROR', text: err.message, icon: 'error' });
-        btn.innerText = "CONFIRMAR"; 
-        btn.disabled = false;
-    }
-}
-    
-
-function setCalidad(valor) {
-    calidadSeleccionada = valor;
-    document.getElementById('inputCalidad').value = valor;
-    
-    // Feedback visual: iluminar estrellas
-    const estrellas = document.querySelectorAll('.btn-star');
-    estrellas.forEach((estrella, index) => {
-        if (index < valor) {
-            estrella.style.color = "#eee346"; // Cian activo
-            estrella.style.textShadow = "0 0 10px #a41721";
-        } else {
-            estrella.style.color = "#2499d8"; // Apagado
-            estrella.style.textShadow = "none";
-        }
-    });
-}
-
-async function verEstadoPedidos() {
-    const modal = document.getElementById('page-principal-depos'); //--- ACÁ CAMBIAR EL MODAL AL QUE APUNTA---//
-    const contenedor = document.getElementById('modal-contenido');
-    const titulo = document.getElementById('modal-titulo');
-
-    titulo.innerText = "GESTIÓN DE RECEPCIÓN";
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    // Loader N.I.C.O.
-    contenedor.innerHTML = `<div class="flex flex-col items-center justify-center py-20">
-        <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p class="text-cyan-500 animate-pulse font-mono text-xs uppercase tracking-widest">Sincronizando Recepciones...</p>
-    </div>`;
-
-    try {
-        const res = await callGoogleScript('obtenerTablaGenerica', { tipo: 'RECEPCION' });
-        
-        if (res.status === "success" && res.reply.success) {
-            const data = res.reply;
-            
-            // Construimos la estructura de la tabla (igual que en cargarTablaGenerica)
-            const nombreHojaReal = 'Estado_Pedidos';
-            const columnasCabecera = ENCABEZADOS_SISTEMA[nombreHojaReal] || [];
-
-            contenedor.innerHTML = `
-                <div class="wrapper-tabla-final px-4">
-                    <table id="tabla-maestra-generica" class="tabla-premium w-full">
-                        <thead>
-                            <tr>${columnasCabecera.map(h => `<th>${h}</th>`).join('')}</tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>`;
-
-            // Llamamos al render de DataTables
-            renderTableNico('#tabla-maestra-generica', data.data, nombreHojaReal);
-            
-        } else {
-            throw new Error(res.reply.error || "Error desconocido");
-        }
-    } catch (err) {
-        contenedor.innerHTML = `<div class="p-4 text-red-400 text-xs font-mono">ERROR: ${err.message}</div>`;
     }
 }
 
 
-function cambiarModoGestion(modo) {
-    document.getElementById('accionActual').value = modo;
-
-    const secRecibido = document.getElementById('section-RECIBIDO');
-    const btnFinal = document.getElementById('btnConfirmarGestion');
-    const inputObs = document.getElementById('inputObservaciones');
-    const wrapperCausa = document.getElementById('wrapper-causa-cancelacion');
-    const footer = document.querySelector('.sect-footer');
-
-    switch (modo) {
-        case 'RECIBIDO':
-            if (secRecibido) secRecibido.style.display = 'block';
-            if (wrapperCausa) wrapperCausa.classList.add('hidden'); 
-            
-            btnFinal.innerText = "PROCESAR RECEPCIÓN";
-            btnFinal.style.background = "#22c55e"; 
-            btnFinal.style.borderColor = "#16a34a";
-            inputObs.placeholder = "Notas de la recepción (opcional)...";
-            break;
-
-        case 'REPROGRAMADO':
-            if (secRecibido) secRecibido.style.display = 'none';
-            if (wrapperCausa) wrapperCausa.classList.add('hidden'); 
-            
-            btnFinal.innerText = "CONFIRMAR REPROGRAMACIÓN";
-            btnFinal.style.background = "#eab308";
-            btnFinal.style.borderColor = "#ca8a04";
-            inputObs.value = ""; 
-            inputObs.placeholder = "Esperando selección de fecha...";
-            solicitarFechaReprogramacion();
-            break;
-
-        case 'CANCELADO':
-            if (secRecibido) secRecibido.style.display = 'none';
-            if (wrapperCausa) wrapperCausa.classList.remove('hidden'); 
-            
-            btnFinal.innerText = "CONFIRMAR ANULACIÓN";
-            btnFinal.style.background = "#ef4444"; 
-            btnFinal.style.borderColor = "#dc2626";
-            inputObs.placeholder = "MOTIVO DE CANCELACIÓN OBLIGATORIO...";
-            inputObs.focus(); 
-            break;
-    }
-    if (footer) {
-        footer.style.pointerEvents = 'none';
-    }
-        console.log("🛠️ N.I.C.O. Terminal: Modo cambiado a " + modo);
-}
-
-function cerrarModalRecepcion() {
-    const modal = document.getElementById('modalRecepcion');
-    const titulo = document.getElementById('recepcionTitulo');
-    const tabsModo = document.querySelector('.modal-body-recep .flex.gap-4');
-    const footerAction = document.getElementById('section-footer');
-    const obs = document.getElementById('inputObservaciones');
-
-    if (titulo) titulo.innerText = "GESTIÓN DE RECEPCIÓN";
-    if (tabsModo) tabsModo.classList.remove('hidden');
-    if (footerAction) footerAction.style.display = 'flex';
-    if (obs) {
-        obs.disabled = false;
-        obs.value = "";
-    }
-
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-    
-    const mainContent = document.getElementById('content');
-    if (mainContent) mainContent.removeAttribute('inert');
-}
-
-async function solicitarFechaReprogramacion() {
-    const mainContent = document.getElementById('content');
-    if (mainContent) mainContent.removeAttribute('aria-hidden');
-
-    const { value: fecha, dismiss } = await Swal.fire({
-        title: 'REPROGRAMAR ARRIBO',
-        input: 'date',
-        inputLabel: '¿Cuándo llegará el pedido?',
-        background: '#0f172a',
-        color: '#fff',
-        confirmButtonColor: '#eab308',
-        showCancelButton: true,
-        cancelButtonText: 'VOLVER',
-        returnFocus: false,
-        
-         didOpen: () => {
-            const container = Swal.getContainer();
-            if (container) {
-                container.style.zIndex = '30000'; 
-            }
-        }
-    });
-
-    if (fecha) {
-        let inputF = document.getElementById('inputNuevaFecha');
-        if (!inputF) {
-            inputF = document.createElement('input');
-            inputF.type = 'hidden';
-            inputF.id = 'inputNuevaFecha';
-            document.getElementById('formRecepcion').appendChild(inputF);
-        }
-        inputF.value = fecha;
-
-        const display = document.getElementById('display-fecha-reprogramada');
-        if (display) display.innerText = fecha.split('-').reverse().join('/');
-
-        document.getElementById('inputObservaciones').value = `REPROGRAMADO PARA EL: ${fecha}`;
-        console.log("✅ Fecha asignada:", fecha);
-    }
-}
-
-
-
-/*--------------SECCION HISTORIAL-----------------------*/
-
-async function verDetalleHistorial(idPedido) {
-    const modal = document.getElementById('modalDetalleHistorial');
-    const contenedor = document.getElementById('contenedorItemsHistorial');
-    const subtitulo = document.getElementById('historialSubtitulo');
-    
-    // Preparar UI
-    subtitulo.innerText = `EXPEDIENTE: ${idPedido}`;
-    contenedor.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-12">
-            <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest italic">Accediendo al archivo central...</p>
-        </div>`;
-    
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-
-    try {
-        const res = await callGoogleScript('obtenerItemHistorial', { idPedido: idPedido });
-        
-        if (res.status === "success" && res.reply.success) {
-            const data = res.reply;
-            
-            // 1. Construir Cabecera de Datos Maestros
-            let html = `
-            <div class="grid grid-cols-2 gap-3 p-4 mb-4 bg-slate-950/50 border border-slate-800 rounded-lg text-[10px]">
-                <div class="space-y-2">
-                    <div>
-                        <p class="text-slate-500 uppercase text-[8px] font-bold">Proveedor / Origen</p>
-                        <p class="text-cyan-400 font-bold uppercase">${data.info.proveedor}</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 uppercase text-[8px] font-bold">Estatus Final</p>
-                        <span class="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">${data.info.estatus}</span>
-                    </div>
-                </div>
-                <div class="space-y-2 text-right">
-                    <div>
-                        <p class="text-slate-500 uppercase text-[8px] font-bold">Registro / Cierre</p>
-                        <p class="text-slate-300 font-mono">${data.info.fechaPedido} <span class="text-slate-600">>></span> ${data.info.fechaRecepcion}</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 uppercase text-[8px] font-bold">Performance</p>
-                        <p class="text-yellow-500">${data.info.calidad} <span class="text-slate-400 ml-2 font-mono">${data.info.cumplimiento}</span></p>
-                    </div>
-                </div>
-                <div class="col-span-2 pt-2 border-t border-slate-800/50">
-                    <p class="text-slate-500 uppercase text-[8px] font-bold">Observaciones de Gestión</p>
-                    <p class="text-slate-400 italic">"${data.info.observaciones}"</p>
-                </div>
-            </div>`;
-
-            // 2. Tabla de Desglose de Inversión
-            html += `
-            <div class="overflow-hidden rounded border border-slate-800">
-                <table class="w-full text-[11px] border-collapse">
-                    <thead>
-                        <tr class="bg-slate-900/80 text-slate-500 text-left border-b border-slate-800">
-                            <th class="p-2 uppercase text-[8px] font-black">Descripción del Ítem</th>
-                            <th class="p-2 uppercase text-[8px] font-black text-right">Inversión Final</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-800/30">`;
-
-            let totalInversion = 0;
-            data.items.forEach((item) => {
-                totalInversion += item.inversion;
-                html += `
-                <tr class="hover:bg-cyan-500/5 transition-colors">
-                    <td class="p-2 text-slate-300">
-                        <span class="text-cyan-900 mr-2 font-mono">▸</span>${item.producto}
-                    </td>
-                    <td class="p-2 text-right text-white font-mono">$${item.inversion.toLocaleString()}</td>
-                </tr>`;
-            });
-
-            html += `
-                    </tbody>
-                    <tfoot>
-                        <tr class="bg-cyan-500/5 border-t border-cyan-500/20">
-                            <td class="p-2 text-cyan-500 font-bold uppercase text-[9px]">Total Invertido</td>
-                            <td class="p-2 text-right text-cyan-400 font-bold font-mono">$${totalInversion.toLocaleString()}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>`;
-
-            contenedor.innerHTML = html;
-
-        } else {
-            throw new Error(res.reply.error || "No se pudo recuperar la información.");
-        }
-    } catch (err) {
-        console.error("Error Historial:", err);
-        contenedor.innerHTML = `
-            <div class="p-10 text-center">
-                <div class="text-red-500 mb-2">⚠️</div>
-                <p class="text-red-400 uppercase text-[10px] font-mono">${err.message}</p>
-            </div>`;
-    }
-}
-
-function cerrarModalHistorial() {
-    document.getElementById('modalDetalleHistorial').style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
-function renderizarTablaItemsHistorial(items) {
-    let html = `<table class="w-full text-left text-[11px] border-collapse">
-        <thead>
-            <tr class="bg-slate-900 border-b border-slate-800">
-                <th class="p-2 text-cyan-500 font-bold">PRODUCTO</th>
-                <th class="p-2 text-cyan-500 font-bold text-center">CANT.</th>
-                <th class="p-2 text-cyan-500 font-bold text-right">PRECIO UNIT.</th>
-                <th class="p-2 text-cyan-500 font-bold text-right">SUBTOTAL</th>
-            </tr>
-        </thead>
-        <tbody>`;
-
-    items.forEach(item => {
-        const subtotal = (item.cantidad * item.precio) || 0;
-        html += `
-        <tr class="border-b border-slate-900 hover:bg-white/5">
-            <td class="p-2 text-slate-300">${item.nombre}</td>
-            <td class="p-2 text-center text-white font-mono">${item.cantidad}</td>
-            <td class="p-2 text-right text-slate-400">$${Number(item.precio).toLocaleString()}</td>
-            <td class="p-2 text-right text-cyan-400 font-bold">$${subtotal.toLocaleString()}</td>
-        </tr>`;
-    });
-
-    html += `</tbody></table>`;
-    document.getElementById('contenedorItemsHistorial').innerHTML = html;
-}
-
-
-
-/*-------------------SECCION DATOS SEMANALES------------------------------*/
-
-let navegacionSemanal = {
-    semanaActual: null,
-    diaActual: null
-};
-
-function abrirModalReportes() {
-    const modal = document.getElementById('modal-reportes-lex');
-    console.log("🚀 Módulo de Reportes Semanales cargado correctamente."); //Acá
-
-    if (modal) modal.style.display = 'flex';
-}
-
-function cerrarModalReportes() {
-    const modal = document.getElementById('modal-reportes-lex');
-    if (modal) {
-        modal.style.display = 'none';
-        document.getElementById('contenido-reporte-lex').innerHTML = ''; 
-    }
-}
-
-async function abrirModalSemanal() {
-    console.log("🚩 INICIO: abrirModalSemanal");
-    mostrarCargandoLex(true);
-    abrirModalReportes(); 
-
-    try {
-        const res = await callGoogleScript('obtenerDatosReporteSemanal');
-        console.log("📦 Respuesta bruta recibida (Mes):", res);
-        
-        // Desenvolvimiento ultra-defensivo multinivel
-        let data = res;
-        if (data && data.reply) data = data.reply;
-        if (data && data.reply) data = data.reply; 
-        
-        console.log("🔍 Data real extraída (Mes):", data);
-
-        let filasRaw = [];
-        let semanasRelativas = [];
-
-        if (data) {
-            filasRaw = data.filas || (Array.isArray(data) ? data : []);
-            semanasRelativas = data.semanasRelativas || [];
-        }
-
-        // Eliminar fila de encabezado física si se coló desde el array
-        if (filasRaw.length > 0 && (filasRaw[0].idprov === 'ID PROV' || filasRaw[0][0] === 'ID PROV')) {
-            filasRaw.shift();
-        }
-
-        console.log("📊 Filas listas para renderizar (Mes):", filasRaw.length);
-
-        if (filasRaw.length === 0) {
-            document.getElementById('contenido-reporte-lex').innerHTML = 
-                `<div style="color:white; text-align:center; padding:20px;">No hay datos disponibles para el reporte mensual.</div>`;
-            return;
-        }
-
-        renderizarVistaMes({ filas: filasRaw, semanasRelativas: semanasRelativas });
-
-    } catch (err) {
-        console.error("❌ ERROR CRÍTICO en abrirModalSemanal:", err);
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-function renderizarVistaMes(response) {
-    let data = response.reply && response.reply.filas ? response.reply : response;
-    const { filas, semanasRelativas } = data;
-    
-    const contenedor = document.getElementById('contenido-reporte-lex');
-    const titulo = document.getElementById('reportesTitulo');
-    
-    if (titulo) titulo.innerText = "REPORTE MENSUAL DE ENTREGAS";
-
-    const hoy = new Date();
-    const d = new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const inicioAño = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const semanaHoy = Math.ceil((((d - inicioAño) / 86400000) + 1) / 7);
-
-    const semanasHead = semanasRelativas.filter(s => s !== "" && s !== null && s !== undefined);
-
-    const semanasNumeros = semanasHead.map((s, i) => {
-        if (/^\d{1,2}$/.test(String(s).trim())) {
-            return parseInt(s);
-        } else {
-            const fechaSemana = new Date(s);
-            if (!isNaN(fechaSemana.getTime())) {
-                return getWeekNumber(fechaSemana);
-            } else {
-                const match = s.toString().match(/\d+/);
-                return match ? parseInt(match[0]) : (i + 1);
-            }
-        }
-    });
-
-    let html = `
-    <div class="lex-report-toolbar" style="padding: 10px; display:flex; gap:15px; align-items:center;">
-        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-btn-nav-header">
-            <i class="fas fa-sync-alt"></i> REFRESCAR HOJA
-        </button>
-        <span style="color: #64748b; font-size: 11px; letter-spacing: 1px;">
-            SISTEMA: SEMANA <b style="color:#22c55e;">${semanaHoy}</b>
-        </span>
-    </div>
-
-    <div style="overflow-x:auto;" class="custom-scroll">
-        <table class="lex-table-report">
-            <thead>
-                <tr>
-                    <th style="color:var(--lex-gold); text-align:left; min-width:250px;">PROVEEDOR</th>
-                    ${semanasNumeros.map(numSemanaColumna => {
-                        const esActual = (numSemanaColumna === semanaHoy);
-                        const claseSemana = esActual ? 'lex-header-actual' : 'lex-header-other';
-
-                        return `
-                        <th style="text-align:center; padding: 0;">
-                            <button onclick="verDetalleSemana(${numSemanaColumna})" 
-                                    class="lex-btn-nav-header ${claseSemana}">
-                                <span class="lex-label-ver">FILTRAR A2</span>
-                                <span class="lex-label-sem">SEM ${numSemanaColumna}</span>
-                            </button>
-                        </th>`;
-                    }).join('')}
-                </tr>
-            </thead>
-            <tbody>
-                ${filas.map(f => {
-                    const idprov = f.idprov || f[0] || '';
-                    const nombre = f.nombre || f[1] || 'SIN NOMBRE';
-                    if (!nombre || nombre === 'NOMBRE PROVEEDOR' || idprov === 'ID PROV') return '';
-
-                    return `
-                    <tr>
-                        <td class="lex-td-prov">
-                            <div class="lex-id-badge">ID: ${idprov}</div>
-                            <div class="lex-nombre-prov">${nombre}</div>
-                        </td>
-                        ${semanasNumeros.map((numSemanaColumna, idx) => {
-                            const val = f[`s${idx + 1}`] !== undefined ? f[`s${idx + 1}`] : f[idx + 2];
-                            const esFuturo = numSemanaColumna > semanaHoy;
-                            return `<td class="lex-td-status" style="text-align:center">${formatearEstado(val, esFuturo)}</td>`;
-                        }).join('')}
-                    </tr>`;
-                }).join('')}
-            </tbody>
-        </table>
-    </div>`;
-
-    contenedor.innerHTML = html;
-}
-
-async function verDetalleSemana(numSemana) {
-    if (!numSemana) return;
-    mostrarCargandoLex(true);
-    
-    try {
-        const res = await callGoogleScript('procesarFiltradoHoja', { 
-            param: parseInt(numSemana), 
-            tipo: "SEMANA" 
-        });
-        console.log("📦 Respuesta bruta recibida (Semana):", res);
-
-        let data = res;
-        if (data && data.reply) data = data.reply;
-        if (data && data.reply) data = data.reply;
-        if (data && data.filas) data = data.filas;
-
-        if (!Array.isArray(data)) {
-            console.error("⚠️ La estructura devuelta no se pudo transformar en Array:", data);
-            data = [];
-        }
-
-        renderizarVistaSemanal(data, numSemana); 
-        
-    } catch (e) {
-        console.error("Error en verDetalleSemana:", e);
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-function renderizarVistaSemanal(data, numSemana) {
-    const contenedor = document.getElementById('contenido-reporte-lex');
-    const titulo = document.getElementById('reportesTitulo');
-    
-    if (titulo) titulo.innerText = `PLANIFICACIÓN SEMANAL: SEMANA ${numSemana}`;
-    
-    const dias = [
-        { corto: 'LUN', largo: 'LUNES' },
-        { corto: 'MAR', largo: 'MARTES' },
-        { corto: 'MIE', largo: 'MIERCOLES' },
-        { corto: 'JUE', largo: 'JUEVES' },
-        { corto: 'VIE', largo: 'VIERNES' },
-        { corto: 'SAB', largo: 'SABADO' }
-    ];
-    
-    let html = `
-    <div class="lex-report-toolbar" style="margin-bottom:15px; display:flex; gap:10px;">
-        <button onclick="abrirModalSemanal()" class="lex-btn-nav lex-neon-green">← VOLVER AL MES</button>
-        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-neon-blue">
-            <i class="fas fa-sync-alt"></i> REFRESCAR
-        </button>
-    </div>
-    <div class="overflow-x-auto custom-scroll">
-        <table class="lex-table-report">
-            <thead>
-                <tr>
-                    <th style="color:var(--lex-gold); text-align:left; min-width:200px;">PROVEEDOR</th>
-                    ${dias.map(d => `
-                        <th style="text-align:center; padding: 0;">
-                            <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="lex-btn-nav lex-neon-orange" style="width:100%; padding:6px 2px; font-size:11px;">
-                                ${d.corto}
-                            </button>
-                        </th>
-                    `).join('')}
-                </tr>
-            </thead>
-            <tbody>`;
-    
-    if (!data || data.length === 0) {
-        html += `<tr><td colspan="7" style="padding:40px; text-align:center; color:#64748b;">No hay datos disponibles para esta semana.</td></tr>`;
-    } else {
-        const filasFiltradas = data.filter(f => {
-            const id = f.idProveedor || f.idprov || f[0] || '';
-            return id !== 'ID PROV' && id !== '';
-        });
-
-        filasFiltradas.forEach(f => {
-            const idprov = f.idProveedor || f.idprov || f[0] || '';
-            const nombre = f.nombreProveedor || f.nombre || f[1] || 'SIN NOMBRE';
-            const s1 = f.s1 !== undefined ? f.s1 : f[2] || 'NO';
-            const s2 = f.s2 !== undefined ? f.s2 : f[3] || 'NO';
-            const s3 = f.s3 !== undefined ? f.s3 : f[4] || 'NO';
-            const s4 = f.s4 !== undefined ? f.s4 : f[5] || 'NO';
-            const s5 = f.s5 !== undefined ? f.s5 : f[6] || 'NO';
-            const s6 = f.s6 !== undefined ? f.s6 : f[7] || 'NO';
-            
-            // Nota: En la vista de los días de la semana actual no ocultamos, pasamos false por defecto
-            html += `
-            <tr>
-                <td class="lex-td-prov">
-                    <div class="lex-id-badge">ID: ${idprov}</div>
-                    <div class="lex-nombre-prov">${nombre}</div>
-                </td>
-                <td style="text-align:center">${formatearEstado(s1, false)}</td>
-                <td style="text-align:center">${formatearEstado(s2, false)}</td>
-                <td style="text-align:center">${formatearEstado(s3, false)}</td>
-                <td style="text-align:center">${formatearEstado(s4, false)}</td>
-                <td style="text-align:center">${formatearEstado(s5, false)}</td>
-                <td style="text-align:center">${formatearEstado(s6, false)}</td>
-            </tr>`;
-        });
-    }
-    
-    html += `</tbody></table></div>`;
-    if (contenedor) contenedor.innerHTML = html;
-}
-
-async function verDetalleDia(nombreDia, numSemana) {
-    console.log(`🔍 Filtrando detalle para: ${nombreDia} (Semana ${numSemana})`);
-    mostrarCargandoLex(true);
-    
-    if (typeof navegacionSemanal !== 'undefined') {
-        navegacionSemanal.diaActual = nombreDia;
-    }
-    
-    const contenedor = document.getElementById('contenido-reporte-lex');
-    const titulo = document.getElementById('reportesTitulo');
-
-    try {
-        const res = await callGoogleScript('procesarFiltradoHoja', { 
-            param: nombreDia, 
-            tipo: "DIA" 
-        });
-        console.log("📦 Respuesta bruta recibida (Día):", res);
-        
-        let data = res;
-        if (data && data.reply) data = data.reply;
-        if (data && data.reply) data = data.reply;
-        if (data && data.filas) data = data.filas;
-
-        if (!Array.isArray(data)) {
-            data = [];
-        }
-
-        // Limpieza de cabeceras físicas por las dudas
-        if (data.length > 0 && (data[0].idProveedor === 'ID PROV' || data[0][0] === 'ID PROV')) {
-            data.shift();
-        }
-        
-        if (titulo) titulo.innerText = `DETALLE: ${nombreDia} - SEMANA ${numSemana}`;
-
-        let html = `
-            <div class="lex-report-toolbar" style="margin-bottom:15px; display:flex; gap:10px;">
-                <button onclick="verDetalleSemana(${numSemana})" class="lex-btn-nav lex-neon-green">← VOLVER A SEMANA</button>
-                <button onclick="abrirModalSemanal()" class="lex-btn-nav lex-neon-orange">INICIO MES</button>
-            </div>
-            <div class="overflow-x-auto custom-scroll">
-                <table class="lex-table-report">
-                    <thead>
-                        <tr>
-                            <th>PROVEEDOR</th>
-                            <th style="text-align:center">ESTADO</th>
-                            <th style="text-align:center">FECHA REGISTRO</th>
-                            <th style="text-align:center">ID PEDIDO</th>
-                            <th style="text-align:center">OBSERVACIONES</th>
-                            <th style="text-align:center">ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
-        if (data.length === 0) {
-            html += `<tr><td colspan="6" style="padding:50px; text-align:center; color:#64748b;">No hay pedidos registrados para este día.</td></tr>`;
-        } else {
-            data.forEach(item => {
-                // 🛠️ MAPEADO CORREGIDO SEGÚN TU CONSOLA OBJETO REAL
-                const idProv = item.idProveedor || item.idprov || item[0] || '';
-                const nombre = item.nombreProveedor || item.nombre || item[1] || 'SIN NOMBRE';
-                const estado = item.estado || item[2] || 'NO';
-                const fechaReg = item.fechaRegistro || item.fecha || item[3] || ''; 
-                const idPedido = item.idPedido || item[4] || '';
-                const observaciones = item.observaciones || item[5] || '';
-                const fechaReprog = item.nuevaFechaReprog || item.fechaReprog || item[6] || '';
-
-                let infoFechaHtml = `<div>${fechaReg || '---'}</div>`;
-                if (fechaReprog && estado.toString().toUpperCase().includes("REPRO")) {
-                    infoFechaHtml += `<div style="font-size:10px; color:var(--lex-gold); margin-top:2px;"><i class="fas fa-calendar-alt"></i> Reprog: ${fechaReprog}</div>`;
-                }
-
-                html += `
-                <tr>
-                    <td class="lex-td-prov">
-                        <div class="lex-id-badge">ID: ${idProv}</div>
-                        <div class="lex-nombre-prov">${nombre}</div>
-                    </td>
-                    <td style="text-align:center; vertical-align:middle;">${formatearEstado(estado)}</td>
-                    <td style="text-align:center; font-size:11px; vertical-align:middle;">${infoFechaHtml}</td>
-                    <td style="text-align:center; color:#94a3b8; font-family:monospace; font-size:12px; vertical-align:middle;">#${idPedido}</td>
-                    <td style="max-width:200px; font-size:11px; color:#cbd5e1; white-space:normal; word-break:break-word; vertical-align:middle;">
-                        ${observaciones || '<span style="color:#475569; font-style:italic;">Sin observaciones</span>'}
-                    </td>
-                    <td style="text-align:center; vertical-align:middle;">
-                        <button onclick="verPedidoDirecto('${idPedido}')" class="lex-btn-nav lex-neon-purple" style="padding:5px 10px; font-size:11px;">
-                            <i class="fas fa-search"></i> Ver
-                        </button>
-                    </td>
-                </tr>`;
-            });
-        }
-
-        html += `</tbody></table></div>`;
-        if (contenedor) contenedor.innerHTML = html;
-
-    } catch (e) {
-        console.error("Error en verDetalleDia:", e);
-        if (contenedor) contenedor.innerHTML = `<div style="color:red; padding:20px;">Error al traer detalle diario: ${e.message}</div>`;
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-function getWeekNumber(d) {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
-
-function formatearEstado(e, esFuturo = false) {
-    const txt = e ? e.toString().toUpperCase().trim() : "";
-    const esNo = !txt || txt === "NO" || txt === "❌ NO";
-
-    // Si es un "NO" pero corresponde a una columna del futuro, se limpia la celda por completo
-    if (esNo && esFuturo) {
-        return ""; 
-    }
-
-    // Estilo base común para mantener simetría visual
-    const estiloBase = "display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;";
-
-    // Caso 1: ❌ NO (Halo Rojo Neon)
-    if (esNo) {
-        return `<span class="status-lex" style="${estiloBase} background: rgba(239, 68, 68, 0.12); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5); box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);">❌ NO</span>`;
-    }
-
-    // Caso 2: ✅ OK / SI (Halo Verde Neon)
-    if (txt.includes("SI") || txt.includes("✅") || txt.includes("OK")) {
-        return `<span class="status-lex" style="${estiloBase} background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.6); box-shadow: 0 0 12px rgba(34, 197, 94, 0.45);">✅ OK</span>`;
-    }
-
-    // Caso 3: ⚠️ REPROG / REPRO (Halo Amarillo/Oro Neon)
-    if (txt.includes("REPRO") || txt.includes("⚠️")) {
-        return `<span class="status-lex" style="${estiloBase} background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.6); box-shadow: 0 0 12px rgba(234, 179, 8, 0.45);">⚠️ REPROG</span>`;
-    }
-
-    // Cualquier otro estado alternativo por las dudas
-    return `<span class="status-lex" style="${estiloBase} background: #475569; color: #cbd5e1; border: 1px solid #64748b;">${txt}</span>`;
-}
-
-function mostrarCargandoLex(show) {
-    const contenedor = document.getElementById('contenido-reporte-lex');
-    if (show) {
-        const loader = document.createElement('div');
-        loader.id = "lex-loader-overlay";
-        loader.innerHTML = `
-            <div style="position:absolute; inset:0; background:rgba(15,23,42,0.8); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000;">
-                <div class="lex-spinner"></div>
-                <span style="color:#c2902e; font-size:9px; margin-top:15px; letter-spacing:2px;">ACCEDIENDO AL ARCHIVO MAESTRO...</span>
-            </div>`;
-        contenedor.appendChild(loader);
-    } else {
-        const loader = document.getElementById('lex-loader-overlay');
-        if (loader) loader.remove();
-    }
-}
-
-async function abrirArchivoPedido(idPedido) {
-    mostrarCargandoLex(true);
-
-    try {
-        // Llamada a la nueva función unificada del servidor
-        const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
-        const data = (res && res.reply) ? res.reply : res;
-
-        if (!data) {
-            alert("SISTEMA: No se encontró ningún documento (PDF/CSV) asociado al pedido " + idPedido);
-            mostrarCargandoLex(false);
-            return;
-        }
-
-        const visor = document.getElementById('visor-pdf-lex');
-        const iframe = document.getElementById('pdf-frame-lex');
-        
-        // Limpieza previa del visor
-        iframe.style.display = 'none';
-        const visorContenidoExtra = document.getElementById('visor-csv-container') || document.createElement('div');
-        visorContenidoExtra.id = 'visor-csv-container';
-        visorContenidoExtra.innerHTML = '';
-        if (!document.getElementById('visor-csv-container')) visor.appendChild(visorContenidoExtra);
-
-        if (data.tipo === 'pdf') {
-            // Lógica para PDF
-            const blob = base64ToBlob(data.contenido, 'application/pdf');
-            const url = URL.createObjectURL(blob);
-            iframe.src = url;
-            iframe.style.display = 'block';
-            visor.dataset.currentBlob = url;
-        } 
-        else if (data.tipo === 'csv') {
-            // Lógica para CSV (inyectamos la tabla HTML que generó el servidor)
-            visorContenidoExtra.innerHTML = `
-                <div style="padding:20px; color:#cbd5e1;">
-                    <h3 style="color:#c2902e; margin-bottom:15px; font-size:12px;">VISTA PREVIA CSV: ${data.nombre}</h3>
-                    <div class="lex-csv-wrapper">${data.contenido}</div>
-                </div>`;
-            visorContenidoExtra.style.display = 'block';
-        }
-
-        visor.style.display = 'flex';
-
-    } catch (e) {
-        console.error("Error al abrir archivo:", e);
-        alert("Error de comunicación con el archivo.");
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-function cerrarVisorLex() {
-    const visor = document.getElementById('visor-pdf-lex');
-    const iframe = document.getElementById('pdf-frame-lex');
-    if (visor.dataset.currentBlob) URL.revokeObjectURL(visor.dataset.currentBlob);
-    iframe.src = "";
-    visor.style.display = 'none';
-}
-
-async function exportarVistaActualALex() {
-    const contenedor = document.getElementById('contenido-reporte-lex') || document.querySelector('.tab-pane.active') || document.body;
-    const tabla = contenedor.querySelector('table');
-    
-    if (!tabla) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Sin datos',
-            text: 'No se detectó ninguna tabla activa en pantalla para exportar.',
-            background: '#1e293b',
-            color: '#cbd5e1'
-        });
-        return;
-    }
-
-    mostrarCargandoLex(true);
-
-    try {
-        const filas = [];
-        const headers = [];
-        let colAccionesIdx = -1;
-        
-        tabla.querySelectorAll('thead th').forEach((th, index) => {
-            const textoHeader = th.innerText.trim();
-            if (textoHeader.toUpperCase() === 'ACCIONES' || textoHeader.toUpperCase() === 'ACCION') {
-                colAccionesIdx = index; 
-            } else {
-                headers.push(textoHeader);
-            }
-        });
-        filas.push(headers);
-
-        tabla.querySelectorAll('tbody tr').forEach(tr => {
-            const fila = [];
-            tr.querySelectorAll('td').forEach((td, index) => {
-                if (index === colAccionesIdx) return;
-
-                const badge = td.querySelector('span');
-                let textoCelda = badge ? badge.innerText.trim() : td.innerText.trim();
-                
-                textoCelda = textoCelda.replace(/\n|\r/g, " "); 
-                fila.push(textoCelda);
-            });
-            
-            if (fila.length > 0) filas.push(fila);
-        });
-
-        const elTitulo = document.getElementById('titulo-reporte-lex') 
-                         || document.querySelector('.active h2') 
-                         || document.querySelector('.active h3');
-                         
-        let nombreArchivo = elTitulo ? elTitulo.innerText.trim() : 'Reporte_Pedidos_Vista_Actual';
-        nombreArchivo = nombreArchivo.toLowerCase().replace(/[^a-z0-9áéíóúñ_-]/gi, '_');
-
-
-        const contenidoCSV = "\uFEFF" + filas.map(f => 
-            f.map(celda => `"${celda.replace(/"/g, '""')}"`).join(";")
-        ).join("\n");
-
-        const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
-        const urlDescarga = URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = urlDescarga;
-        link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`; 
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(urlDescarga);
-
-    } catch (e) {
-        console.error("❌ Falló el wrapper de exportación CSV:", e);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error de Exportación',
-            text: 'Ocurrió un inconveniente al empaquetar los datos de la vista.',
-            background: '#1e293b',
-            color: '#cbd5e1'
-        });
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-function base64ToBlob(base64, type) {
-    const bin = atob(base64);
-    const len = bin.length;
-    const arr = new Uint8Array(len);
-    for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
-    return new Blob([arr], { type: type });
-}
-
-
-async function ejecutarSincronizacionRelampago() {
-    mostrarCargandoLex(true);
-    try {
-        const res = await callGoogleScript('verificarReporteSemanal');
-        if (res.status === "success") {
-            // Como es solo lectura, volvemos al panel principal para ver los cambios globales
-            await abrirModalSemanal();
-        }
-    } catch (err) {
-        console.error("Falla en Sync:", err);
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-window.verPedidoDirecto = async function(idPedido) {
-    if (!idPedido || idPedido.trim() === "") {
-        Swal.fire({ icon: 'warning', title: 'Atención', text: 'ID de pedido no válido.', background: '#1e293b', color: '#cbd5e1' });
-        return;
-    }
-
-    Swal.fire({
-        title: 'Buscando registro...',
-        html: `Consultando orden <b style="color:#00f0ff">${idPedido}</b> en el ecosistema...`,
-        background: '#1e293b',
-        color: '#cbd5e1',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
-
-    try {
-        const response = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
-        console.log("📦 [LexTech-DEBUG] Respuesta cruda de la API:", response);
-        const laRespuestaReal = response?.reply || response;
-
-        if (!laRespuestaReal || laRespuestaReal.status === 'error') {
-            Swal.fire({
-                icon: 'info',
-                title: 'Información del Sistema',
-                text: laRespuestaReal?.message || 'No se localizó el pedido.',
-                background: '#1e293b',
-                color: '#cbd5e1',
-                confirmButtonColor: '#475569'
-            });
-            return;
-        }
-
-        const resData = laRespuestaReal.data || laRespuestaReal;
-        const proveedor = resData.proveedor || '---';
-        const productos = resData.productos || '---';
-        const estado = resData.estado || '---';
-        const fechaRegistro = resData.fechaRegistro || '---';
-        const observaciones = resData.observaciones || 'Sin comentarios registrados.';
-        const nuevaFechaReprog = resData.nuevaFechaReprog || '';
-        const origenHoja = laRespuestaReal.origen || 'Ecosistema';
-
-        let colorEstado = '#34d399'; 
-        if (estado.toUpperCase().includes('REPRO')) colorEstado = '#eab308'; // Amarillo
-        if (estado.toUpperCase().includes('PEND')) colorEstado = '#38bdf8'; // Azul
-
-        Swal.fire({
-            title: `<span style="font-size:11px; color:#64748b; letter-spacing:1.5px; font-weight:bold;">DETALLE DE PEDIDO • ${origenHoja.toUpperCase()}</span><br>
-                    <span style="color:#00f0ff; font-family:monospace; font-size:22px;">#${idPedido}</span>`,
-            html: `
-                <div style="text-align: left; background: rgba(15, 23, 42, 0.7); padding: 16px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; margin-top:10px;">
-                    
-                    <div style="margin-bottom: 10px;">
-                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">PROVEEDOR:</span>
-                        <span style="color: #f8fafc; font-weight:600;">${proveedor}</span>
-                    </div>
-
-                    <div style="margin-bottom: 10px;">
-                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">PRODUCTOS / DETALLE:</span>
-                        <div style="background: rgba(15, 23, 42, 0.9); padding: 8px 12px; border-radius: 4px; color: #cbd5e1; border-left: 3px solid #00f0ff; font-family: sans-serif; font-size: 12.5px;">
-                            ${productos}
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 10px;">
-                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">ESTADO:</span>
-                        <span style="background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius:4px; color:${colorEstado}; font-weight: bold; font-size: 12px;">
-                            ${estado}
-                        </span>
-                    </div>
-
-                    <div style="margin-bottom: 10px;">
-                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">FECHA REGISTRO:</span>
-                        <span style="color: #cbd5e1;">${fechaRegistro}</span>
-                    </div>
-
-                    ${nuevaFechaReprog && nuevaFechaReprog !== "---" && nuevaFechaReprog !== "" ? `
-                    <div style="margin-bottom: 10px; border-left: 3px solid #eab308; padding-left: 8px; background: rgba(234, 179, 8, 0.05); padding-top: 4px; padding-bottom: 4px;">
-                        <span style="color: #eab308; font-weight: bold; display:inline-block; width:110px;">REPROGRAMADO:</span>
-                        <span style="color: #fef08a; font-weight: bold;">${nuevaFechaReprog}</span>
-                    </div>` : ''}
-
-                    <hr style="border:0; border-top: 1px dashed #334155; margin: 14px 0;">
-                    
-                    <div>
-                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">OBSERVACIONES:</span>
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; color: #94a3b8; font-style: italic; min-height: 40px; word-break: break-word; border: 1px solid rgba(255,255,255,0.01);">
-                            ${observaciones}
-                        </div>
-                    </div>
-
-                </div>
-            `,
-            background: '#1e293b',
-            color: '#cbd5e1',
-            confirmButtonText: 'ENTENDIDO',
-            confirmButtonColor: '#475569',
-            customClass: { confirmButton: 'lex-sweet-btn' }
-        });
-
-    } catch (error) {
-        console.error("❌ Error en renderizado frontend:", error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error de Renderizado',
-            text: 'No se pudo procesar adecuadamente la estructura del pedido.',
-            background: '#1e293b',
-            color: '#cbd5e1'
-        });
-    }
-};
-
-console.log("✅ N.I.C.O. Terminal: Carga finalizada sin errores críticos.");
-
-
-
-//----------------------------SECCION NICO Y SIDEBAR-------------
-
-function toggleMenu() {
-  const menu = document.getElementById('mainMenu');
-  if (menu) {
-    menu.classList.toggle('active');
-  } else {
-    console.warn("NICO: No se encontró #mainMenu para toggle");
-  }
-};
+/*----------- FUNCIONES DEL PEDIDOS AUTO ASISTIDOS-----------*/
+window.speed = window.speed || 0;
+window.prevSpeed = window.prevSpeed || 0;
+window.currentScale = window.currentScale || 0;
 
 window.speedIncrase = function() {
-    if (typeof speed === 'undefined') window.speed = 0;
-    if (speed < 180) {
-        speed = speed + 15;
+    if (window.speed < 180) {
+        window.speed += 15;
     } else {
-        speed = 0;
-        currentScale = 0;
+        window.speed = 0;
+        window.currentScale = 0;
     }
     window.actualizarInterfaz();
-    if (typeof currentScale !== 'undefined') currentScale++;
+    window.currentScale++;
     window.changeActive();
 };
 
 window.actualizarInterfaz = function() {
     const el = document.getElementsByClassName("arrow-wrapper")[0];
     if (!el) return;
-    const claseVieja = "speed-" + (typeof prevSpeed !== 'undefined' ? prevSpeed : 0);
-    const claseNueva = "speed-" + speed;
+    const claseVieja = "speed-" + window.prevSpeed;
+    const claseNueva = "speed-" + window.speed;
     el.classList.remove(claseVieja);
     el.classList.add(claseNueva);
-    window.prevSpeed = speed;
+    window.prevSpeed = window.speed;
 };
 
 window.changeActive = function() {
-    let nombreClaseBusqueda = "speedometer-Scale-" + currentScale;
+    const nombreClaseBusqueda = "speedometer-Scale-" + window.currentScale;
     const el = document.getElementsByClassName(nombreClaseBusqueda)[0];
-    if (el) {
-        el.classList.toggle("active");
-    }
+    if (el) el.classList.toggle("active");
 };
 
 
-// ----------------------------- NICO CONTROLLER -----------------//
+// ------- NICO CONTROLLER --------//
 function abrirModalPedidos_Autoasist() {
     const modal = document.getElementById('modal-pedidos-autoasistidos');
-    console.log("🚀 Módulo de Pedidos cargado correctamente.");
+    console.log("%c 🚀 N.I.C.O. > Módulo Autoasistido Inicializado.", "color: #0ea5e9; font-weight: bold;");
 
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        if (window.NicoController) window.NicoController.rearrancar();
+    }
 }
 
 function cerrarModalPedidos_Autoasist() {
     const modal = document.getElementById('modal-pedidos-autoasistidos');
-    
     if (modal) {
         modal.style.display = 'none';
         
-        // 1. Limpiamos el historial de mensajes del chat
+        if (window.NicoController) window.NicoController.detener();
+        
         const chatMessages = document.getElementById('chat-messages');
         if (chatMessages) chatMessages.innerHTML = '';
         
-        // 2. Limpiamos la tabla y le devolvemos su estado de espera original
         const tablaCuerpo = document.getElementById('tabla-informes-cuerpo');
         if (tablaCuerpo) {
             tablaCuerpo.innerHTML = `
                 <tr id="fila-espera-nico" class="border-b border-slate-900/50 hover:bg-slate-900/20 transition-colors">
                     <td class="p-3 font-mono text-slate-500 text-center py-10" colspan="5">
-                        <i class="fi fi-rr-chart-connected mr-2"></i> Aguardando procesamiento de órdenes o dictados de voz...
+                        <span class="inline-block animate-pulse mr-2">📡</span> Aguardando procesamiento de órdenes o dictados de voz...
                     </td>
-                </tr>
-            `;
+                </tr>`;
         }
         
-        // 3. Opcional: Limpiar el input de texto por si quedó algo escrito
         const userInput = document.getElementById('user-input');
         if (userInput) userInput.value = '';
+        
+        APAGAR_VISUAL_MIC();
     }
 }
 
@@ -2133,23 +1249,28 @@ if (!window.NicoController) {
             tamanoVisual: 180
         };
 
+        let animationFrameId = null;
+        let estaActivo = false;
+
         function iniciar() {
             const currentCanvas = document.getElementById("canvas-nico");
             if (!currentCanvas) return;
 
+            estaActivo = true;
             nico.estadoActual = "SALUDANDO";
             nico.img.crossOrigin = "Anonymous";
             nico.img.src = ESTADOS.SALUDANDO;
             nico.frame = 0;
             
-            requestAnimationFrame(draw);
+            // Evitamos duplicaciones del loop lógico
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(draw);
             
             setTimeout(() => {
-                if (nico.estadoActual === "SALUDANDO") {
+                if (nico.estadoActual === "SALUDANDO" && estaActivo) {
                     cambiarEstado("ESPERANDO");
                 }
             }, 4500);
-            
         }
 
         function cambiarEstado(nuevoEstado) {
@@ -2161,13 +1282,26 @@ if (!window.NicoController) {
             }
         }
 
+        function detenerLoop() {
+            estaActivo = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
         function draw(timestamp) {
+            if (!estaActivo) return;
+
             const currentCanvas = document.getElementById("canvas-nico");
-            if (!currentCanvas) return;
+            if (!currentCanvas) {
+                animationFrameId = requestAnimationFrame(draw);
+                return;
+            }
             
             const currentCtx = currentCanvas.getContext("2d");
             if (!nico.img.complete) {
-                requestAnimationFrame(draw);
+                animationFrameId = requestAnimationFrame(draw);
                 return;
             }
 
@@ -2188,19 +1322,15 @@ if (!window.NicoController) {
                 nico.frame = (nico.frame + 1) % nico.totalFrames;
                 nico.lastUpdate = timestamp;
             }
-            requestAnimationFrame(draw);
+            animationFrameId = requestAnimationFrame(draw);
         }
-
-        iniciar();
 
         return { 
             cambiarA: cambiarEstado,
-            rearrancar: iniciar 
+            rearrancar: iniciar,
+            detener: detenerLoop
         };
     })();
-} else {
-
-    NicoController.rearrancar();
 }
 
 // ------------------- LOGICA DEL CHAT ----------------------------
@@ -2540,192 +1670,1313 @@ function renderizarTablaInformesNico(productosFiltrados) {
 
 function seleccionarSkusPorVoz(skusASeleccionar) {
     if (!skusASeleccionar || skusASeleccionar.length === 0) return;
-
     let itemsProcesados = 0;
 
     skusASeleccionar.forEach(sku => {
-        // Buscamos el checkbox específico generado en la tabla central
         const checkbox = document.getElementById(`chk-central-${sku.trim().toUpperCase()}`);
-        
         if (checkbox && !checkbox.checked) {
             checkbox.checked = true;
-            // Disparamos manualmente el evento onclick nativo para que se ejecute tu lógica de 'toggleSeleccion'
-            checkbox.onclick();
+            checkbox.onclick(); 
             itemsProcesados++;
         }
     });
 
-    if (itemsProcesados > 0) {
-        // Alerta estética sutil de interfaz inteligente
+    if (itemsProcesados > 0 && typeof Swal !== "undefined") {
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
-            timer: 2500,
+            timer: 2000,
             background: '#0f172a',
-            color: '#0ea5e9'
+            color: '#34d399'
         });
         Toast.fire({
             icon: 'success',
-            title: `N.I.C.O: Se tildaron ${itemsProcesados} items vía comando de voz.`
+            title: `N.I.C.O: ${itemsProcesados} ítems procesados e integrados.`
         });
     } else {
-        console.warn("N.I.C.O: Los SKUs dictados no se encuentran en la grilla visual actual.");
+        console.warn("⚠️ N.I.C.O: Los identificadores dictados se encuentran fuera de la grilla visual indexada.");
     }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const tabla = document.querySelector(".tabla-nico"); 
-  if (!tabla) return;
+    const tabla = document.querySelector(".tabla-nico"); 
+    if (!tabla) return;
 
-  tabla.querySelectorAll("th").forEach((headerCell, index) => {
-    headerCell.style.cursor = "pointer";
-    
-    headerCell.addEventListener("click", () => {
-      const tbody = tabla.querySelector("tbody");
-      const rows = Array.from(tbody.querySelectorAll("tr"));
-      const isAscending = !headerCell.classList.contains("sort-asc");
-      
-      // Resetear estados visuales en otros encabezados
-      tabla.querySelectorAll("th").forEach(th => th.classList.remove("sort-asc", "sort-desc"));
-      
-      // Ordenar filas de forma inteligente (detecta números automáticamente)
-      const sortedRows = rows.sort((a, b) => {
-        const cellA = a.children[index].textContent.trim();
-        const cellB = b.children[index].textContent.trim();
+    tabla.querySelectorAll("th").forEach((headerCell, index) => {
+        if (index === 0) return; // Saltamos la columna del checkbox
+        headerCell.style.cursor = "pointer";
         
-        const numA = parseFloat(cellA.replace(/[^0-9.-]+/g, ""));
-        const numB = parseFloat(cellB.replace(/[^0-9.-]+/g, ""));
-        
-        if (!isNaN(numA) && !isNaN(numB)) {
-          return isAscending ? numA - numB : numB - numA;
-        }
-        return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
-      });
-      
-      // Reinyectar al DOM
-      tbody.append(...sortedRows);
-      headerCell.classList.toggle("sort-asc", isAscending);
-      headerCell.classList.toggle("sort-desc", !isAscending);
-    });
-  });
-});
-
-
-/*document.addEventListener("DOMContentLoaded", () => {
-  const circles = document.querySelectorAll(".neon-menu-wrapper .nm-circle-outer");
-
-  circles.forEach(circle => {
-    const targetSpan = circle.querySelector(".nm-circle-inner span[onclick]");
-    
-    if (targetSpan) {
-      const originalAction = targetSpan.getAttribute("onclick");
-      
-      targetSpan.removeAttribute("onclick");
-      
-      circle.style.cursor = "pointer";
-      
-      circle.addEventListener("click", (e) => {
-        e.preventDefault();
-        
-        circle.classList.remove("explode");
-        void circle.offsetWidth; 
-        circle.classList.add("explode");
-        
-
-        setTimeout(() => {
-          if (originalAction) {
-            const runAction = new Function(originalAction);
-            runAction();
-          }
-        }, 400);
-      });
-    }
-  });
-});*/
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  const circles = document.querySelectorAll(".neon-menu-wrapper .nm-circle-outer");
-
-  circles.forEach(circle => {
-    // Comprobamos si este nodo en particular posee sub-opciones adentro
-    const miniCircles = circle.querySelectorAll(".nm-mini-circle");
-
-    if (miniCircles.length > 0) {
-
-      circle.style.cursor = "pointer";
-
-      circle.addEventListener("click", (e) => {
-        // Si el click fue en un mini-círculo, frenamos para que no interfiera con el padre
-        if (e.target.closest(".nm-mini-circle")) return;
-        
-        e.preventDefault();
-        // Conmutamos la clase expanded para abrir/cerrar
-        circle.classList.toggle("expanded");
-      });
-
-      // Configuración de eventos para cada mini círculo
-      miniCircles.forEach(mini => {
-        mini.addEventListener("click", (e) => {
-          e.stopPropagation(); 
-          
-          mini.classList.remove("explode");
-          void mini.offsetWidth;
-          mini.classList.add("explode");
-
-          const targetModal = mini.getAttribute("data-modal");
-
-          setTimeout(() => {
-            circle.classList.remove("expanded"); 
+        headerCell.addEventListener("click", () => {
+            const tbody = tabla.querySelector("tbody");
+            if (!tbody) return;
             
-            // Disparamos los llamados de tus modales específicos
-            if (targetModal === "modal-pedidos-autoasistidos") {
-              if (typeof abrirModalPedidos === "function") {
-                abrirModalPedidos(); 
-              } else {
-                const m = document.getElementById('modal-pedidos-autoasistidos');
-                if (m) m.style.display = 'flex';
-              }
-            } else if (targetModal === "modal-pedidos") {
-              const modalManual = document.getElementById('modal-pedidos');
-              if (modalManual) modalManual.style.display = 'flex';
-            }
-          }, 400);
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            if (rows.length === 0 || rows[0].querySelector("td").getAttribute("colspan")) return;
+
+            const isAscending = !headerCell.classList.contains("sort-asc");
+            
+            tabla.querySelectorAll("th").forEach(th => th.classList.remove("sort-asc", "sort-desc"));
+            
+            const sortedRows = rows.sort((a, b) => {
+                const cellA = a.children[index]?.textContent.trim() || "";
+                const cellB = b.children[index]?.textContent.trim() || "";
+                
+                const numA = parseFloat(cellA.replace(/[^0-9.-]+/g, ""));
+                const numB = parseFloat(cellB.replace(/[^0-9.-]+/g, ""));
+                
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return isAscending ? numA - numB : numB - numA;
+                }
+                return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+            });
+            
+            tbody.append(...sortedRows);
+            headerCell.classList.toggle("sort-asc", isAscending);
+            headerCell.classList.toggle("sort-desc", !isAscending);
         });
-      });
-
-    } else {
-
-      const targetSpan = circle.querySelector(".nm-circle-inner span[onclick]");
-      if (targetSpan) {
-        const originalAction = targetSpan.getAttribute("onclick");
-        targetSpan.removeAttribute("onclick");
-        circle.style.cursor = "pointer";
-
-        circle.addEventListener("click", (e) => {
-          e.preventDefault();
-          
-          circle.classList.remove("explode");
-          void circle.offsetWidth;
-          circle.classList.add("explode");
-
-          setTimeout(() => {
-            if (originalAction) {
-              const runAction = new Function(originalAction);
-              runAction();
-            }
-          }, 400);
-        });
-      }
-    }
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".nm-circle-outer")) {
-      document.querySelectorAll(".nm-circle-outer.expanded").forEach(openCircle => {
-        openCircle.classList.remove("expanded");
-      });
-    }
-  });
+    });
 });
+
+
+
+/*----------------------------------- FUNCIONES DEL MODAL RECEPCIÓN---------------------------------*/
+/**
+ * @param {Array} datos 
+ * @param {number|string} fila  */
+
+async function abrirRecepcion(datos, fila) {
+    if (!datos || datos.length === 0) {
+        console.error("❌ N.I.C.O. Error: No se suministraron datos válidos para la orden.");
+        return;
+    }
+
+    const idPedido = String(datos[0]).trim();
+    const modal = document.getElementById('modalRecepcion');
+    
+    if (!modal) {
+        console.error("❌ N.I.C.O. DOM Error: El contenedor base con ID 'modalRecepcion' NO existe en el HTML.");
+        Swal.fire({
+            title: 'ERROR DE INTERFAZ',
+            text: "No se encontró el elemento raíz '#modalRecepcion'. Revisa tu estructura HTML.",
+            icon: 'error',
+            background: '#0f172a',
+            color: '#f1f5f9'
+        });
+        return;
+    }
+
+    const inputID = document.getElementById('recepcionID');
+    const inputFila = document.getElementById('recepcionFila');
+    if (inputID) inputID.value = idPedido;
+    if (inputFila) inputFila.value = fila;
+
+    const modalInterno = document.querySelector('#modalRecepcion > div');
+    if (modalInterno) modalInterno.className = "modal-recep-content"; 
+
+    const resumen = document.getElementById('resumenPedido');
+    if (resumen) {
+        resumen.innerHTML = `
+        <div class="flex justify-between items-center w-full">
+            <div>
+                <h2 class="text-cyan-400 font-bold text-xs uppercase tracking-widest">ORDEN: ${idPedido}</h2>
+                <p class="text-[10px] text-slate-500 uppercase">${datos[2] || 'Sin Proveedor asignado'}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-cyan-500 font-bold text-xs">$${Number(datos[5] || 0).toLocaleString()}</p>
+                <p class="text-[9px] text-orange-500 uppercase">Arribo: ${datos[6] || '---'}</p>
+            </div>
+        </div>`;
+    }
+
+    const contenedor = document.getElementById('contenedorItemsRecepcion');
+    if (contenedor) {
+        contenedor.innerHTML = `<div class="py-20 text-center text-cyan-500 text-[10px] font-mono animate-pulse">SOLICITANDO DESGLOSE A N.I.C.O...</div>`;
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.style.setProperty('display', 'flex', 'important');
+    document.body.style.overflow = 'hidden';
+
+    cambiarModoGestion('RECIBIDO'); 
+
+    try {
+        const res = await callGoogleScript('obtenerItemsPedido', { idPedido: idPedido });
+        
+        if (res.status === "success" && res.reply && res.reply.success) {
+            renderizarItemsDesgloseEspecial(res.reply.items, 'contenedorItemsRecepcion');
+            const titulo = document.getElementById('recepcionTitulo');
+            if (titulo) titulo.focus();
+        } else {
+            throw new Error(res.message || (res.reply && res.reply.error) || "Falla en comunicación remota.");
+        }
+    } catch (err) {
+        console.error("❌ Error al desglosar los ítems de la orden:", err);
+        if (contenedor) {
+            contenedor.innerHTML = `<div class="text-red-500 text-[10px] p-4 text-center font-mono">ERROR AL CARGAR ITEMS: ${err.message}</div>`;
+        }
+    }
+}
+
+function renderizarItemsDesgloseEspecial(items, idContenedor) {
+    const contenedor = document.getElementById(idContenedor);
+    if (!contenedor) return;
+
+    if (!items || items.length === 0) {
+        contenedor.innerHTML = `<div class="text-amber-500 text-[10px] p-4 text-center font-mono">LA ORDEN NO CONTIENE ÍTEMS INDEXADOS.</div>`;
+        return;
+    }
+
+    let html = `
+    <div class="overflow-x-auto max-h-[350px] overflow-y-auto custom-scrollbar">
+        <table class="w-full text-[11px] border-collapse mb-4">
+            <thead class="sticky top-0 bg-[#0f172a] z-30 shadow-md">
+                <tr class="text-left text-slate-500 border-b border-cyan-900/50">
+                    <th class="p-3 uppercase tracking-wider">SKU / Producto</th>
+                    <th class="p-3 text-center uppercase tracking-wider">Pedida</th>
+                    <th class="p-3 text-right uppercase tracking-wider">Recibida</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60">`;
+
+    items.forEach(item => {
+        html += `
+        <tr class="hover:bg-cyan-500/5 transition-colors duration-150">
+            <td class="p-3">
+                <div class="font-mono text-cyan-400 font-bold">${item.sku || 'N/A'}</div>
+                <div class="text-[10px] text-slate-400 uppercase leading-tight mt-0.5">${item.nombre || ''}</div>
+            </td>
+            <td class="p-3 text-center text-white font-mono font-bold text-xs">${item.cantidadPedida || 0}</td>
+            <td class="p-3 text-right">
+                <input type="number" 
+                       class="input-recibido-item w-20 bg-slate-950 border border-slate-700/80 rounded p-1 text-right text-cyan-400 font-bold outline-none focus:border-cyan-500 transition-colors" 
+                       data-sku="${item.sku || ''}" 
+                       data-original="${item.cantidadPedida || 0}" 
+                       data-nombre="${item.nombre || ''}" 
+                       value="${item.cantidadPedida || 0}"        
+                       min="0"
+                       oninput="recalcularPorcentajeDesdeItems()">
+            </td>
+        </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    contenedor.innerHTML = html;
+    
+    recalcularPorcentajeDesdeItems();
+}
+ 
+function recalcularPorcentajeDesdeItems() {
+    const inputs = document.querySelectorAll('.input-recibido-item');
+    let totalPedido = 0;
+    let totalRecibido = 0;
+
+    inputs.forEach(input => {
+        const pedido = parseFloat(input.getAttribute('data-original')) || 0;
+        const recibido = parseFloat(input.value) || 0;
+        
+        totalPedido += pedido;
+        totalRecibido += recibido;
+    });
+
+    if (totalPedido === 0) return;
+
+    let porcentaje = Math.round((totalRecibido / totalPedido) * 100);
+    if (porcentaje > 100) porcentaje = 100; 
+    if (porcentaje < 0) porcentaje = 0;
+
+    const slider = document.getElementById('inputPorcentaje');
+    const display = document.getElementById('valorPorcentaje');
+    
+    if (slider) slider.value = porcentaje;
+    if (display) display.innerText = porcentaje + "%";
+}
+
+async function confirmarGestionFinal() {
+    const btn = document.getElementById('btnConfirmarGestion');
+    const listaInputs = document.querySelectorAll('.input-recibido-item');
+    
+    let itemsRecibidos = [];
+    listaInputs.forEach(input => {
+        itemsRecibidos.push({
+            sku: input.getAttribute('data-sku') || "",
+            nombre: input.getAttribute('data-nombre') || "",
+            cantidadRecibida: parseFloat(input.value) || 0,
+            platilloPedido: parseFloat(input.getAttribute('data-original')) || 0 
+        });
+    });
+
+    const recepcionIDNode = document.getElementById('recepcionID');
+    const recepcionFilaNode = document.getElementById('recepcionFila');
+    const accionActualNode = document.getElementById('accionActual');
+    const inputPorcentajeNode = document.getElementById('inputPorcentaje');
+    const inputObservacionesNode = document.getElementById('inputObservaciones');
+
+    const config = {
+        idPedido: recepcionIDNode ? recepcionIDNode.value : "",
+        filaEstado: recepcionFilaNode ? recepcionFilaNode.value : "",
+        accion: accionActualNode ? accionActualNode.value : "RECIBIDO",
+        porcentaje: inputPorcentajeNode ? inputPorcentajeNode.value : "100",
+        calidad: typeof calidadSeleccionada !== 'undefined' ? calidadSeleccionada : 0,
+        observaciones: inputObservacionesNode ? inputObservacionesNode.value.trim() : "",
+        esCausaProveedor: document.getElementById('inputCausa') ? document.getElementById('inputCausa').value === 'proveedor' : false,
+        nuevaFecha: document.getElementById('inputNuevaFecha') ? document.getElementById('inputNuevaFecha').value : "",
+        itemsRecibidos: itemsRecibidos 
+    };
+
+    if (config.accion === 'REPROGRAMADO' && !config.nuevaFecha) {
+        Swal.fire({ title: 'FECHA REQUERIDA', text: 'Indique el nuevo día estimado de arribo.', icon: 'warning', background: '#0f172a', color: '#fff' });
+        return;
+    }
+
+    if (btn) {
+        btn.innerText = "PROCESANDO IMPACTO...";
+        btn.disabled = true;
+    }
+
+    try {
+        const res = await callGoogleScript('gestionarEstadoPedidoServidor', config);
+        
+        if (res.status === "success" && res.reply && res.reply.success) {
+            cerrarModalRecepcion();
+            Swal.fire({ title: 'ÉXITO', text: 'El estado de la orden fue actualizado en el servidor.', icon: 'success', timer: 1500, showConfirmButton: false })
+            .then(() => verEstadoPedidos());
+        } else {
+            throw new Error(res.message || (res.reply && res.reply.error) || "Error al actualizar.");
+        }
+    } catch (err) {
+        Swal.fire({ title: 'FALLA DE COMUNICACIÓN', text: err.message, icon: 'error', background: '#0f172a', color: '#fff' });
+        if (btn) {
+            btn.innerText = "CONFIRMAR GESTIÓN"; 
+            btn.disabled = false;
+        }
+    }
+}
+
+function setCalidad(valor) {
+    window.calidadSeleccionada = valor;
+    const inputCalidad = document.getElementById('inputCalidad');
+    if (inputCalidad) inputCalidad.value = valor;
+    
+    const estrellas = document.querySelectorAll('.btn-star');
+    estrellas.forEach((estrella, index) => {
+        if (index < valor) {
+            estrella.style.color = "#eee346"; 
+            estrella.style.textShadow = "0 0 8px rgba(238, 227, 70, 0.6)";
+        } else {
+            estrella.style.color = "#475569"; 
+            estrella.style.textShadow = "none";
+        }
+    });
+}
+
+async function verEstadoPedidos() {
+    const modal = document.getElementById('page-principal-depos');
+    const contenedor = document.getElementById('modal-contenido');
+    const titulo = document.getElementById('modal-titulo');
+
+    if (!modal || !contenedor) return;
+
+    if (titulo) titulo.innerText = "GESTIÓN DE RECEPCIÓN";
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    contenedor.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-20">
+        <div class="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-cyan-500 animate-pulse font-mono text-xs uppercase tracking-widest">Sincronizando Mapeo con N.I.C.O...</p>
+    </div>`;
+
+    try {
+        const res = await callGoogleScript('obtenerTablaGenerica', { tipo: 'RECEPCION' });
+        
+        if (res.status === "success" && res.reply && res.reply.success) {
+            const data = res.reply;
+            const nombreHojaReal = 'Estado_Pedidos';
+            const columnasCabecera = (typeof ENCABEZADOS_SISTEMA !== 'undefined' ? ENCABEZADOS_SISTEMA[nombreHojaReal] : []) || [];
+
+            contenedor.innerHTML = `
+                <div class="wrapper-tabla-final px-2 w-full overflow-x-auto">
+                    <table id="tabla-maestra-generica" class="tabla-premium w-full text-xs">
+                        <thead>
+                            <tr class="bg-slate-900 text-slate-400 font-mono text-left">
+                                ${columnasCabecera.map(h => `<th class="p-3 uppercase font-bold">${h}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>`;
+
+            if (typeof renderTableNico === 'function') {
+                renderTableNico('#tabla-maestra-generica', data.data, nombreHojaReal);
+            }
+        } else {
+            throw new Error((res.reply && res.reply.error) || "Falla de mapeo de respuesta.");
+        }
+    } catch (err) {
+        contenedor.innerHTML = `<div class="p-4 text-red-400 text-xs font-mono bg-red-950/20 border border-red-900 rounded-lg">❌ ERROR CRÍTICO: ${err.message}</div>`;
+    }
+}
+
+function cambiarModoGestion(modo) {
+    const inputAccion = document.getElementById('accionActual');
+    if (inputAccion) inputAccion.value = modo;
+
+    const secRecibido = document.getElementById('section-RECIBIDO');
+    const btnFinal = document.getElementById('btnConfirmarGestion');
+    const inputObs = document.getElementById('inputObservaciones');
+    const wrapperCausa = document.getElementById('wrapper-causa-cancelacion');
+    const footer = document.querySelector('.sect-footer');
+
+    if (!btnFinal || !inputObs) return;
+
+    switch (modo) {
+        case 'RECIBIDO':
+            if (secRecibido) secRecibido.style.display = 'block';
+            if (wrapperCausa) wrapperCausa.classList.add('hidden'); 
+            
+            btnFinal.innerText = "PROCESAR RECEPCIÓN";
+            btnFinal.style.background = "#10b981";
+            btnFinal.style.borderColor = "#059669";
+            inputObs.placeholder = "Notas generales de la recepción física (opcional)...";
+            break;
+
+        case 'REPROGRAMADO':
+            if (secRecibido) secRecibido.style.display = 'none';
+            if (wrapperCausa) wrapperCausa.classList.add('hidden'); 
+            
+            btnFinal.innerText = "CONFIRMAR REPROGRAMACIÓN";
+            btnFinal.style.background = "#f59e0b"; 
+            btnFinal.style.borderColor = "#d97706";
+            inputObs.value = ""; 
+            inputObs.placeholder = "Esperando asignación de fecha mediante calendario...";
+            solicitarFechaReprogramacion();
+            break;
+
+        case 'CANCELADO':
+            if (secRecibido) secRecibido.style.display = 'none';
+            if (wrapperCausa) wrapperCausa.classList.remove('hidden'); 
+            
+            btnFinal.innerText = "CONFIRMAR ANULACIÓN";
+            btnFinal.style.background = "#ef4444"; 
+            btnFinal.style.borderColor = "#dc2626";
+            inputObs.placeholder = "INGRESE MOTIVO DE CANCELACIÓN DE MANERA OBLIGATORIA...";
+            inputObs.focus(); 
+            break;
+    }
+    
+    if (footer) footer.style.pointerEvents = 'auto';
+    console.log("🛠️ N.I.C.O. Terminal: Contexto de recepción conmutado a -> " + modo);
+}
+
+function cerrarModalRecepcion() {
+    const modal = document.getElementById('modalRecepcion');
+    if (!modal) return;
+
+    const titulo = document.getElementById('recepcionTitulo');
+    const tabsModo = document.querySelector('.modal-body-recep .flex.gap-4');
+    const footerAction = document.getElementById('section-footer');
+    const obs = document.getElementById('inputObservaciones');
+
+    if (titulo) titulo.innerText = "GESTIÓN DE RECEPCIÓN";
+    if (tabsModo) tabsModo.classList.remove('hidden');
+    if (footerAction) footerAction.style.display = 'flex';
+    if (obs) {
+        obs.disabled = false;
+        obs.value = "";
+    }
+
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    
+    const mainContent = document.getElementById('content');
+    if (mainContent) mainContent.removeAttribute('inert');
+}
+
+async function solicitarFechaReprogramacion() {
+    const mainContent = document.getElementById('content');
+    if (mainContent) mainContent.removeAttribute('aria-hidden');
+
+    const { value: fecha } = await Swal.fire({
+        title: 'REPROGRAMAR ARRIBO',
+        input: 'date',
+        inputLabel: 'Indique la nueva fecha estimada de descarga:',
+        background: '#0f172a',
+        color: '#f1f5f9',
+        confirmButtonColor: '#f59e0b',
+        confirmButtonText: 'ASIGNAR FECHA',
+        showCancelButton: true,
+        cancelButtonText: 'VOLVER',
+        returnFocus: false,
+        didOpen: () => {
+            const container = Swal.getContainer();
+            if (container) container.style.zIndex = '35000';
+        }
+    });
+
+    if (fecha) {
+        let inputF = document.getElementById('inputNuevaFecha');
+        const formRecepcion = document.getElementById('formRecepcion') || document.body;
+
+        if (!inputF) {
+            inputF = document.createElement('input');
+            inputF.type = 'hidden';
+            inputF.id = 'inputNuevaFecha';
+            formRecepcion.appendChild(inputF);
+        }
+        inputF.value = fecha;
+
+        const display = document.getElementById('display-fecha-reprogramada');
+        if (display) display.innerText = fecha.split('-').reverse().join('/');
+
+        const obs = document.getElementById('inputObservaciones');
+        if (obs) obs.value = `REPROGRAMADO PARA EL: ${fecha.split('-').reverse().join('/')}`;
+        console.log("✅ Fecha asignada correctamente:", fecha);
+    }
+}
+
+
+
+/*--------------SECCION HISTORIAL-----------------------*/
+
+/** @param {string|number} idPedido - Identificador único de la orden.  */
+
+async function verDetalleHistorial(idPedido) {
+    const modal = document.getElementById('modalDetalleHistorial');
+    const contenedor = document.getElementById('contenedorItemsHistorial');
+    const subtitulo = document.getElementById('historialSubtitulo');
+    
+    if (!modal || !contenedor) {
+        console.error("❌ N.I.C.O. DOM Error: Elementos críticos del Historial no encontrados.");
+        return;
+    }
+
+    if (subtitulo) subtitulo.innerText = `EXPEDIENTE: ${idPedido}`;
+    
+    contenedor.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12">
+            <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest italic animate-pulse">Accediendo al archivo central...</p>
+        </div>`;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.style.setProperty('display', 'flex', 'important');
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const res = await callGoogleScript('obtenerItemHistorial', { idPedido: idPedido });
+        
+        if (res.status === "success" && res.reply && res.reply.success) {
+            const data = res.reply;
+            
+            if (!data.info) {
+                throw new Error("El servidor no retornó la cabecera informativa (info).");
+            }
+
+            let html = `
+            <div class="grid grid-cols-2 gap-3 p-4 mb-4 bg-slate-950/50 border border-slate-800/60 rounded-lg text-[10px]">
+                <div class="space-y-2">
+                    <div>
+                        <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Proveedor / Origen</p>
+                        <p class="text-cyan-400 font-bold uppercase">${data.info.proveedor || 'SIN PROVEEDOR'}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Estatus Final</p>
+                        <span class="inline-block px-2 py-0.5 mt-1 text-[9px] font-mono rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+                            ${data.info.estatus || 'FINALIZADO'}
+                        </span>
+                    </div>
+                </div>
+                <div class="space-y-2 text-right">
+                    <div>
+                        <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Registro / Cierre</p>
+                        <p class="text-slate-300 font-mono mt-0.5">
+                            ${data.info.fechaPedido || '---'} <span class="text-cyan-700 mx-1">➔</span> ${data.info.fechaRecepcion || '---'}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Performance (Calidad / Cumplimiento)</p>
+                        <p class="text-amber-400 font-mono mt-0.5 font-bold">
+                            ${generarEstrellasVisuales(data.info.calidad)} 
+                            <span class="text-slate-400 ml-2 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">${data.info.cumplimiento || '0%'}</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="col-span-2 pt-2 border-t border-slate-800/40 mt-1">
+                    <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Observaciones de Gestión</p>
+                    <p class="text-slate-400 italic mt-0.5 bg-slate-900/40 p-2 rounded border border-slate-900 font-sans">
+                        ${data.info.observaciones ? `"${data.info.observaciones}"` : '"Sin novedades registradas en la recepción."'}
+                    </p>
+                </div>
+            </div>`;
+
+
+            if (data.items && data.items.length > 0 && 'precio' in data.items[0]) {
+                html += renderizarTablaItemsHistorial(data.items);
+            } else {
+                html += renderizarTablaInversionPlana(data.items || []);
+            }
+
+            contenedor.innerHTML = html;
+
+        } else {
+            throw new Error((res.reply && res.reply.error) || "No se pudo recuperar la información del archivo.");
+        }
+    } catch (err) {
+        console.error("❌ Error en Módulo Historial:", err);
+        contenedor.innerHTML = `
+            <div class="p-10 text-center bg-red-950/10 border border-red-900/30 rounded-xl mt-2">
+                <div class="text-red-500 text-xl mb-2">⚠️</div>
+                <p class="text-red-400 uppercase text-[10px] font-mono tracking-wide">Falla de Indexación: ${err.message}</p>
+            </div>`;
+    }
+}
+
+function cerrarModalHistorial() {
+    const modal = document.getElementById('modalDetalleHistorial');
+    if (!modal) return;
+
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function renderizarTablaInversionPlana(items) {
+    if (items.length === 0) return `<p class="text-[10px] text-slate-500 font-mono text-center py-4">S/D ÍTEMS</p>`;
+
+    let html = `
+    <div class="overflow-hidden rounded-lg border border-slate-800 max-h-[280px] overflow-y-auto custom-scrollbar">
+        <table class="w-full text-[11px] border-collapse">
+            <thead class="sticky top-0 bg-[#0f172a] z-10 shadow">
+                <tr class="bg-slate-900/90 text-slate-500 text-left border-b border-slate-800">
+                    <th class="p-2.5 uppercase text-[8px] font-black tracking-wider">Descripción del Ítem</th>
+                    <th class="p-2.5 uppercase text-[8px] font-black tracking-wider text-right">Inversión Final</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/40 bg-slate-950/20">`;
+
+    let totalInversion = 0;
+    items.forEach((item) => {
+        const inversionItem = parseFloat(item.inversion) || 0;
+        totalInversion += inversionItem;
+        html += `
+        <tr class="hover:bg-cyan-500/5 transition-colors duration-100">
+            <td class="p-2.5 text-slate-300 flex items-center gap-2">
+                <span class="text-cyan-700 font-mono text-xs">▸</span>
+                <span class="uppercase">${item.producto || 'Ítem Desconocido'}</span>
+            </td>
+            <td class="p-2.5 text-right text-white font-mono font-bold">$${inversionItem.toLocaleString()}</td>
+        </tr>`;
+    });
+
+    html += `
+            </tbody>
+            <tfoot class="sticky bottom-0 bg-slate-900 z-10 border-t border-cyan-500/20">
+                <tr class="bg-cyan-950/20">
+                    <td class="p-2.5 text-cyan-500 font-bold uppercase text-[9px] tracking-widest">Total Líquido Invertido</td>
+                    <td class="p-2.5 text-right text-cyan-400 font-bold font-mono text-xs">$${totalInversion.toLocaleString()}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>`;
+    return html;
+}
+
+function renderizarTablaItemsHistorial(items) {
+    let html = `
+    <div class="overflow-hidden rounded-lg border border-slate-800 max-h-[280px] overflow-y-auto custom-scrollbar">
+        <table class="w-full text-left text-[11px] border-collapse">
+            <thead class="sticky top-0 bg-[#0f172a] z-10 shadow">
+                <tr class="bg-slate-900/90 text-slate-500 border-b border-slate-800 text-[8px] font-black tracking-wider">
+                    <th class="p-2.5 uppercase">PRODUCTO</th>
+                    <th class="p-2.5 uppercase text-center">CANT.</th>
+                    <th class="p-2.5 uppercase text-right">PRECIO UNIT.</th>
+                    <th class="p-2.5 uppercase text-right">SUBTOTAL</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/40 bg-slate-950/20">`;
+
+    let totalCalculado = 0;
+    items.forEach(item => {
+        const cantidad = parseFloat(item.cantidad) || 0;
+        const precio = parseFloat(item.precio) || 0;
+        const subtotal = cantidad * precio;
+        totalCalculado += subtotal;
+
+        html += `
+        <tr class="hover:bg-cyan-500/5 transition-colors duration-100">
+            <td class="p-2.5 text-slate-300 uppercase font-medium">${item.nombre || item.producto}</td>
+            <td class="p-2.5 text-center text-white font-mono font-bold">${cantidad}</td>
+            <td class="p-2.5 text-right text-slate-400 font-mono">$${precio.toLocaleString()}</td>
+            <td class="p-2.5 text-right text-cyan-400 font-bold font-mono">$${subtotal.toLocaleString()}</td>
+        </tr>`;
+    });
+
+    html += `
+            </tbody>
+            <tfoot class="sticky bottom-0 bg-slate-900 z-10 border-t border-cyan-500/20">
+                <tr class="bg-cyan-950/20 font-bold">
+                    <td colspan="3" class="p-2.5 text-cyan-500 uppercase text-[9px] tracking-widest">Total Líquido Calculado</td>
+                    <td class="p-2.5 text-right text-cyan-400 font-mono text-xs">$${totalCalculado.toLocaleString()}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>`;
+    return html;
+}
+
+function generarEstrellasVisuales(valor) {
+    const num = parseInt(valor) || 0;
+    if (num === 0) return '⭐ 0/5';
+    let estrellas = '';
+    for(let i = 0; i < 5; i++) {
+        estrellas += i < num ? '★' : '☆';
+    }
+    return estrellas;
+}
+
+
+/*-------------------SECCION DATOS SEMANALES------------------------------*/
+let navegacionSemanal = {
+    semanaActual: null,
+    diaActual: null
+};
+
+function abrirModalReportes() {
+    const modal = document.getElementById('modal-reportes-lex');
+    console.log("🚀 Módulo de Reportes Semanales cargado correctamente.");
+
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.style.setProperty('display', 'flex', 'important');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function cerrarModalReportes() {
+    const modal = document.getElementById('modal-reportes-lex');
+    if (modal) {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        
+        const contenido = document.getElementById('contenido-reporte-lex');
+        if (contenido) contenido.innerHTML = ''; 
+    }
+}
+
+async function abrirModalSemanal() {
+    console.log("🚩 INICIO: abrirModalSemanal");
+    mostrarCargandoLex(true);
+    abrirModalReportes(); 
+
+    try {
+        const res = await callGoogleScript('obtenerDatosReporteSemanal');
+        console.log("📦 Respuesta bruta recibida (Mes):", res);
+        
+        let data = res?.reply?.reply || res?.reply || res;
+        console.log("🔍 Data real extraída (Mes):", data);
+
+        let filasRaw = data?.filas || (Array.isArray(data) ? data : []);
+        let semanasRelativas = data?.semanasRelativas || [];
+
+        if (filasRaw.length > 0 && (filasRaw[0]?.idprov === 'ID PROV' || filasRaw[0]?.[0] === 'ID PROV')) {
+            filasRaw.shift();
+        }
+
+        console.log("📊 Filas listas para renderizar (Mes):", filasRaw.length);
+
+        const contenedor = document.getElementById('contenido-reporte-lex');
+        if (filasRaw.length === 0) {
+            if (contenedor) {
+                contenedor.innerHTML = `<div class="text-slate-400 text-center py-10 font-mono text-xs uppercase tracking-wider">No hay datos disponibles para el reporte mensual.</div>`;
+            }
+            return;
+        }
+
+        renderizarVistaMes({ filas: filasRaw, semanasRelativas: semanasRelativas });
+
+    } catch (err) {
+        console.error("❌ ERROR CRÍTICO en abrirModalSemanal:", err);
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+function renderizarVistaMes(response) {
+    const data = response?.reply?.filas ? response.reply : response;
+    const { filas, semanasRelativas } = data;
+    
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+    
+    if (titulo) titulo.innerText = "REPORTE MENSUAL DE ENTREGAS";
+
+    const semanaHoy = getWeekNumber(new Date());
+    const semanasHead = (semanasRelativas || []).filter(s => s !== "" && s !== null && s !== undefined);
+
+    const semanasNumeros = semanasHead.map((s, i) => {
+        if (/^\d{1,2}$/.test(String(s).trim())) {
+            return parseInt(s);
+        } else {
+            const fechaSemana = new Date(s);
+            if (!isNaN(fechaSemana.getTime())) {
+                return getWeekNumber(fechaSemana);
+            } else {
+                const match = s.toString().match(/\d+/);
+                return match ? parseInt(match[0]) : (i + 1);
+            }
+        }
+    });
+
+    let html = `
+    <div class="lex-report-toolbar p-3 bg-slate-900/40 rounded-lg mb-4 flex gap-4 items-center border border-slate-800/40">
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-btn-nav-header px-3 py-1.5 bg-cyan-950/40 text-cyan-400 border border-cyan-800/50 rounded text-[10px] font-bold hover:bg-cyan-900/40 transition-all">
+            <i class="fas fa-sync-alt mr-1"></i> REFRESCAR HOJA
+        </button>
+        <span class="text-slate-500 font-mono text-[10px] tracking-widest uppercase">
+            Ecosistema: Semana Actual <b class="text-emerald-400 ml-1 font-bold">${semanaHoy}</b>
+        </span>
+    </div>
+
+    <div class="overflow-x-auto custom-scroll border border-slate-800/60 rounded-lg">
+        <table class="lex-table-report w-full text-left border-collapse text-[11px]">
+            <thead>
+                <tr class="bg-slate-900 border-b border-slate-800">
+                    <th class="p-2.5 text-amber-500 font-bold uppercase tracking-wider min-w-[250px]">Proveedor / Cuenta</th>
+                    ${semanasNumeros.map(numSemanaColumna => {
+                        const esActual = (numSemanaColumna === semanaHoy);
+                        const claseSemana = esActual ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-slate-950/40 text-slate-400 border-slate-800';
+
+                        return `
+                        <th class="p-1 text-center min-w-[90px]">
+                            <button onclick="verDetalleSemana(${numSemanaColumna})" 
+                                    class="w-full py-1.5 px-2 rounded border flex flex-col items-center justify-center transition-all hover:border-cyan-500/50 group ${claseSemana}">
+                                <span class="text-[7px] text-slate-500 uppercase tracking-tight group-hover:text-cyan-400 transition-colors">Filtrar A2</span>
+                                <span class="text-[10px] font-mono font-bold mt-0.5">SEM ${numSemanaColumna}</span>
+                            </button>
+                        </th>`;
+                    }).join('')}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-900/60 bg-slate-950/20">
+                ${filas.map(f => {
+                    const idprov = f?.idprov || f?.[0] || '';
+                    const nombre = f?.nombre || f?.[1] || 'SIN NOMBRE';
+                    if (!nombre || nombre === 'NOMBRE PROVEEDOR' || idprov === 'ID PROV') return '';
+
+                    return `
+                    <tr class="hover:bg-slate-900/30 transition-colors">
+                        <td class="p-2.5 lex-td-prov border-r border-slate-900/40">
+                            <div class="inline-block px-1.5 py-0.5 text-[8px] font-mono rounded bg-slate-900 text-slate-400 border border-slate-800 mb-1">ID: ${idprov}</div>
+                            <div class="lex-nombre-prov font-bold text-slate-300 uppercase tracking-wide">${nombre}</div>
+                        </td>
+                        ${semanasNumeros.map((numSemanaColumna, idx) => {
+                            const val = f[`s${idx + 1}`] !== undefined ? f[`s${idx + 1}`] : f[idx + 2];
+                            const esFuturo = numSemanaColumna > semanaHoy;
+                            return `<td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(val, esFuturo)}</td>`;
+                        }).join('')}
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>
+    </div>`;
+
+    if (contenedor) contenedor.innerHTML = html;
+}
+
+async function verDetalleSemana(numSemana) {
+    if (!numSemana) return;
+    mostrarCargandoLex(true);
+    
+    try {
+        const res = await callGoogleScript('procesarFiltradoHoja', { 
+            param: parseInt(numSemana), 
+            tipo: "SEMANA" 
+        });
+        console.log("📦 Respuesta bruta recibida (Semana):", res);
+
+        let data = res?.reply?.reply || res?.reply || res?.filas || res;
+        if (!Array.isArray(data)) data = [];
+
+        renderizarVistaSemanal(data, numSemana); 
+        
+    } catch (e) {
+        console.error("❌ Error en verDetalleSemana:", e);
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+function renderizarVistaSemanal(data, numSemana) {
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+    
+    if (titulo) titulo.innerText = `PLANIFICACIÓN SEMANAL: SEMANA ${numSemana}`;
+    
+    const dias = [
+        { corto: 'LUN', largo: 'LUNES' },
+        { corto: 'MAR', largo: 'MARTES' },
+        { corto: 'MIE', largo: 'MIERCOLES' },
+        { corto: 'JUE', largo: 'JUEVES' },
+        { corto: 'VIE', largo: 'VIERNES' },
+        { corto: 'SAB', largo: 'SABADO' }
+    ];
+    
+    let html = `
+    <div class="lex-report-toolbar mb-4 flex gap-2">
+        <button onclick="abrirModalSemanal()" class="px-3 py-1.5 text-[10px] font-bold bg-emerald-950/30 text-emerald-400 border border-emerald-800/40 rounded hover:bg-emerald-900/30 transition-all">← VOLVER AL MES</button>
+        <button onclick="ejecutarSincronizacionRelampago()" class="px-3 py-1.5 text-[10px] font-bold bg-cyan-950/30 text-cyan-400 border border-cyan-800/40 rounded hover:bg-cyan-900/30 transition-all">
+            <i class="fas fa-sync-alt mr-1"></i> REFRESCAR
+        </button>
+    </div>
+    <div class="overflow-x-auto custom-scroll border border-slate-800/60 rounded-lg">
+        <table class="lex-table-report w-full text-left border-collapse text-[11px]">
+            <thead>
+                <tr class="bg-slate-900 border-b border-slate-800">
+                    <th class="p-2.5 text-amber-500 font-bold uppercase tracking-wider min-w-[200px]">Proveedor / Cuenta</th>
+                    ${dias.map(d => `
+                        <th class="p-1 text-center min-w-[80px]">
+                            <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="w-full py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded font-mono font-bold text-[10px] hover:border-amber-400 transition-colors">
+                                ${d.corto}
+                            </button>
+                        </th>
+                    `).join('')}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-900/60 bg-slate-950/20">`;
+    
+    if (!data || data.length === 0) {
+        html += `<tr><td colspan="7" class="p-10 text-center text-slate-500 font-mono text-xs">No hay datos disponibles para esta semana.</td></tr>`;
+    } else {
+        const filasFiltradas = data.filter(f => {
+            const id = f?.idProveedor || f?.idprov || f?.[0] || '';
+            return id !== 'ID PROV' && id !== '';
+        });
+
+        filasFiltradas.forEach(f => {
+            const idprov = f?.idProveedor || f?.idprov || f?.[0] || '';
+            const nombre = f?.nombreProveedor || f?.nombre || f?.[1] || 'SIN NOMBRE';
+            const s1 = f?.s1 !== undefined ? f.s1 : f?.[2] || 'NO';
+            const s2 = f?.s2 !== undefined ? f.s2 : f?.[3] || 'NO';
+            const s3 = f?.s3 !== undefined ? f.s3 : f?.[4] || 'NO';
+            const s4 = f?.s4 !== undefined ? f.s4 : f?.[5] || 'NO';
+            const s5 = f?.s5 !== undefined ? f.s5 : f?.[6] || 'NO';
+            const s6 = f?.s6 !== undefined ? f.s6 : f?.[7] || 'NO';
+            
+            html += `
+            <tr class="hover:bg-slate-900/30 transition-colors">
+                <td class="p-2.5 border-r border-slate-900/40">
+                    <div class="inline-block px-1.5 py-0.5 text-[8px] font-mono rounded bg-slate-900 text-slate-400 border border-slate-800 mb-1">ID: ${idprov}</div>
+                    <div class="lex-nombre-prov font-bold text-slate-300 uppercase tracking-wide">${nombre}</div>
+                </td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s1, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s2, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s3, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s4, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s5, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s6, false)}</td>
+            </tr>`;
+        });
+    }
+    
+    html += `</tbody></table></div>`;
+    if (contenedor) contenedor.innerHTML = html;
+}
+
+async function verDetalleDia(nombreDia, numSemana) {
+    console.git?.(`🔍 Filtrando detalle para: ${nombreDia} (Semana ${numSemana})`);
+    mostrarCargandoLex(true);
+    
+    if (typeof navegacionSemanal !== 'undefined') {
+        navegacionSemanal.diaActual = nombreDia;
+    }
+    
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+
+    try {
+        const res = await callGoogleScript('procesarFiltradoHoja', { 
+            param: nombreDia, 
+            tipo: "DIA" 
+        });
+        
+        let data = res?.reply?.reply || res?.reply || res?.filas || res;
+        if (!Array.isArray(data)) data = [];
+
+        if (data.length > 0 && (data[0]?.idProveedor === 'ID PROV' || data[0]?.[0] === 'ID PROV')) {
+            data.shift();
+        }
+        
+        if (titulo) titulo.innerText = `DETALLE: ${nombreDia} - SEMANA ${numSemana}`;
+
+        let html = `
+        <div class="lex-report-toolbar mb-4 flex gap-2">
+            <button onclick="verDetalleSemana(${numSemana})" class="px-3 py-1.5 text-[10px] font-bold bg-emerald-950/30 text-emerald-400 border border-emerald-800/40 rounded hover:bg-emerald-900/30 transition-all">← VOLVER A SEMANA</button>
+            <button onclick="abrirModalSemanal()" class="px-3 py-1.5 text-[10px] font-bold bg-amber-950/30 text-amber-400 border border-amber-800/40 rounded hover:bg-amber-900/30 transition-all">INICIO MES</button>
+        </div>
+        <div class="overflow-x-auto custom-scroll border border-slate-800/60 rounded-lg">
+            <table class="lex-table-report w-full text-left border-collapse text-[11px]">
+                <thead>
+                    <tr class="bg-slate-900 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[9px]">
+                        <th class="p-2.5">PROVEEDOR</th>
+                        <th class="p-2.5 text-center">ESTADO</th>
+                        <th class="p-2.5 text-center">FECHA REGISTRO</th>
+                        <th class="p-2.5 text-center">ID PEDIDO</th>
+                        <th class="p-2.5">OBSERVACIONES</th>
+                        <th class="p-2.5 text-center">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-900/60 bg-slate-950/20">`;
+
+        if (data.length === 0) {
+            html += `<tr><td colspan="6" class="p-10 text-center text-slate-500 font-mono text-xs">No hay pedidos registrados para este día.</td></tr>`;
+        } else {
+            data.forEach(item => {
+                const idProv = item?.idProveedor || item?.idprov || item?.[0] || '';
+                const nombre = item?.nombreProveedor || item?.nombre || item?.[1] || 'SIN NOMBRE';
+                const estado = item?.estado || item?.[2] || 'NO';
+                const fechaReg = item?.fechaRegistro || item?.fecha || item?.[3] || ''; 
+                const idPedido = item?.idPedido || item?.[4] || '';
+                const observaciones = item?.observaciones || item?.[5] || '';
+                const fechaReprog = item?.nuevaFechaReprog || item?.fechaReprog || item?.[6] || '';
+
+                let infoFechaHtml = `<div class="font-mono text-slate-300">${fechaReg || '---'}</div>`;
+                if (fechaReprog && estado.toString().toUpperCase().includes("REPRO")) {
+                    infoFechaHtml += `<div class="text-[9px] text-amber-400 font-mono mt-0.5"><i class="fas fa-calendar-alt mr-1"></i>Reprog: ${fechaReprog}</div>`;
+                }
+
+                html += `
+                <tr class="hover:bg-slate-900/30 transition-colors">
+                    <td class="p-2.5 align-middle">
+                        <div class="inline-block px-1.5 py-0.5 text-[8px] font-mono rounded bg-slate-900 text-slate-400 border border-slate-800 mb-1">ID: ${idProv}</div>
+                        <div class="font-bold text-slate-300 uppercase tracking-wide">${nombre}</div>
+                    </td>
+                    <td class="p-2 text-center align-middle">${formatearEstado(estado)}</td>
+                    <td class="p-2 text-center align-middle">${infoFechaHtml}</td>
+                    <td class="p-2 text-center align-middle text-slate-400 font-mono font-bold text-xs">#${idPedido}</td>
+                    <td class="p-2 align-middle max-width-[200px] text-slate-400 text-[10px] leading-relaxed white-space-normal break-words">
+                        ${observaciones || '<span class="text-slate-600 italic">Sin observaciones</span>'}
+                    </td>
+                    <td class="p-2 text-center align-middle">
+                        <button onclick="verPedidoDirecto('${idPedido}')" class="px-2 py-1 text-[10px] font-bold bg-purple-950/40 text-purple-400 border border-purple-800/50 rounded hover:bg-purple-900/40 transition-colors">
+                            <i class="fas fa-search mr-1"></i> Ver
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        html += `</tbody></table></div>`;
+        if (contenedor) contenedor.innerHTML = html;
+
+    } catch (e) {
+        console.error("❌ Error en verDetalleDia:", e);
+        if (contenedor) contenedor.innerHTML = `<div class="text-red-400 font-mono text-xs p-5">Error al traer detalle diario: ${e.message}</div>`;
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+function getWeekNumber(d) {
+    const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    target.setUTCDate(target.getUTCDate() + 4 - (target.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+    return Math.ceil((((target - yearStart) / 86400000) + 1) / 7);
+}
+
+function formatearEstado(e, esFuturo = false) {
+    const txt = e ? e.toString().toUpperCase().trim() : "";
+    const esNo = !txt || txt === "NO" || txt === "❌ NO";
+
+    if (esNo && esFuturo) return ""; 
+
+    const estiloBase = "display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: monospace; letter-spacing: 0.5px; border: 1px solid;";
+
+    if (esNo) {
+        return `<span style="${estiloBase} background: rgba(239, 68, 68, 0.1); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);">❌ NO</span>`;
+    }
+    if (txt.includes("SI") || txt.includes("✅") || txt.includes("OK")) {
+        return `<span style="${estiloBase} background: rgba(34, 197, 94, 0.1); color: #4ade80; border-color: rgba(34, 197, 94, 0.4); box-shadow: 0 0 8px rgba(34, 197, 94, 0.2);">✅ OK</span>`;
+    }
+    if (txt.includes("REPRO") || txt.includes("⚠️")) {
+        return `<span style="${estiloBase} background: rgba(234, 179, 8, 0.1); color: #facc15; border-color: rgba(234, 179, 8, 0.4); box-shadow: 0 0 8px rgba(234, 179, 8, 0.2);">⚠️ REPROG</span>`;
+    }
+
+    return `<span style="${estiloBase} background: #334155; color: #cbd5e1; border-color: #475569;">${txt}</span>`;
+}
+
+function mostrarCargandoLex(show) {
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    if (!contenedor) return;
+    
+    if (show) {
+        const loader = document.createElement('div');
+        loader.id = "lex-loader-overlay";
+        loader.className = "absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center z-50 rounded-lg animate-fade-in";
+        loader.innerHTML = `
+            <div class="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <span class="text-amber-500 font-mono text-[9px] tracking-[2px] uppercase animate-pulse">ACCEDIENDO AL ARCHIVO MAESTRO...</span>`;
+        contenedor.appendChild(loader);
+    } else {
+        const loader = document.getElementById('lex-loader-overlay');
+        if (loader) loader.remove();
+    }
+}
+
+async function abrirArchivoPedido(idPedido) {
+    mostrarCargandoLex(true);
+    try {
+        const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
+        const data = res?.reply || res;
+
+        if (!data) {
+            alert(`SISTEMA: No se encontró ningún documento asociado al pedido #${idPedido}`);
+            return;
+        }
+
+        const visor = document.getElementById('visor-pdf-lex');
+        const iframe = document.getElementById('pdf-frame-lex');
+        if (!visor || !iframe) return;
+        
+        iframe.style.display = 'none';
+        let visorCSV = document.getElementById('visor-csv-container');
+        if (!visorCSV) {
+            visorCSV = document.createElement('div');
+            visorCSV.id = 'visor-csv-container';
+            visor.appendChild(visorCSV);
+        }
+        visorCSV.innerHTML = '';
+        visorCSV.style.display = 'none';
+
+        if (data.tipo === 'pdf') {
+            const blob = base64ToBlob(data.contenido, 'application/pdf');
+            const url = URL.createObjectURL(blob);
+            iframe.src = url;
+            iframe.style.display = 'block';
+            visor.dataset.currentBlob = url;
+        } else if (data.tipo === 'csv') {
+            visorCSV.innerHTML = `
+                <div class="p-4 text-slate-300">
+                    <h3 class="text-amber-500 font-bold font-mono text-xs mb-3 uppercase tracking-wider">VISTA PREVIA CSV: ${data.nombre}</h3>
+                    <div class="lex-csv-wrapper overflow-auto border border-slate-800 rounded bg-slate-950 p-2">${data.contenido}</div>
+                </div>`;
+            visorCSV.style.display = 'block';
+        }
+
+        visor.style.display = 'flex';
+    } catch (e) {
+        console.error("❌ Fallo crítico en canal de visualización:", e);
+        alert("Error de comunicación con el archivo.");
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+function cerrarVisorLex() {
+    const visor = document.getElementById('visor-pdf-lex');
+    const iframe = document.getElementById('pdf-frame-lex');
+    if (!visor || !iframe) return;
+    
+    if (visor.dataset.currentBlob) {
+        URL.revokeObjectURL(visor.dataset.currentBlob);
+        delete visor.dataset.currentBlob;
+    }
+    iframe.src = "";
+    visor.style.display = 'none';
+}
+
+async function exportarVistaActualALex() {
+    const contenedor = document.getElementById('contenido-reporte-lex') || document.querySelector('.tab-pane.active') || document.body;
+    const tabla = contenedor?.querySelector('table');
+    
+    if (!tabla) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin datos',
+            text: 'No se detectó ninguna tabla activa en pantalla para exportar.',
+            background: '#1e293b', color: '#cbd5e1'
+        });
+        return;
+    }
+
+    mostrarCargandoLex(true);
+
+    try {
+        const filas = [];
+        const headers = [];
+        let colAccionesIdx = -1;
+        
+        tabla.querySelectorAll('thead th').forEach((th, index) => {
+            const textoHeader = th.innerText.trim();
+            if (['ACCIONES', 'ACCION'].includes(textoHeader.toUpperCase())) {
+                colAccionesIdx = index; 
+            } else {
+                headers.push(textoHeader);
+            }
+        });
+        filas.push(headers);
+
+        tabla.querySelectorAll('tbody tr').forEach(tr => {
+            const fila = [];
+            tr.querySelectorAll('td').forEach((td, index) => {
+                if (index === colAccionesIdx) return;
+                const badge = td.querySelector('span');
+                let textoCelda = badge ? badge.innerText.trim() : td.innerText.trim();
+                fila.push(textoCelda.replace(/\n|\r/g, " "));
+            });
+            if (fila.length > 0) filas.push(fila);
+        });
+
+        const elTitulo = document.getElementById('titulo-reporte-lex') || document.querySelector('.active h2') || document.querySelector('.active h3');
+        let nombreArchivo = elTitulo ? elTitulo.innerText.trim() : 'Reporte_Pedidos_Vista_Actual';
+        nombreArchivo = nombreArchivo.toLowerCase().replace(/[^a-z0-9áéíóúñ_-]/gi, '_');
+
+        const contenidoCSV = "\uFEFF" + filas.map(f => 
+            f.map(celda => `"${celda.replace(/"/g, '""')}"`).join(";")
+        ).join("\n");
+
+        const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
+        const urlDescarga = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = urlDescarga;
+        link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`; 
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(urlDescarga);
+
+    } catch (e) {
+        console.error("❌ Falló el wrapper de exportación CSV:", e);
+        Swal.fire({
+            icon: 'error', title: 'Error de Exportación', text: 'Ocurrió un inconveniente al empaquetar los datos.', background: '#1e293b', color: '#cbd5e1'
+        });
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+function base64ToBlob(base64, type) {
+    const bin = atob(base64);
+    const len = bin.length;
+    const arr = new Uint8Array(len);
+    for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: type });
+}
+
+
+async function ejecutarSincronizacionRelampago() {
+    mostrarCargandoLex(true);
+    try {
+        const res = await callGoogleScript('verificarReporteSemanal');
+        if (res?.status === "success") {
+            await abrirModalSemanal();
+        }
+    } catch (err) {
+        console.error("❌ Falla en Sync:", err);
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+window.verPedidoDirecto = async function(idPedido) {
+    if (!idPedido || idPedido.trim() === "") {
+        Swal.fire({ icon: 'warning', title: 'Atención', text: 'ID de pedido no válido.', background: '#1e293b', color: '#cbd5e1' });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Buscando registro...',
+        html: `Consultando orden <b style="color:#00f0ff">#${idPedido}</b> en el ecosistema...`,
+        background: '#1e293b', color: '#cbd5e1',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const response = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
+        const laRespuestaReal = response?.reply || response;
+
+        if (!laRespuestaReal || laRespuestaReal.status === 'error') {
+            Swal.fire({
+                icon: 'info', title: 'Información del Sistema', text: laRespuestaReal?.message || 'No se localizó el pedido.', background: '#1e293b', color: '#cbd5e1', confirmButtonColor: '#475569'
+            });
+            return;
+        }
+
+        const resData = laRespuestaReal.data || laRespuestaReal;
+        const proveedor = resData.proveedor || '---';
+        const productos = resData.productos || '---';
+        const estado = resData.estado || '---';
+        const fechaRegistro = resData.fechaRegistro || '---';
+        const observaciones = resData.observaciones || 'Sin comentarios registrados.';
+        const nuevaFechaReprog = resData.nuevaFechaReprog || '';
+        const origenHoja = laRespuestaReal.origen || 'Ecosistema';
+
+        let colorEstado = '#34d399'; 
+        if (estado.toUpperCase().includes('REPRO')) colorEstado = '#eab308';
+        if (estado.toUpperCase().includes('PEND')) colorEstado = '#38bdf8';
+
+        Swal.fire({
+            title: `<span style="font-size:11px; color:#64748b; letter-spacing:1.5px; font-weight:bold;">DETALLE DE PEDIDO • ${origenHoja.toUpperCase()}</span><br>
+                    <span style="color:#00f0ff; font-family:monospace; font-size:22px;">#${idPedido}</span>`,
+            html: `
+                <div style="text-align: left; background: rgba(15, 23, 42, 0.7); padding: 16px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; margin-top:10px;">
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">PROVEEDOR:</span>
+                        <span style="color: #f8fafc; font-weight:600; text-transform:uppercase;">${proveedor}</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">PRODUCTOS / DETALLE:</span>
+                        <div style="background: rgba(15, 23, 42, 0.9); padding: 8px 12px; border-radius: 4px; color: #cbd5e1; border-left: 3px solid #00f0ff; font-size: 12.5px;">
+                            ${productos}
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">ESTADO:</span>
+                        <span style="background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius:4px; color:${colorEstado}; font-weight: bold; font-size: 11px; font-family:monospace;">
+                            ${estado}
+                        </span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">REGISTRO:</span>
+                        <span style="color: #cbd5e1; font-family:monospace;">${fechaRegistro}</span>
+                    </div>
+                    ${nuevaFechaReprog && !["---", ""].includes(nuevaFechaReprog) ? `
+                    <div style="margin-bottom: 10px; border-left: 3px solid #eab308; padding-left: 8px; background: rgba(234, 179, 8, 0.05); padding-top: 4px; padding-bottom: 4px;">
+                        <span style="color: #eab308; font-weight: bold; display:inline-block; width:110px;">REPROGRAMADO:</span>
+                        <span style="color: #fef08a; font-weight: bold; font-family:monospace;">${nuevaFechaReprog}</span>
+                    </div>` : ''}
+                    <hr style="border:0; border-top: 1px dashed #334155; margin: 14px 0;">
+                    <div>
+                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">OBSERVACIONES:</span>
+                        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; color: #94a3b8; font-style: italic; min-height: 40px; word-break: break-word; border: 1px solid rgba(255,255,255,0.01);">
+                            ${observaciones}
+                        </div>
+                    </div>
+                </div>`,
+            background: '#1e293b', color: '#cbd5e1',
+            confirmButtonText: 'ENTENDIDO', confirmButtonColor: '#475569',
+            customClass: { confirmButton: 'lex-sweet-btn' }
+        });
+    } catch (error) {
+        console.error("❌ Error en renderizado frontend:", error);
+        Swal.fire({
+            icon: 'error', title: 'Error de Renderizado', text: 'No se pudo procesar adecuadamente la estructura del pedido.', background: '#1e293b', color: '#cbd5e1'
+        });
+    }
+};
+
+console.log("✅ N.I.C.O. Terminal: Carga finalizada sin errores críticos.");
+
+
+
