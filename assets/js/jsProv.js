@@ -16,63 +16,44 @@ window.estadoEdicion = window.estadoEdicion || { hoja: "", fila: null };
 document.addEventListener("click", (e) => {
     const miniCircle = e.target.closest(".nm-mini-circle");
     if (miniCircle) {
-        e.stopPropagation();
-        
-        miniCircle.classList.remove("explode");
-        void miniCircle.offsetWidth;
-        miniCircle.classList.add("explode");
-
-        const targetModal = miniCircle.getAttribute("data-modal");
-        const parentCircle = miniCircle.closest(".nm-circle-outer");
-
-        setTimeout(() => {
-            if (parentCircle) parentCircle.classList.remove("expanded"); 
-            if (targetModal === "modal-pedidos-autoasistidos") {
-                abrirModalPedidos_Autoasist(); 
-            } else if (targetModal === "modal-pedidos") {
-                abrirModalPedidosManual();     
-            }
-        }, 400);
-        return;
+        const targetWithClick = miniCircle.querySelector("[onclick]");
+        if (targetWithClick && e.target !== targetWithClick) {
+            e.preventDefault();
+            e.stopPropagation();
+            targetWithClick.click();
+        }
+        return; 
     }
 
     const circleOuter = e.target.closest(".nm-circle-outer");
     if (circleOuter) {
         const hasMini = circleOuter.querySelectorAll(".nm-mini-circle").length > 0;
-
         if (hasMini) {
-            e.preventDefault();
             circleOuter.classList.toggle("expanded");
-        } else {
-                    const elementWithOnclick = circleOuter.querySelector("[onclick]") || (circleOuter.getAttribute("onclick") ? circleOuter : null);
+            return;
+        }
+
+        const targetWithClick = circleOuter.querySelector("[onclick]");
+        if (targetWithClick && e.target !== targetWithClick) {
+            e.preventDefault();
+            e.stopPropagation();
             
-            if (elementWithOnclick) {
-                e.stopPropagation();
-                e.preventDefault();
-                
-                circleOuter.classList.remove("explode");
-                void circleOuter.offsetWidth;
-                circleOuter.classList.add("explode");
+            circleOuter.classList.remove("explode");
+            void circleOuter.offsetWidth;
+            circleOuter.classList.add("explode");
 
-                const originalAction = elementWithOnclick.getAttribute("onclick");
-
-                setTimeout(() => {
-                    if (originalAction) {
-                        try {
-                            const runAction = new Function(originalAction);
-                            runAction();
-                        } catch (err) {
-                            console.error("Error al ejecutar acción:", err);
-                        }
-                    }
-                }, 400);
-            }
+            setTimeout(() => {
+                targetWithClick.click();
+            }, 150);
+            return;
         }
         return;
     }
 
     document.querySelectorAll(".nm-circle-outer.expanded").forEach(openCircle => {
-        openCircle.classList.remove("expanded");
+        if (!openCircle.contains(e.target)) {
+            openCircle.classList.remove("expanded");
+        }
     });
 }, true);
 
@@ -85,14 +66,15 @@ window.abrirModal = function(tipo) {
     if (!modal || !contenido || !titulo) return;
     
     contenido.innerHTML = "";
-    titulo.innerText = tipo;
+    titulo.innerText = tipo.toUpperCase();
     
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     
-    // Cualquier consulta que no sea Pedidos (como HISTORIAL) se carga acá de forma genérica
     if (typeof cargarTablaGenerica === "function") {
         cargarTablaGenerica(tipo); 
+    } else {
+        console.error("La función cargarTablaGenerica no está definida.");
     }
 };
 
@@ -471,9 +453,7 @@ async function ejecutarGuardado() {
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
 /** @param {string} tipo - Tipo de flujo. Si es 'PEDIDOS' activa el flujo manual. */
 
-
-
-function abrirModalPedidosManual() {
+window.abrirModalPedidosManual = function() {
     console.log("Cargando entorno de Pedidos Manuales...");
     const modal = document.getElementById('modal-maestro');
     const contenido = document.getElementById('modal-contenido');
@@ -482,13 +462,12 @@ function abrirModalPedidosManual() {
     if (!modal || !contenido || !titulo) return;
     
     contenido.innerHTML = "";
-    window.carritoPedidos = []; // Inicializamos el carrito
+    window.carritoPedidos = []; 
     titulo.innerText = "PEDIDOS (MANUAL)";
     
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     
-    // Inyectamos el cargador de proveedores
     contenido.innerHTML = `
         <div class="p-6 text-center">
             <h3 class="text-cyan-400 mb-4 font-bold uppercase tracking-widest text-[10px]">Seleccione un Proveedor</h3>
@@ -497,7 +476,6 @@ function abrirModalPedidosManual() {
             </div>
         </div>`;
 
-    // Vamos a GAS por la lista de proveedores
     google.script.run
         .withSuccessHandler(lista => {
             const container = document.getElementById('selector-proveedor-container');
@@ -520,10 +498,9 @@ function abrirModalPedidosManual() {
                     </button>
                 </div>`;
         })
-        .withFailureHandler(err => console.error("Error al pedir proveedores a GAS:", err))
+        .withFailureHandler(err => console.error("Error al pedir proveedores:", err))
         .obtenerListaProveedoresUnicos();
-}
-
+};
 
 
 async function cargarProductosPorProveedor() {
@@ -667,7 +644,6 @@ async function cargarProductosPorProveedor() {
             </div>`;
     }
 }
-
 
 function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, stockMinimo) {
     window.carritoPedidos = window.carritoPedidos || [];
@@ -1175,7 +1151,7 @@ window.changeActive = function() {
 
 
 // ------- NICO CONTROLLER --------//
-function abrirModalPedidos_Autoasist() {
+window.abrirModalPedidos_Autoasist = function() {
     const modal = document.getElementById('modal-pedidos-autoasistidos');
     console.log("%c 🚀 N.I.C.O. > Módulo Autoasistido Inicializado.", "color: #0ea5e9; font-weight: bold;");
 
@@ -1183,9 +1159,9 @@ function abrirModalPedidos_Autoasist() {
         modal.style.display = 'flex';
         if (window.NicoController) window.NicoController.rearrancar();
     }
-}
+};
 
-function cerrarModalPedidos_Autoasist() {
+window.cerrarModalPedidos_Autoasist = function() {
     const modal = document.getElementById('modal-pedidos-autoasistidos');
     if (modal) {
         modal.style.display = 'none';
@@ -1209,7 +1185,7 @@ function cerrarModalPedidos_Autoasist() {
         
         if (typeof APAGAR_VISUAL_MIC === "function") APAGAR_VISUAL_MIC();
     }
-}
+};
 
 // ---------- CONTROLADOR DE NICO Y ANIMACIONES ---------------- //
 
@@ -1958,7 +1934,7 @@ function setCalidad(valor) {
     });
 }
 
-async function verEstadoPedidos() {
+window.verEstadoPedidos = async function() {
     const modal = document.getElementById('page-principal-depos');
     const contenedor = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
@@ -2004,7 +1980,7 @@ async function verEstadoPedidos() {
     } catch (err) {
         contenedor.innerHTML = `<div class="p-4 text-red-400 text-xs font-mono bg-red-950/20 border border-red-900 rounded-lg">❌ ERROR CRÍTICO: ${err.message}</div>`;
     }
-}
+};
 
 function cambiarModoGestion(modo) {
     const inputAccion = document.getElementById('accionActual');
@@ -2359,10 +2335,10 @@ function cerrarModalReportes() {
     }
 }
 
-async function abrirModalSemanal() {
+window.abrirModalSemanal = async function() {
     console.log("🚩 INICIO: abrirModalSemanal");
-    mostrarCargandoLex(true);
-    abrirModalReportes(); 
+    if (typeof mostrarCargandoLex === "function") mostrarCargandoLex(true);
+    if (typeof abrirModalReportes === "function") abrirModalReportes(); 
 
     try {
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
@@ -2388,14 +2364,16 @@ async function abrirModalSemanal() {
             return;
         }
 
-        renderizarVistaMes({ filas: filasRaw, semanasRelativas: semanasRelativas });
+        if (typeof renderizarVistaMes === "function") {
+            renderizarVistaMes({ filas: filasRaw, semanasRelativas: semanasRelativas });
+        }
 
     } catch (err) {
         console.error("❌ ERROR CRÍTICO en abrirModalSemanal:", err);
     } finally {
-        mostrarCargandoLex(false);
+        if (typeof mostrarCargandoLex === "function") mostrarCargandoLex(false);
     }
-}
+};
 
 function renderizarVistaMes(response) {
     const data = response?.reply?.filas ? response.reply : response;
