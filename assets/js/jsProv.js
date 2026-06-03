@@ -1859,8 +1859,7 @@ window.verEstadoPedidos = async function() {
     </div>`;
 
     try {
-        // Consumo directo del wrapper optimizado para Recepción
-        const res = await callGoogleScript('obtenerTablaGenerica', { tipo: 'RECEPCION' });
+        const res = await callGoogleScript('obtenerPedidosRecepcion');
         
         if (res && res.status === "success" && res.reply && res.reply.success) {
             const dataServidor = res.reply.data || [];
@@ -1879,7 +1878,6 @@ window.verEstadoPedidos = async function() {
                     <table id="tabla-recepcion-exclusiva" class="tabla-premium w-full text-left border-collapse"></table>
                 </div>`;
 
-            // Renderizar la tabla usando el motor aislado de recepción
             renderTablaRecepcion('#tabla-recepcion-exclusiva', dataServidor);
 
         } else {
