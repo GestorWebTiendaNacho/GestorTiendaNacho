@@ -13,83 +13,88 @@ var currentScale = typeof currentScale !== 'undefined' ? currentScale : 1;
 window.estadoEdicion = window.estadoEdicion || { hoja: "", fila: null };
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  const circles = document.querySelectorAll(".nm-circle-outer");
-
-  circles.forEach(circle => {
-    const miniCircles = circle.querySelectorAll(".nm-mini-circle");
-
-    if (miniCircles.length > 0) {
-      circle.style.cursor = "pointer";
-
-      circle.addEventListener("click", (e) => {
-        if (e.target.closest(".nm-mini-circle")) return;
+document.addEventListener("click", (e) => {
+    const miniCircle = e.target.closest(".nm-mini-circle");
+    if (miniCircle) {
+        e.stopPropagation();
         
-        e.preventDefault();
-        circle.classList.toggle("expanded");
-      });
+        miniCircle.classList.remove("explode");
+        void miniCircle.offsetWidth;
+        miniCircle.classList.add("explode");
 
-      miniCircles.forEach(mini => {
-        mini.addEventListener("click", (e) => {
-          e.stopPropagation(); 
-          
-          mini.classList.remove("explode");
-          void mini.offsetWidth;
-          mini.classList.add("explode");
+        const targetModal = miniCircle.getAttribute("data-modal");
+        const parentCircle = miniCircle.closest(".nm-circle-outer");
 
-          const targetModal = mini.getAttribute("data-modal");
-
-          setTimeout(() => {
-            circle.classList.remove("expanded"); 
-            
+        setTimeout(() => {
+            if (parentCircle) parentCircle.classList.remove("expanded"); 
             if (targetModal === "modal-pedidos-autoasistidos") {
-              if (typeof abrirModalPedidos === "function") {
-                abrirModalPedidos(); 
-              } else {
-                const m = document.getElementById('modal-pedidos-autoasistidos');
-                if (m) m.style.display = 'flex';
-              }
+                abrirModalPedidos_Autoasist(); 
             } else if (targetModal === "modal-pedidos") {
-              const modalManual = document.getElementById('modal-pedidos');
-              if (modalManual) modalManual.style.display = 'flex';
+                abrirModalPedidosManual();     
             }
-          }, 400);
-        });
-      });
-
-    } else {
-      const targetSpan = circle.querySelector(".nm-circle-inner span[onclick]");
-      if (targetSpan) {
-        const originalAction = targetSpan.getAttribute("onclick");
-        targetSpan.removeAttribute("onclick");
-        circle.style.cursor = "pointer";
-
-        circle.addEventListener("click", (e) => {
-          e.preventDefault();
-          
-          circle.classList.remove("explode");
-          void circle.offsetWidth;
-          circle.classList.add("explode");
-
-          setTimeout(() => {
-            if (originalAction) {
-              const runAction = new Function(originalAction);
-              runAction();
-            }
-          }, 400);
-        });
-      }
+        }, 400);
+        return;
     }
-  });
 
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".nm-circle-outer")) {
-      document.querySelectorAll(".nm-circle-outer.expanded").forEach(openCircle => {
+    const circleOuter = e.target.closest(".nm-circle-outer");
+    if (circleOuter) {
+        const hasMini = circleOuter.querySelectorAll(".nm-mini-circle").length > 0;
+
+        if (hasMini) {
+            e.preventDefault();
+            circleOuter.classList.toggle("expanded");
+        } else {
+                    const elementWithOnclick = circleOuter.querySelector("[onclick]") || (circleOuter.getAttribute("onclick") ? circleOuter : null);
+            
+            if (elementWithOnclick) {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                circleOuter.classList.remove("explode");
+                void circleOuter.offsetWidth;
+                circleOuter.classList.add("explode");
+
+                const originalAction = elementWithOnclick.getAttribute("onclick");
+
+                setTimeout(() => {
+                    if (originalAction) {
+                        try {
+                            const runAction = new Function(originalAction);
+                            runAction();
+                        } catch (err) {
+                            console.error("Error al ejecutar acción:", err);
+                        }
+                    }
+                }, 400);
+            }
+        }
+        return;
+    }
+
+    document.querySelectorAll(".nm-circle-outer.expanded").forEach(openCircle => {
         openCircle.classList.remove("expanded");
-      });
+    });
+}, true);
+
+window.abrirModal = function(tipo) {
+    console.log("Abriendo modal maestro para:", tipo);
+    const modal = document.getElementById('modal-maestro');
+    const contenido = document.getElementById('modal-contenido');
+    const titulo = document.getElementById('modal-titulo');
+    
+    if (!modal || !contenido || !titulo) return;
+    
+    contenido.innerHTML = "";
+    titulo.innerText = tipo;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Cualquier consulta que no sea Pedidos (como HISTORIAL) se carga acá de forma genérica
+    if (typeof cargarTablaGenerica === "function") {
+        cargarTablaGenerica(tipo); 
     }
-  });
-});
+};
 
 
 //-------SECCION DE APERTURA DEL MODAL Y CARGA DE TABLAS------------------------------------
@@ -466,77 +471,60 @@ async function ejecutarGuardado() {
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
 /** @param {string} tipo - Tipo de flujo. Si es 'PEDIDOS' activa el flujo manual. */
 
-async function abrirModal_Pedidos(tipo) {
-    console.log(`%c📦 Terminal N.I.C.O: Inicializando canal de pedido -> [${tipo}]`, 'color: #06b6d4; font-weight: bold;');
-    
-    const modal = document.getElementById('modal-pedidos');
+
+
+function abrirModalPedidosManual() {
+    console.log("Cargando entorno de Pedidos Manuales...");
+    const modal = document.getElementById('modal-maestro');
     const contenido = document.getElementById('modal-contenido');
     const titulo = document.getElementById('modal-titulo');
     
-    if (!modal || !contenido || !titulo) {
-        console.error("Error estructural: No se encontraron los elementos del modal de pedidos.");
-        return;
-    }
+    if (!modal || !contenido || !titulo) return;
     
     contenido.innerHTML = "";
-    titulo.innerText = tipo;
+    window.carritoPedidos = []; // Inicializamos el carrito
+    titulo.innerText = "PEDIDOS (MANUAL)";
+    
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     
-    if (tipo === 'PEDIDOS') {
-        contenido.innerHTML = `
-            <div class="p-8 text-center flex flex-col items-center justify-center min-h-[250px] w-full">
-                <h3 class="text-cyan-500 mb-4 font-mono font-bold uppercase tracking-[0.2em] text-[11px] animate-pulse">
-                    IDENTIFICANDO PROVEEDORES HOMOLOGADOS
-                </h3>
-                <div id="selector-proveedor-container" class="flex flex-col items-center gap-4 mt-2">
-                    <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-                </div>
-            </div>`;
+    // Inyectamos el cargador de proveedores
+    contenido.innerHTML = `
+        <div class="p-6 text-center">
+            <h3 class="text-cyan-400 mb-4 font-bold uppercase tracking-widest text-[10px]">Seleccione un Proveedor</h3>
+            <div id="selector-proveedor-container" class="flex flex-col items-center gap-4">
+                <div class="w-8 h-8 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
+            </div>
+        </div>`;
 
-        try {
-            const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'baseProveedores' });
-            
-            if (res && res.status === "success" && res.reply && res.reply.data) {
-                const filas = res.reply.data;
-                
-                const listaUnicos = [...new Set(filas.map(f => f[1]).filter(p => p && p.trim() !== ""))].sort();
-                
-                const container = document.getElementById('selector-proveedor-container');
-                if (!container) return;
-
-                let options = listaUnicos.map(p => `<option value="${escapingForOption(p)}">${p}</option>`).join('');
-
-                container.innerHTML = `
-                    <div class="flex flex-col space-y-4 items-center">
-                        <select id="prov-seleccionado" 
-                                class="bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-lg w-72 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 outline-none text-xs font-mono transition-all">
-                            <option value="">-- SELECCIONAR PROVEEDOR --</option>
-                            ${options}
-                        </select>
-                        <div class="flex gap-3 mt-2">
-                            <button onclick="cargarProductosPorProveedor()" 
-                                    class="btn-accion-nico h-10 px-6 bg-cyan-600/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500 hover:text-slate-950 rounded-md font-black text-[10px] tracking-widest transition-all uppercase duration-200 active:scale-95 shadow-[0_0_15px_rgba(6,182,212,0.05)]">
-                                SINCRONIZAR CATÁLOGO
-                            </button>
-                        </div>
-                    </div>`;
-            } else {
-                throw new Error("No se recibieron registros de proveedores desde la nube.");
-            }
-        } catch (err) {
-            console.error("❌ Error cargando proveedores en modal:", err);
+    // Vamos a GAS por la lista de proveedores
+    google.script.run
+        .withSuccessHandler(lista => {
             const container = document.getElementById('selector-proveedor-container');
-            if (container) {
-                container.innerHTML = `<span class="text-red-500 font-mono text-[10px] uppercase">FALLA DE ENLACE: ${err.message}</span>`;
-            }
-        }
-    } else {
-        if (typeof cargarTablaGenerica === "function") {
-            cargarTablaGenerica(tipo);
-        }
-    }
+            if (!container) return;
+            
+            let options = (lista || []).map(p => {
+                const nombre = p ? String(p).trim() : "";
+                const nombreEscapado = nombre.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                return `<option value="${nombreEscapado}">${nombreEscapado}</option>`;
+            }).join('');
+
+            container.innerHTML = `
+                <select id="prov-seleccionado" class="bg-slate-900 border border-cyan-500/50 text-white p-2 rounded w-64 focus:border-cyan-400 outline-none text-xs">
+                    <option value="">-- SELECCIONAR PROVEEDOR --</option>
+                    ${options}
+                </select>
+                <div class="flex gap-3 mt-4">
+                    <button onclick="cargarProductosPorProveedor()" class="btn-accion-nico h-10 px-6 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-[10px]">
+                        CARGAR CATÁLOGO
+                    </button>
+                </div>`;
+        })
+        .withFailureHandler(err => console.error("Error al pedir proveedores a GAS:", err))
+        .obtenerListaProveedoresUnicos();
 }
+
+
 
 async function cargarProductosPorProveedor() {
     const selector = document.getElementById('prov-seleccionado');
@@ -1201,7 +1189,6 @@ function cerrarModalPedidos_Autoasist() {
     const modal = document.getElementById('modal-pedidos-autoasistidos');
     if (modal) {
         modal.style.display = 'none';
-        
         if (window.NicoController) window.NicoController.detener();
         
         const chatMessages = document.getElementById('chat-messages');
@@ -1220,7 +1207,7 @@ function cerrarModalPedidos_Autoasist() {
         const userInput = document.getElementById('user-input');
         if (userInput) userInput.value = '';
         
-        APAGAR_VISUAL_MIC();
+        if (typeof APAGAR_VISUAL_MIC === "function") APAGAR_VISUAL_MIC();
     }
 }
 
