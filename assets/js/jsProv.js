@@ -432,7 +432,7 @@ function _renderizarTablaInternaProveedores(dataset) {
         autoWidth: false,
         columnDefs: columnDefs,
         drawCallback: function() {
-            console.log(`%c⚡ ISOLATED_CORE: Vista de proveedores renderizada de manera autónoma.`, 'color: #3b82f6; font-weight: bold;');
+            console.log(`%c⚡  Vista de proveedores renderizada de manera autónoma.`, 'color: #31b58d; font-weight: bold;');
         }
     });
 }
@@ -1839,7 +1839,7 @@ const CONFIG_RECEPCION = {
 };
 
 window.verEstadoPedidos = async function() {
-    const workspace = document.getElementById('workspaceRecepcion');
+    const workspace = document.getElementById('resumenPedido');
     const tituloPantalla = document.getElementById('modal-titulo');
 
     if (!workspace) {
