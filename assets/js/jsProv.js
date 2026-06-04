@@ -430,7 +430,7 @@ function _renderizarTablaInternaProveedores(dataset) {
 }
 
 function filtrarTablaProveedores() {
-    const inputFiltro = document.getElementById('filtro-tabla-global');
+    const inputFiltro = document.getElementById('filtro-proveedores-buscar');
     if (inputFiltro && window._tablaProveedoresInstance) {
         window._tablaProveedoresInstance.search(inputFiltro.value).draw();
     }
