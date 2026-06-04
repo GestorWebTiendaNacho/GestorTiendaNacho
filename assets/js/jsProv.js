@@ -292,11 +292,7 @@ function escapingForOption(str) {
 }
 
 /* ---SECCION DE EDICION DE TABLA PROVEEDORES--- */
-
-
-// Estructura de datos local (Encabezados internos de la isla de proveedores)
 const _ENCABEZADOS_PROVEEDORES = ['ID','RAZÓN SOCIAL','CIUDAD','DOMICILIO','TELÉFONO','EMAIL','CODIGO PROV','PROVINCIA','ACCIONES'];
-
 
 function _escapeHtmlProveedor(str) {
     if (str === null || str === undefined) return "";
@@ -311,8 +307,7 @@ function _escapeHtmlProveedor(str) {
 function abrirModuloProveedores() {
     const modal = document.getElementById('modal-proveedores');
     if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+        modal.style.setProperty('display', 'flex', 'important');
         cargarTablaProveedores();
     }
 }
@@ -320,11 +315,9 @@ function abrirModuloProveedores() {
 function cerrarModuloProveedores() {
     const modal = document.getElementById('modal-proveedores');
     if (modal) {
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
+        modal.style.setProperty('display', 'none', 'important');
     }
 }
-
 
 async function cargarTablaProveedores() {
     const contenedor = document.getElementById('modal-proveedores-contenido');
@@ -373,7 +366,6 @@ async function cargarTablaProveedores() {
     }
 }
 
-
 function _renderizarTablaInternaProveedores(dataset) {
     const selector = '#tabla-proveedores-dedicada';
 
@@ -421,7 +413,7 @@ function _renderizarTablaInternaProveedores(dataset) {
         };
     });
 
-    _tablaProveedoresInstance = $(selector).DataTable({
+    window._tablaProveedoresInstance = $(selector).DataTable({
         data: dataset || [],
         dom: 'rtip', 
         language: { 
@@ -432,16 +424,15 @@ function _renderizarTablaInternaProveedores(dataset) {
         autoWidth: false,
         columnDefs: columnDefs,
         drawCallback: function() {
-            console.log(`%c⚡  Vista de proveedores renderizada de manera autónoma.`, 'color: #31b58d; font-weight: bold;');
+            console.log(`%c⚡ Vista de proveedores renderizada de manera autónoma.`, 'color: #31b58d; font-weight: bold;');
         }
     });
 }
 
-
 function filtrarTablaProveedores() {
-    const inputFiltro = document.getElementById('filtro-proveedores-interno');
-    if (inputFiltro && _tablaProveedoresInstance) {
-        _tablaProveedoresInstance.search(inputFiltro.value).draw();
+    const inputFiltro = document.getElementById('filtro-tabla-global');
+    if (inputFiltro && window._tablaProveedoresInstance) {
+        window._tablaProveedoresInstance.search(inputFiltro.value).draw();
     }
 }
 

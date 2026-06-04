@@ -1693,12 +1693,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     z-index: 9999 !important; 
 }
 
-.modal-prov-content{
+.modal-prov-content {
     background: #0f172a;
     border: 1px solid #c2902e;
     width: 95%;
     max-width: 800px; 
-    height: auto;
+    height: 85vh; 
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
     border-radius: 8px;
