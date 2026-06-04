@@ -397,9 +397,8 @@ function _renderizarTablaInternaProveedores(dataset) {
                 render: function(val, type, row, meta) {
                     const filaIndex = meta.row + 2;
                     const rowJson = JSON.stringify(row).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                    
                     return `
-                        <button onclick='abrirEditorProveedor(${filaIndex}, "${rowJson}")' 
+                        <button onclick='abrirEditorProveedor(${filaIndex}, ${rowJson})' 
                                 class='px-3 py-1 text-[9px] font-black tracking-widest bg-blue-600/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500 hover:text-slate-950 transition-all rounded-md shadow-[0_0_10px_rgba(59,130,246,0.1)] active:scale-95'>
                             EDITAR
                         </button>`;

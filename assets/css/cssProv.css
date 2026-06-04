@@ -1690,20 +1690,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
-    z-index: 9999 !important; 
+    z-index: 9999 !important;
+    background-color: rgba(15, 23, 42, 0.70) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important; 
 }
 
 .modal-prov-content {
     background: #0f172a;
     border: 1px solid #c2902e;
-    width: 95%;
-    max-width: 800px; 
-    height: 85vh; 
-    max-height: 85vh;
     display: flex;
     flex-direction: column;
     border-radius: 8px;
     position: relative;
     overflow: hidden;
     animation: lexFadeIn 0.3s ease-out;
+    width: 98%;
+    max-width: 1200px; 
+    height: 92vh; 
+    max-height: 92vh;
 }
