@@ -153,86 +153,25 @@
 </div>
 
 <!-- MODAL RECEPCIÓN -->
+<div id="workspaceRecepcion" class="w-full p-2">
+</div>
 <div id="modalRecepcion" class="modal-recep-overlay">
   <div class="modal-recep-content">
     
     <div class="modal-header-recep">
-      <h3 id="recepcionTitulo" tabindex="-1">GESTIÓN DE RECEPCIÓN</h3> <button onclick="cerrarModalRecepcion()" class="btn-closeRecep">&times;</button>
+      <h3 id="recepcionTitulo" tabindex="-1">GESTIÓN DE RECEPCIÓN</h3> 
+      <button onclick="cerrarModalRecepcion()" class="btn-closeRecep">&times;</button>
     </div>
     
     <div class="modal-body-recep">
-      
       <div id="resumenPedido" class="mb-6"></div>
-
-        <div class="flex gap-4 mb-6">
-        <button type="button" onclick="cambiarModoGestion('RECIBIDO')" id="tab-RECIBIDO" class="btn-gestion btn-tipo-recibir active-tab-recep">Recibir</button>
-        <button type="button" onclick="cambiarModoGestion('REPROGRAMADO')" id="tab-REPROGRAMADO" class="btn-gestion btn-tipo-reprogramar">Reprogramar</button>
-        <button type="button" onclick="cambiarModoGestion('CANCELADO')" id="tab-CANCELADO" class="btn-gestion btn-tipo-cancelar">Cancelar</button>
-        </div>
-
+      
       <form id="formRecepcion">
-        <input type="hidden" id="recepcionFila">
-        <input type="hidden" id="recepcionID">
-        <input type="hidden" id="accionActual" value="RECIBIDO">
-
-        <div id="section-RECIBIDO" class="gestion-section">
-          <div class="bg-slate-900/50 p-4 border border-slate-800 rounded mb-6">
-             <div id="contenedorItemsRecepcion"></div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 border-t border-slate-800 pt-4">
-            <div>
-            <label class="block text-[10px] uppercase text-cyan-500 mb-2 font-bold italic">
-                Cumplimiento: <span id="valorPorcentaje" class="text-white">100%</span>
-            </label>
-            <input type="range" id="inputPorcentaje" class="w-full accent-cyan-500 pointer-events-none" min="0" max="100" value="100">
-            </div>
-            <div class="text-center">
-              <label class="block text-[10px] uppercase text-cyan-500 mb-2 font-bold italic">Calidad / Precio</label>
-              <div class="flex justify-center gap-2">
-                <button type="button" class="btn-star" onclick="setCalidad(1)">★</button>
-                <button type="button" class="btn-star" onclick="setCalidad(2)">★</button>
-                <button type="button" class="btn-star" onclick="setCalidad(3)">★</button>
-                <button type="button" class="btn-star" onclick="setCalidad(4)">★</button>
-                <button type="button" class="btn-star" onclick="setCalidad(5)">★</button>
-                <input type="hidden" id="inputCalidad" value="0">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="section-OBS" class="mb-6">
-          
-          <div id="wrapper-reprogramacion" class="hidden mb-4">
-            <div class="flex items-center justify-between bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg">
-                <div class="flex flex-col">
-                    <span class="text-[9px] text-yellow-500 uppercase font-bold">Nueva Fecha de Arribo</span>
-                    <span id="display-fecha-reprogramada" class="text-white font-mono text-xs">Sin seleccionar</span>
-                </div>
-                <button type="button" onclick="solicitarFechaReprogramacion()" 
-                        class="bg-yellow-600 hover:bg-yellow-500 text-slate-950 text-[10px] font-bold px-3 py-1.5 rounded transition-all active:scale-95">
-                    CAMBIAR FECHA
-                </button>
-            </div>
-          </div>
-
-          <div id="wrapper-causa-cancelacion" class="hidden mb-3">
-            <label class="block text-[10px] uppercase text-red-500 mb-2 font-bold italic">Responsable de Cancelación</label>
-            <select id="inputCausa" class="w-full bg-slate-950 border border-slate-800 p-2 rounded text-white text-sm outline-none focus:border-red-500">
-              <option value="cliente">RESPONSABILIDAD DEL CLIENTE (SIN PENA)</option>
-              <option value="proveedor">RESPONSABILIDAD DEL PROVEEDOR (APLICAR PENA)</option>
-            </select>
-          </div>
-
-          <label class="block text-[10px] uppercase text-slate-500 mb-2 font-bold italic">Observaciones Finales</label>
-          <textarea id="inputObservaciones" class="w-full bg-slate-950 border border-slate-800 p-2 rounded text-white text-sm h-24 outline-none focus:border-cyan-500" placeholder="Escriba aquí las observaciones..."></textarea>
-        </div>
-
-      </form>
+         </form>
       
-      <div class="h-24"></div> 
-      
-    </div> <div id="section-footer" class="sect-footer">
+      </div> 
+
+    <div id="section-footer" class="sect-footer">
       <button type="button" id="btnConfirmarGestion" onclick="confirmarGestionFinal()" class="btn-accion-pedido">
         CONFIRMAR GESTIÓN <i class="fi fi-sc-check-double"></i>
       </button>
