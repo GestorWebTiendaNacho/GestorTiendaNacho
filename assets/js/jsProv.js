@@ -1829,7 +1829,7 @@ const CONFIG_RECEPCION = {
 };
 
 window.verEstadoPedidos = async function() {
-    const workspace = document.getElementById('resumenPedido');
+    const workspace = document.getElementById('workspace-recepcion-main');
     const tituloPantalla = document.getElementById('modal-titulo');
 
     if (!workspace) {
@@ -1855,12 +1855,12 @@ window.verEstadoPedidos = async function() {
             const dataServidor = res.reply.data || [];
             
             workspace.innerHTML = `
-                <div class="w-full flex justify-between items-end mb-4 px-4 pt-2 animate-fadeIn">
+                <div class="w-full flex justify-between items-end mb-4 px-4 pt-2 animate-fadeIn font-mono">
                     <div class="flex flex-col">
                         <span class="text-[8px] text-cyan-500/40 font-mono italic tracking-widest">STREAM: ESTADO_PEDIDOS.DAT</span>
                         <span class="text-[14px] text-white font-black tracking-tighter uppercase">ORDENES DE COMPRA EN TRÁNSITO</span>
                     </div>
-                    <div class="text-[9px] text-slate-500 font-mono bg-slate-900/80 px-3 py-1.5 border border-slate-800/60 rounded">
+                    <div class="text-[9px] text-slate-500 bg-slate-900/80 px-3 py-1.5 border border-slate-800/60 rounded">
                         ÚLTIMA SYNC: <span class="text-cyan-400 font-bold">${res.reply.ultimaActualizacion || 'ONLINE'}</span>
                     </div>
                 </div>
@@ -1896,7 +1896,6 @@ function renderTablaRecepcion(selector, data) {
         $(selector).empty(); 
     }
     
-    // Inyección limpia de estructura de cabecera
     let theadHtml = `
         <thead>
             <tr>${cabecera.map(h => `<th class="p-4 text-left uppercase tracking-widest text-[10px]">${h}</th>`).join('')}</tr>
@@ -1906,7 +1905,6 @@ function renderTablaRecepcion(selector, data) {
 
     const indexAcciones = cabecera.length - 1;
     
-    // Configuración estructural de columnas mapeando las 9 columnas que provee el backend de GAS
     const configDefs = cabecera.map((titulo, i) => {
         if (i === indexAcciones) {
             return {
@@ -1915,7 +1913,7 @@ function renderTablaRecepcion(selector, data) {
                 searchable: false,
                 className: "text-center align-middle py-2 px-4 w-[120px]",
                 render: function(val, type, row, meta) {
-                    const filaIndex = meta.row + 2; // Corrección de índice para coincidir con la fila física de Sheets
+                    const filaIndex = meta.row + 2; 
                     const rowJson = JSON.stringify(row).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                     
                     return `
@@ -1935,7 +1933,6 @@ function renderTablaRecepcion(selector, data) {
         };
     });
 
-    // Instanciación limpia de DataTable
     $(selector).DataTable({
         data: data || [],
         dom: 'rtip', 
@@ -1964,21 +1961,19 @@ async function abrirRecepcion(datos, fila) {
         return;
     }
 
-    // Setear valores de control en los inputs ocultos
     document.getElementById('recepcionID').value = idPedido;
     document.getElementById('recepcionFila').value = fila;
 
-    // Poblar Resumen de Cabecera del Modal con desestructuración segura de la fila de GAS
-    const resumen = document.getElementById('resumenPedido');
+    const resumen = document.getElementById('recepcion-resumen-pedido');
     if (resumen) {
         resumen.innerHTML = `
-        <div class="flex justify-between items-center w-full bg-slate-900/40 p-3 rounded border border-slate-800/80">
+        <div class="flex justify-between items-center w-full bg-slate-900/40 p-3 rounded border border-slate-800/80 font-mono">
             <div>
-                <h2 class="text-cyan-400 font-bold text-xs uppercase tracking-widest font-mono">ID ORDEN: ${idPedido}</h2>
+                <h2 class="text-cyan-400 font-bold text-xs uppercase tracking-widest">ID ORDEN: ${idPedido}</h2>
                 <p class="text-[10px] text-slate-400 uppercase font-bold mt-0.5">${datos[2] || 'PROVEEDOR INDEFINIDO'}</p>
             </div>
-            <div class="text-right font-mono">
-                <p class="text-emerald-400 font-bold text-xs">SKU: ${datos[4] || '---'}</p>
+            <div class="text-right">
+                <p class="text-emerald-400 font-bold text-xs">SKU INTERNO: ${datos[4] || '---'}</p>
                 <p class="text-[9px] text-slate-500 uppercase">F. PEDIDO: ${datos[1] ? datos[1].split('T')[0] : '---'}</p>
             </div>
         </div>`;
@@ -1989,17 +1984,14 @@ async function abrirRecepcion(datos, fila) {
         contenedorItems.innerHTML = `<div class="py-12 text-center text-cyan-500 text-[10px] font-mono animate-pulse tracking-widest">SOLICITANDO DESGLOSE DE PRODUCTOS...</div>`;
     }
 
-    // Desplegar Modal de Recepción
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.style.setProperty('display', 'flex', 'important');
     document.body.style.overflow = 'hidden';
 
-    // Establecer modo por defecto de forma segura
     cambiarModoGestion('RECIBIDO'); 
 
     try {
-        // Buscar desglose en el servidor
         const res = await callGoogleScript('obtenerItemsPedido', { idPedido: idPedido });
         
         if (res.status === "success" && res.reply && res.reply.success) {
@@ -2027,7 +2019,7 @@ function renderizarItemsDesgloseEspecial(items, idContenedor) {
     }
 
     let html = `
-    <div class="overflow-x-auto max-h-[300px] overflow-y-auto custom-scrollbar">
+    <div class="overflow-x-auto max-h-[200px] overflow-y-auto custom-scrollbar border border-slate-800 rounded">
         <table class="w-full text-[11px] border-collapse">
             <thead class="sticky top-0 bg-[#0c1324] z-30 shadow-md">
                 <tr class="text-left text-slate-500 border-b border-cyan-900/30">
@@ -2053,7 +2045,7 @@ function renderizarItemsDesgloseEspecial(items, idContenedor) {
                        data-original="${item.cantidadPedida || 0}" 
                        data-nombre="${item.nombre || ''}" 
                        data-precio="${item.precio || 0}"
-                       value="${item.cantidadPedida || 0}"         
+                       value="${item.cantidadPedida || 0}"          
                        min="0"
                        oninput="recalcularPorcentajeDesdeItems()">
             </td>
@@ -2082,7 +2074,7 @@ function recalcularPorcentajeDesdeItems() {
     if (totalPedido === 0) return;
 
     let porcentaje = Math.round((totalRecibido / totalPedido) * 100);
-    porcentaje = Math.max(0, Math.min(porcentaje, 100)); // Clampeado entre 0 y 100
+    porcentaje = Math.max(0, Math.min(porcentaje, 100));
 
     const slider = document.getElementById('inputPorcentaje');
     const display = document.getElementById('valorPorcentaje');
@@ -2097,7 +2089,6 @@ async function confirmarGestionFinal() {
     const accionActual = document.getElementById('accionActual').value;
     const inputObsValue = document.getElementById('inputObservaciones').value.trim();
 
-    // Validar restricción estricta de cancelación
     if (accionActual === 'CANCELADO' && !inputObsValue) {
         Swal.fire({ title: 'MOTIVO REQUERIDO', text: 'Es obligatorio registrar el motivo del colapso del pedido.', icon: 'warning', background: '#0f172a', color: '#fff' });
         return;
@@ -2125,7 +2116,6 @@ async function confirmarGestionFinal() {
         nuevaFecha: document.getElementById('inputNuevaFecha')?.value || ""
     };
 
-    // Si se cancela o reprograma en caliente y la lista de ítems no se cargó, reconstruimos con datos del resumen
     if (itemsRecibidos.length === 0) {
         configPayload.itemsRecibidos = [{ sku: "N/A", nombre: "PROCESO EXTRAPOLADO", cantidadRecibida: 0 }];
     } else {
@@ -2138,7 +2128,7 @@ async function confirmarGestionFinal() {
     }
 
     if (btn) {
-        btn.innerText = "SINKRONIZANDO CON N.I.C.O...";
+        btn.innerHTML = "SINCRONIZANDO CON N.I.C.O... <i class='fas fa-spinner animate-spin ml-2'></i>";
         btn.disabled = true;
     }
 
@@ -2148,7 +2138,6 @@ async function confirmarGestionFinal() {
         if (res.status === "success" && res.reply && res.reply.success) {
             cerrarModalRecepcion();
             Swal.fire({ title: 'IMPACTO EXITOSO', text: 'Los registros e historiales han sido actualizados.', icon: 'success', timer: 1500, showConfirmButton: false });
-            // Refrescar la tabla exclusiva de recepción inmediatamente
             verEstadoPedidos();
         } else {
             throw new Error(res.message || res.reply?.error || "Error indeterminado en el servidor.");
@@ -2156,7 +2145,7 @@ async function confirmarGestionFinal() {
     } catch (err) {
         Swal.fire({ title: 'FALLA DE ESCRITURA', text: err.message, icon: 'error', background: '#0f172a', color: '#fff' });
         if (btn) {
-            btn.innerText = "CONFIRMAR GESTIÓN"; 
+            btn.innerHTML = "CONFIRMAR GESTIÓN <i class='fi fi-sc-check-double'></i>"; 
             btn.disabled = false;
         }
     }
@@ -2190,16 +2179,22 @@ function cambiarModoGestion(modo) {
 
     if (!btnFinal || !inputObs) return;
 
-    // 1. Alternar estado activo en las pestañas superiores
     ['RECIBIDO', 'REPROGRAMADO', 'CANCELADO'].forEach(m => {
-        document.getElementById(`tab-${m}`)?.classList.remove('active-tab-recep');
+        const targetTab = document.getElementById(`tab-${m}`);
+        if (targetTab) {
+            targetTab.classList.remove('border-cyan-500', 'text-cyan-400');
+            targetTab.classList.add('border-transparent', 'text-slate-500');
+        }
     });
-    document.getElementById(`tab-${modo}`)?.classList.add('active-tab-recep');
+    
+    const tabActiva = document.getElementById(`tab-${modo}`);
+    if (tabActiva) {
+        tabActiva.classList.remove('border-transparent', 'text-slate-500');
+        tabActiva.classList.add('border-cyan-500', 'text-cyan-400');
+    }
 
-    // 2. Limpiar modificadores semánticos previos del botón de confirmación sin romper su base
-    btnFinal.classList.remove('confirmar-recibir', 'confirmar-reprogramar', 'confirmar-cancelar');
+    btnFinal.classList.remove('bg-emerald-600', 'bg-amber-600', 'bg-red-600');
 
-    // 3. Modificación del comportamiento y adición de subclases estéticas nativas
     switch (modo) {
         case 'RECIBIDO':
             if (secRecibido) secRecibido.style.display = 'block';
@@ -2207,7 +2202,7 @@ function cambiarModoGestion(modo) {
             if (wrapperCausa) wrapperCausa.classList.add('hidden'); 
             
             btnFinal.innerText = "PROCESAR RECEPCIÓN FÍSICA";
-            btnFinal.classList.add('confirmar-recibir');
+            btnFinal.classList.add('bg-emerald-600');
             inputObs.placeholder = "Notas generales del estado de arribo del material (opcional)...";
             break;
 
@@ -2217,7 +2212,7 @@ function cambiarModoGestion(modo) {
             if (wrapperCausa) wrapperCausa.classList.add('hidden'); 
             
             btnFinal.innerText = "CONFIRMAR NUEVA FECHA";
-            btnFinal.classList.add('confirmar-reprogramar');
+            btnFinal.classList.add('bg-amber-600');
             inputObs.placeholder = "Indique detalles de la justificación del transportista o proveedor...";
             solicitarFechaReprogramacion();
             break;
@@ -2228,7 +2223,7 @@ function cambiarModoGestion(modo) {
             if (wrapperCausa) wrapperCausa.classList.remove('hidden'); 
             
             btnFinal.innerText = "CONFIRMAR ANULACIÓN TOTAL";
-            btnFinal.classList.add('confirmar-cancelar');
+            btnFinal.classList.add('bg-red-600');
             inputObs.placeholder = "INGRESE EL MOTIVO DE LA CANCELACIÓN OBLIGATORIAMENTE...";
             inputObs.focus(); 
             break;
@@ -2249,7 +2244,7 @@ async function solicitarFechaReprogramacion() {
         returnFocus: false,
         didOpen: () => {
             const container = Swal.getContainer();
-            if (container) container.style.zIndex = '35000'; // Asegurar que pase por encima del modal
+            if (container) container.style.zIndex = '35000';
         }
     });
 
@@ -2280,7 +2275,6 @@ function cerrarModalRecepcion() {
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
 
-    // Limpieza de campos del formulario
     document.getElementById('formRecepcion').reset();
     window.calidadSeleccionada = 0;
     setCalidad(0);
@@ -2291,6 +2285,8 @@ function cerrarModalRecepcion() {
     const inputF = document.getElementById('inputNuevaFecha');
     if (inputF) inputF.remove();
 }
+
+
 
 /*--------------SECCION HISTORIAL-----------------------*/
 

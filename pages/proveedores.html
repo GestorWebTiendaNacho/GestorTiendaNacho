@@ -159,17 +159,15 @@
     
     <div class="modal-header-recep">
       <h3 id="recepcionTitulo" tabindex="-1">GESTIÓN DE RECEPCIÓN</h3> 
-      <button onclick="cerrarModalRecepcion()" class="btn-closeRecep">&times;</button>
+      <button type="button" onclick="cerrarModalRecepcion()" class="btn-closeRecep">&times;</button>
     </div>
     
-    <div class="modal-body-recep">
+    <div class="modal-body-recep custom-scrollbar">
       <div id="resumenPedido" class="mb-6"></div>
-        <div id="workspaceRecepcion" class="w-full p-2">
-        </div>
-      <form id="formRecepcion">
-      </form>
-      
-      </div> 
+      <div id="workspaceRecepcion" class="w-full p-2">
+          </div>
+      <form id="formRecepcion"></form>
+    </div> 
 
     <div id="section-footer" class="sect-footer">
       <button type="button" id="btnConfirmarGestion" onclick="confirmarGestionFinal()" class="btn-accion-pedido">
