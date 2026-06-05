@@ -2533,36 +2533,45 @@ function generarEstrellasVisuales(valor) {
  */
 
 async function verPdfPedido(idPedido) {
+    // 1. Confirmación de entrada en la terminal del navegador
     console.log("🚀 [N.I.C.O. Trace] Botón presionado con éxito. idPedido recibido:", idPedido);
 
-    if (!idPedido || idPedido === "undefined" || idPedido === "null") {
-        console.warn("⚠️ [N.I.C.O. Trace] Parada por ID inválido en verPdfPedido.");
-        Swal.fire({
-            icon: 'warning',
-            title: 'ID INVÁLIDO',
-            text: 'No se puede consultar un expediente sin un identificador de pedido válido.',
-            confirmButtonColor: '#00f0ff',
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
-        return;
-    }
-
-    // Despliegue del Loader Estético
-    Swal.fire({
-        title: 'Buscando Comprobante',
-        text: `Rastreando archivos del pedido #${idPedido} en Google Drive...`,
-        allowOutsideClick: false,
-        background: '#0f172a',
-        color: '#f8fafc',
-        didOpen: () => {
-            Swal.showLoading();
-            const loader = Swal.getPopup().querySelector('.swal2-loader');
-            if (loader) loader.style.borderColor = '#00f0ff transparent #00f0ff transparent';
-        }
-    });
-
     try {
+        // 🛡️ ESCUDO CRÍTICO: Verificación de la existencia de SweetAlert2
+        if (typeof Swal === 'undefined') {
+            console.error("❌ Error Estructural: La librería SweetAlert2 (Swal) no se encuentra cargada en el DOM.");
+            alert(`[N.I.C.O. Alerta de UI]\n\nLa función se ejecutó para el pedido ${idPedido}, pero SweetAlert2 no está instalado en este HTML.\n\nPor favor, agregá el CDN de SweetAlert2.`);
+            return;
+        }
+
+        // Validación de consistencia del ID
+        if (!idPedido || idPedido === "undefined" || idPedido === "null") {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ID INVÁLIDO',
+                text: 'No se puede consultar un expediente sin un identificador de pedido válido.',
+                confirmButtonColor: '#00f0ff',
+                background: '#0f172a',
+                color: '#f8fafc'
+            });
+            return;
+        }
+
+        // 2. Despliegue del Loader Estético (Ahora protegido dentro del try)
+        Swal.fire({
+            title: 'Buscando Comprobante',
+            text: `Rastreando archivos del pedido #${idPedido} en Google Drive...`,
+            allowOutsideClick: false,
+            background: '#0f172a',
+            color: '#f8fafc',
+            didOpen: () => {
+                Swal.showLoading();
+                const loader = Swal.getPopup().querySelector('.swal2-loader');
+                if (loader) loader.style.borderColor = '#00f0ff transparent #00f0ff transparent';
+            }
+        });
+
+        // 3. Viaje de consulta al backend central
         const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
         
         if (res && res.status === "success" && res.reply) {
@@ -2571,6 +2580,7 @@ async function verPdfPedido(idPedido) {
             if (archivoData.success && archivoData.url) {
                 Swal.close(); 
 
+                // CASO A: Es un PDF estructural
                 if (archivoData.tipo === 'pdf') {
                     const nuevaVentana = window.open();
                     if (nuevaVentana) {
@@ -2579,9 +2589,10 @@ async function verPdfPedido(idPedido) {
                         );
                         nuevaVentana.document.title = archivoData.nombre || `Pedido_${idPedido}`;
                     } else {
-                        throw new Error("El navegador bloqueó la ventana emergente. Por favor, permití los popups para este sistema.");
+                        throw new Error("El navegador bloqueó la ventana emergente. Por favor, habilitá los popups para este sitio.");
                     }
                 } 
+                // CASO B: Es un CSV convertido a HTML
                 else if (archivoData.tipo === 'csv') {
                     Swal.fire({
                         title: `<span class="text-cyan-500 font-mono text-sm uppercase tracking-wider">VISTA PREVIA: ${archivoData.nombre}</span>`,
@@ -2601,16 +2612,22 @@ async function verPdfPedido(idPedido) {
         }
 
     } catch (error) {
-        console.error("❌ Error en Visor PDF:", error);
-        Swal.fire({
-            icon: 'error',
-            title: '<span class="text-red-500 font-mono text-sm">IMPOSIBLE ABRIR VISOR</span>',
-            text: error.message || 'La respuesta del servidor no contiene una URL válida o el archivo no existe.',
-            confirmButtonText: 'ENTENDIDO',
-            confirmButtonColor: '#ef4444',
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
+        console.error("❌ Falla capturada en el flujo de verPdfPedido:", error);
+        
+        // Caída controlada si Swal está roto o si el servidor falla
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: '<span class="text-red-500 font-mono text-sm">IMPOSIBLE ABRIR VISOR</span>',
+                text: error.message || 'Error desconocido al procesar el archivo.',
+                confirmButtonText: 'ENTENDIDO',
+                confirmButtonColor: '#ef4444',
+                background: '#0f172a',
+                color: '#f8fafc'
+            });
+        } else {
+            alert("Error en Visor PDF: " + error.message);
+        }
     }
 }
 
