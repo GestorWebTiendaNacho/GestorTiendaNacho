@@ -344,15 +344,20 @@ table.dataTable.no-footer {
     z-index: 99999 !important;
 }
 
-/*CONTENIDO DEL MODAL*/
+/* CONTENIDO DEL MODAL EXPANDIDO */
 .modal-recep-content {
     background: #0f172a !important;
     border: 2px solid #c2902e !important;
-    width: 95vw !important; 
-    max-width: 900px !important;
+    
+    /* ANCHO: Subimos a 96% del viewport y estiramos el tope a 1300px para DataTables */
+    width: 96vw !important; 
+    max-width: 1300px !important; 
     min-width: 320px !important;
-    height: 85vh !important;
-    max-height: 90vh !important;
+    
+    /* ALTO: Llevamos el cuerpo casi al límite de la pantalla */
+    height: 92vh !important;
+    max-height: 95vh !important;
+    
     display: flex !important;
     flex-direction: column !important;
     z-index: 20001 !important;
@@ -363,7 +368,7 @@ table.dataTable.no-footer {
     animation: fadeIn 0.3s ease-out;
 }
 
-/* CABECERA*/
+/* CABECERA */
 .modal-header-recep {
     flex: 0 0 auto;
     padding: 12px 16px;
@@ -404,7 +409,7 @@ table.dataTable.no-footer {
     left: 0;
     width: 100% !important;
     height: 100px !important;
-    background: linear-gradient(to top, #0f172a 70%, transparent) !important; /* Degradado sutil para integrar el fondo */
+    background: linear-gradient(to top, #0f172a 70%, transparent) !important;
     padding: 0 24px;
     display: flex !important;
     align-items: center !important; 
