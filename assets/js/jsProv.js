@@ -2532,39 +2532,81 @@ function generarEstrellasVisuales(valor) {
  * @param {string|number} idPedido 
  */
 async function verPdfPedido(idPedido) {
-    const btn = document.getElementById('btnVerPdfHistorial');
-    const textoOriginal = btn ? btn.innerHTML : '';
-    
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = `
-            <div class="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-            Buscando...
-        `;
+    if (!idPedido || idPedido === "undefined" || idPedido === "null") {
+        Swal.fire({
+            icon: 'warning',
+            title: 'ID INVÁLIDO',
+            text: 'No se puede consultar un expediente sin un identificador de pedido válido.',
+            confirmButtonColor: '#00f0ff',
+            background: '#0f172a',
+            color: '#f8fafc'
+        });
+        return;
     }
+
+    Swal.fire({
+        title: 'Buscando Comprobante',
+        text: `Rastreando archivos del pedido #${idPedido} en Google Drive...`,
+        allowOutsideClick: false,
+        background: '#0f172a',
+        color: '#f8fafc',
+        didOpen: () => {
+            Swal.showLoading();
+            const loader = Swal.getPopup().querySelector('.swal2-loader');
+            if (loader) loader.style.borderColor = '#00f0ff transparent #00f0ff transparent';
+        }
+    });
 
     try {
         const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
         
-        if (res.status === "success" && res.reply) {
-            const urlPdf = res.reply.url || (typeof res.reply === 'string' ? res.reply : null);
-            
-            if (urlPdf && urlPdf.startsWith('http')) {
-                window.open(urlPdf, '_blank');
+        if (res && res.status === "success" && res.reply) {
+            const archivoData = res.reply; 
+
+            if (archivoData.success && archivoData.url) {
+                Swal.close(); 
+
+                if (archivoData.tipo === 'pdf') {
+                    const nuevaVentana = window.open();
+                    if (nuevaVentana) {
+                        nuevaVentana.document.write(
+                            `<iframe src="${archivoData.url}" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%; position:fixed;" allowfullscreen></iframe>`
+                        );
+                        nuevaVentana.document.title = archivoData.nombre || `Pedido_${idPedido}`;
+                    } else {
+                        throw new Error("El navegador bloqueó la ventana emergente. Por favor, permití los popups para este sistema.");
+                    }
+                } 
+                else if (archivoData.tipo === 'csv') {
+                    Swal.fire({
+                        title: `<span class="text-cyan-500 font-mono text-sm uppercase tracking-wider">VISTA PREVIA: ${archivoData.nombre}</span>`,
+                        html: `<div class="custom-scroll border border-slate-800 rounded bg-slate-950 p-2 overflow-auto max-h-[400px] text-left">${archivoData.contenido}</div>`,
+                        width: '700px',
+                        confirmButtonText: 'CERRAR VISTA',
+                        confirmButtonColor: '#1e293b',
+                        background: '#0f172a',
+                        color: '#f8fafc'
+                    });
+                }
             } else {
-                throw new Error("La respuesta del servidor no contiene una URL válida.");
+                throw new Error(archivoData.error || "El servidor no localizó un archivo físico para esta orden.");
             }
         } else {
-            throw new Error(res.message || "No se localizó el archivo digital.");
+            throw new Error("La respuesta estructural del servidor central es inválida o está malformada.");
         }
-    } catch (err) {
-        console.error("❌ Error en Visor PDF:", err);
-        alert(`Imposible abrir visor: ${err.message}`);
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = textoOriginal;
-        }
+
+    } catch (error) {
+        console.error("❌ Error en Visor PDF:", error);
+        
+        Swal.fire({
+            icon: 'error',
+            title: '<span class="text-red-500 font-mono text-sm">IMPOSIBLE ABRIR VISOR</span>',
+            text: error.message || 'La respuesta del servidor no contiene una URL válida o el archivo no existe.',
+            confirmButtonText: 'ENTENDIDO',
+            confirmButtonColor: '#ef4444',
+            background: '#0f172a',
+            color: '#f8fafc'
+        });
     }
 }
 
