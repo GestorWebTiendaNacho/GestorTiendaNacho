@@ -2550,7 +2550,7 @@ async function verPdfPedido(idPedido) {
                 confirmButtonColor: '#00f0ff',
                 background: '#0f172a',
                 color: '#f8fafc',
-                willOpen: () => { Swal.getContainer().style.zIndex = "100000"; }
+                willOpen: () => { Swal.getContainer().style.zIndex = "100005"; }
             });
             return;
         }
@@ -2564,7 +2564,7 @@ async function verPdfPedido(idPedido) {
             color: '#f8fafc',
             willOpen: () => {
                 // 🚀 SOLUCIÓN AL CONGELAMIENTO: Perfora las capas de tus modales HTML
-                Swal.getContainer().style.zIndex = "100000";
+                Swal.getContainer().style.zIndex = "100005";
             },
             didOpen: () => {
                 Swal.showLoading();
@@ -2596,7 +2596,7 @@ async function verPdfPedido(idPedido) {
                         background: '#0f172a',
                         color: '#f8fafc',
                         willOpen: () => {
-                            Swal.getContainer().style.zIndex = "100000"; // Mantiene el visor al frente
+                            Swal.getContainer().style.zIndex = "100005"; // Mantiene el visor al frente
                         }
                     });
                 } 
@@ -2611,7 +2611,7 @@ async function verPdfPedido(idPedido) {
                         background: '#0f172a',
                         color: '#f8fafc',
                         willOpen: () => {
-                            Swal.getContainer().style.zIndex = "100000";
+                            Swal.getContainer().style.zIndex = "100005";
                         }
                     });
                 }
@@ -2633,7 +2633,7 @@ async function verPdfPedido(idPedido) {
             confirmButtonColor: '#ef4444',
             background: '#0f172a',
             color: '#f8fafc',
-            willOpen: () => { Swal.getContainer().style.zIndex = "100000"; }
+            willOpen: () => { Swal.getContainer().style.zIndex = "100005"; }
         });
     }
 }
