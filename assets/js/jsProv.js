@@ -2315,43 +2315,36 @@ function cerrarModalRecepcion() {
 /** @param {string|number} idPedido - Identificador único de la orden.  */
 
 async function verDetalleHistorial(idPedido) {
-    // 1. Vinculación estricta a la anatomía real de tus Modales
     const modalDetalle = document.getElementById('modalDetalleHistorial');
     const infoGeneral = document.getElementById('infoGeneralHistorial');
     const contenedorItems = document.getElementById('contenedorItemsHistorial');
     const obsBox = document.getElementById('obsHistorial');
     const subtitulo = document.getElementById('historialSubtitulo');
     
-    // Escudo de Cimientos estructurales del DOM
     if (!modalDetalle || !contenedorItems || !infoGeneral || !obsBox) {
         console.error("❌ N.I.C.O. DOM Error: Cimientos del modal de detalles ausentes en el HTML.");
         return;
     }
 
-    // Escudo de Control de Parámetros
     if (!idPedido || idPedido === "undefined" || idPedido === "null") {
         console.error(`❌ Falla de Invocación Local: Se intentó auditar un ID inválido. Recibido: [${idPedido}]`);
         return;
     }
 
-    // 2. Preparación visual del layout antes del viaje al servidor
     if (subtitulo) subtitulo.innerText = `ID: ${idPedido}`;
     infoGeneral.innerHTML = '';
     obsBox.innerText = "Cargando observaciones...";
     
-    // Loader integrado nativo con la estética Cyan de tu cabecera
     contenedorItems.innerHTML = `
         <div class="flex flex-col items-center justify-center py-12 bg-slate-950">
             <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
             <p class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest italic animate-pulse">Filtrando y recuperando ítems del expediente...</p>
         </div>`;
     
-    // Despliegue nativo del modal de detalles
     modalDetalle.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
     try {
-        // 3. Consulta al backend por el lote completo de productos
         const res = await callGoogleScript('obtenerItemHistorial', { idPedido: idPedido });
         
         if (res.status === "success" && res.reply && res.reply.success) {
@@ -2359,7 +2352,6 @@ async function verDetalleHistorial(idPedido) {
             
             if (!data.info) throw new Error("El servidor central no retornó el bloque informativo (info).");
 
-            // 4. Inyección en tu grilla de 2 a 4 columnas del HTML (infoGeneralHistorial)
             infoGeneral.innerHTML = `
                 <div class="flex flex-col">
                     <span class="text-slate-500 text-[8px] uppercase tracking-wider font-bold">Proveedor / Origen</span>
@@ -2388,15 +2380,12 @@ async function verDetalleHistorial(idPedido) {
                 </div>
             `;
 
-            // 5. Renderizado del listado completo de productos (múltiples ítems)
-            // Evaluamos estructuralmente qué tipo de tabla inyectar según las propiedades de la respuesta
             if (data.items && data.items.length > 0 && ('precio' in data.items[0] || 'precioUnitario' in data.items[0])) {
                 contenedorItems.innerHTML = renderizarTablaItemsHistorial(data.items, idPedido);
             } else {
                 contenedorItems.innerHTML = renderizarTablaInversionPlana(data.items || [], idPedido);
             }
 
-            // 6. Inyección de anotaciones en tu bloque de notas
             obsBox.innerHTML = data.info.observaciones 
                 ? `"${data.info.observaciones}"` 
                 : `"Sin novedades registradas en la recepción del expediente."`;
@@ -2459,7 +2448,7 @@ function renderizarTablaInversionPlana(items, idPedido) {
             </tbody>
             <tfoot class="sticky bottom-0 bg-slate-900 z-10 border-t border-cyan-500/20">
                 <tr class="bg-cyan-950/20">
-                    <td class="p-2.5 text-cyan-500 font-bold uppercase text-[9px] tracking-widest">Total Líquido Invertido</td>
+                    <td class="p-2.5 text-cyan-500 font-bold uppercase text-[9px] tracking-widest">Total Invertido</td>
                     <td class="p-2.5 text-right text-cyan-400 font-bold font-mono text-xs">$${totalInversion.toLocaleString()}</td>
                 </tr>
             </tfoot>
