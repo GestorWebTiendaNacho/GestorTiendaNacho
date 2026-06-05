@@ -256,6 +256,55 @@
 
   </div>
 </div>
+<div id="modalDetalleHistorial" class="modal-recep-overlay" style="display: none;">
+  <div class="modal-recep-content !max-w-3xl"> 
+    
+    <!-- Encabezado del Visor -->
+    <div class="modal-header-recep !border-cyan-500/50">
+      <div class="flex flex-col">
+        <h3 id="historialTitulo" class="text-cyan-500 font-bold uppercase tracking-wider text-sm">Detalle de Pedido</h3>
+        <span id="historialSubtitulo" class="text-[9px] text-slate-500 font-mono">ID: ---</span>
+      </div>
+      <!-- Llama a la función de cierre que mantiene congelado el fondo general -->
+      <button onclick="cerrarModalHistorial()" class="btn-closeRecep">&times;</button>
+    </div>
+    
+    <div class="modal-body-recep custom-scroll">
+      <!-- Grilla Informativa de Cabecera (Se llena dinámicamente vía JS) -->
+      <div id="infoGeneralHistorial" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-slate-900/50 border border-slate-800 rounded-lg">
+        <!-- Inyección dinámica de Proveedor, Fechas, Estatus y Calidad -->
+      </div>
+
+      <!-- Tabla de Artículos Compuestos -->
+      <div class="mb-4">
+        <label class="block text-[10px] uppercase text-cyan-500 mb-2 font-bold italic tracking-widest">
+          Desglose de Productos
+        </label>
+        <div id="contenedorItemsHistorial" class="bg-slate-950 border border-slate-800 rounded overflow-hidden">
+          <!-- Inyección dinámica de la tabla de ítems -->
+        </div>
+      </div>
+
+      <!-- Bloque de Anotaciones y Auditoría -->
+      <div class="mb-6">
+        <label class="block text-[10px] uppercase text-slate-500 mb-2 font-bold italic tracking-widest">
+          Notas del Registro
+        </label>
+        <div id="obsHistorial" class="w-full bg-slate-900/30 border border-slate-800 p-3 rounded text-slate-400 text-xs italic min-h-[60px]">
+          Sin observaciones registradas.
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones de Cierre de la Ficha -->
+    <div class="sect-footer !justify-end">
+      <button type="button" onclick="cerrarModalHistorial()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded text-[10px] font-bold uppercase border border-slate-700 transition-colors">
+        Cerrar Consulta
+      </button>
+    </div>
+
+  </div>
+</div>
 
 <div id="modal-reportes-lex" class="modal-lex-overlay">
     <div class="lex-modal-reportes-content">
