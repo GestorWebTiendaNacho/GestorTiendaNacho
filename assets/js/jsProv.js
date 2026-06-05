@@ -2531,8 +2531,12 @@ function generarEstrellasVisuales(valor) {
 /** 
  * @param {string|number} idPedido 
  */
+
 async function verPdfPedido(idPedido) {
+    console.log("🚀 [N.I.C.O. Trace] Botón presionado con éxito. idPedido recibido:", idPedido);
+
     if (!idPedido || idPedido === "undefined" || idPedido === "null") {
+        console.warn("⚠️ [N.I.C.O. Trace] Parada por ID inválido en verPdfPedido.");
         Swal.fire({
             icon: 'warning',
             title: 'ID INVÁLIDO',
@@ -2544,6 +2548,7 @@ async function verPdfPedido(idPedido) {
         return;
     }
 
+    // Despliegue del Loader Estético
     Swal.fire({
         title: 'Buscando Comprobante',
         text: `Rastreando archivos del pedido #${idPedido} en Google Drive...`,
@@ -2561,7 +2566,7 @@ async function verPdfPedido(idPedido) {
         const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
         
         if (res && res.status === "success" && res.reply) {
-            const archivoData = res.reply; 
+            const archivoData = res.reply;
 
             if (archivoData.success && archivoData.url) {
                 Swal.close(); 
@@ -2597,7 +2602,6 @@ async function verPdfPedido(idPedido) {
 
     } catch (error) {
         console.error("❌ Error en Visor PDF:", error);
-        
         Swal.fire({
             icon: 'error',
             title: '<span class="text-red-500 font-mono text-sm">IMPOSIBLE ABRIR VISOR</span>',
