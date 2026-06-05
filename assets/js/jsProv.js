@@ -2315,128 +2315,116 @@ function cerrarModalRecepcion() {
 /** @param {string|number} idPedido - Identificador único de la orden.  */
 
 async function verDetalleHistorial(idPedido) {
-    const modal = document.getElementById('modalDetalleHistorial');
-    const cabeceraInfo = document.getElementById('lex-cabecera-historial');
-    const contenedorTabla = document.getElementById('contenedorItemsHistorial');
+    // 1. Vinculación estricta a la anatomía real de tus Modales
+    const modalDetalle = document.getElementById('modalDetalleHistorial');
+    const infoGeneral = document.getElementById('infoGeneralHistorial');
+    const contenedorItems = document.getElementById('contenedorItemsHistorial');
     const obsBox = document.getElementById('obsHistorial');
     const subtitulo = document.getElementById('historialSubtitulo');
     
-    // 1. Verificación unificada de cimientos del DOM
-    if (!modal || !contenedorTabla || !cabeceraInfo || !obsBox) {
-        console.error("❌ N.I.C.O. DOM Error: Elementos críticos del Historial no encontrados.");
+    // Escudo de Cimientos estructurales del DOM
+    if (!modalDetalle || !contenedorItems || !infoGeneral || !obsBox) {
+        console.error("❌ N.I.C.O. DOM Error: Cimientos del modal de detalles ausentes en el HTML.");
         return;
     }
 
-    // 2. ESCUDO DE CONTROL: Validar que el idPedido realmente exista y sea válido
+    // Escudo de Control de Parámetros
     if (!idPedido || idPedido === "undefined" || idPedido === "null") {
-        console.error(`❌ Error crítico: Se invocó verDetalleHistorial con un ID inválido o ausente. Recibido: [${idPedido}]`);
-        
-        if (subtitulo) subtitulo.innerText = `PEDIDO: NO IDENTIFICADO`;
-        cabeceraInfo.innerHTML = '';
-        obsBox.innerText = "No se pueden cargar observaciones de un registro inexistente.";
-        
-        contenedorTabla.innerHTML = `
-            <div class="p-10 text-center bg-amber-950/20 border border-amber-500/30 rounded-xl mt-2">
-                <div class="text-amber-500 text-xl mb-2">⚠️</div>
-                <p class="text-amber-400 uppercase text-[10px] font-mono tracking-wide font-bold">Falla de Invocación Local</p>
-                <p class="text-slate-400 text-[11px] mt-1">El botón de la tabla principal no le pasó un ID de pedido válido a la función.</p>
-                <p class="text-cyan-500 font-mono text-[9px] mt-2 bg-slate-950/60 p-1 rounded border border-slate-800">Valor recibido: "${idPedido}"</p>
-            </div>`;
-            
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        return; // Frena la ejecución, no viaja al servidor de GAS
+        console.error(`❌ Falla de Invocación Local: Se intentó auditar un ID inválido. Recibido: [${idPedido}]`);
+        return;
     }
 
-    // Si pasa el escudo, procedemos con la carga normal
-    if (subtitulo) subtitulo.innerText = `PEDIDO: ${idPedido}`;
-    
-    // Loader inicial limpio directo en la zona de carga de la tabla
-    contenedorTabla.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-12">
-            <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest italic animate-pulse">Accediendo al archivo central...</p>
-        </div>`;
-    
-    // Limpieza de estados anteriores
-    cabeceraInfo.innerHTML = '';
+    // 2. Preparación visual del layout antes del viaje al servidor
+    if (subtitulo) subtitulo.innerText = `ID: ${idPedido}`;
+    infoGeneral.innerHTML = '';
     obsBox.innerText = "Cargando observaciones...";
     
-    // Apertura nativa limpia coherente con tu CSS
-    modal.style.display = 'flex';
+    // Loader integrado nativo con la estética Cyan de tu cabecera
+    contenedorItems.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12 bg-slate-950">
+            <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest italic animate-pulse">Filtrando y recuperando ítems del expediente...</p>
+        </div>`;
+    
+    // Despliegue nativo del modal de detalles
+    modalDetalle.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
     try {
+        // 3. Consulta al backend por el lote completo de productos
         const res = await callGoogleScript('obtenerItemHistorial', { idPedido: idPedido });
         
         if (res.status === "success" && res.reply && res.reply.success) {
             const data = res.reply;
             
-            if (!data.info) throw new Error("El servidor no retornó la cabecera informativa (info).");
+            if (!data.info) throw new Error("El servidor central no retornó el bloque informativo (info).");
 
-            // 3. Inyección Limpia en la Cabecera Dedicada del HTML
-            cabeceraInfo.innerHTML = `
-            <div class="grid grid-cols-2 gap-3 p-4 mb-4 bg-slate-950/50 border border-slate-800/60 rounded-lg text-[10px]">
-                <div class="space-y-2">
-                    <div>
-                        <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Proveedor / Origen</p>
-                        <p class="text-cyan-400 font-bold uppercase">${data.info.proveedor || 'SIN PROVEEDOR'}</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Estatus Final</p>
-                        <span class="inline-block px-2 py-0.5 mt-1 text-[9px] font-mono rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+            // 4. Inyección en tu grilla de 2 a 4 columnas del HTML (infoGeneralHistorial)
+            infoGeneral.innerHTML = `
+                <div class="flex flex-col">
+                    <span class="text-slate-500 text-[8px] uppercase tracking-wider font-bold">Proveedor / Origen</span>
+                    <span class="text-slate-200 text-xs font-semibold uppercase mt-0.5">${data.info.proveedor || 'SIN PROVEEDOR'}</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-slate-500 text-[8px] uppercase tracking-wider font-bold">Línea de Tiempo</span>
+                    <span class="text-slate-400 font-mono text-[11px] mt-0.5">
+                        ${data.info.fechaPedido || '---'} <span class="text-cyan-600 font-sans">➔</span> ${data.info.fechaRecepcion || '---'}
+                    </span>
+                </div>
+                <div class="flex flex-col md:items-center">
+                    <div class="w-full md:w-auto">
+                        <span class="text-slate-500 text-[8px] uppercase tracking-wider font-bold block">Estatus Final</span>
+                        <span class="inline-block px-2 py-0.5 mt-1 text-[9px] font-mono rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase font-bold">
                             ${data.info.estatus || 'FINALIZADO'}
                         </span>
                     </div>
                 </div>
-                <div class="space-y-2 text-right">
-                    <div>
-                        <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Registro / Cierre</p>
-                        <p class="text-slate-300 font-mono mt-0.5">
-                            ${data.info.fechaPedido || '---'} <span class="text-cyan-700 mx-1">➔</span> ${data.info.fechaRecepcion || '---'}
-                        </p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 uppercase text-[8px] font-bold tracking-wider">Performance (Calidad / Cumplimiento)</p>
-                        <p class="text-amber-400 font-mono mt-0.5 font-bold">
-                            ${generarEstrellasVisuales(data.info.calidad)} 
-                            <span class="text-slate-400 ml-2 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">${data.info.cumplimiento || '0%'}</span>
-                        </p>
+                <div class="flex flex-col text-right">
+                    <span class="text-slate-500 text-[8px] uppercase tracking-wider font-bold">Auditoría de Calidad</span>
+                    <div class="text-amber-400 font-mono text-[11px] mt-0.5 font-bold space-x-1.5">
+                        <span>${generarEstrellasVisuales(data.info.calidad)}</span>
+                        <span class="text-slate-400 bg-slate-950 px-1 py-0.5 rounded border border-slate-800 text-[10px] font-normal">${data.info.cumplimiento || '100%'}</span>
                     </div>
                 </div>
-            </div>`;
+            `;
 
-            // 4. Inyección Exclusiva de la Tabla en su contenedor correspondiente pasándole el idPedido
-            if (data.items && data.items.length > 0 && 'precio' in data.items[0]) {
-                contenedorTabla.innerHTML = renderizarTablaItemsHistorial(data.items, idPedido);
+            // 5. Renderizado del listado completo de productos (múltiples ítems)
+            // Evaluamos estructuralmente qué tipo de tabla inyectar según las propiedades de la respuesta
+            if (data.items && data.items.length > 0 && ('precio' in data.items[0] || 'precioUnitario' in data.items[0])) {
+                contenedorItems.innerHTML = renderizarTablaItemsHistorial(data.items, idPedido);
             } else {
-                contenedorTabla.innerHTML = renderizarTablaInversionPlana(data.items || [], idPedido);
+                contenedorItems.innerHTML = renderizarTablaInversionPlana(data.items || [], idPedido);
             }
 
-            // 5. Inyección de Notas en la Caja de Observaciones Dedicada del HTML
+            // 6. Inyección de anotaciones en tu bloque de notas
             obsBox.innerHTML = data.info.observaciones 
                 ? `"${data.info.observaciones}"` 
-                : `"Sin novedades registradas en la recepción."`;
+                : `"Sin novedades registradas en la recepción del expediente."`;
 
         } else {
-            throw new Error((res.reply && res.reply.error) || "No se pudo recuperar la información del archivo.");
+            throw new Error((res.reply && res.reply.error) || "El registro no devolvió una estructura mapeable.");
         }
     } catch (err) {
-        console.error("❌ Error en Módulo Historial:", err);
-        contenedorTabla.innerHTML = `
-            <div class="p-10 text-center bg-red-950/10 border border-red-900/30 rounded-xl mt-2">
-                <div class="text-red-500 text-xl mb-2">⚠️</div>
-                <p class="text-red-400 uppercase text-[10px] font-mono tracking-wide">Falla de Indexación: ${err.message}</p>
+        console.error(`❌ Error en Módulo Historial [ID: ${idPedido}]:`, err);
+        contenedorItems.innerHTML = `
+            <div class="p-8 text-center bg-red-950/20 border border-red-900/30 rounded font-mono">
+                <div class="text-red-500 text-lg mb-1">⚠️</div>
+                <p class="text-red-400 uppercase text-[10px] font-bold tracking-wide">Falla de Indexación Crítica</p>
+                <p class="text-slate-400 text-[11px] mt-1 normal-case">${err.message}</p>
             </div>`;
-        obsBox.innerText = "Error al mapear las notas.";
+        obsBox.innerText = "Imposible recuperar notas debido a un colapso en la consulta.";
     }
 }
 
 function cerrarModalHistorial() {
-    const modal = document.getElementById('modalDetalleHistorial');
-    if (!modal) return;
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
+    const modalDetalle = document.getElementById('modalDetalleHistorial');
+    if (!modalDetalle) return;
+    
+    // Ocultamos el detalle limpio
+    modalDetalle.style.display = 'none';
+    
+    // Bloqueamos el overflow en el body porque el listado general todavía sigue abierto de fondo
+    document.body.style.overflow = 'hidden'; 
 }
 
 function renderizarTablaInversionPlana(items, idPedido) {
