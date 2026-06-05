@@ -153,7 +153,6 @@
 </div>
 
 <!-- MODAL RECEPCIÓN -->
-
 <div id="modalRecepcion" class="modal-recep-overlay">
   <div class="modal-recep-content">
     
@@ -163,10 +162,58 @@
     </div>
     
     <div class="modal-body-recep custom-scrollbar">
-      <div id="resumenPedido" class="mb-6"></div>
-      <div id="workspaceRecepcion" class="w-full p-2">
+      
+      <div id="recepcion-resumen-pedido" class="mb-4"></div>
+      
+      <div class="flex gap-2 mb-4 border-b border-slate-800 pb-2 font-mono text-[11px]">
+        <button type="button" id="tab-RECIBIDO" onclick="cambiarModoGestion('RECIBIDO')" class="px-4 py-1.5 font-bold border-b-2 transition-all duration-200">RECIBIR</button>
+        <button type="button" id="tab-REPROGRAMADO" onclick="cambiarModoGestion('REPROGRAMADO')" class="px-4 py-1.5 font-bold border-b-2 transition-all duration-200">REPROGRAMAR</button>
+        <button type="button" id="tab-CANCELADO" onclick="cambiarModoGestion('CANCELADO')" class="px-4 py-1.5 font-bold border-b-2 transition-all duration-200">CANCELAR</button>
+      </div>
+
+      <form id="formRecepcion" onsubmit="event.preventDefault();">
+        
+        <input type="hidden" id="recepcionID" value="">
+        <input type="hidden" id="recepcionFila" value="">
+        <input type="hidden" id="accionActual" value="RECIBIDO">
+        <input type="hidden" id="inputCalidad" value="0">
+        <input type="hidden" id="inputPorcentaje" value="100">
+        
+        <div id="section-RECIBIDO" class="gestion-section">
+          <div id="contenedorItemsRecepcion" class="w-full mb-4"></div>
+          
+          <div class="flex items-center gap-3 bg-slate-900/20 p-2 rounded border border-slate-900 mb-2">
+            <span class="text-[9px] text-slate-400 font-mono uppercase tracking-wider">Calidad de Entrega:</span>
+            <div class="flex gap-1">
+              <button type="button" onclick="setCalidad(1)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+              <button type="button" onclick="setCalidad(2)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+              <button type="button" onclick="setCalidad(3)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+              <button type="button" onclick="setCalidad(4)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+              <button type="button" onclick="setCalidad(5)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+            </div>
+            <span id="valorPorcentaje" class="text-xs font-mono text-cyan-400 ml-auto font-bold">100%</span>
           </div>
-      <form id="formRecepcion"></form>
+        </div>
+
+        <div id="wrapper-reprogramacion" class="gestion-section hidden bg-amber-950/10 border border-amber-900/30 p-3 rounded mb-3">
+          <p class="text-[10px] font-mono text-amber-400 uppercase tracking-widest">
+            Nueva Ventana de Arribo: <span id="display-fecha-reprogramada" class="text-white font-bold ml-1">Sin seleccionar</span>
+          </p>
+        </div>
+
+        <div id="wrapper-causa-cancelacion" class="gestion-section hidden bg-red-950/10 border border-red-900/30 p-3 rounded mb-3">
+          <label for="inputCausa" class="text-[9px] text-red-400 font-mono block mb-1 uppercase tracking-wider">Atribución del Quiebre:</label>
+          <select id="inputCausa" class="w-full bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 p-2 rounded outline-none focus:border-red-500">
+            <option value="proveedor">Responsabilidad Directa del Proveedor</option>
+            <option value="logistica">Falla o Incidente Logístico de Distribución</option>
+          </select>
+        </div>
+
+        <div class="w-full mt-2">
+          <textarea id="inputObservaciones" class="w-full bg-[#020617] border border-slate-800 rounded p-2 text-white text-xs font-mono placeholder-slate-600 outline-none focus:border-cyan-500/50 transition-colors" rows="2" placeholder="Notas generales..."></textarea>
+        </div>
+
+      </form>
     </div> 
 
     <div id="section-footer" class="sect-footer">
