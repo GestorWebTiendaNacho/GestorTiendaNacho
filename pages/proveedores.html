@@ -106,7 +106,7 @@
                     <span class="fi fi-rs-time-past nm-icon-main"></span>
                 </div>
                 <div class="nm-circle-outer">
-                    <div class="nm-circle-inner" onclick="verDetalleHistorial()">
+                    <div class="nm-circle-inner" onclick="abrirHistorialGeneral()">
                         <span class="fi fi-rs-time-past"></span>
                         <h2>HISTORIAL</h2>
                     </div>
@@ -230,36 +230,27 @@
 </div>
 
 <!-- MODAL HISTORIAL -->
-<div id="modalDetalleHistorial" class="lex-modal-overlay">
-  <div class="lex-modal-content">
-    
-    <div class="lex-modal-header">
+<div id="modalHistorialGeneral" class="lex-modal-overlay" style="display: none;">
+  <div class="lex-modal-content max-w-4xl"> <div class="lex-modal-header">
       <div class="lex-header-group">
-        <h3 id="historialTitulo">DETALLE DE EXPEDIENTE</h3>
-        <span id="historialSubtitulo">ID: ---</span>
+        <h3>HISTORIAL DE COMPRAS</h3>
+        <span class="text-slate-500 text-[10px] uppercase tracking-wider font-mono">Archivo Central de Órdenes</span>
       </div>
-      <button onclick="cerrarModalHistorial()" class="lex-btn-close">&times;</button>
+      <button onclick="cerrarModalHistorialGeneral()" class="lex-btn-close">&times;</button>
     </div>
     
     <div class="lex-modal-body custom-scroll">
-      <div id="lex-cabecera-historial"></div>
-
-      <div class="lex-section">
-        <label class="lex-label">Desglose de Productos e Inversión</label>
-        <div id="contenedorItemsHistorial" class="lex-container-items"></div>
+      <div class="mb-4 flex justify-between items-center bg-slate-950/30 p-3 border border-slate-800/80 rounded-lg">
+        <p class="text-slate-400 text-[11px]">Seleccioná un expediente de la lista para auditar su desglose e inversión líquida.</p>
       </div>
 
-      <div class="lex-section">
-        <label class="lex-label">Notas del Registro</label>
-        <div id="obsHistorial" class="lex-obs-box">
-            Sin observaciones registradas.
+      <div id="contenedorListaGeneralHistorial" class="lex-container-items">
         </div>
-      </div>
     </div>
 
     <div class="lex-modal-footer">
-      <button type="button" onclick="cerrarModalHistorial()" class="lex-btn-footer">
-        Finalizar Consulta
+      <button type="button" onclick="cerrarModalHistorialGeneral()" class="lex-btn-footer">
+        Cerrar Historial
       </button>
     </div>
 

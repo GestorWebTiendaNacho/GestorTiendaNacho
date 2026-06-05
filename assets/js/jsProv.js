@@ -2321,22 +2321,48 @@ async function verDetalleHistorial(idPedido) {
     const obsBox = document.getElementById('obsHistorial');
     const subtitulo = document.getElementById('historialSubtitulo');
     
+    // 1. Verificación unificada de cimientos del DOM
     if (!modal || !contenedorTabla || !cabeceraInfo || !obsBox) {
         console.error("❌ N.I.C.O. DOM Error: Elementos críticos del Historial no encontrados.");
         return;
     }
 
+    // 2. ESCUDO DE CONTROL: Validar que el idPedido realmente exista y sea válido
+    if (!idPedido || idPedido === "undefined" || idPedido === "null") {
+        console.error(`❌ Error crítico: Se invocó verDetalleHistorial con un ID inválido o ausente. Recibido: [${idPedido}]`);
+        
+        if (subtitulo) subtitulo.innerText = `PEDIDO: NO IDENTIFICADO`;
+        cabeceraInfo.innerHTML = '';
+        obsBox.innerText = "No se pueden cargar observaciones de un registro inexistente.";
+        
+        contenedorTabla.innerHTML = `
+            <div class="p-10 text-center bg-amber-950/20 border border-amber-500/30 rounded-xl mt-2">
+                <div class="text-amber-500 text-xl mb-2">⚠️</div>
+                <p class="text-amber-400 uppercase text-[10px] font-mono tracking-wide font-bold">Falla de Invocación Local</p>
+                <p class="text-slate-400 text-[11px] mt-1">El botón de la tabla principal no le pasó un ID de pedido válido a la función.</p>
+                <p class="text-cyan-500 font-mono text-[9px] mt-2 bg-slate-950/60 p-1 rounded border border-slate-800">Valor recibido: "${idPedido}"</p>
+            </div>`;
+            
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        return; // Frena la ejecución, no viaja al servidor de GAS
+    }
+
+    // Si pasa el escudo, procedemos con la carga normal
     if (subtitulo) subtitulo.innerText = `PEDIDO: ${idPedido}`;
     
+    // Loader inicial limpio directo en la zona de carga de la tabla
     contenedorTabla.innerHTML = `
         <div class="flex flex-col items-center justify-center py-12">
             <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
             <p class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest italic animate-pulse">Accediendo al archivo central...</p>
         </div>`;
     
+    // Limpieza de estados anteriores
     cabeceraInfo.innerHTML = '';
     obsBox.innerText = "Cargando observaciones...";
     
+    // Apertura nativa limpia coherente con tu CSS
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
@@ -2348,6 +2374,7 @@ async function verDetalleHistorial(idPedido) {
             
             if (!data.info) throw new Error("El servidor no retornó la cabecera informativa (info).");
 
+            // 3. Inyección Limpia en la Cabecera Dedicada del HTML
             cabeceraInfo.innerHTML = `
             <div class="grid grid-cols-2 gap-3 p-4 mb-4 bg-slate-950/50 border border-slate-800/60 rounded-lg text-[10px]">
                 <div class="space-y-2">
@@ -2379,12 +2406,14 @@ async function verDetalleHistorial(idPedido) {
                 </div>
             </div>`;
 
+            // 4. Inyección Exclusiva de la Tabla en su contenedor correspondiente pasándole el idPedido
             if (data.items && data.items.length > 0 && 'precio' in data.items[0]) {
                 contenedorTabla.innerHTML = renderizarTablaItemsHistorial(data.items, idPedido);
             } else {
                 contenedorTabla.innerHTML = renderizarTablaInversionPlana(data.items || [], idPedido);
             }
 
+            // 5. Inyección de Notas en la Caja de Observaciones Dedicada del HTML
             obsBox.innerHTML = data.info.observaciones 
                 ? `"${data.info.observaciones}"` 
                 : `"Sin novedades registradas en la recepción."`;
@@ -2402,6 +2431,7 @@ async function verDetalleHistorial(idPedido) {
         obsBox.innerText = "Error al mapear las notas.";
     }
 }
+
 function cerrarModalHistorial() {
     const modal = document.getElementById('modalDetalleHistorial');
     if (!modal) return;
@@ -2559,6 +2589,104 @@ async function verPdfPedido(idPedido) {
             btn.innerHTML = textoOriginal;
         }
     }
+}
+
+async function abrirHistorialGeneral() {
+    const modalGeneral = document.getElementById('modalHistorialGeneral');
+    const contenedorLista = document.getElementById('contenedorListaGeneralHistorial');
+
+    if (!modalGeneral || !contenedorLista) {
+        console.error("❌ N.I.C.O. DOM Error: Elementos del Historial General no encontrados.");
+        return;
+    }
+
+    contenedorLista.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-16">
+            <div class="w-9 h-9 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p class="text-purple-400 font-mono text-[9px] uppercase tracking-widest italic animate-pulse">Sincronizando registros históricos...</p>
+        </div>`;
+
+    modalGeneral.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const res = await callGoogleScript('obtenerHistorialGeneral');
+        
+        if (res.status === "success" && res.reply && res.reply.success) {
+            const pedidos = res.reply.pedidos || [];
+            
+            contenedorLista.innerHTML = renderizarTablaHistorialGeneral(pedidos);
+        } else {
+            throw new Error((res.reply && res.reply.error) || "Error al leer los registros del servidor.");
+        }
+    } catch (err) {
+        console.error("❌ Error en Historial General:", err);
+        contenedorLista.innerHTML = `
+            <div class="p-10 text-center bg-red-950/10 border border-red-900/30 rounded-xl mt-2">
+                <div class="text-red-500 text-xl mb-2">⚠️</div>
+                <p class="text-red-400 uppercase text-[10px] font-mono tracking-wide">Falla de Sincronización: ${err.message}</p>
+            </div>`;
+    }
+}
+
+
+function cerrarModalHistorialGeneral() {
+    const modalGeneral = document.getElementById('modalHistorialGeneral');
+    if (!modalGeneral) return;
+    modalGeneral.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+/**
+ * @param {Array} pedidos - Lista de objetos de pedidos devuelta por GAS.
+ */
+function renderizarTablaHistorialGeneral(pedidos) {
+    if (!pedidos || pedidos.length === 0) {
+        return `<p class="text-[11px] text-slate-500 font-mono text-center py-8 bg-slate-950/20 border border-slate-900 rounded-lg">No se encontraron expedientes registrados en el sistema.</p>`;
+    }
+
+    let html = `
+    <div class="overflow-hidden rounded-lg border border-slate-800 max-h-[400px] overflow-y-auto custom-scroll">
+        <table class="w-full text-[11px] border-collapse">
+            <thead class="sticky top-0 bg-[#0f172a] z-10 shadow">
+                <tr class="bg-slate-900/90 text-slate-500 text-left border-b border-slate-800">
+                    <th class="p-3 uppercase text-[8px] font-black tracking-wider">ID Pedido</th>
+                    <th class="p-3 uppercase text-[8px] font-black tracking-wider">Fecha</th>
+                    <th class="p-3 uppercase text-[8px] font-black tracking-wider">Proveedor</th>
+                    <th class="p-3 uppercase text-[8px] font-black tracking-wider text-right">Estatus</th>
+                    <th class="p-3 uppercase text-[8px] font-black tracking-wider text-center">Acción</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/40 bg-slate-950/20">`;
+
+    pedidos.forEach((p) => {
+        const idReal = p.idPedido || p.id || 'S/D';
+        
+        html += `
+        <tr class="hover:bg-purple-500/5 transition-colors duration-100 text-slate-300">
+            <td class="p-3 font-mono font-bold text-purple-400">${idReal}</td>
+            <td class="p-3 text-slate-400 font-mono">${p.fechaPedido || p.fecha || '---'}</td>
+            <td class="p-3 uppercase font-medium">${p.proveedor || 'SIN PROVEEDOR'}</td>
+            <td class="p-3 text-right">
+                <span class="inline-block px-2 py-0.5 text-[9px] font-mono rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+                    ${p.estatus || 'FINALIZADO'}
+                </span>
+            </td>
+            <td class="p-3 text-center">
+                <button type="button" onclick="verDetalleHistorial('${idReal}')"
+                    class="px-2.5 py-1 bg-cyan-950/50 hover:bg-cyan-900/70 text-cyan-400 font-mono text-[9px] uppercase tracking-wider rounded border border-cyan-800/50 transition-all active:scale-95">
+                    Auditar
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    html += `
+            </tbody>
+        </table>
+    </div>`;
+
+    return html;
 }
 
 /*-------------------SECCION DATOS SEMANALES------------------------------*/
