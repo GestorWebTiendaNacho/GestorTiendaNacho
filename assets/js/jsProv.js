@@ -2321,7 +2321,6 @@ async function verDetalleHistorial(idPedido) {
     const obsBox = document.getElementById('obsHistorial');
     const subtitulo = document.getElementById('historialSubtitulo');
     
-    // Verificación unificada de cimientos del DOM
     if (!modal || !contenedorTabla || !cabeceraInfo || !obsBox) {
         console.error("❌ N.I.C.O. DOM Error: Elementos críticos del Historial no encontrados.");
         return;
@@ -2329,18 +2328,15 @@ async function verDetalleHistorial(idPedido) {
 
     if (subtitulo) subtitulo.innerText = `PEDIDO: ${idPedido}`;
     
-    // Loader inicial limpio directo en la zona de carga de la tabla
     contenedorTabla.innerHTML = `
         <div class="flex flex-col items-center justify-center py-12">
             <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3"></div>
             <p class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest italic animate-pulse">Accediendo al archivo central...</p>
         </div>`;
     
-    // Limpieza de estados anteriores
     cabeceraInfo.innerHTML = '';
     obsBox.innerText = "Cargando observaciones...";
     
-    // Apertura nativa limpia coherente con tu CSS
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
@@ -2352,7 +2348,6 @@ async function verDetalleHistorial(idPedido) {
             
             if (!data.info) throw new Error("El servidor no retornó la cabecera informativa (info).");
 
-            // 1. Inyección Limpia en la Cabecera Dedicada del HTML
             cabeceraInfo.innerHTML = `
             <div class="grid grid-cols-2 gap-3 p-4 mb-4 bg-slate-950/50 border border-slate-800/60 rounded-lg text-[10px]">
                 <div class="space-y-2">
@@ -2384,14 +2379,12 @@ async function verDetalleHistorial(idPedido) {
                 </div>
             </div>`;
 
-            // 2. Inyección Exclusiva de la Tabla en su contenedor correspondiente
             if (data.items && data.items.length > 0 && 'precio' in data.items[0]) {
-                contenedorTabla.innerHTML = renderizarTablaItemsHistorial(data.items);
+                contenedorTabla.innerHTML = renderizarTablaItemsHistorial(data.items, idPedido);
             } else {
-                contenedorTabla.innerHTML = renderizarTablaInversionPlana(data.items || []);
+                contenedorTabla.innerHTML = renderizarTablaInversionPlana(data.items || [], idPedido);
             }
 
-            // 3. Inyección de Notas en la Caja de Observaciones Dedicada del HTML
             obsBox.innerHTML = data.info.observaciones 
                 ? `"${data.info.observaciones}"` 
                 : `"Sin novedades registradas en la recepción."`;
@@ -2409,7 +2402,6 @@ async function verDetalleHistorial(idPedido) {
         obsBox.innerText = "Error al mapear las notas.";
     }
 }
-
 function cerrarModalHistorial() {
     const modal = document.getElementById('modalDetalleHistorial');
     if (!modal) return;
@@ -2417,7 +2409,7 @@ function cerrarModalHistorial() {
     document.body.style.overflow = 'auto';
 }
 
-function renderizarTablaInversionPlana(items) {
+function renderizarTablaInversionPlana(items, idPedido) {
     if (items.length === 0) return `<p class="text-[10px] text-slate-500 font-mono text-center py-4">S/D ÍTEMS</p>`;
 
     let html = `
@@ -2454,11 +2446,22 @@ function renderizarTablaInversionPlana(items) {
                 </tr>
             </tfoot>
         </table>
+    </div>
+    
+    <div class="mt-3 flex justify-end">
+        <button type="button" id="btnVerPdfHistorial" onclick="verPdfPedido('${idPedido}')" 
+            class="px-3 py-1.5 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-400 font-mono text-[10px] uppercase tracking-wider rounded border border-cyan-800/50 transition-all active:scale-95 flex items-center gap-1.5">
+            <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+            Ver Detalle (PDF)
+        </button>
     </div>`;
+    
     return html;
 }
 
-function renderizarTablaItemsHistorial(items) {
+function renderizarTablaItemsHistorial(items, idPedido) {
     let html = `
     <div class="overflow-hidden rounded-lg border border-slate-800 max-h-[280px] overflow-y-auto custom-scroll">
         <table class="w-full text-left text-[11px] border-collapse">
@@ -2497,7 +2500,18 @@ function renderizarTablaItemsHistorial(items) {
                 </tr>
             </tfoot>
         </table>
+    </div>
+    
+    <div class="mt-3 flex justify-end">
+        <button type="button" id="btnVerPdfHistorial" onclick="verPdfPedido('${idPedido}')" 
+            class="px-3 py-1.5 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-400 font-mono text-[10px] uppercase tracking-wider rounded border border-cyan-800/50 transition-all active:scale-95 flex items-center gap-1.5">
+            <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+            Ver Detalle (PDF)
+        </button>
     </div>`;
+    
     return html;
 }
 
@@ -2507,6 +2521,45 @@ function generarEstrellasVisuales(valor) {
     return '★'.repeat(num) + '☆'.repeat(5 - num); // Sintaxis optimizada nativa de JS
 }
 
+/** 
+ * @param {string|number} idPedido 
+ */
+async function verPdfPedido(idPedido) {
+    const btn = document.getElementById('btnVerPdfHistorial');
+    const textoOriginal = btn ? btn.innerHTML : '';
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <div class="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+            Buscando...
+        `;
+    }
+
+    try {
+        const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
+        
+        if (res.status === "success" && res.reply) {
+            const urlPdf = res.reply.url || (typeof res.reply === 'string' ? res.reply : null);
+            
+            if (urlPdf && urlPdf.startsWith('http')) {
+                window.open(urlPdf, '_blank');
+            } else {
+                throw new Error("La respuesta del servidor no contiene una URL válida.");
+            }
+        } else {
+            throw new Error(res.message || "No se localizó el archivo digital.");
+        }
+    } catch (err) {
+        console.error("❌ Error en Visor PDF:", err);
+        alert(`Imposible abrir visor: ${err.message}`);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    }
+}
 
 /*-------------------SECCION DATOS SEMANALES------------------------------*/
 let navegacionSemanal = {
