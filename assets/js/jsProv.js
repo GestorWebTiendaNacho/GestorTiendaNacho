@@ -1829,8 +1829,23 @@ const CONFIG_RECEPCION = {
 };
 
 window.verEstadoPedidos = async function() {
+    // 1. ABRIR EL MODAL INMEDIATAMENTE
+    const modal = document.getElementById('modalRecepcion');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.style.setProperty('display', 'flex', 'important');
+        document.body.style.overflow = 'hidden';
+    } else {
+        console.error("❌ Error: No existe el contenedor 'modalRecepcion'.");
+        return;
+    }
+
+    // 2. CONFIGURAR ESTADO INICIAL (Mostrar tabla general, ocultar el formulario)
     const workspace = document.getElementById('workspaceRecepcion');
-    const tituloPantalla = document.getElementById('modal-titulo');
+    const vistaDetalle = document.getElementById('vistaDetallePedido');
+    const footer = document.getElementById('section-footer');
+    const tituloPantalla = document.getElementById('recepcionTitulo');
 
     if (!workspace) {
         console.error("❌ Error de Nodo: No se encontró el espacio de trabajo activo.");
@@ -1838,8 +1853,13 @@ window.verEstadoPedidos = async function() {
     }
 
     if (tituloPantalla) tituloPantalla.innerText = "SISTEMA DE CONTROL DE RECEPCIÓN";
+    
+    // Switch de entornos visuales
+    workspace.style.display = 'block';
+    if (vistaDetalle) vistaDetalle.style.display = 'none';
+    if (footer) footer.style.display = 'none';
 
-    // Loader de Sincronización Estilo Cyberpunk
+    // Inyectar el Loader Cyberpunk
     workspace.innerHTML = `
     <div class="flex flex-col items-center justify-center py-20 w-full bg-slate-950/20 rounded-xl border border-slate-900">
         <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
@@ -1954,13 +1974,20 @@ async function abrirRecepcion(datos, fila) {
     }
 
     const idPedido = String(datos[0]).trim();
-    const modal = document.getElementById('modalRecepcion');
     
-    if (!modal) {
-        console.error("❌ DOM Error: El contenedor independiente 'modalRecepcion' no existe.");
-        return;
-    }
+    // 1. MUTACIÓN DE PANTALLA: Ocultar la tabla principal y mostrar el área de gestión
+    const workspace = document.getElementById('workspaceRecepcion');
+    const vistaDetalle = document.getElementById('vistaDetallePedido');
+    const footer = document.getElementById('section-footer');
+    const tituloPantalla = document.getElementById('recepcionTitulo');
 
+    if (workspace) workspace.style.display = 'none';
+    if (vistaDetalle) vistaDetalle.style.display = 'block';
+    if (footer) footer.style.display = 'flex';
+    
+    if (tituloPantalla) tituloPantalla.innerText = `GESTIÓN DE ORDEN: ${idPedido}`;
+
+    // 2. SETEO DE DATOS DE LA ORDEN SELECCIONADA
     document.getElementById('recepcionID').value = idPedido;
     document.getElementById('recepcionFila').value = fila;
 
@@ -1984,20 +2011,15 @@ async function abrirRecepcion(datos, fila) {
         contenedorItems.innerHTML = `<div class="py-12 text-center text-cyan-500 text-[10px] font-mono animate-pulse tracking-widest">SOLICITANDO DESGLOSE DE PRODUCTOS...</div>`;
     }
 
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    modal.style.setProperty('display', 'flex', 'important');
-    document.body.style.overflow = 'hidden';
-
     cambiarModoGestion('RECIBIDO'); 
 
+    // 3. CONSULTA DE SUB-ITEMS MEDIANTE TU CONECTOR DE GAS
     try {
         const res = await callGoogleScript('obtenerItemsPedido', { idPedido: idPedido });
         
         if (res.status === "success" && res.reply && res.reply.success) {
             renderizarItemsDesgloseEspecial(res.reply.items, 'contenedorItemsRecepcion');
-            const titulo = document.getElementById('recepcionTitulo');
-            if (titulo) titulo.focus();
+            if (tituloPantalla) tituloPantalla.focus();
         } else {
             throw new Error(res.message || res.reply?.error || "Falla de comunicación interna.");
         }
