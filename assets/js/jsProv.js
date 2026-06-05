@@ -1829,7 +1829,7 @@ const CONFIG_RECEPCION = {
 };
 
 window.verEstadoPedidos = async function() {
-    const workspace = document.getElementById('workspace-recepcion-main');
+    const workspace = document.getElementById('workspaceRecepcion');
     const tituloPantalla = document.getElementById('modal-titulo');
 
     if (!workspace) {
