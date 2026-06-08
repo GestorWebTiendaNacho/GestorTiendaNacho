@@ -27,7 +27,7 @@
     background: transparent;
     min-height: 100vh;
     color: white;
-    padding: 40px 20px !important; /* Reducido el padding superior */
+    padding: 40px 20px !important;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -46,14 +46,14 @@
     -webkit-text-fill-color: transparent;
 }
 
-/* --- CONTENEDOR CENTRAL (Más compacto en pantalla) --- */
+/* --- CONTENEDOR CENTRAL */
 .container-box {
     position: relative; 
     display: grid;
     grid-template-columns: repeat(2, 1fr); 
-    gap: 3rem; /* Reducido ligeramente para acercar las cards */
+    gap: 3rem; 
     width: 100%;
-    max-width: 780px; /* BAJÓ DE 950px A 780px: Achica el ancho de todo el bloque */
+    max-width: 780px;
     margin: 0 auto;
 }
 
@@ -63,20 +63,16 @@
     align-items: center;
     flex-direction: column;
     background: var(--card-bg);
-    padding: 20px 20px 20px 20px; /* REDUCIDO: Menos aire/vacío interno */
-    border-radius: 35px; /* Ajustado al nuevo tamaño */
+    padding: 20px 20px 20px 20px; 
+    border-radius: 35px; 
     position: relative;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
-    
-    --cut-radius: 92px; /* Mantiene el calce perfecto con el círculo central */
-    
+    --cut-radius: 92px;
     -webkit-mask-image: radial-gradient(circle at var(--cnr), transparent var(--cut-radius), #000 calc(var(--cut-radius) + 0.5px));
     mask-image: radial-gradient(circle at var(--cnr), transparent var(--cut-radius), #000 calc(var(--cut-radius) + 0.5px));
-    
     transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 box-shadow 0.5s ease, 
                 border-color 0.5s ease;
-    
     will-change: transform;
 }
 
@@ -122,7 +118,7 @@
     color: var(--blue);
 }
 
-/* --- EFECTO MAGNÉTICO ADAPTADO --- */
+/* --- EFECTO MAGNÉTICO --- */
 .center-core:hover ~ .box-1 { transform: translate(-25px, -25px); } 
 .center-core:hover ~ .box-2 { transform: translate(25px, -25px);  } 
 .center-core:hover ~ .box-3 { transform: translate(-25px, 25px);  } 
@@ -141,7 +137,6 @@
 .box-3:hover { border-color: var(--blue); box-shadow: 1px 30px 60px rgba(0, 139, 255, 0.25);}
 .box-4:hover { border-color: var(--orange); box-shadow: 1px 30px 60px rgba(255, 101, 0, 0.25);}
 
-/* --- OPTIMIZACIÓN DE IMÁGENES (Se ven más grandes en la card) --- */
 .cover { 
     animation: flotarImagen 6s ease-in-out infinite; 
     transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -153,8 +148,8 @@
 .box-4 .cover { animation-delay: 4.5s; }
 .box:hover .cover { transform: translateY(-8px) scale(1.03); }
 
-.cover img { 
-    width: 210px; /* SUBIÓ DE 190px A 210px: Ahora llena mucho mejor la card compacta */
+.cover img {
+    width: 210px;
     height: auto; 
     filter: drop-shadow(0 12px 12px rgba(0,0,0,0.6)); 
 }
@@ -169,8 +164,8 @@
     cursor: pointer; 
     outline: 0; 
     width: 100%; 
-    max-width: 230px; /* Reducido sutilmente para acompañar el nuevo ancho */
-    height: 44px; /* Bajó de 50px a 44px para ganar espacio vertical */
+    max-width: 230px; 
+    height: 44px;
     border-radius: 10px; 
     background-color: #05070c; 
     margin-top: 15px; /* Reducido el espacio muerto arriba del botón */
