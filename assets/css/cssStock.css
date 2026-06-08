@@ -23,15 +23,11 @@
     --mv-neon-green-glow: rgba(16, 185, 129, 0.5);
 }
 
-* {
-    box-sizing: border-box !important;
-}
-
 .main-admin-container {
     background: transparent;
     min-height: 100vh;
     color: white;
-    padding: 60px 20px !important;
+    padding: 40px 20px !important; /* Reducido el padding superior */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -42,7 +38,7 @@
     font-weight: 900;
     letter-spacing: 4px;
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem; /* Reducido el espacio bajo el título */
     text-transform: uppercase;
     background: linear-gradient(to right, #fff, #64748b);
     -webkit-background-clip: text;
@@ -50,35 +46,33 @@
     -webkit-text-fill-color: transparent;
 }
 
-/* --- CONTENEDOR CENTRAL --- */
+/* --- CONTENEDOR CENTRAL (Más compacto en pantalla) --- */
 .container-box {
     position: relative; 
     display: grid;
     grid-template-columns: repeat(2, 1fr); 
-    gap: 3.5rem; 
+    gap: 3rem; /* Reducido ligeramente para acercar las cards */
     width: 100%;
-    max-width: 950px;
+    max-width: 780px; /* BAJÓ DE 950px A 780px: Achica el ancho de todo el bloque */
     margin: 0 auto;
 }
 
-/* --- CARDS CON MÁSCARA CONSTANTE --- */
+/* --- CARDS COMPACTAS --- */
 .box {
     display: flex;
     align-items: center;
     flex-direction: column;
     background: var(--card-bg);
-    padding: 35px 25px 30px 25px; 
-    border-radius: 45px; 
+    padding: 20px 20px 20px 20px; /* REDUCIDO: Menos aire/vacío interno */
+    border-radius: 35px; /* Ajustado al nuevo tamaño */
     position: relative;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
     
-    --cut-radius: 92px; 
+    --cut-radius: 92px; /* Mantiene el calce perfecto con el círculo central */
     
-    /* La máscara se queda fija acá, nunca se remueve */
     -webkit-mask-image: radial-gradient(circle at var(--cnr), transparent var(--cut-radius), #000 calc(var(--cut-radius) + 0.5px));
     mask-image: radial-gradient(circle at var(--cnr), transparent var(--cut-radius), #000 calc(var(--cut-radius) + 0.5px));
     
-    /* Añadimos transform al will-change para optimizar la aceleración por hardware de la GPU */
     transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 box-shadow 0.5s ease, 
                 border-color 0.5s ease;
@@ -86,21 +80,21 @@
     will-change: transform;
 }
 
-/* --- ASIGNACIÓN DE COORDENADAS (Tu lógica matemática) --- */
+/* --- ASIGNACIÓN DE COORDENADAS --- */
 .box-1 { --cnr: right bottom; border: 2px solid rgba(0, 191, 156, 0.15); }
 .box-2 { --cnr: left bottom; border: 2px solid rgba(173, 13, 40, 0.15); }
 .box-3 { --cnr: right top; border: 2px solid rgba(0, 139, 255, 0.15); }
 .box-4 { --cnr: left top; border: 2px solid rgba(255, 101, 0, 0.15); }
 
 
-/* --- EL CÍRCULO CENTRAL --- */
+/* --- EL CÍRCULO CENTRAL (INTACTO, NO SE MODIFICA) --- */
 .center-core {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); 
-    width: 180px; 
-    height: 180px;
+    width: 180px;  /* Se conserva en 180px */
+    height: 180px; /* Se conserva en 180px */
     border-radius: 50%;
     background: radial-gradient(circle, #1e293b 0%, #020617 100%);
     border: 4px double var(--gold);
@@ -128,16 +122,16 @@
     color: var(--blue);
 }
 
-/* --- EFECTO MAGNÉTICO (Se desplazan conservando la forma) --- */
-.center-core:hover ~ .box-1 { transform: translate(-35px, -35px); } 
-.center-core:hover ~ .box-2 { transform: translate(35px, -35px);  } 
-.center-core:hover ~ .box-3 { transform: translate(-35px, 35px);  } 
-.center-core:hover ~ .box-4 { transform: translate(35px, 35px);   } 
+/* --- EFECTO MAGNÉTICO ADAPTADO --- */
+.center-core:hover ~ .box-1 { transform: translate(-25px, -25px); } 
+.center-core:hover ~ .box-2 { transform: translate(25px, -25px);  } 
+.center-core:hover ~ .box-3 { transform: translate(-25px, 25px);  } 
+.center-core:hover ~ .box-4 { transform: translate(25px, 25px);   } 
 
 
-/* --- HOVER INDIVIDUAL DE CARD  --- */
+/* --- HOVER INDIVIDUAL DE CARD --- */
 .box:hover {
-    transform: translateY(-12px) scale(1.02);
+    transform: translateY(-8px) scale(1.02);
     z-index: 101;
     box-shadow: 1px 30px 60px rgba(244, 235, 115, 0.25); 
 }
@@ -147,44 +141,49 @@
 .box-3:hover { border-color: var(--blue); box-shadow: 1px 30px 60px rgba(0, 139, 255, 0.25);}
 .box-4:hover { border-color: var(--orange); box-shadow: 1px 30px 60px rgba(255, 101, 0, 0.25);}
 
-/* --- ANIMACIÓN DE IMÁGENES --- */
+/* --- OPTIMIZACIÓN DE IMÁGENES (Se ven más grandes en la card) --- */
 .cover { 
     animation: flotarImagen 6s ease-in-out infinite; 
     transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    border-radius: 45px !important; 
+    border-radius: 25px !important; 
 }
 .box-1 .cover { animation-delay: 0s; }
 .box-2 .cover { animation-delay: 1.5s; }
 .box-3 .cover { animation-delay: 3s; }
 .box-4 .cover { animation-delay: 4.5s; }
-.box:hover .cover { transform: translateY(-15px) scale(1.05); }
-.cover img { width: 190px; height: auto; filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6)); }
+.box:hover .cover { transform: translateY(-8px) scale(1.03); }
+
+.cover img { 
+    width: 210px; /* SUBIÓ DE 190px A 210px: Ahora llena mucho mejor la card compacta */
+    height: auto; 
+    filter: drop-shadow(0 12px 12px rgba(0,0,0,0.6)); 
+}
 
 @keyframes flotarImagen { 
     0%, 100% { transform: translateY(0); } 
-    50% { transform: translateY(-8px); } 
+    50% { transform: translateY(-5px); } 
 }
 
-/* --- BOTONES --- */
+/* --- BOTONES INTEGRADOS --- */
 .box button {
     cursor: pointer; 
     outline: 0; 
     width: 100%; 
-    max-width: 250px; 
-    height: 50px; 
-    border-radius: 12px; 
+    max-width: 230px; /* Reducido sutilmente para acompañar el nuevo ancho */
+    height: 44px; /* Bajó de 50px a 44px para ganar espacio vertical */
+    border-radius: 10px; 
     background-color: #05070c; 
-    margin-top: 25px; 
+    margin-top: 15px; /* Reducido el espacio muerto arriba del botón */
     overflow: hidden; 
     position: relative;
     color: #fff; 
-    font-size: 14px; 
+    font-size: 13px; /* Tipografía un punto más chica */
     font-weight: 800; 
     text-transform: uppercase; 
     letter-spacing: 1px; 
     text-align: right; 
-    padding-right: 20px; 
-    line-height: 48px; 
+    padding-right: 15px; 
+    line-height: 42px; 
     box-shadow: 0 4px 10px rgba(0,0,0,0.4); 
     transition: all 0.4s ease; 
     z-index: 5;
@@ -201,7 +200,7 @@
     transition: width 500ms cubic-bezier(0.25, 1, 0.5, 1), opacity 300ms ease; 
     z-index: 1; 
     opacity: 0; 
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
 .box-1 button { border: 2px solid rgba(0, 191, 156, 0.15); }
