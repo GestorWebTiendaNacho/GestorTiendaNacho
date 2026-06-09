@@ -262,7 +262,7 @@
     cursor: not-allowed;
 }
 
-/*...spinner de carga...*/
+/*...OVERLAY DE CARGA...*/
 .loader {
   display: flex;
   justify-content: center;

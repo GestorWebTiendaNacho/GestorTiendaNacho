@@ -1195,21 +1195,11 @@ function calcularTotalConfirmacion() {
 
 
 async function ejecutarGeneracionPedido(idPedido, dias) {
-    if (!window.Swal) return alert("Procesando orden...");
-
-    Swal.fire({
-        title: 'PROCESANDO ORDEN',
-        html: `
-            <div class="flex flex-col items-center justify-center p-4 space-y-3">
-                <div class="w-8 h-8 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-                <div class="text-cyan-500 font-mono text-[9px] uppercase tracking-widest animate-pulse">Sincronizando estructuras con Google Cloud...</div>
-            </div>`,
-        background: '#0f172a',
-        color: '#f1f5f9',
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    // 1. Localizamos el overlay nativo del sistema
+    const overlayCarga = document.getElementById('overlay-carga');
+    
+    // 2. Encendemos el spinner global antes de iniciar cualquier petición
+    if (overlayCarga) overlayCarga.style.display = 'flex';
 
     try {
         const proveedorFinalInput = document.getElementById('cambiar-proveedor-final');
@@ -1223,26 +1213,33 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
             fechaActualizacion: new Date().toLocaleString('es-AR')
         };
 
+        // Despacho asíncrono al servidor central
         const res = await callGoogleScript('procesarPedidoFinal', payload);
 
         if (res && res.status === "success") {
-            Swal.fire({
-                icon: 'success',
-                title: '¡ORDEN CONFIRMADA!',
-                html: `
-                    <div class="text-slate-300 text-xs mb-4 font-sans">
-                        La operación de compra <b class="text-cyan-400 font-mono">${idPedido}</b> ha sido impactada con éxito.
-                    </div>
-                    ${res.url ? `
-                    <a href="${res.url}" target="_blank" 
-                       class="inline-block bg-cyan-600 text-slate-950 hover:text-white px-5 py-2.5 rounded-md font-black text-[10px] tracking-widest uppercase transition-all shadow-md shadow-cyan-950/50 hover:bg-cyan-500">
-                        DESCARGAR PDF DE ORDEN
-                    </a>` : ''}`,
-                background: '#0f172a',
-                color: '#f1f5f9',
-                confirmButtonColor: '#0ea5e9',
-                confirmButtonText: 'ENTENDIDO'
-            });
+            // 3. Apagamos el overlay inmediatamente al recibir respuesta positiva
+            if (overlayCarga) overlayCarga.style.display = 'none';
+
+            // Desplegamos confirmación visual final
+            if (window.Swal) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡ORDEN CONFIRMADA!',
+                    html: `
+                        <div class="text-slate-300 text-xs mb-4 font-sans">
+                            La operación de compra <b class="text-cyan-400 font-mono">${idPedido}</b> ha sido impactada con éxito.
+                        </div>
+                        ${res.url ? `
+                        <a href="${res.url}" target="_blank" 
+                           class="inline-block bg-cyan-600 text-slate-950 hover:text-white px-5 py-2.5 rounded-md font-black text-[10px] tracking-widest uppercase transition-all shadow-md shadow-cyan-950/50 hover:bg-cyan-500">
+                            DESCARGAR PDF DE ORDEN
+                        </a>` : ''}`,
+                    background: '#0f172a',
+                    color: '#f1f5f9',
+                    confirmButtonColor: '#0ea5e9',
+                    confirmButtonText: 'ENTENDIDO'
+                });
+            }
 
             // Purgado completo y restauración limpia de las vistas del sistema
             window.carritoPedidos = [];
@@ -1264,14 +1261,22 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
 
     } catch (err) {
         console.error("❌ Fallo crítico en la persistencia del pedido:", err);
-        Swal.fire({
-            icon: 'error',
-            title: 'FALLA DE COMUNICACIÓN',
-            text: 'No se pudo guardar el registro en las celdas maestras: ' + err.message,
-            background: '#0f172a',
-            color: '#f1f5f9',
-            confirmButtonColor: '#ef4444'
-        });
+        
+        // 4. Apagamos el overlay de carga de forma segura en caso de excepción de red
+        if (overlayCarga) overlayCarga.style.display = 'none';
+
+        if (window.Swal) {
+            Swal.fire({
+                icon: 'error',
+                title: 'FALLA DE COMUNICACIÓN',
+                text: 'No se pudo guardar el registro en las celdas maestras: ' + err.message,
+                background: '#0f172a',
+                color: '#f1f5f9',
+                confirmButtonColor: '#ef4444'
+            });
+        } else {
+            alert('❌ FALLA DE COMUNICACIÓN: ' + err.message);
+        }
     }
 }
 
