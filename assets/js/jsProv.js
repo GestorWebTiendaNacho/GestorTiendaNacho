@@ -674,10 +674,12 @@ async function cargarProductosPorProveedor() {
             proveedorFiltro: prov 
         });
 
-        if (!res || res.status !== "success") {
-            throw new Error(res ? res.message || "Falla en estructura de respuesta" : "Sin respuesta del servidor central.");
+        // CONTROL DE FLUJO SEGURO: Evitamos colapsar si la respuesta viene optimizada y directa de la base de datos
+        if (!res) {
+            throw new Error("Sin respuesta del servidor central.");
         }
 
+        // Extracción adaptativa compatible con la nueva estructura limpia { data: [...] }
         const lista = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
         
         // INTERCEPCIÓN SEGURA: Guardamos la lista completa para el Master Checkbox
@@ -809,15 +811,22 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
 
     if (checkbox.checked) {
         if (!window.carritoPedidos.some(p => String(p.id).trim() === idFiltro)) {
+            // OBTENER VALORES NUMÉRICOS SEGUROS
+            const stockAct = parseInt(stock || 0);
+            const stockMin = parseInt(stockMinimo || 0);
+            
+            // CÁLCULO DE BRECHA CRÍTICA COMPATIBLE: Si falta stock, calcula la diferencia sugerida, de lo contrario arranca en 1.
+            const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
+
             window.carritoPedidos.push({ 
                 id: idFiltro, 
                 nombre: nombre, 
                 sku: sku, 
                 precio: parseFloat(precio || 0), 
-                stock: parseInt(stock || 0), 
-                stockMinimo: parseInt(stockMinimo || 0), 
+                stock: stockAct, 
+                stockMinimo: stockMin, 
                 proveedor: proveedor, 
-                cantidad: 1 
+                cantidad: cantidadSugerida // <-- Inyección automatizada inteligente integrada
             });
         }
         if (trPadre) trPadre.classList.add('bg-cyan-950/10');
@@ -828,6 +837,67 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
     actualizarContadorVisual();
 }
 
+function toggleTodosProductos(masterCheck) {
+    if (!window.productosDelProveedorActual || window.productosDelProveedorActual.length === 0) return;
+    window.carritoPedidos = window.carritoPedidos || [];
+    
+    const selector = document.getElementById('prov-seleccionado');
+    const prov = selector ? selector.value.trim() : "";
+    const checkboxesVisibles = document.querySelectorAll('.row-checkbox');
+
+    if (masterCheck.checked) {
+        window.productosDelProveedorActual.forEach(prod => {
+            const idStr = String(prod.id || "").trim();
+            const yaExiste = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
+            
+            if (!yaExiste) {
+                // OBTENER VALORES NUMÉRICOS SEGUROS
+                const stockAct = parseInt(prod.stock || 0);
+                const stockMin = parseInt(prod.stockMinimo || 0);
+                
+                // CÁLCULO DE BRECHA CRÍTICA: Si falta stock, calcula la diferencia. Si no, arranca en 1.
+                const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
+
+                window.carritoPedidos.push({
+                    id: idStr,
+                    nombre: String(prod.nombre || "").replace(/'/g, "").replace(/"/g, ""),
+                    precio: parseFloat(prod.precio || 0),
+                    sku: String(prod.sku || "").trim(),
+                    stock: stockAct,
+                    proveedor: prov,
+                    stockMinimo: stockMin,
+                    cantidad: cantidadSugerida // <-- Inyección automatizada inteligente
+                });
+            }
+        });
+
+        checkboxesVisibles.forEach(cb => {
+            cb.checked = true;
+            const tr = cb.closest('tr');
+            if (tr) tr.classList.add('bg-cyan-950/10');
+        });
+
+    } else {
+        window.productosDelProveedorActual.forEach(prod => {
+            const idStr = String(prod.id || "").trim();
+            window.carritoPedidos = window.carritoPedidos.filter(item => String(item.id).trim() !== idStr);
+        });
+
+        checkboxesVisibles.forEach(cb => {
+            cb.checked = false;
+            const tr = cb.closest('tr');
+            if (tr) tr.classList.remove('bg-cyan-950/10');
+        });
+    }
+
+    const contador = document.getElementById('contador-items');
+    if (contador) {
+        const span = contador.querySelector('span');
+        if (span) span.innerText = window.carritoPedidos.length;
+    }
+
+    if (typeof actualizarContadorVisual === "function") actualizarContadorVisual();
+}
 
 function actualizarContadorVisual() {
     const contador = document.getElementById('contador-items');
