@@ -664,7 +664,7 @@ async function cargarProductosPorProveedor() {
         <div class="flex flex-col items-center justify-center py-20 w-full space-y-4">
             <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
             <p class="text-[10px] text-cyan-500 font-mono uppercase tracking-[0.3em] animate-pulse">
-                Descargando catálogo indexado de: ${prov}...
+                Analizando rotación e indexando catálogo de: ${prov}...
             </p>
         </div>`;
 
@@ -679,9 +679,15 @@ async function cargarProductosPorProveedor() {
         }
 
         const lista = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
+        
+        // INTERCEPCIÓN SEGURA: Guardamos la lista completa para el Master Checkbox
+        window.productosDelProveedorActual = lista; 
 
         if (lista.length > 0) {
             window.carritoPedidos = window.carritoPedidos || [];
+
+            // Evaluamos si ya están todos seleccionados de antemano para pintar el master check activo
+            const todosMarcados = lista.every(p => window.carritoPedidos.some(item => String(item.id).trim() === String(p.id).trim()));
 
             let tablaHtml = `
                 <div class="mb-4 p-4 bg-slate-900/90 border border-slate-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-20 backdrop-blur shadow-xl mx-2">
@@ -691,7 +697,7 @@ async function cargarProductosPorProveedor() {
                     
                     <div class="relative w-full sm:w-64">
                         <input type="text" id="buscador-productos" onkeyup="filtrarProductosMain()" 
-                               placeholder="FILTRAR PRODUCTOS..." 
+                               placeholder="FILTRAR PRODUCTOS ACTIVO..." 
                                class="w-full bg-slate-950 border border-slate-800 p-2 pl-3 text-[10px] text-white rounded-md font-mono focus:border-cyan-500 outline-none placeholder-slate-600 transition-colors">
                     </div>
 
@@ -705,11 +711,16 @@ async function cargarProductosPorProveedor() {
                     <table id="tabla-maestra-pedidos" class="tabla-premium w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-950/80 text-cyan-500 border-b border-slate-800 text-[10px] font-black uppercase tracking-wider">
-                                <th class="p-4 text-center w-[60px]">SEL.</th>
+                                <th class="p-4 text-center w-[60px]">
+                                    <input type="checkbox" id="master-check-productos" ${todosMarcados ? 'checked' : ''}
+                                           onclick="toggleTodosProductos(this)"
+                                           class="w-4 h-4 accent-cyan-500 rounded border-slate-800 bg-slate-900 cursor-pointer shadow-sm transition-transform active:scale-90">
+                                </th>
                                 <th class="p-4 w-[80px]">ID</th>
                                 <th class="p-4">PRODUCTO</th>
                                 <th class="p-4 w-[120px]">CÓDIGO</th>
-                                <th class="p-4 w-[100px]">STOCK ACTUAL</th>
+                                <th class="p-4 w-[100px]">STOCK ACT.</th>
+                                <th class="p-4 w-[100px] text-center bg-cyan-950/30 text-cyan-400 border-x border-slate-800/50">VENTAS (90D)</th>
                                 <th class="p-4 w-[110px]">COSTO UNIT.</th>
                                 <th class="p-4 w-[100px] text-center">STOCK MÍN.</th>
                             </tr>
@@ -723,17 +734,17 @@ async function cargarProductosPorProveedor() {
                 const precioNum = parseFloat(prod.precio || 0);
                 const stockNum = parseInt(prod.stock || 0);
                 const stockMinNum = parseInt(prod.stockMinimo || 0);
+                const ventas90Num = parseInt(prod.ventas90Dias || 0); 
 
                 const alertarStock = stockNum <= stockMinNum;
-                
                 const yaSeleccionado = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
                 const checkedAttr = yaSeleccionado ? "checked" : "";
 
                 tablaHtml += `
                     <tr class="hover:bg-cyan-500/5 transition-colors duration-150 ${yaSeleccionado ? 'bg-cyan-950/10' : ''}">
                         <td class="p-4 text-center">
-                            <input type="checkbox" ${checkedAttr}
-                                   class="w-4 h-4 accent-cyan-500 rounded border-slate-800 bg-slate-900 cursor-pointer shadow-sm transition-transform active:scale-90" 
+                            <input type="checkbox" ${checkedAttr} data-id="${idStr}"
+                                   class="row-checkbox w-4 h-4 accent-cyan-500 rounded border-slate-800 bg-slate-900 cursor-pointer shadow-sm transition-transform active:scale-90" 
                                    onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${escapingForOption(prov)}', '${stockMinNum}')">
                         </td>
                         <td class="p-4 text-slate-500 font-bold">${idStr}</td>
@@ -743,6 +754,9 @@ async function cargarProductosPorProveedor() {
                         <td class="p-4 text-cyan-600/80 font-bold">${skuLimpio || "---"}</td>
                         <td class="p-4 ${alertarStock ? 'text-red-400 font-black animate-pulse bg-red-950/10' : 'text-slate-400'}">
                             ${stockNum}
+                        </td>
+                        <td class="p-4 text-center font-bold text-emerald-400 bg-emerald-950/5 border-x border-slate-900/40">
+                            ${ventas90Num} <span class="text-[9px] text-slate-500 font-normal">u.</span>
                         </td>
                         <td class="p-4 text-emerald-400 font-bold">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                         <td class="p-4 text-slate-500 text-center">${stockMinNum}</td>
@@ -761,7 +775,7 @@ async function cargarProductosPorProveedor() {
                         "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
                         "pageLength": 10,
                         "dom": 'rtip', 
-                        "order": [[2, "asc"]],
+                        "order": [[5, "desc"]], 
                         "autoWidth": false,
                         "columnDefs": [
                             { "targets": 0, "orderable": false } 
@@ -773,8 +787,8 @@ async function cargarProductosPorProveedor() {
         } else {
             contenedor.innerHTML = `
                 <div class="p-12 text-center border border-slate-800 rounded-xl bg-slate-950/40 m-2">
-                    <p class="text-amber-500 uppercase font-mono font-bold text-[10px] tracking-[0.25em]">Catálogo No Encontrado</p>
-                    <p class="text-slate-500 text-[10px] mt-2 font-sans">No hay asignación de insumos activos para la entidad "${prov}" en baseProductos.</p>
+                    <p class="text-amber-500 uppercase font-mono font-bold text-[10px] tracking-[0.25em]">Sin Artículos Críticos</p>
+                    <p class="text-slate-500 text-[10px] mt-2 font-sans">No se detectaron productos vinculados a "${prov}" con salidas reales en los últimos 90 días.</p>
                 </div>`;
         }
 
@@ -1041,7 +1055,7 @@ async function revisarPedido() {
 
 
 // --- FUNCIÓN DE ELIMINACIÓN ---
-/** @param {number} index - Índice absoluto del artículo en la matriz carritoPedidos. */
+/** @param {number} index */
 
 function eliminarDelPedido(index) {
     if (!window.Swal) {
@@ -1079,7 +1093,7 @@ function ejecutarBajaItemCarrito(index) {
 }
 
 
-/** @param {string} idPedido - Identificador único alfanumérico generado para la transacción. */
+/** @param {string} idPedido  */
 
 function prepararEnvioPedido(idPedido) {
     const inputDias = document.getElementById('tiempo-estimated');
@@ -2736,12 +2750,13 @@ function renderizarTablaHistorialGeneral(pedidos) {
     return html;
 }
 
+
+
 /*-------------------SECCION DATOS SEMANALES------------------------------*/
 let navegacionSemanal = {
     semanaActual: null,
     diaActual: null
 };
-
 
 function cerrarModalReportes() {
     const modal = document.getElementById('modal-reportes-lex');

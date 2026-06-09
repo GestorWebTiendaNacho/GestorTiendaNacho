@@ -4,7 +4,7 @@
         return;
     }
     window.jsStockCargado = true;
-
+    let archivoVentasBase64 = null;
     var CONFIG_UI = {
         colorGold: '#c2902e',
         colorBlue: '#00f2ff',
@@ -356,7 +356,7 @@ function cerrarModalSincronizacion() {
 
 
     /*---Seccion Ventas--*/
-let archivoVentasBase64 = null;
+
 let nombreArchivoVentas = "";
 
 // 1. ABRIR PANEL MODAL
