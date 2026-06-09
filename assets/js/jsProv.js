@@ -1,6 +1,6 @@
 console.log("🚀 N.I.C.O. Terminal: Iniciando carga de scripts...");
 //-------------------jsProv------------------//
-
+var _ENCABEZADOS_PROVEEDORES = ['ID','RAZÓN SOCIAL','CIUDAD','DOMICILIO','TELÉFONO','EMAIL','CODIGO PROV','PROVINCIA','ACCIONES'];
 var _tablaProveedoresInstance = null;
 window.estadoEdicion = { esNuevo: false, fila: null };
 window.carritoPedidos = window.carritoPedidos || [];
@@ -292,7 +292,7 @@ function escapingForOption(str) {
 }
 
 /* ---SECCION DE EDICION DE TABLA PROVEEDORES--- */
-const _ENCABEZADOS_PROVEEDORES = ['ID','RAZÓN SOCIAL','CIUDAD','DOMICILIO','TELÉFONO','EMAIL','CODIGO PROV','PROVINCIA','ACCIONES'];
+
 
 function _escapeHtmlProveedor(str) {
     if (str === null || str === undefined) return "";
@@ -2800,6 +2800,16 @@ let navegacionSemanal = {
     diaActual: null
 };
 
+function abrirModalReportes() {
+    const modal = document.getElementById('modal-reportes-lex');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Previene scroll de fondo
+    }
+}
+
 function cerrarModalReportes() {
     const modal = document.getElementById('modal-reportes-lex');
     if (modal) {
@@ -2815,8 +2825,8 @@ function cerrarModalReportes() {
 
 window.abrirModalSemanal = async function() {
     console.log("🚩 INICIO: abrirModalSemanal");
-    if (typeof mostrarCargandoLex === "function") mostrarCargandoLex(true);
     if (typeof abrirModalReportes === "function") abrirModalReportes(); 
+    if (typeof mostrarCargandoLex === "function") mostrarCargandoLex(true);
 
     try {
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
@@ -3035,7 +3045,6 @@ function renderizarVistaSemanal(data, numSemana) {
 }
 
 async function verDetalleDia(nombreDia, numSemana) {
-    console.git?.(`🔍 Filtrando detalle para: ${nombreDia} (Semana ${numSemana})`);
     mostrarCargandoLex(true);
     
     if (typeof navegacionSemanal !== 'undefined') {
@@ -3157,17 +3166,19 @@ function formatearEstado(e, esFuturo = false) {
 }
 
 function mostrarCargandoLex(show) {
-    const contenedor = document.getElementById('contenido-reporte-lex');
-    if (!contenedor) return;
+    const contenedorPadre = document.getElementById('modal-reportes-lex') || document.getElementById('contenido-reporte-lex');
+    if (!contenedorPadre) return;
     
     if (show) {
+        if (document.getElementById('lex-loader-overlay')) return;
+
         const loader = document.createElement('div');
         loader.id = "lex-loader-overlay";
         loader.className = "absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center z-50 rounded-lg animate-fade-in";
         loader.innerHTML = `
             <div class="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
             <span class="text-amber-500 font-mono text-[9px] tracking-[2px] uppercase animate-pulse">ACCEDIENDO AL ARCHIVO MAESTRO...</span>`;
-        contenedor.appendChild(loader);
+        contenedorPadre.appendChild(loader);
     } else {
         const loader = document.getElementById('lex-loader-overlay');
         if (loader) loader.remove();
@@ -3315,7 +3326,6 @@ function base64ToBlob(base64, type) {
     for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
     return new Blob([arr], { type: type });
 }
-
 
 async function ejecutarSincronizacionRelampago() {
     mostrarCargandoLex(true);
