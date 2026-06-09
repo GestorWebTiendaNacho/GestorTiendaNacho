@@ -674,15 +674,17 @@ async function cargarProductosPorProveedor() {
             proveedorFiltro: prov 
         });
 
-        // CONTROL DE FLUJO SEGURO: Evitamos colapsar si la respuesta viene optimizada y directa de la base de datos
         if (!res) {
             throw new Error("Sin respuesta del servidor central.");
         }
 
-        // Extracción adaptativa compatible con la nueva estructura limpia { data: [...] }
-        const lista = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
+        // 1. Extracción adaptativa inicial
+        const listaBruta = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
         
-        // INTERCEPCIÓN SEGURA: Guardamos la lista completa para el Master Checkbox
+        // 🛡️ DEPURACIÓN SELECTIVA: Forzamos el filtro en frontend para limpiar ítems con rotación cero (0 u.)
+        const lista = listaBruta.filter(prod => parseInt(prod.ventas90Dias || 0) > 0);
+        
+        // INTERCEPCIÓN SEGURA: Guardamos la lista ya depurada para el Master Checkbox
         window.productosDelProveedorActual = lista; 
 
         if (lista.length > 0) {
@@ -747,7 +749,7 @@ async function cargarProductosPorProveedor() {
                         <td class="p-4 text-center">
                             <input type="checkbox" ${checkedAttr} data-id="${idStr}"
                                    class="row-checkbox w-4 h-4 accent-cyan-500 rounded border-slate-800 bg-slate-900 cursor-pointer shadow-sm transition-transform active:scale-90" 
-                                   onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${escapingForOption(prov)}', '${stockMinNum}')">
+                                   onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${escapingForOption(prov)}', '${stockMinimo}')">
                         </td>
                         <td class="p-4 text-slate-500 font-bold">${idStr}</td>
                         <td class="p-4 font-sans">
@@ -795,7 +797,7 @@ async function cargarProductosPorProveedor() {
         }
 
     } catch (err) {
-        console.error("❌ Error en compilación de catálogo dirigido:", err);
+        console.error("❌ Error enDoc compilación de catálogo dirigido:", err);
         contenedor.innerHTML = `
             <div class="p-8 text-red-500 text-[10px] text-center uppercase font-mono border border-red-900/30 bg-red-950/20 rounded-xl mx-2">
                 CRITICAL_SYNC_ERROR:<br><span class="text-slate-300 block mt-2 normal-case font-sans">${err.message}</span>
