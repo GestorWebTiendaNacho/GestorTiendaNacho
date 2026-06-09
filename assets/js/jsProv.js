@@ -556,7 +556,7 @@ async function ejecutarGuardadoProveedor() {
 
 
 //---- FUNCIONES DEL MODAL DE PEDIDOS ----
-/** @param {string} tipo - Tipo de flujo. Si es 'PEDIDOS' activa el flujo manual. */
+/** @param {string} tipo - */
 
 window.abrirModalPedidosManual = async function() {
     console.log("Cargando entorno de Pedidos Manuales...");
@@ -649,7 +649,6 @@ async function cargarProductosPorProveedor() {
     const selector = document.getElementById('prov-seleccionado');
     const prov = selector ? selector.value.trim() : "";
     const contenedor = document.getElementById('modal-contenido');
-
     if (!contenedor) return;
     if (!prov) {
         if (window.Swal) {
@@ -659,7 +658,6 @@ async function cargarProductosPorProveedor() {
         }
         return;
     }
-
     contenedor.innerHTML = `
         <div class="flex flex-col items-center justify-center py-20 w-full space-y-4">
             <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
@@ -667,50 +665,36 @@ async function cargarProductosPorProveedor() {
                 Analizando rotación e indexando catálogo de: ${prov}...
             </p>
         </div>`;
-
     try {
         const res = await callGoogleScript('obtenerTablaFiltrada', { 
             nombreHoja: 'baseProductos', 
             proveedorFiltro: prov 
         });
-
         if (!res) {
             throw new Error("Sin respuesta del servidor central.");
         }
-
-        // 1. Extracción adaptativa inicial
         const listaBruta = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
-        
-        // 🛡️ DEPURACIÓN SELECTIVA: Forzamos el filtro en frontend para limpiar ítems con rotación cero (0 u.)
         const lista = listaBruta.filter(prod => parseInt(prod.ventas90Dias || 0) > 0);
-        
-        // INTERCEPCIÓN SEGURA: Guardamos la lista ya depurada para el Master Checkbox
         window.productosDelProveedorActual = lista; 
 
         if (lista.length > 0) {
             window.carritoPedidos = window.carritoPedidos || [];
-
-            // Evaluamos si ya están todos seleccionados de antemano para pintar el master check activo
             const todosMarcados = lista.every(p => window.carritoPedidos.some(item => String(item.id).trim() === String(p.id).trim()));
-
             let tablaHtml = `
                 <div class="mb-4 p-4 bg-slate-900/90 border border-slate-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-20 backdrop-blur shadow-xl mx-2">
                     <div id="contador-items" class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">
                         Items en orden: <span class="text-cyan-400 font-bold bg-slate-950 px-2 py-1 rounded border border-slate-800/80">${window.carritoPedidos.length}</span>
                     </div>
-                    
                     <div class="relative w-full sm:w-64">
                         <input type="text" id="buscador-productos" onkeyup="filtrarProductosMain()" 
                                placeholder="FILTRAR PRODUCTOS ACTIVO..." 
                                class="w-full bg-slate-950 border border-slate-800 p-2 pl-3 text-[10px] text-white rounded-md font-mono focus:border-cyan-500 outline-none placeholder-slate-600 transition-colors">
                     </div>
-
                     <button onclick="revisarPedido()" 
                             class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 hover:text-white text-[10px] font-black tracking-widest px-5 py-2.5 rounded-md transition-all uppercase duration-200 active:scale-95 w-full sm:w-auto">
                         REVISAR PEDIDO →
                     </button>
                 </div>
-                
                 <div class="overflow-x-auto border border-slate-900 bg-slate-950/40 rounded-xl mx-2 mb-4">
                     <table id="tabla-maestra-pedidos" class="tabla-premium w-full text-left border-collapse">
                         <thead>
@@ -724,7 +708,7 @@ async function cargarProductosPorProveedor() {
                                 <th class="p-4">PRODUCTO</th>
                                 <th class="p-4 w-[120px]">CÓDIGO</th>
                                 <th class="p-4 w-[100px]">STOCK ACT.</th>
-                                <th class="p-4 w-[100px] text-center bg-cyan-950/30 text-cyan-400 border-x border-slate-800/50">VENTAS (90D)</th>
+                                <th class="p-4 w-[100px] text-center bg-cyan-950/30 text-cyan-400 border-x border-slate-800/50">ROTACIÓN</th>
                                 <th class="p-4 w-[110px]">COSTO UNIT.</th>
                                 <th class="p-4 w-[100px] text-center">STOCK MÍN.</th>
                             </tr>
@@ -739,17 +723,16 @@ async function cargarProductosPorProveedor() {
                 const stockNum = parseInt(prod.stock || 0);
                 const stockMinNum = parseInt(prod.stockMinimo || 0);
                 const ventas90Num = parseInt(prod.ventas90Dias || 0); 
-
                 const alertarStock = stockNum <= stockMinNum;
                 const yaSeleccionado = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
                 const checkedAttr = yaSeleccionado ? "checked" : "";
-
+                
                 tablaHtml += `
                     <tr class="hover:bg-cyan-500/5 transition-colors duration-150 ${yaSeleccionado ? 'bg-cyan-950/10' : ''}">
                         <td class="p-4 text-center">
                             <input type="checkbox" ${checkedAttr} data-id="${idStr}"
                                    class="row-checkbox w-4 h-4 accent-cyan-500 rounded border-slate-800 bg-slate-900 cursor-pointer shadow-sm transition-transform active:scale-90" 
-                                   onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${escapingForOption(prov)}', '${stockMinimo}')">
+                                   onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${escapingForOption(prov)}', '${stockMinNum}')">
                         </td>
                         <td class="p-4 text-slate-500 font-bold">${idStr}</td>
                         <td class="p-4 font-sans">
@@ -766,10 +749,8 @@ async function cargarProductosPorProveedor() {
                         <td class="p-4 text-slate-500 text-center">${stockMinNum}</td>
                     </tr>`;
             });
-
             tablaHtml += `</tbody></table></div>`;
             contenedor.innerHTML = tablaHtml;
-
             if (window.jQuery && $.fn.DataTable) {
                 setTimeout(() => {
                     if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
@@ -795,7 +776,6 @@ async function cargarProductosPorProveedor() {
                     <p class="text-slate-500 text-[10px] mt-2 font-sans">No se detectaron productos vinculados a "${prov}" con salidas reales en los últimos 90 días.</p>
                 </div>`;
         }
-
     } catch (err) {
         console.error("❌ Error enDoc compilación de catálogo dirigido:", err);
         contenedor.innerHTML = `
@@ -813,11 +793,8 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
 
     if (checkbox.checked) {
         if (!window.carritoPedidos.some(p => String(p.id).trim() === idFiltro)) {
-            // OBTENER VALORES NUMÉRICOS SEGUROS
             const stockAct = parseInt(stock || 0);
             const stockMin = parseInt(stockMinimo || 0);
-            
-            // CÁLCULO DE BRECHA CRÍTICA COMPATIBLE: Si falta stock, calcula la diferencia sugerida, de lo contrario arranca en 1.
             const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
 
             window.carritoPedidos.push({ 
@@ -828,7 +805,7 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
                 stock: stockAct, 
                 stockMinimo: stockMin, 
                 proveedor: proveedor, 
-                cantidad: cantidadSugerida // <-- Inyección automatizada inteligente integrada
+                cantidad: cantidadSugerida
             });
         }
         if (trPadre) trPadre.classList.add('bg-cyan-950/10');
@@ -853,11 +830,9 @@ function toggleTodosProductos(masterCheck) {
             const yaExiste = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
             
             if (!yaExiste) {
-                // OBTENER VALORES NUMÉRICOS SEGUROS
                 const stockAct = parseInt(prod.stock || 0);
                 const stockMin = parseInt(prod.stockMinimo || 0);
                 
-                // CÁLCULO DE BRECHA CRÍTICA: Si falta stock, calcula la diferencia. Si no, arranca en 1.
                 const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
 
                 window.carritoPedidos.push({
@@ -868,7 +843,7 @@ function toggleTodosProductos(masterCheck) {
                     stock: stockAct,
                     proveedor: prov,
                     stockMinimo: stockMin,
-                    cantidad: cantidadSugerida // <-- Inyección automatizada inteligente
+                    cantidad: cantidadSugerida
                 });
             }
         });
@@ -909,7 +884,6 @@ function actualizarContadorVisual() {
     }
 }
 
-
 function filtrarProductosMain() {
     const input = document.getElementById("buscador-productos");
     if (!input) return;
@@ -943,7 +917,6 @@ function filtrarProductosMain() {
         }
     }
 }
-
 
 function cerrarModal_Pedidos() {
     const modal = document.getElementById('modal-pedidos');
@@ -1125,7 +1098,6 @@ async function revisarPedido() {
     calcularTotalConfirmacion();
 }
 
-
 // --- FUNCIÓN DE ELIMINACIÓN ---
 /** @param {number} index */
 
@@ -1199,7 +1171,6 @@ async function obtenerProveedoresParaSelector() {
     }
 }
 
-
 function actualizarCantidadCarrito(index, valor) {
     const cant = Math.max(1, parseInt(valor) || 1);
     if (window.carritoPedidos && window.carritoPedidos[index]) {
@@ -1212,8 +1183,6 @@ function actualizarCantidadCarrito(index, valor) {
         calcularTotalConfirmacion();
     }
 }
-    
-
 
 function calcularTotalConfirmacion() {
     if (!window.carritoPedidos) return;
@@ -1223,7 +1192,6 @@ function calcularTotalConfirmacion() {
         display.innerText = "$ " + total.toLocaleString('es-AR', { minimumFractionDigits: 2 });
     }
 }
-
 
 
 async function ejecutarGeneracionPedido(idPedido, dias) {
@@ -1307,8 +1275,6 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
     }
 }
 
-
-
 function volverAListaProductos() {
     if (!document.getElementById('prov-seleccionado') && window.carritoPedidos && window.carritoPedidos.length > 0) {
         const provActivo = window.carritoPedidos[0].proveedor;
@@ -1325,7 +1291,6 @@ function volverAListaProductos() {
         abrirModal_Pedidos('PEDIDOS');
     }
 }
-
 
 function actualizarProveedorCarrito(nuevoProveedor) {
     if (window.carritoPedidos && window.carritoPedidos.length > 0) {

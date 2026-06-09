@@ -123,8 +123,8 @@ height: calc(100vh - 90px) !important;
 
 /*------Seccion tablas------*/
 #contenedor-estilo-malevich {
-    height: 85vh !important;
-    max-height: 85vh !important;
+    height: 95vh !important;
+    max-height: 95vh !important;
     overflow: hidden !important;
     display: flex;
     flex-direction: column;
