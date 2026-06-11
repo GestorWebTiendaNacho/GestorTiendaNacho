@@ -1031,17 +1031,17 @@ async function revisarPedido() {
             </div>
         </div>
 
-        <div class="border border-slate-900 rounded-xl overflow-hidden mx-1 bg-slate-950/20">
+        <div class="border border-slate-900 rounded-xl overflow-y-auto max-h-[380px] md:max-h-[45vh] mx-1 bg-slate-950/20 custom-scroll relative">
             <table class="w-full text-left border-collapse table-fixed"> 
-                <thead>
-                    <tr class="bg-slate-950 text-cyan-500 border-b border-slate-800 text-[9px] font-black uppercase tracking-wider z-10">
-                        <th class="p-3 w-1/4">Item / Detalle</th> 
-                        <th class="p-3 text-center w-[12%]">Stock Act.</th> 
-                        <th class="p-3 text-center w-[12%]">Stock Mín.</th> 
-                        <th class="p-3 text-center w-[16%]">Cantidad</th> 
-                        <th class="p-3 text-right w-[15%]">Costo Unit.</th> 
-                        <th class="p-3 text-right w-[15%]">Subtotal</th> 
-                        <th class="p-3 text-center w-[6%] text-red-500"></th> 
+                <thead class="sticky top-0 bg-slate-950 z-20 shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+                    <tr class="text-cyan-500 border-b border-slate-800 text-[9px] font-black uppercase tracking-wider">
+                        <th class="p-3 w-1/4 bg-slate-950">Item / Detalle</th> 
+                        <th class="p-3 text-center w-[12%] bg-slate-950">Stock Act.</th> 
+                        <th class="p-3 text-center w-[12%] bg-slate-950">Stock Mín.</th> 
+                        <th class="p-3 text-center w-[16%] bg-slate-950">Cantidad</th> 
+                        <th class="p-3 text-right w-[15%] bg-slate-950">Costo Unit.</th> 
+                        <th class="p-3 text-right w-[15%] bg-slate-950">Subtotal</th> 
+                        <th class="p-3 text-center w-[6%] text-red-500 bg-slate-950"></th> 
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-900/50 font-mono text-[11px]">`;
@@ -2917,7 +2917,7 @@ function renderizarVistaMes(response) {
                         <th class="p-1 text-center min-w-[90px]">
                             <button onclick="verDetalleSemana(${numSemanaColumna})" 
                                     class="w-full py-1.5 px-2 rounded border flex flex-col items-center justify-center transition-all hover:border-cyan-500/50 group ${claseSemana}">
-                                <span class="text-[7px] text-slate-500 uppercase tracking-tight group-hover:text-cyan-400 transition-colors">Filtrar A2</span>
+                                <span class="text-[7px] text-slate-500 uppercase tracking-tight group-hover:text-cyan-400 transition-colors"><i class="fi fi-br-referral-link-arrow"></i></span>
                                 <span class="text-[10px] font-mono font-bold mt-0.5">SEM ${numSemanaColumna}</span>
                             </button>
                         </th>`;
