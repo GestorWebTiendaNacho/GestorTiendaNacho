@@ -3424,7 +3424,10 @@ window.verPedidoDirecto = async function(idPedido) {
                 </div>`,
             background: '#1e293b', color: '#cbd5e1',
             confirmButtonText: 'ENTENDIDO', confirmButtonColor: '#475569',
-            customClass: { confirmButton: 'lex-sweet-btn' }
+            customClass: {
+                container: 'swal-pedido-container', // <- ¡Esto destruye el bug de capas!
+                popup: 'swal-pedido'
+            }
         });
     } catch (error) {
         console.error("❌ Error en renderizado frontend:", error);
