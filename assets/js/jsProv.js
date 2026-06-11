@@ -2606,7 +2606,10 @@ async function verPdfPedido(idPedido) {
                 confirmButtonColor: '#00f0ff',
                 background: '#0f172a',
                 color: '#f8fafc',
-                customClass: { popup: 'swal-pedido' } // Vinculación de clase CSS
+                customClass: {
+                        container: 'swal-pedido-container',
+                        popup: 'swal-pedido'
+                    }
             });
             return;
         }
@@ -2618,7 +2621,10 @@ async function verPdfPedido(idPedido) {
             allowOutsideClick: false,
             background: '#0f172a',
             color: '#f8fafc',
-            customClass: { popup: 'swal-pedido' }, // Vinculación de clase CSS
+            customClass: {
+                        container: 'swal-pedido-container',
+                        popup: 'swal-pedido'
+                    },
             didOpen: () => {
                 Swal.showLoading();
             }
@@ -2645,7 +2651,10 @@ async function verPdfPedido(idPedido) {
                         confirmButtonColor: '#1e293b',
                         background: '#0f172a',
                         color: '#f8fafc',
-                        customClass: { popup: 'swal-pedido' } // Vinculación de clase CSS
+                        customClass: {
+                        container: 'swal-pedido-container',
+                        popup: 'swal-pedido'
+                    }
                     });
                 } 
                 // CASO B: Es un CSV convertido a HTML
@@ -2658,7 +2667,10 @@ async function verPdfPedido(idPedido) {
                         confirmButtonColor: '#1e293b',
                         background: '#0f172a',
                         color: '#f8fafc',
-                        customClass: { popup: 'swal-pedido' } // Vinculación de clase CSS
+                        customClass: {
+                        container: 'swal-pedido-container',
+                        popup: 'swal-pedido'
+                    }
                     });
                 }
             } else {
@@ -2679,7 +2691,10 @@ async function verPdfPedido(idPedido) {
             confirmButtonColor: '#ef4444',
             background: '#0f172a',
             color: '#f8fafc',
-            customClass: { popup: 'swal-pedido' } // Vinculación de clase CSS
+            customClass: {
+                container: 'swal-pedido-container',
+                popup: 'swal-pedido'
+            }
         });
     }
 }
