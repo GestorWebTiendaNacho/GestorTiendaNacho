@@ -1298,7 +1298,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: #00f0ff;
 }
-
+ .swal2-popup swal2-modal swal2-show{
+    z-index: 200005 !important;
+ }
 
 
 /*---seccion nico --*/
