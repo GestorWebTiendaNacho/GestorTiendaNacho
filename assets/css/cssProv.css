@@ -1240,7 +1240,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* -----SWAL PEDIDOS---*/
 .swal2-container:has(.swal-pedido) {
-  z-index: 200005 !important;
+  z-index: 300005 !important;
   backdrop-filter: blur(4px); /* Suaviza el fondo para enfocar el modal */
   background-color: rgba(15, 23, 42, 0.75) !important; /* Slate 900 con opacidad */
 }
@@ -1299,7 +1299,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: #00f0ff;
 }
  .swal2-popup swal2-modal swal2-show{
-    z-index: 200005 !important;
+    z-index: 300005 !important;
  }
 
 
