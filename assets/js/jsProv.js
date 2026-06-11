@@ -2606,26 +2606,21 @@ async function verPdfPedido(idPedido) {
                 confirmButtonColor: '#00f0ff',
                 background: '#0f172a',
                 color: '#f8fafc',
-                willOpen: () => { Swal.getContainer().style.zIndex = "100005"; }
+                customClass: { popup: 'swal-pedido' } // Vinculación de clase CSS
             });
             return;
         }
 
-        // 1. Despliegue del Loader forzando el z-index al frente de los modales
+        // 1. Despliegue del Loader
         Swal.fire({
             title: 'Buscando Comprobante',
             text: `Rastreando archivos del pedido #${idPedido} en Google Drive...`,
             allowOutsideClick: false,
             background: '#0f172a',
             color: '#f8fafc',
-            willOpen: () => {
-                // 🚀 SOLUCIÓN AL CONGELAMIENTO: Perfora las capas de tus modales HTML
-                Swal.getContainer().style.zIndex = "100005";
-            },
+            customClass: { popup: 'swal-pedido' }, // Vinculación de clase CSS
             didOpen: () => {
                 Swal.showLoading();
-                const loader = Swal.getPopup().querySelector('.swal2-loader');
-                if (loader) loader.style.borderColor = '#00f0ff transparent #00f0ff transparent';
             }
         });
 
@@ -2638,10 +2633,9 @@ async function verPdfPedido(idPedido) {
             const archivoData = res.reply;
 
             if (archivoData.success && archivoData.url) {
-                // Cerramos el loader previo
-                Swal.close(); 
+                Swal.close(); // Cerramos el loader previo
 
-                // CASO A: Es un PDF -> Lo abrimos en un visor interno integrado (Inmune a bloqueadores)
+                // CASO A: Es un PDF -> Lo abrimos en un visor interno integrado
                 if (archivoData.tipo === 'pdf') {
                     Swal.fire({
                         title: `<span class="text-cyan-500 font-mono text-xs uppercase tracking-wider">${archivoData.nombre}</span>`,
@@ -2651,9 +2645,7 @@ async function verPdfPedido(idPedido) {
                         confirmButtonColor: '#1e293b',
                         background: '#0f172a',
                         color: '#f8fafc',
-                        willOpen: () => {
-                            Swal.getContainer().style.zIndex = "100005"; // Mantiene el visor al frente
-                        }
+                        customClass: { popup: 'swal-pedido' } // Vinculación de clase CSS
                     });
                 } 
                 // CASO B: Es un CSV convertido a HTML
@@ -2666,9 +2658,7 @@ async function verPdfPedido(idPedido) {
                         confirmButtonColor: '#1e293b',
                         background: '#0f172a',
                         color: '#f8fafc',
-                        willOpen: () => {
-                            Swal.getContainer().style.zIndex = "100005";
-                        }
+                        customClass: { popup: 'swal-pedido' } // Vinculación de clase CSS
                     });
                 }
             } else {
@@ -2689,7 +2679,7 @@ async function verPdfPedido(idPedido) {
             confirmButtonColor: '#ef4444',
             background: '#0f172a',
             color: '#f8fafc',
-            willOpen: () => { Swal.getContainer().style.zIndex = "100005"; }
+            customClass: { popup: 'swal-pedido' } // Vinculación de clase CSS
         });
     }
 }

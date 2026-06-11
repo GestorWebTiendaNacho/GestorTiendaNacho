@@ -1238,6 +1238,66 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     letter-spacing: 1px;
 }
 
+/* -----SWAL PEDIDOS---*/
+.swal2-container:has(.swal-pedido) {
+  z-index: 100005 !important;
+  backdrop-filter: blur(4px); /* Suaviza el fondo para enfocar el modal */
+  background-color: rgba(15, 23, 42, 0.75) !important; /* Slate 900 con opacidad */
+}
+
+/* Estilos base de la tarjeta del modal */
+.swal-pedido {
+  background: #0f172a !important; /* bg-slate-900 */
+  border: 1px solid #1e293b !important; /* border-slate-800 */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 240, 255, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 1.25rem !important;
+}
+
+/* Título del modal */
+.swal-pedido .swal2-title {
+  color: #f8fafc !important; /* text-slate-5 */
+  padding-top: 0.5rem !important;
+}
+
+/* Botones personalizados internos */
+.swal-pedido .swal2-confirm {
+  font-family: monospace !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  padding: 0.6rem 1.5rem !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Hover del botón de confirmación secundario (Cerrar Visor) */
+.swal-pedido .swal2-confirm:hover {
+  background-color: #334155 !important; /* slate-700 */
+  color: #00f0ff !important; /* Brillo Cyan */
+}
+
+/* Personalización del Loader de carga */
+.swal-pedido .swal2-loader {
+  border-color: #00f0ff transparent #00f0ff transparent !important;
+}
+
+/* Estilización del scrollbar interno para las tablas CSV */
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: #020617;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #00f0ff;
+}
 
 
 
