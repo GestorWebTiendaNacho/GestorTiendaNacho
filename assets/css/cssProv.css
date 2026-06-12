@@ -1799,8 +1799,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     position: relative;
     overflow: hidden;
     animation: lexFadeIn 0.3s ease-out;
-    width: 98%;
-    max-width: 1200px; 
-    height: 92vh; 
-    max-height: 92vh;
+    width: 96vw !important;
+    max-width: 96vw !important;
+    height: 92vh !important;  
+    max-height: 92vh !important;
 }
