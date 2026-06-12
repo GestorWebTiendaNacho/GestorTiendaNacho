@@ -1075,7 +1075,7 @@ async function revisarPedido() {
                 </td>
                 <td class="p-3 text-center">
                     <button onclick="eliminarDelPedido(${index})" class="text-slate-600 hover:text-red-400 transition-all transform hover:scale-110 p-1">
-                        ✕
+                        <i class="fi fi-rr-trash"></i>
                     </button>
                 </td>
             </tr>`;
@@ -1119,7 +1119,11 @@ function eliminarDelPedido(index) {
         confirmButtonText: 'SÍ, RETIRAR',
         cancelButtonText: 'ABORTAR',
         background: '#0f172a',
-        color: '#f1f5f9'
+        color: '#f1f5f9',
+        customClass: {
+        container: 'swal-pedido-container',
+        popup: 'swal-pedido'
+}
     }).then((result) => {
         if (result.isConfirmed) {
             ejecutarBajaItemCarrito(index);
