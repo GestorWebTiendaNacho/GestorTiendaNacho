@@ -650,6 +650,7 @@ async function cargarProductosPorProveedor() {
     const prov = selector ? selector.value.trim() : "";
     const contenedor = document.getElementById('modal-contenido');
     if (!contenedor) return;
+
     if (!prov) {
         if (window.Swal) {
             Swal.fire('AVISO DEL SISTEMA', 'Por favor, selecciona un proveedor válido de la lista maestro.', 'info');
@@ -658,21 +659,25 @@ async function cargarProductosPorProveedor() {
         }
         return;
     }
-    contenedor.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-20 w-full space-y-4">
-            <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-            <p class="text-[10px] text-cyan-500 font-mono uppercase tracking-[0.3em] animate-pulse">
-                Analizando rotación e indexando catálogo de: ${prov}...
-            </p>
-        </div>`;
+
+    // 1. Capturar el overlay diseñado por ti
+    const overlay = document.getElementById('overlay-carga');
+    if (overlay) {
+        // Forzamos un z-index superior a la sección de reportes (30000) para asegurar visibilidad
+        overlay.style.zIndex = "45000"; 
+        overlay.style.display = 'flex';
+    }
+
     try {
         const res = await callGoogleScript('obtenerTablaFiltrada', { 
             nombreHoja: 'baseProductos', 
             proveedorFiltro: prov 
         });
+        
         if (!res) {
             throw new Error("Sin respuesta del servidor central.");
         }
+        
         const listaBruta = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
         const lista = listaBruta.filter(prod => parseInt(prod.ventas90Dias || 0) > 0);
         window.productosDelProveedorActual = lista; 
@@ -751,6 +756,7 @@ async function cargarProductosPorProveedor() {
             });
             tablaHtml += `</tbody></table></div>`;
             contenedor.innerHTML = tablaHtml;
+
             if (window.jQuery && $.fn.DataTable) {
                 setTimeout(() => {
                     if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
@@ -777,11 +783,14 @@ async function cargarProductosPorProveedor() {
                 </div>`;
         }
     } catch (err) {
-        console.error("❌ Error enDoc compilación de catálogo dirigido:", err);
+        console.error("❌ Error en compilación de catálogo dirigido:", err);
         contenedor.innerHTML = `
             <div class="p-8 text-red-500 text-[10px] text-center uppercase font-mono border border-red-900/30 bg-red-950/20 rounded-xl mx-2">
                 CRITICAL_SYNC_ERROR:<br><span class="text-slate-300 block mt-2 normal-case font-sans">${err.message}</span>
             </div>`;
+    } finally {
+        // 2. Apagar el overlay SIEMPRE al terminar, pase lo que pase
+        if (overlay) overlay.style.display = 'none';
     }
 }
 
