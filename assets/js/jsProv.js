@@ -2009,7 +2009,7 @@ function renderTablaRecepcion(selector, data) {
                         <button onclick='abrirRecepcion(${rowJson}, ${filaIndex})' 
                                 class='btn-accion-nico px-3 py-1 text-[9px] font-black tracking-widest bg-cyan-600/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500 hover:text-slate-950 transition-all rounded-md shadow-[0_0_10px_rgba(6,182,212,0.1)] active:scale-95'
                                 aria-label='Gestionar pedido fila ${filaIndex}'>
-                            GESTIONAR
+                            <i class="fi fi-bs-comment-alt-check"></i>
                         </button>`;
                 }
             };
@@ -2267,18 +2267,34 @@ function cambiarModoGestion(modo) {
 
     if (!btnFinal || !inputObs) return;
 
+    const estilosActivos = {
+        'RECIBIDO': ['bg-emerald-950/40', 'text-emerald-400', 'border-emerald-500/50', 'shadow-[0_0_15px_rgba(16,185,129,0.15)]'],
+        'REPROGRAMADO': ['bg-amber-950/40', 'text-amber-400', 'border-amber-500/50', 'shadow-[0_0_15px_rgba(245,158,11,0.15)]'],
+        'CANCELADO': ['bg-red-950/40', 'text-red-400', 'border-red-500/50', 'shadow-[0_0_15px_rgba(239,68,68,0.15)]']
+    };
+
+    const estilosInactivos = ['bg-slate-900/30', 'text-slate-500', 'border-slate-800/80', 'hover:text-slate-400'];
+
+    const todasLasClases = [
+        ...estilosInactivos,
+        ...estilosActivos['RECIBIDO'],
+        ...estilosActivos['REPROGRAMADO'],
+        ...estilosActivos['CANCELADO'],
+        'border-cyan-500', 'text-cyan-400', 'border-transparent' // Antiguos residuos
+    ];
+
     ['RECIBIDO', 'REPROGRAMADO', 'CANCELADO'].forEach(m => {
         const targetTab = document.getElementById(`tab-${m}`);
         if (targetTab) {
-            targetTab.classList.remove('border-cyan-500', 'text-cyan-400');
-            targetTab.classList.add('border-transparent', 'text-slate-500');
+            targetTab.classList.remove(...todasLasClases);
+            targetTab.classList.add(...estilosInactivos);
         }
     });
     
     const tabActiva = document.getElementById(`tab-${modo}`);
-    if (tabActiva) {
-        tabActiva.classList.remove('border-transparent', 'text-slate-500');
-        tabActiva.classList.add('border-cyan-500', 'text-cyan-400');
+    if (tabActiva && estilosActivos[modo]) {
+        tabActiva.classList.remove(...estilosInactivos);
+        tabActiva.classList.add(...estilosActivos[modo]);
     }
 
     btnFinal.classList.remove('bg-emerald-600', 'bg-amber-600', 'bg-red-600');
@@ -2302,7 +2318,7 @@ function cambiarModoGestion(modo) {
             btnFinal.innerText = "CONFIRMAR NUEVA FECHA";
             btnFinal.classList.add('bg-amber-600');
             inputObs.placeholder = "Indique detalles de la justificación del transportista o proveedor...";
-            solicitarFechaReprogramacion();
+            if (typeof solicitarFechaReprogramacion === "function") solicitarFechaReprogramacion();
             break;
 
         case 'CANCELADO':
