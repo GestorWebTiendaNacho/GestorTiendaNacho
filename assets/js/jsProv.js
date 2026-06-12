@@ -323,13 +323,13 @@ async function cargarTablaProveedores() {
     const contenedor = document.getElementById('modal-proveedores-contenido');
     if (!contenedor) return;
 
-    contenedor.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-64 w-full">
-        <div class="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-blue-500 font-mono text-[10px] uppercase tracking-[0.3em] animate-pulse">
-            Sincronizando: baseProveedores.DAT ...
-        </p>
-    </div>`;
+    const overlay = document.getElementById('overlay-carga');
+    if (overlay) {
+        overlay.style.zIndex = "45000";
+        overlay.style.display = 'flex';
+    }
+
+    contenedor.innerHTML = '';
 
     try {
         const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'PROVEEDORES' });
@@ -340,7 +340,7 @@ async function cargarTablaProveedores() {
             contenedor.innerHTML = `
                 <div class="w-full flex justify-between items-end mb-4 px-4 pt-2">
                     <div class="flex flex-col">
-                        <span class="text-[8px] text-blue-500/40 font-mono italic tracking-widest">FS_STREAM: baseProveedores.DAT</span>
+                        <span class="text-[8px] text-blue-500/40 font-mono italic tracking-widest">FS_STREAM: BASE PROVEEDORES</span>
                         <span class="text-[14px] text-white font-black tracking-tighter uppercase">ARCHIVO MAESTRO DE PROVEEDORES</span>
                     </div>
                     <div class="text-[9px] text-slate-500 font-mono bg-slate-900/80 px-2 py-1 border border-slate-800/60 rounded">
@@ -363,6 +363,8 @@ async function cargarTablaProveedores() {
             <span class="uppercase font-bold tracking-widest text-red-400">Falla de Enlace en Nodo Proveedores</span>
             <span class="text-slate-400 bg-red-950/30 px-4 py-2 border border-red-900/40 rounded mt-2 font-sans">${err.message}</span>
         </div>`;
+    } finally {
+        if (overlay) overlay.style.display = 'none';
     }
 }
 
@@ -660,10 +662,8 @@ async function cargarProductosPorProveedor() {
         return;
     }
 
-    // 1. Capturar el overlay diseñado por ti
     const overlay = document.getElementById('overlay-carga');
     if (overlay) {
-        // Forzamos un z-index superior a la sección de reportes (30000) para asegurar visibilidad
         overlay.style.zIndex = "45000"; 
         overlay.style.display = 'flex';
     }
@@ -1898,44 +1898,42 @@ const CONFIG_RECEPCION = {
 };
 
 window.verEstadoPedidos = async function() {
-    // 1. ABRIR EL MODAL INMEDIATAMENTE
     const modal = document.getElementById('modalRecepcion');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        modal.style.setProperty('display', 'flex', 'important');
-        document.body.style.overflow = 'hidden';
-    } else {
-        console.error("❌ Error: No existe el contenedor 'modalRecepcion'.");
-        return;
-    }
-
-    // 2. CONFIGURAR ESTADO INICIAL (Mostrar tabla general, ocultar el formulario)
     const workspace = document.getElementById('workspaceRecepcion');
     const vistaDetalle = document.getElementById('vistaDetallePedido');
     const footer = document.getElementById('section-footer');
     const tituloPantalla = document.getElementById('recepcionTitulo');
+
+    if (!modal) {
+        console.error("❌ Error: No existe el contenedor 'modalRecepcion'.");
+        return;
+    }
 
     if (!workspace) {
         console.error("❌ Error de Nodo: No se encontró el espacio de trabajo activo.");
         return;
     }
 
+    const overlay = document.getElementById('overlay-carga');
+    if (overlay) {
+        overlay.style.zIndex = "45000"; 
+        overlay.style.display = 'flex';
+    }
+
+    // ABRIR EL MODAL INMEDIATAMENTE
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.style.setProperty('display', 'flex', 'important');
+    document.body.style.overflow = 'hidden';
+
+    // CONFIGURAR ESTADO INICIAL DE LA INTERFAZ
     if (tituloPantalla) tituloPantalla.innerText = "SISTEMA DE CONTROL DE RECEPCIÓN";
     
-    // Switch de entornos visuales
     workspace.style.display = 'block';
+    workspace.innerHTML = '';
+    
     if (vistaDetalle) vistaDetalle.style.display = 'none';
     if (footer) footer.style.display = 'none';
-
-    // Inyectar el Loader Cyberpunk
-    workspace.innerHTML = `
-    <div class="flex flex-col items-center justify-center py-20 w-full bg-slate-950/20 rounded-xl border border-slate-900">
-        <div class="w-10 h-10 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-cyan-500 font-mono text-[10px] uppercase tracking-[0.3em] animate-pulse">
-            CONECTANDO CON ARCHIVO MAESTRO: ESTADO_PEDIDOS...
-        </p>
-    </div>`;
 
     try {
         const res = await callGoogleScript('obtenerPedidosRecepcion');
@@ -1969,6 +1967,8 @@ window.verEstadoPedidos = async function() {
             <span class="uppercase font-bold tracking-widest text-red-400">Falla de Enlace Remoto</span>
             <span class="text-slate-400 bg-red-950/40 px-4 py-2 border border-red-900/40 rounded mt-2 font-sans">${err.message}</span>
         </div>`;
+    } finally {
+        if (overlay) overlay.style.display = 'none';
     }
 };
 
@@ -2722,11 +2722,13 @@ async function abrirHistorialGeneral() {
         return;
     }
 
-    contenedorLista.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-16">
-            <div class="w-9 h-9 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p class="text-purple-400 font-mono text-[9px] uppercase tracking-widest italic animate-pulse">Sincronizando registros históricos...</p>
-        </div>`;
+    const overlay = document.getElementById('overlay-carga');
+    if (overlay) {
+        overlay.style.zIndex = "45000";
+        overlay.style.display = 'flex';
+    }
+
+    contenedorLista.innerHTML = '';
 
     modalGeneral.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -2737,6 +2739,7 @@ async function abrirHistorialGeneral() {
         if (res.status === "success" && res.reply && res.reply.success) {
             const pedidos = res.reply.pedidos || [];
             
+            // Renderizar la tabla de historial nativa
             contenedorLista.innerHTML = renderizarTablaHistorialGeneral(pedidos);
         } else {
             throw new Error((res.reply && res.reply.error) || "Error al leer los registros del servidor.");
@@ -2748,6 +2751,8 @@ async function abrirHistorialGeneral() {
                 <div class="text-red-500 text-xl mb-2">⚠️</div>
                 <p class="text-red-400 uppercase text-[10px] font-mono tracking-wide">Falla de Sincronización: ${err.message}</p>
             </div>`;
+    } finally {
+        if (overlay) overlay.style.display = 'none';
     }
 }
 
