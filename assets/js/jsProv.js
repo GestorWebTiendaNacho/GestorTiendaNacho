@@ -1946,7 +1946,7 @@ window.verEstadoPedidos = async function() {
             workspace.innerHTML = `
                 <div class="w-full flex justify-between items-end mb-4 px-4 pt-2 animate-fadeIn font-mono">
                     <div class="flex flex-col">
-                        <span class="text-[8px] text-cyan-500/40 font-mono italic tracking-widest">STREAM: ESTADO_PEDIDOS.DAT</span>
+                        <span class="text-[8px] text-cyan-500/40 font-mono italic tracking-widest">STREAM: ESTADO PEDIDOS</span>
                         <span class="text-[14px] text-white font-black tracking-tighter uppercase">ORDENES DE COMPRA EN TRÁNSITO</span>
                     </div>
                     <div class="text-[9px] text-slate-500 bg-slate-900/80 px-3 py-1.5 border border-slate-800/60 rounded">
@@ -2044,7 +2044,6 @@ async function abrirRecepcion(datos, fila) {
 
     const idPedido = String(datos[0]).trim();
     
-    // 1. MUTACIÓN DE PANTALLA: Ocultar la tabla principal y mostrar el área de gestión
     const workspace = document.getElementById('workspaceRecepcion');
     const vistaDetalle = document.getElementById('vistaDetallePedido');
     const footer = document.getElementById('section-footer');
@@ -2056,7 +2055,6 @@ async function abrirRecepcion(datos, fila) {
     
     if (tituloPantalla) tituloPantalla.innerText = `GESTIÓN DE ORDEN: ${idPedido}`;
 
-    // 2. SETEO DE DATOS DE LA ORDEN SELECCIONADA
     document.getElementById('recepcionID').value = idPedido;
     document.getElementById('recepcionFila').value = fila;
 
@@ -2082,7 +2080,6 @@ async function abrirRecepcion(datos, fila) {
 
     cambiarModoGestion('RECIBIDO'); 
 
-    // 3. CONSULTA DE SUB-ITEMS MEDIANTE TU CONECTOR DE GAS
     try {
         const res = await callGoogleScript('obtenerItemsPedido', { idPedido: idPedido });
         
@@ -2333,6 +2330,10 @@ async function solicitarFechaReprogramacion() {
         showCancelButton: true,
         cancelButtonText: 'CANCELAR',
         returnFocus: false,
+        customClass: {
+                container: 'swal-pedido-container',
+                popup: 'swal-pedido'
+            },
         didOpen: () => {
             const container = Swal.getContainer();
             if (container) container.style.zIndex = '35000';
