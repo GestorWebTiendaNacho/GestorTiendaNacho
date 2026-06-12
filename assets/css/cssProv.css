@@ -469,8 +469,8 @@ table.dataTable.no-footer {
     
     /* ANCHO: Subimos a 96% del viewport y estiramos el tope a 1300px para DataTables */
     width: 96vw !important; 
-    max-width: 1300px !important; 
-    min-width: 320px !important;
+    max-width: 96vw !important; 
+    /*min-width: 320px !important;*/
     
     /* ALTO: Llevamos el cuerpo casi al límite de la pantalla */
     height: 92vh !important;
