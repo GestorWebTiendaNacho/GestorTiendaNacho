@@ -1897,6 +1897,28 @@ const CONFIG_RECEPCION = {
     ENCABEZADOS: ['ID PEDIDO', 'FECHA PEDIDO', 'PROVEEDOR', 'ESTATUS', 'SKU', 'PRODUCTO', 'COSTO UNIT.', 'NUEVA FECHA', 'OBSERVACIONES', 'ACCIONES']
 };
 
+function asegurarDataTable() {
+    return new Promise((resolve) => {
+        if (typeof $.fn.dataTable !== 'undefined' || typeof DataTable !== 'undefined') {
+            return resolve(true);
+        }
+
+        console.warn("⚠️ DataTables no detectado. Intentando carga de rescate...");
+        
+        const script = document.createElement('script');
+        script.src = "https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js";
+        script.onload = () => {
+            console.log("✅ Biblioteca DataTable recuperada con éxito.");
+            resolve(true);
+        };
+        script.onerror = () => {
+            console.error("❌ Bloqueo total: El CDN fue bloqueado por la red o un AdBlocker.");
+            resolve(false);
+        };
+        document.head.appendChild(script);
+    });
+}
+
 window.verEstadoPedidos = async function() {
     const modal = document.getElementById('modalRecepcion');
     const workspace = document.getElementById('workspaceRecepcion');
@@ -1920,13 +1942,11 @@ window.verEstadoPedidos = async function() {
         overlay.style.display = 'flex';
     }
 
-    // ABRIR EL MODAL INMEDIATAMENTE
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.style.setProperty('display', 'flex', 'important');
     document.body.style.overflow = 'hidden';
 
-    // CONFIGURAR ESTADO INICIAL DE LA INTERFAZ
     if (tituloPantalla) tituloPantalla.innerText = "SISTEMA DE CONTROL DE RECEPCIÓN";
     
     workspace.style.display = 'block';
@@ -1936,6 +1956,11 @@ window.verEstadoPedidos = async function() {
     if (footer) footer.style.display = 'none';
 
     try {
+        const dataTableListo = await asegurarDataTable();
+        if (!dataTableListo) {
+            throw new Error("Biblioteca DataTable ausente. Es muy probable que un AdBlocker o las directivas de seguridad de su red corporativa estén bloqueando el componente de tablas.");
+        }
+
         const res = await callGoogleScript('obtenerPedidosRecepcion');
         
         if (res && res.status === "success" && res.reply && res.reply.success) {
