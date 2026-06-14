@@ -1,367 +1,410 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
-    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
-    .cyber-dashboard-root {
-      display: flex;
-      width: 100%;
-      min-height: 100vh;
-      background-color: #020611;
-      background-image: 
-        radial-gradient(circle at 50% 50%, #061535 0%, #020611 100%),
-        linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px);
-      background-size: 100% 100%, 25px 25px, 25px 25px;
-      color: #ffffff;
-      font-family: 'Share Tech Mono', monospace;
-      box-sizing: border-box;
-    }
+.cyber-dashboard-root {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #01040d;
+  background-image: 
+    radial-gradient(circle at 50% 50%, #030d24 0%, #01040d 100%),
+    linear-gradient(rgba(0, 240, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 100%, 30px 30px, 30px 30px;
+  color: #ffffff;
+  font-family: 'Share Tech Mono', monospace;
+  box-sizing: border-box;
+}
 
-    /* ==========================================
-       SIDEBAR & LÍNEAS CONECTORAS ANIMADAS
-       ========================================== */
-    .sidebar-cyber {
-      width: 260px;
-      background: rgba(2, 6, 18, 0.9);
-      border-right: 2px solid #00f0ff;
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.1), inset -10px 0 30px rgba(0,0,0,0.8);
-      padding: 25px 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+/* ==========================================
+   SIDEBAR & SISTEMA DE CIRCUITOS EXTENSIBLES
+   ========================================== */
+.sidebar-cyber {
+  width: 260px;
+  background: linear-gradient(180deg, rgba(2, 6, 20, 0.95) 0%, rgba(1, 3, 10, 0.98) 100%);
+  border-right: 2px solid #00f0ff;
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.15), inset -10px 0 25px rgba(0,0,0,0.9);
+  padding: 25px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 10;
+}
 
-    .brand-zone {
-      padding: 10px 5px;
-      border-left: 3px solid #00f0ff;
-      background: linear-gradient(90deg, rgba(0,240,255,0.05), transparent);
-    }
-    .brand-glitch {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: 3px;
-      color: #00f0ff;
-      text-shadow: 0 0 10px rgba(0,240,255,0.4);
-    }
+.brand-zone {
+  padding: 12px 8px;
+  border-left: 4px solid #00f0ff;
+  background: linear-gradient(90deg, rgba(0,240,255,0.08), transparent);
+  box-shadow: inset 5px 0 10px rgba(0,240,255,0.05);
+}
+.brand-glitch {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #00f0ff;
+  text-shadow: 0 0 12px rgba(0,240,255,0.6);
+}
 
-    .nav-menu {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.nav-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
 
-    .nav-group {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
+.btn-nav {
+  width: 100%;
+  position: relative;
+  padding: 12px 18px;
+  background: rgba(4, 14, 38, 0.5);
+  color: #8fa0bc;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  margin-bottom: 8px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  clip-path: polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-nav i:first-child { width: 18px; margin-right: 8px; font-size: 13px; }
+.ml-auto-cyber { margin-left: auto; transition: transform 0.3s ease; }
 
-    .btn-nav {
-      width: 100%;
-      position: relative;
-      padding: 12px 16px;
-      background: rgba(6, 18, 42, 0.4);
-      color: #a4b8d4;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      border: 1px solid rgba(0, 240, 255, 0.2);
-      margin-bottom: 12px;
-      cursor: pointer;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      clip-path: polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%);
-      transition: all 0.3s ease;
-    }
+.btn-nav:hover, .btn-nav.active {
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.12);
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35), inset 0 0 15px rgba(0, 240, 255, 0.2);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
+}
+.btn-nav.orange { border-color: rgba(245, 158, 11, 0.35); color: #f59e0b; }
+.btn-nav.orange:hover, .btn-nav.orange.active { color: #ffb020; border-color: #f59e0b; box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+.btn-nav.purple { border-color: rgba(168, 85, 247, 0.35); color: #a855f7; }
+.btn-nav.purple:hover, .btn-nav.purple.active { color: #c084fc; border-color: #a855f7; box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
 
-    .btn-nav:hover, .btn-nav.active {
-      color: #00f0ff;
-      background: rgba(0, 240, 255, 0.1);
-      border-color: #00f0ff;
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 15px rgba(0, 240, 255, 0.2);
-      text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
-    }
+/* SISTEMA ANIMADO DE SUBMENÚ COLLAPSE */
+.sub-menu {
+  position: relative;
+  margin-left: 24px;
+  padding-left: 18px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+.nav-group.expanded .sub-menu {
+  max-height: 300px;
+  opacity: 1;
+  margin-bottom: 10px;
+}
+.nav-group.expanded .ml-auto-cyber {
+  transform: rotate(180deg);
+}
 
-    .btn-nav.orange { border-color: rgba(245, 158, 11, 0.3); color: #f59e0b; }
-    .btn-nav.orange:hover, .btn-nav.orange.active { color: #ffb020; border-color: #f59e0b; text-shadow: 0 0 8px #f59e0b; }
+/* Línea troncal del circuito */
+.sub-menu::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -12px;
+  bottom: 22px;
+  width: 2px;
+  background: var(--menu-clr, #00f0ff);
+  box-shadow: 0 0 8px var(--menu-clr, #00f0ff);
+}
+.sub-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  position: relative;
+  padding: 8px 14px;
+  background: rgba(3, 10, 28, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-left: 3px solid var(--menu-clr, #00f0ff);
+  color: #8da2c0;
+  font-size: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  margin-bottom: 6px;
+  cursor: pointer;
+  text-align: left;
+  clip-path: polygon(0 0, 92% 0, 100% 35%, 100% 100%, 0 100%);
+  transition: all 0.2s ease;
+}
+/* Derivación horizontal con nodo de acople */
+.sub-menu button::before {
+  content: '';
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  width: 18px;
+  height: 2px;
+  background: var(--menu-clr, #00f0ff);
+  box-shadow: 0 0 6px var(--menu-clr, #00f0ff);
+  opacity: 0.6;
+}
+.sub-menu button:hover, .sub-menu button.active-sub {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--menu-clr, #00f0ff);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.05), inset 0 0 10px rgba(var(--menu-clr), 0.1);
+  text-shadow: 0 0 5px #fff;
+}
+.sub-menu button:hover::before, .sub-menu button.active-sub::before {
+  opacity: 1;
+  background: #fff;
+  box-shadow: 0 0 8px #fff, 0 0 4px var(--menu-clr, #00f0ff);
+}
 
-    .btn-nav.purple { border-color: rgba(168, 85, 247, 0.3); color: #a855f7; }
-    .btn-nav.purple:hover, .btn-nav.purple.active { color: #c084fc; border-color: #a855f7; text-shadow: 0 0 8px #a855f7; }
+.mt-auto-cyber { margin-top: auto; }
 
-    /* CONTENEDOR DE SUBMENÚ - LÍNEA TRONCAL VERTICAL */
-    .sub-menu {
-      position: relative;
-      margin-left: 20px;
-      padding-left: 20px;
-      margin-bottom: 15px;
-    }
+/* ==========================================
+   WORKSPACE COMPONENTES CENTRALES V3D
+   ========================================== */
+.main-workspace {
+  flex: 1;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: calc(100% - 260px);
+  box-sizing: border-box;
+}
 
-    /* Línea vertical principal que viaja hacia abajo */
-    .sub-menu::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: -15px;
-      bottom: 22px;
-      width: 2px;
-      background: linear-gradient(to bottom, var(--menu-clr, #00f0ff) 0%, rgba(255,255,255,0.05) 100%);
-      background-size: 100% 200%;
-      background-position: 0% 0%;
-      animation: circuitPulse 4s linear infinite;
-    }
+.cyber-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed rgba(0, 240, 255, 0.2);
+  padding-bottom: 14px;
+}
+.system-pulse {
+  display: flex;
+  align-items: center;
+  background: rgba(16, 185, 129, 0.05);
+  padding: 6px 16px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 3px;
+  box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.1);
+}
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  margin-right: 12px;
+  box-shadow: 0 0 12px #10b981;
+  animation: pulseGlow 1.8s infinite;
+}
+.user-badge {
+  display: flex;
+  align-items: center;
+  background: rgba(4, 14, 38, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  padding: 6px 18px;
+  clip-path: polygon(8% 0, 100% 0, 100% 100%, 0 100%, 0 40%);
+  box-shadow: 0 0 15px rgba(0,240,255,0.1);
+}
 
-    /* RAMIFICACIONES HORIZONTALES PARA CADA SUB-BOTÓN */
-    .sub-menu button {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-      position: relative;
-      padding: 8px 12px;
-      background: rgba(4, 12, 32, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-left: 2px solid var(--menu-clr, #00f0ff);
-      color: #94a3b8;
-      font-size: 10px;
-      font-weight: bold;
-      margin-bottom: 6px;
-      cursor: pointer;
-      text-align: left;
-      clip-path: polygon(0 0, 92% 0, 100% 35%, 100% 100%, 0 100%);
-      transition: all 0.2s ease;
-    }
+/* CARDS CON PROFUNDIDAD Y VOLUMEN MECÁNICO */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 18px;
+}
+@media (min-width: 768px) {
+  .cards-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 
-    /* El conector horizontal físico que toca la línea troncal */
-    .sub-menu button::before {
-      content: '';
-      position: absolute;
-      left: -20px;
-      top: 50%;
-      width: 20px;
-      height: 1px;
-      background: var(--menu-clr, #00f0ff);
-      opacity: 0.5;
-      transition: all 0.2s ease;
-    }
+.cyber-card {
+  background: linear-gradient(135deg, rgba(6, 20, 54, 0.85) 0%, rgba(3, 10, 28, 0.95) 100%);
+  border: 1px solid rgba(var(--card-clr-rgb), 0.25);
+  border-top: 4px solid var(--card-clr);
+  border-radius: 4px;
+  padding: 18px;
+  position: relative;
+  clip-path: polygon(0 0, 90% 0, 100% 12%, 100% 100%, 0 100%);
+  /* Sombra externa + Sombra interna para simular relieve profundo */
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.85),
+    inset 0 0 20px rgba(var(--card-clr-rgb), 0.12),
+    0 0 10px rgba(0, 0, 0, 0.5);
+  transform: translateZ(0);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), 
+              box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), 
+              border-color 0.3s ease;
+}
+.cyber-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--card-clr);
+  box-shadow: 
+    0 25px 45px rgba(0, 0, 0, 0.95),
+    inset 0 0 25px rgba(var(--card-clr-rgb), 0.25),
+    0 0 25px rgba(var(--card-clr-rgb), 0.3);
+}
+.cyber-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 15%;
+  width: 40px; height: 2px;
+  background: var(--card-clr);
+  box-shadow: 0 0 10px var(--card-clr);
+}
 
-    .sub-menu button:hover, .sub-menu button.active-sub {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.03);
-      border-color: var(--menu-clr, #00f0ff);
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
-    }
-    .sub-menu button:hover::before, .sub-menu button.active-sub::before {
-      opacity: 1;
-      height: 2px;
-      box-shadow: 0 0 6px var(--menu-clr, #00f0ff);
-    }
+.card-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+.card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.icon-box {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 18px;
+}
+.data-num {
+  display: block;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 12px currentColor;
+}
+.data-lbl { font-size: 9px; letter-spacing: 1px; margin-top: 2px; }
 
-    @keyframes circuitPulse {
-      0% { background-position: 0% 0%; }
-      100% { background-position: 0% -200%; }
-    }
+/* BOTONES INTEGRADOS */
+.card-action-btn, .mini-footer-btn {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.18) 0%, rgba(1, 4, 12, 0.6) 100%);
+  border: 1px solid #f59e0b;
+  color: #ffb020;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  padding: 8px 0;
+  width: 100%;
+  margin-top: 14px;
+  cursor: pointer;
+  text-align: center;
+  text-shadow: 0 0 6px rgba(245,158,11,0.6);
+  transition: all 0.2s ease;
+}
+.card-action-btn:hover, .mini-footer-btn:hover {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.35) 0%, rgba(245, 158, 11, 0.05) 100%);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.45), inset 0 0 10px rgba(245, 158, 11, 0.2);
+  color: #fff;
+}
 
-    /* ==========================================
-       WORKSPACE COMPONENTES CENTRALES
-       ========================================== */
-    .main-workspace {
-      flex: 1;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      max-width: calc(100% - 260px);
-      box-sizing: border-box;
-    }
+/* DISEÑO DE PANELES DE CONTROL */
+.workspace-split {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 22px;
+}
+@media (min-width: 1024px) {
+  .workspace-split { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .col-custom-left { grid-column: span 3 / span 3; }
+}
 
-    .cyber-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px dashed rgba(0, 240, 255, 0.15);
-      padding-bottom: 12px;
-    }
-    .system-pulse {
-      display: flex;
-      align-items: center;
-      background: rgba(16, 185, 129, 0.03);
-      padding: 6px 14px;
-      border: 1px solid rgba(16, 185, 129, 0.2);
-      border-radius: 4px;
-    }
-    .pulse-indicator {
-      width: 8px;
-      height: 8px;
-      background-color: #10b981;
-      border-radius: 50%;
-      margin-right: 10px;
-      box-shadow: 0 0 10px #10b981;
-      animation: pulseGlow 2s infinite;
-    }
+.panel-cyber {
+  background: rgba(3, 10, 28, 0.5);
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  border-left: 4px solid var(--panel-clr);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 0 20px rgba(var(--panel-clr-rgb), 0.05);
+}
+.panel-header {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--panel-clr);
+  letter-spacing: 2px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  text-shadow: 0 0 10px var(--panel-clr);
+}
 
-    .user-badge {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(6, 18, 42, 0.7);
-      border: 1px solid rgba(0, 240, 255, 0.3);
-      padding: 6px 16px;
-      clip-path: polygon(8% 0, 100% 0, 100% 100%, 0 100%, 0 40%);
-    }
+/* DATA TABLES COMPLETA */
+.overflow-x-auto { overflow-x: auto; width: 100%; }
+.cyber-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+.cyber-table th {
+  background: rgba(5, 16, 44, 0.9);
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 12px;
+  border-bottom: 2px solid #00f0ff;
+}
+.cyber-table td { padding: 10px 12px; border-bottom: 1px solid rgba(0, 240, 255, 0.08); color: #cbd5e1; }
+.cyber-table tr:hover td { background: rgba(0, 240, 255, 0.04); color: #fff; }
 
-    /* CARDS GRID DE ALTA FIDELIDAD */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(1, minmax(0, 1fr));
-      gap: 15px;
-    }
-    @media (min-width: 768px) {
-      .cards-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    }
+.table-row-btn {
+  background: transparent; border: 1px solid #f59e0b; color: #f59e0b;
+  font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: bold;
+  padding: 4px 12px; cursor: pointer; border-radius: 2px; transition: all 0.15s ease;
+}
+.table-row-btn:hover { background: #f59e0b; color: #000; box-shadow: 0 0 10px #f59e0b; }
 
-    .cyber-card {
-      background: rgba(4, 12, 32, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-top: 3px solid var(--card-clr);
-      padding: 16px;
-      position: relative;
-      clip-path: polygon(0 0, 90% 0, 100% 15%, 100% 100%, 0 100%);
-      box-shadow: 0 15px 30px rgba(0,0,0,0.5);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .cyber-card::before {
-      content: '';
-      position: absolute;
-      top: 0; right: 15%;
-      width: 35px; height: 2px;
-      background: var(--card-clr);
-      box-shadow: 0 0 8px var(--card-clr);
-    }
-    .card-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
-    .card-body {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .icon-box {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-    .data-num {
-      display: block;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 30px;
-      font-weight: 700;
-      text-shadow: 0 0 10px currentColor;
-    }
-    .data-lbl { font-size: 9px; opacity: 0.5; }
+.cyber-pagination-container {
+  display: flex; justify-content: space-between; align-items: center; margin-top: 18px;
+  padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.cyber-pagination { display: flex; align-items: center; gap: 4px; }
+.pag-btn { background: rgba(5, 16, 44, 0.9); border: 1px solid rgba(0,240,255,0.2); color: #7e94b3; padding: 4px 10px; font-size: 11px; cursor: pointer; font-family: 'Orbitron'; }
+.pag-btn.active, .pag-btn:hover { border-color: #00f0ff; color: #00f0ff; background: rgba(0,240,255,0.1); box-shadow: 0 0 8px rgba(0,240,255,0.2); }
 
-    /* BOTONES ÁMBAR INDUSTRIAL */
-    .card-action-btn, .mini-footer-btn {
-      background: linear-gradient(180deg, rgba(245, 158, 11, 0.15) 0%, rgba(0, 0, 0, 0.3) 100%);
-      border: 1px solid #f59e0b;
-      color: #ffb020;
-      font-size: 10px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      padding: 8px 0;
-      width: 100%;
-      cursor: pointer;
-      text-align: center;
-      text-shadow: 0 0 5px rgba(245,158,11,0.5);
-      transition: all 0.2s ease;
-    }
-    .card-action-btn:hover, .mini-footer-btn:hover {
-      background: linear-gradient(180deg, rgba(245, 158, 11, 0.3) 0%, transparent 100%);
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4), inset 0 0 8px rgba(245, 158, 11, 0.2);
-      color: #fff;
-    }
+/* MINIPANELES STACK DERECHO */
+.right-widgets-stack { display: flex; flex-direction: column; gap: 14px; }
+.mini-panel-cyber {
+  background: rgba(3, 10, 28, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 3px solid var(--panel-clr);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+}
+.mini-header { 
+  font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; 
+  color: var(--panel-clr); padding: 10px 14px; background: rgba(255,255,255,0.02); 
+  border-bottom: 1px solid rgba(255,255,255,0.06); letter-spacing: 1px;
+}
+.mini-content { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.mini-row { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 4px; }
+.mini-row strong { color: #ffffff; font-family: 'Orbitron'; }
+.mini-panel-cyber .mini-footer-btn { margin: 0 14px 14px 14px; width: calc(100% - 28px); }
 
-    /* LAYOUT DIVISOR ASIMÉTRICO */
-    .workspace-split {
-      display: grid;
-      grid-template-columns: repeat(1, minmax(0, 1fr));
-      gap: 20px;
-    }
-    @media (min-width: 1024px) {
-      .workspace-split { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .col-custom-left { grid-column: span 3 / span 3; }
-    }
+/* SECCIÓN INFERIOR RADAR Y HISTOGRAMA */
+.bottom-split { display: flex; flex-direction: column; gap: 22px; }
+@media (min-width: 768px) { .bottom-split { flex-direction: row; } }
+.flex-1 { flex: 1; }
 
-    .panel-cyber {
-      background: rgba(4, 12, 32, 0.45);
-      border: 1px solid rgba(0, 240, 255, 0.08);
-      border-left: 3px solid var(--panel-clr);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-    }
-    .panel-header {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 13px;
-      font-weight: bold;
-      color: var(--panel-clr);
-      letter-spacing: 1px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      padding-bottom: 8px;
-      margin-bottom: 12px;
-      text-shadow: 0 0 8px var(--panel-clr);
-    }
+.animated-bell { animation: bellRing 2.5s infinite; }
 
-    /* DATA TABLES */
-    .overflow-x-auto { overflow-x: auto; width: 100%; }
-    .cyber-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
-    .cyber-table th {
-      background: rgba(6, 18, 42, 0.85);
-      color: #00f0ff;
-      font-family: 'Orbitron', sans-serif;
-      padding: 12px;
-      border-bottom: 2px solid #00f0ff;
-    }
-    .cyber-table td { padding: 11px 12px; border-bottom: 1px solid rgba(0, 240, 255, 0.05); color: #cbd5e1; }
-    .cyber-table tr:hover td { background: rgba(0, 240, 255, 0.02); color: #fff; }
-    .table-row-btn {
-      background: transparent; border: 1px solid #f59e0b; color: #f59e0b;
-      font-size: 9px; padding: 3px 10px; cursor: pointer; border-radius: 2px;
-    }
-    .table-row-btn:hover { background: #f59e0b; color: #000; font-weight: bold; }
-
-    .cyber-pagination { display: flex; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.05); }
-    .pag-btn { background: rgba(6, 18, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); color: #64748b; padding: 4px 10px; font-size: 11px; cursor: pointer; }
-    .pag-btn.active, .pag-btn:hover { border-color: #00f0ff; color: #00f0ff; background: rgba(0,240,255,0.05); }
-
-    /* MINI PANELS LATERALES */
-    .mini-panel-cyber {
-      background: rgba(4, 12, 32, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.03);
-      border-top: 2px solid var(--panel-clr);
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 10px;
-    }
-    .mini-header { font-size: 10px; font-weight: bold; color: var(--panel-clr); padding: 8px 12px; background: rgba(255,255,255,0.01); border-bottom: 1px solid rgba(255,255,255,0.04); }
-    .mini-content { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
-    .mini-row { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
-    .mini-row strong { color: #ffffff; }
-
-    /* PARTE INFERIOR GRID MIXTO */
-    .bottom-split { display: flex; flex-direction: column; gap: 20px; }
-    @media (min-width: 768px) { .bottom-split { flex-direction: row; } }
-    .flex-1 { flex: 1; }
-
-    @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.6; } }
+@keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.5; } }
+@keyframes bellRing { 0%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(15deg); } 20%, 40% { transform: rotate(-15deg); } 50% { transform: rotate(0); } }
 
