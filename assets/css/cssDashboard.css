@@ -59,6 +59,10 @@
 .dashboard-container,
 .dashboard-container * {
     box-sizing: border-box;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(0, 240, 255, 0.2) transparent !important;
+
 }
 
 .dashboard-container {
