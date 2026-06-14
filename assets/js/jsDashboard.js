@@ -141,3 +141,11 @@
     });
   }
 })();
+document.querySelectorAll('.btn-nav, .card-action-btn').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    el.style.filter = "brightness(1.2)";
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.filter = "brightness(1)";
+  });
+});

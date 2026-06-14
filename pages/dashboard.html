@@ -3,196 +3,206 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="assets/css/cssDashboard.css">
 
-<div class="cyber-dashboard-root">  
- 
+<div class="cyber-dashboard-root">
+
+  <!-- SIDEBAR -->
   <aside class="sidebar-cyber">
     <div class="brand-zone">
       <div class="brand-glitch">DEPÓSITO</div>
     </div>
 
     <nav class="nav-menu">
-      <button class="btn-nav active">
-        <i class="fas fa-home"></i> INICIO
-      </button>
+
+      <div class="nav-group">
+        <button class="btn-nav active">
+          <i class="fas fa-home"></i> INICIO
+        </button>
+      </div>
 
       <div class="nav-group">
         <button class="btn-nav orange toggle-menu-btn">
-          <i class="fas fa-shopping-cart"></i> PEDIDOS <i class="fas fa-chevron-down text-[9px] ml-auto-cyber"></i>
+          <i class="fas fa-box"></i> PEDIDOS
+          <i class="fas fa-chevron-down ml-auto-cyber"></i>
         </button>
-        <div class="sub-menu" style="--menu-clr: #f59e0b;">
-          <button><i class="fas fa-hand-pointer"></i> MANUAL</button>
-          <button><i class="fas fa-robot"></i> ASISTIDA</button>
+        <div class="sub-menu" style="--menu-clr:#f59e0b;">
+          <button>MANUAL</button>
+          <button>ASISTIDA</button>
         </div>
       </div>
 
       <div class="nav-group">
         <button class="btn-nav purple toggle-menu-btn">
-          <i class="fas fa-chart-bar"></i> REPORTES <i class="fas fa-chevron-down text-[9px] ml-auto-cyber"></i>
+          <i class="fas fa-chart-bar"></i> REPORTES
+          <i class="fas fa-chevron-down ml-auto-cyber"></i>
         </button>
-        <div class="sub-menu" style="--menu-clr: #a855f7;">
-          <button><i class="fas fa-trophy"></i> TOP PROD</button>
-          <button class="active-sub"><i class="fas fa-exclamation-circle"></i> CRÍTICOS</button>
-          <button><i class="fas fa-dollar-sign"></i> VENDIDOS</button>
-          <button><i class="fas fa-info-circle"></i> MÁS INFO</button>
+        <div class="sub-menu" style="--menu-clr:#a855f7;">
+          <button>TOP PROD</button>
+          <button>CRÍTICOS</button>
+          <button>VENDIDOS</button>
+          <button>MÁS INFO</button>
         </div>
       </div>
 
-      <button class="btn-nav mt-auto-cyber" style="border-color: rgba(0, 240, 255, 0.15)">
-        <i class="fas fa-sliders-h"></i> CONFIGURACIÓN
-      </button>
+      <div class="mt-auto-cyber">
+        <button class="btn-nav">
+          <i class="fas fa-cog"></i> CONFIGURACIÓN
+        </button>
+      </div>
+
     </nav>
   </aside>
 
+  <!-- MAIN -->
   <main class="main-workspace">
-    
-    <header class="cyber-header">
+
+    <!-- HEADER -->
+    <div class="cyber-header">
       <div class="system-pulse">
         <div class="pulse-indicator"></div>
-        <span class="text-emerald-400 font-bold tracking-[0.15em] text-[11px]">SISTEMA ACTIVO</span>
+        SISTEMA ACTIVO
       </div>
+
       <div class="user-badge">
-        <span class="text-[11px] text-white font-bold tracking-wider">USUARIO: ADMINISTRADOR</span>
+        <i class="fas fa-user"></i> USUARIO ADMIN
       </div>
-    </header>
+    </div>
 
-    <section class="cards-grid">
-      <div class="cyber-card" style="--card-clr: #00f0ff; --card-clr-rgb: 0, 240, 255;">
-        <span class="card-title text-cyan-400">TOP PRODUCTOS</span>
+    <!-- CARDS -->
+    <div class="cards-grid">
+
+      <div class="cyber-card" style="--card-clr:#00f0ff;--card-clr-rgb:0,240,255;">
+        <div class="card-title">TOP PRODUCTOS</div>
         <div class="card-body">
-          <div class="icon-box bg-cyan-950/20 text-cyan-400"><i class="fas fa-chart-simple"></i></div>
-          <div class="text-right">
-            <span class="data-num text-white">248</span>
-            <span class="data-lbl text-cyan-400 block font-bold">PRODUCTOS</span>
+          <div>
+            <span class="data-num">248</span>
+            <div class="data-lbl">PRODUCTOS</div>
           </div>
+          <div class="icon-box"><i class="fas fa-chart-bar"></i></div>
         </div>
-        <button class="card-action-btn">VER REPORTE COMPLETO</button>
+        <button class="card-action-btn">VER REPORTE</button>
       </div>
 
-      <div class="cyber-card" style="--card-clr: #f59e0b; --card-clr-rgb: 245, 158, 11;">
-        <span class="card-title text-amber-500">TOP PROD. VENDIDOS</span>
+      <div class="cyber-card" style="--card-clr:#f59e0b;--card-clr-rgb:245,158,11;">
+        <div class="card-title">TOP PROD. VENDIDOS</div>
         <div class="card-body">
-          <div class="icon-box bg-amber-950/20 text-amber-500"><i class="fas fa-arrow-trend-up"></i></div>
-          <div class="text-right">
-            <span class="data-num text-amber-400">1,842</span>
-            <span class="data-lbl text-amber-500 block font-bold">UNIDADES</span>
+          <div>
+            <span class="data-num">1,842</span>
+            <div class="data-lbl">UNIDADES</div>
           </div>
+          <div class="icon-box"><i class="fas fa-arrow-up"></i></div>
         </div>
-        <button class="card-action-btn">VER REPORTE COMPLETO</button>
+        <button class="card-action-btn">VER REPORTE</button>
       </div>
 
-      <div class="cyber-card" style="--card-clr: #ef4444; --card-clr-rgb: 239, 68, 68;">
-        <span class="card-title text-red-500">TOP PROD. PEDIDOS</span>
+      <div class="cyber-card" style="--card-clr:#ef4444;--card-clr-rgb:239,68,68;">
+        <div class="card-title">TOP PROD. PEDIDOS</div>
         <div class="card-body">
-          <div class="icon-box bg-red-950/20 text-red-400"><i class="fas fa-clipboard-list"></i></div>
-          <div class="text-right">
-            <span class="data-num text-red-400">762</span>
-            <span class="data-lbl text-red-500 block font-bold">PEDIDOS</span>
+          <div>
+            <span class="data-num">762</span>
+            <div class="data-lbl">PEDIDOS</div>
           </div>
+          <div class="icon-box"><i class="fas fa-file-alt"></i></div>
         </div>
-        <button class="card-action-btn">VER REPORTE COMPLETO</button>
+        <button class="card-action-btn">VER REPORTE</button>
       </div>
 
-      <div class="cyber-card" style="--card-clr: #a855f7; --card-clr-rgb: 168, 85, 247;">
-        <span class="card-title text-purple-400">TOP PEDIDOS MÁS INFO</span>
+      <div class="cyber-card" style="--card-clr:#a855f7;--card-clr-rgb:168,85,247;">
+        <div class="card-title">TOP PEDIDOS MÁS INFO</div>
         <div class="card-body">
-          <div class="icon-box bg-purple-950/20 text-purple-400"><i class="fas fa-circle-info"></i></div>
-          <div class="text-right">
-            <span class="data-num text-purple-400">96%</span>
-            <span class="data-lbl text-purple-400 block font-bold">CUMPLIMIENTO</span>
+          <div>
+            <span class="data-num">96%</span>
+            <div class="data-lbl">CUMPLIMIENTO</div>
           </div>
+          <div class="icon-box"><i class="fas fa-info-circle"></i></div>
         </div>
-        <button class="card-action-btn">VER REPORTE COMPLETO</button>
+        <button class="card-action-btn">VER REPORTE</button>
       </div>
-    </section>
 
-    <section class="workspace-split">
-      <div class="panel-cyber col-custom-left" style="--panel-clr: #00f0ff; --panel-clr-rgb: 0, 240, 255;">
+    </div>
+
+    <!-- CONTENIDO -->
+    <div class="workspace-split">
+
+      <!-- TABLA -->
+      <div class="panel-cyber col-custom-left" style="--panel-clr:#00f0ff;--panel-clr-rgb:0,240,255;">
         <div class="panel-header">PRODUCTOS CRÍTICOS</div>
+
         <div class="overflow-x-auto">
           <table class="cyber-table">
             <thead>
-              <tr><th>SKU</th><th>PRODUCTO</th><th>STOCK</th><th>MÍNIMO</th><th>PROVEEDOR</th><th>CATEGORÍA</th><th class="text-center">ACCIÓN</th></tr>
+              <tr>
+                <th>SKU</th>
+                <th>PRODUCTO</th>
+                <th>STOCK</th>
+                <th>MÍNIMO</th>
+                <th>PROVEEDOR</th>
+                <th>CATEGORÍA</th>
+                <th>ACCIÓN</th>
+              </tr>
             </thead>
             <tbody>
-              <tr><td>SKU-001</td><td>SENSOR DE TEMPERATURA</td><td class="text-red-500 font-bold bg-red-500/5 text-center rounded">5</td><td>20</td><td>PROVEEDOR A</td><td>ELECTRÓNICA</td><td class="text-center"><button class="table-row-btn">VER »</button></td></tr>
-              <tr><td>SKU-002</td><td>BATERÍA 12V 7A</td><td class="text-red-500 font-bold bg-red-500/5 text-center rounded">8</td><td>15</td><td>PROVEEDOR B</td><td>ENERGÍA</td><td class="text-center"><button class="table-row-btn">VER »</button></td></tr>
-              <tr><td>SKU-003</td><td>CIRCUITO INTEGRADO 555</td><td class="text-red-500 font-bold bg-red-500/5 text-center rounded">3</td><td>10</td><td>PROVEEDOR C</td><td>ELECTRÓNICA</td><td class="text-center"><button class="table-row-btn">VER »</button></td></tr>
-              <tr><td>SKU-004</td><td>CHIP MICROCONTROLADOR</td><td class="text-red-500 font-bold bg-red-500/5 text-center rounded">2</td><td>8</td><td>PROVEEDOR C</td><td>ELECTRÓNICA</td><td class="text-center"><button class="table-row-btn">VER »</button></td></tr>
-              <tr><td>SKU-005</td><td>RESISTENCIA 1K OHM</td><td class="text-amber-500 font-bold bg-amber-500/5 text-center rounded">12</td><td>25</td><td>PROVEEDOR D</td><td>COMPONENTES</td><td class="text-center"><button class="table-row-btn">VER »</button></td></tr>
-              <tr><td>SKU-006</td><td>TRANSISTOR TIP31</td><td class="text-red-500 font-bold bg-red-500/5 text-center rounded">6</td><td>12</td><td>PROVEEDOR D</td><td>SEMICONDUCTORES</td><td class="text-center"><button class="table-row-btn">VER »</button></td></tr>
-              <tr><td>SKU-007</td><td>POTENCIÓMETRO 10K</td><td class="text-red-500 font-bold bg-red-500/5 text-center rounded">9</td><td>20</td><td>PROVEEDOR E</td><td>COMPONENTES</td><td class="text-center"><button class="table-row-btn">VER »</button></td></tr>
-              <tr><td>SKU-008</td><td>DISPLAY LCD 16X2</td><td class="text-red-500 font-bold bg-red-500/5 text-center rounded">4</td><td>10</td><td>PROVEEDOR F</td><td>PANTALLAS</td><td class="text-center"><button class="table-row-btn">VER »</button></td></tr>
+              <tr>
+                <td>SKU-001</td>
+                <td>Sensor de temperatura</td>
+                <td style="color:#ef4444;">5</td>
+                <td>20</td>
+                <td>A</td>
+                <td>Electrónica</td>
+                <td><button class="table-row-btn">VER</button></td>
+              </tr>
+              <tr>
+                <td>SKU-002</td>
+                <td>Batería 12V</td>
+                <td style="color:#f59e0b;">8</td>
+                <td>15</td>
+                <td>B</td>
+                <td>Energía</td>
+                <td><button class="table-row-btn">VER</button></td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div class="cyber-pagination-container">
-          <span class="text-[11px] text-cyan-500/80 font-bold tracking-wider">TOTAL PRODUCTOS: <span class="bg-cyan-950/60 px-2 py-0.5 border border-cyan-500/40 text-cyan-400 font-mono rounded">248</span></span>
-          <div class="cyber-pagination">
-            <button class="pag-btn"><i class="fas fa-angle-double-left"></i></button>
-            <button class="pag-btn active">1</button>
-            <button class="pag-btn">2</button>
-            <button class="pag-btn">3</button>
-            <button class="pag-btn">4</button>
-            <button class="pag-btn">5</button>
-            <button class="pag-btn"><i class="fas fa-angle-double-right"></i></button>
-          </div>
-        </div>
       </div>
 
+      <!-- WIDGETS DERECHA -->
       <div class="right-widgets-stack">
-        <div class="mini-panel-cyber" style="--panel-clr: #f59e0b;">
-          <div class="mini-header"><i class="fas fa-arrow-trend-up mr-1"></i> TOP PROD. VENDIDOS</div>
+
+        <div class="mini-panel-cyber" style="--panel-clr:#f59e0b;">
+          <div class="mini-header">TOP VENDIDOS</div>
           <div class="mini-content">
-            <div class="mini-row"><span>1° CINVA BBR-SKU-44</span><strong>1,250</strong></div>
-            <div class="mini-row"><span>2° CIVIAZON-SKU-20</span><strong>930</strong></div>
-            <div class="mini-row"><span>3° CHIPM-SKU-28</span><strong>620</strong></div>
+            <div class="mini-row"><span>1° PROD</span><strong>1250</strong></div>
+            <div class="mini-row"><span>2° PROD</span><strong>930</strong></div>
           </div>
-          <button class="mini-footer-btn">VER REPORTE COMPLETO</button>
+          <button class="mini-footer-btn">VER REPORTE</button>
         </div>
 
-        <div class="mini-panel-cyber" style="--panel-clr: #ef4444;">
-          <div class="mini-header"><i class="fas fa-clipboard-list mr-1"></i> TOP PROD. PEDIDOS</div>
+        <div class="mini-panel-cyber" style="--panel-clr:#ef4444;">
+          <div class="mini-header">TOP PEDIDOS</div>
           <div class="mini-content">
-            <div class="mini-row"><span>1° CLIPS-SKU-160</span><strong>320</strong></div>
-            <div class="mini-row"><span>2° HENGER-SKU-180</span><strong>210</strong></div>
-            <div class="mini-row"><span>3° SIMILACRO-SKU-100</span><strong>150</strong></div>
+            <div class="mini-row"><span>1°</span><strong>320</strong></div>
           </div>
-          <button class="mini-footer-btn">VER REPORTE COMPLETO</button>
+          <button class="mini-footer-btn">VER REPORTE</button>
         </div>
 
-        <div class="mini-panel-cyber" style="--panel-clr: #a855f7;">
-          <div class="mini-header"><i class="fas fa-circle-info mr-1"></i> TOP PEDIDOS MÁS INFO</div>
-          <div class="mini-content">
-            <div class="mini-row"><span>BAKUN-TS01-SKU-3</span><strong>51</strong></div>
-            <div class="mini-row"><span>TS01-MRPL-SKU-3</span><strong>51</strong></div>
-            <div class="mini-row"><span>BAKUN-S1</span><strong>51</strong></div>
-          </div>
-          <button class="mini-footer-btn">VER REPORTE COMPLETO</button>
-        </div>
-      </div>
-    </section>
-
-    <footer class="bottom-split">
-      <div class="panel-cyber flex-1" style="--panel-clr: #00f0ff; --panel-clr-rgb: 0, 240, 255;">
-        <div class="panel-header">RECORDATORIOS <i class="fas fa-bell text-[11px] ml-1 animated-bell"></i></div>
-        <div class="flex items-center justify-between p-2 h-[120px]">
-          <div class="text-slate-300 text-xs max-w-[65%] font-sans">
-            <p class="font-mono text-cyan-400 font-bold text-[12px] mb-1">MÓDULO DE ALERTAS</p>
-            <p class="leading-relaxed opacity-90">De los productos principales, <strong class="text-red-400 font-mono font-bold">10 de los registrados</strong> están por debajo del stock mínimo.</p>
-          </div>
-          <div class="w-24 h-24 relative flex items-center justify-center">
-            <canvas id="cyberInjectedRadar" class="w-full h-full"></canvas>
-          </div>
-        </div>
       </div>
 
-      <div class="panel-cyber flex-1" style="--panel-clr: #a855f7; --panel-clr-rgb: 168, 85, 247;">
-        <div class="panel-header">CANTIDAD DE PROD. VENDIDOS</div>
-        <div class="p-2 flex items-end h-[120px] w-full">
-          <canvas id="cyberInjectedHistogram" class="w-full h-[100px]"></canvas>
-        </div>
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="bottom-split">
+
+      <div class="panel-cyber flex-1" style="--panel-clr:#00f0ff;">
+        <div class="panel-header">RECORDATORIOS</div>
+        <canvas id="cyberInjectedRadar"></canvas>
       </div>
-    </footer>
+
+      <div class="panel-cyber flex-1" style="--panel-clr:#a855f7;">
+        <div class="panel-header">VENTAS</div>
+        <canvas id="cyberInjectedHistogram"></canvas>
+      </div>
+
+    </div>
+
   </main>
 </div>
 

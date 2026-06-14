@@ -408,3 +408,22 @@
 @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.5; } }
 @keyframes bellRing { 0%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(15deg); } 20%, 40% { transform: rotate(-15deg); } 50% { transform: rotate(0); } }
 
+canvas {
+  width: 100%;
+  display: block;
+}
+
+.panel-cyber canvas {
+  margin-top: 10px;
+}
+
+/* líneas estilo circuito */
+.cyber-dashboard-root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(0,240,255,0.08), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(168,85,247,0.08), transparent 40%);
+  pointer-events: none;
+}
