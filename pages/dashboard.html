@@ -4,100 +4,61 @@
 <link rel="stylesheet" href="assets/css/cssDashboard.css">
 
 
-<div class="hud-root">
+<canvas id="connections"></canvas> <div class="dashboard"> 
+    <!-- SIDEBAR --> 
+     <aside class="sidebar"> 
+        <h2 class="logo">⚡ CORE</h2> <ul> 
+            <li class="active">Dashboard</li> 
+            <li>Analytics</li> 
+            <li>Inventario</li> 
+            <li>Settings</li> </ul> 
+        </aside> 
+        <!-- MAIN --> 
+    <main class="main"> 
+        <header class="topbar"> 
+        <h1>System Control</h1> 
+        <div class="status">ONLINE</div> 
+    </header> 
 
-  <!-- FONDO -->
-  <div class="hud-bg"></div>
+    <!-- CARDS --> 
+<section class="cards"> 
+    <div class="card blue"> 
+        <h3>Productos</h3> <p>248</p> 
+    </div> 
+    <div class="card orange"> 
+        <h3>Vendidos</h3> <p>1,842</p> 
+    </div> 
+    <div class="card red"> <h3>Pedidos</h3> <p>762</p> 
+    </div> 
+</section> 
 
-  <!-- SVG LÍNEAS -->
-  <svg class="hud-overlay" viewBox="0 0 1600 900">
-    <path class="line cyan" d="M200 180 H600 L700 140 H1200" />
-    <path class="line purple" d="M300 650 H900 L1200 500" />
-    <path class="line orange" d="M100 400 H400 L500 450 H900" />
-  </svg>
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="logo">DEPÓSITO</div>
-
-    <div class="menu">
-      <button class="btn active">INICIO</button>
-
-      <div class="submenu">
-        <button class="btn">PEDIDOS</button>
-        <div class="submenu-items">
-          <span>MANUAL</span>
-          <span>ASISTIDA</span>
-        </div>
-      </div>
-
-      <div class="submenu">
-        <button class="btn">REPORTES</button>
-        <div class="submenu-items">
-          <span>TOP</span>
-          <span>CRÍTICOS</span>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main">
-
-    <!-- HEADER -->
-    <header class="header">
-      <div class="status">● SISTEMA ACTIVO</div>
-      <div class="user">ADMIN</div>
-    </header>
-
-    <!-- CARDS -->
-    <section class="cards">
-      <div class="card cyan"><span>TOP PRODUCTOS</span><b>248</b></div>
-      <div class="card orange"><span>VENDIDOS</span><b>1842</b></div>
-      <div class="card red"><span>PEDIDOS</span><b>762</b></div>
-      <div class="card purple"><span>INFO</span><b>96%</b></div>
-    </section>
-
-    <!-- CONTENIDO -->
-    <section class="content">
-
-      <!-- TABLA -->
-      <div class="panel table">
-        <h3>PRODUCTOS CRÍTICOS</h3>
-        <table>
-          <thead>
+<!-- GRID --> 
+ <section class="grid"> 
+    <!-- CHART --> 
+     <div class="panel chart"> 
+        <h3>Actividad</h3> 
+        <canvas id="chart"></canvas> 
+    </div> 
+    <!-- TABLE --> 
+     <div class="panel"> <h3>Productos Críticos</h3> 
+        <table> 
             <tr>
-              <th>SKU</th>
-              <th>Producto</th>
-              <th>Stock</th>
-              <th>Mín</th>
-              <th>Prov</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>001</td><td>Sensor</td><td class="low">5</td><td>20</td><td>A</td></tr>
-            <tr><td>002</td><td>Batería</td><td class="mid">8</td><td>15</td><td>B</td></tr>
-          </tbody>
-        </table>
-      </div>
+                <th>Producto</th>
+                <th>Stock</th>
+            </tr> <tr>
+                <td>Sensor</td>
+                <td class="danger">5</td>
+            </tr> 
+            <tr>
+                <td>Batería</td>
+                <td class="warning">8</td>
+            </tr> 
+        </table> 
+    </div> 
+</section> 
+</main> 
+</div> 
 
-      <!-- LATERAL -->
-      <div class="sidepanels">
-        <div class="mini orange">TOP VENTAS</div>
-        <div class="mini red">TOP PEDIDOS</div>
-      </div>
-
-    </section>
-
-    <!-- GRÁFICOS -->
-    <section class="charts">
-      <canvas id="radar"></canvas>
-      <canvas id="bars"></canvas>
-    </section>
-
-  </main>
-
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/jsDashboard.js"></script>
