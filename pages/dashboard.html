@@ -1,63 +1,111 @@
 
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="assets/css/cssDashboard.css">
 
-<!--<canvas id="connections"></canvas>
+<!-- Canvas: animated HUD circuit connections -->
+<canvas id="connections"></canvas>
+<!-- Canvas: ambient scanning particles -->
+<canvas id="particles"></canvas>
 
 <div class="dashboard-container">
-    <aside class="sidebar-hud">
+    <!-- ═══ LEFT SIDEBAR ═══ -->
+    <aside class="sidebar-hud" id="sidebarHud">
         <div class="sidebar-brand">
+            <div class="brand-accent"></div>
             <h2>DEPÓSITO</h2>
+            <span class="brand-sub">CONTROL HUB v2.4</span>
         </div>
-        
+
         <nav class="sidebar-nav">
-            <div class="nav-item active">
-                <i class="fa-solid fa-house icon-cyan"></i>
-                <span>INICIO</span>
-            </div>
-            
-            <div class="nav-group open">
-                <div class="nav-item group-title orange-trigger">
-                    <i class="fa-solid fa-cart-shopping icon-orange"></i>
-                    <span>PEDIDOS</span>
-                    <i class="fa-solid fa-chevron-down arrow"></i>
+            <div class="nav-item active" data-node="inicio">
+                <div class="nav-shape cyan-theme">
+                    <i class="fa-solid fa-house"></i>
+                    <span>INICIO</span>
                 </div>
-                <div class="sub-nav">
+            </div>
+
+            <div class="nav-group open" data-group="pedidos">
+                <div class="nav-item group-title orange-theme">
+                    <div class="nav-shape orange-theme">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>PEDIDOS</span>
+                        <i class="fa-solid fa-chevron-down arrow"></i>
+                    </div>
+                </div>
+                <div class="sub-nav orange-line">
                     <div class="nav-item sub-item"><i class="fa-solid fa-hand-pointer"></i> MANUAL</div>
                     <div class="nav-item sub-item"><i class="fa-solid fa-robot"></i> ASISTIDA</div>
                 </div>
             </div>
-            
-            <div class="nav-group open">
-                <div class="nav-item group-title purple-trigger">
-                    <i class="fa-solid fa-chart-simple icon-purple"></i>
-                    <span>REPORTES</span>
-                    <i class="fa-solid fa-chevron-down arrow"></i>
+
+            <div class="nav-item" data-node="recepcion">
+                <div class="nav-shape cyan-theme">
+                    <i class="fa-solid fa-truck-ramp-box"></i>
+                    <span>RECEPCIÓN</span>
                 </div>
-                <div class="sub-nav">
+            </div>
+
+            <div class="nav-item" data-node="semanal">
+                <div class="nav-shape cyan-theme">
+                    <i class="fa-solid fa-calendar-week"></i>
+                    <span>SEMANAL</span>
+                </div>
+            </div>
+
+            <div class="nav-item" data-node="proveedores">
+                <div class="nav-shape cyan-theme">
+                    <i class="fa-solid fa-industry"></i>
+                    <span>PROVEEDORES</span>
+                </div>
+            </div>
+
+            <div class="nav-item" data-node="historial">
+                <div class="nav-shape cyan-theme">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>HISTORIAL</span>
+                </div>
+            </div>
+
+            <div class="nav-group open" data-group="reportes">
+                <div class="nav-item group-title purple-theme">
+                    <div class="nav-shape purple-theme">
+                        <i class="fa-solid fa-chart-simple"></i>
+                        <span>REPORTES</span>
+                        <i class="fa-solid fa-chevron-down arrow"></i>
+                    </div>
+                </div>
+                <div class="sub-nav purple-line">
                     <div class="nav-item sub-item"><i class="fa-solid fa-trophy"></i> TOP PROD</div>
                     <div class="nav-item sub-item"><i class="fa-solid fa-triangle-exclamation"></i> CRÍTICOS</div>
                     <div class="nav-item sub-item"><i class="fa-solid fa-dollar-sign"></i> VENDIDOS</div>
                     <div class="nav-item sub-item"><i class="fa-solid fa-circle-info"></i> MÁS INFO</div>
                 </div>
             </div>
-            
-            <div class="nav-item configuration-btn">
-                <i class="fa-solid fa-gear icon-blue"></i>
-                <span>CONFIGURACIÓN</span>
+
+            <div class="nav-item configuration-btn" data-node="config">
+                <div class="nav-shape cyan-theme">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>CONFIGURACIÓN</span>
+                </div>
             </div>
         </nav>
     </aside>
 
+    <!-- ═══ MAIN CONTENT ═══ -->
     <main class="main-hud">
+        <!-- Top Header Bar -->
         <header class="topbar-hud">
-            <div class="system-status">
-                <span class="pulse-dot"></span>
-                <span class="status-text">SISTEMA ACTIVO</span>
-                <svg class="heartbeat-svg" viewBox="0 0 100 20">
-                    <polyline points="0,10 30,10 35,2 40,18 45,10 70,10 75,5 80,12 85,10 100,10"></polyline>
-                </svg>
+            <div class="topbar-left">
+                <div class="system-status">
+                    <span class="pulse-dot"></span>
+                    <span class="status-text">SISTEMA ACTIVO</span>
+                    <svg class="heartbeat-svg" viewBox="0 0 100 20" aria-hidden="true">
+                        <polyline points="0,10 20,10 25,2 30,18 35,10 55,10 60,5 65,12 70,10 100,10"></polyline>
+                    </svg>
+                </div>
+                <div class="topbar-separator"></div>
+                <span class="topbar-clock" id="hudClock">00:00:00</span>
             </div>
             <div class="user-profile">
                 <div class="user-info">
@@ -71,12 +119,15 @@
             </div>
         </header>
 
+        <!-- KPI Metric Cards -->
         <section class="kpi-row">
-            <div class="hud-card kpi-card cyan-glow">
+            <div class="hud-card kpi-card cyan-glow" data-connect="kpi1">
+                <div class="card-corner-bracket tl"></div>
+                <div class="card-corner-bracket br"></div>
                 <div class="card-inner">
                     <span class="card-title">TOP PRODUCTOS</span>
                     <div class="card-body">
-                        <div class="card-icon-box"><i class="fa-solid fa-chart-bar"></i></div>
+                        <div class="card-icon-ring"><i class="fa-solid fa-chart-bar"></i></div>
                         <div class="card-value-container">
                             <span class="card-value">248</span>
                             <span class="card-unit">PRODUCTOS</span>
@@ -87,11 +138,13 @@
                 </div>
             </div>
 
-            <div class="hud-card kpi-card orange-glow">
+            <div class="hud-card kpi-card orange-glow" data-connect="kpi2">
+                <div class="card-corner-bracket tl"></div>
+                <div class="card-corner-bracket br"></div>
                 <div class="card-inner">
                     <span class="card-title">TOP PROD. VENDIDOS</span>
                     <div class="card-body">
-                        <div class="card-icon-box"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="card-icon-ring"><i class="fa-solid fa-chart-line"></i></div>
                         <div class="card-value-container">
                             <span class="card-value">1,842</span>
                             <span class="card-unit">UNIDADES</span>
@@ -102,11 +155,13 @@
                 </div>
             </div>
 
-            <div class="hud-card kpi-card red-glow">
+            <div class="hud-card kpi-card red-glow" data-connect="kpi3">
+                <div class="card-corner-bracket tl"></div>
+                <div class="card-corner-bracket br"></div>
                 <div class="card-inner">
                     <span class="card-title">TOP PROD. PEDIDOS</span>
                     <div class="card-body">
-                        <div class="card-icon-box"><i class="fa-solid fa-clipboard-list"></i></div>
+                        <div class="card-icon-ring"><i class="fa-solid fa-clipboard-list"></i></div>
                         <div class="card-value-container">
                             <span class="card-value">762</span>
                             <span class="card-unit">PEDIDOS</span>
@@ -117,11 +172,13 @@
                 </div>
             </div>
 
-            <div class="hud-card kpi-card purple-glow">
+            <div class="hud-card kpi-card purple-glow" data-connect="kpi4">
+                <div class="card-corner-bracket tl"></div>
+                <div class="card-corner-bracket br"></div>
                 <div class="card-inner">
                     <span class="card-title">TOP PEDIDOS MÁS INFO</span>
                     <div class="card-body">
-                        <div class="card-icon-box"><i class="fa-solid fa-circle-info"></i></div>
+                        <div class="card-icon-ring"><i class="fa-solid fa-circle-info"></i></div>
                         <div class="card-value-container">
                             <span class="card-value">96%</span>
                             <span class="card-unit">CUMPLIMIENTO</span>
@@ -133,11 +190,19 @@
             </div>
         </section>
 
+        <!-- Main Grid: Table + Side Widgets -->
         <section class="dashboard-grid">
-            <div class="hud-card main-panel table-panel blue-glow">
+            <div class="hud-card main-panel table-panel blue-glow" data-connect="table">
+                <div class="panel-corner tl"></div>
+                <div class="panel-corner tr"></div>
+                <div class="panel-corner bl"></div>
+                <div class="panel-corner br"></div>
                 <div class="card-inner">
-                    <span class="panel-header-title">PRODUCTOS CRÍTICOS</span>
-                    
+                    <div class="panel-header-row">
+                        <span class="panel-header-title">PRODUCTOS CRÍTICOS</span>
+                        <div class="panel-header-line"></div>
+                    </div>
+
                     <div class="table-wrapper">
                         <table class="hud-table">
                             <thead>
@@ -233,20 +298,20 @@
                             TOTAL PRODUCTOS: <span class="badge-value">248</span>
                         </div>
                         <div class="hud-pagination">
-                            <button class="pag-btn"><i class="fa-solid fa-angles-left"></i></button>
+                            <button class="pag-btn" aria-label="Anterior"><i class="fa-solid fa-angles-left"></i></button>
                             <button class="pag-btn active">1</button>
                             <button class="pag-btn">2</button>
                             <button class="pag-btn">3</button>
                             <button class="pag-btn">4</button>
                             <button class="pag-btn">5</button>
-                            <button class="pag-btn"><i class="fa-solid fa-angles-right"></i></button>
+                            <button class="pag-btn" aria-label="Siguiente"><i class="fa-solid fa-angles-right"></i></button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="side-widgets-column">
-                <div class="hud-card sub-panel orange-glow-dim">
+                <div class="hud-card sub-panel orange-glow-dim" data-connect="widget1">
                     <div class="card-inner">
                         <span class="sub-panel-title"><i class="fa-solid fa-arrow-trend-up"></i> TOP PROD. VENDIDOS</span>
                         <ul class="ranking-list">
@@ -258,7 +323,7 @@
                     </div>
                 </div>
 
-                <div class="hud-card sub-panel red-glow-dim">
+                <div class="hud-card sub-panel red-glow-dim" data-connect="widget2">
                     <div class="card-inner">
                         <span class="sub-panel-title"><i class="fa-solid fa-boxes-stacked"></i> TOP PROD. PEDIDOS</span>
                         <ul class="ranking-list">
@@ -270,7 +335,7 @@
                     </div>
                 </div>
 
-                <div class="hud-card sub-panel purple-glow-dim">
+                <div class="hud-card sub-panel purple-glow-dim" data-connect="widget3">
                     <div class="card-inner">
                         <span class="sub-panel-title"><i class="fa-solid fa-circle-nodes"></i> TOP PEDIDOS MÁS INFO</span>
                         <ul class="ranking-list">
@@ -284,14 +349,15 @@
             </div>
         </section>
 
+        <!-- Bottom Section -->
         <section class="bottom-grid-hud">
-            <div class="hud-card radar-panel blue-glow">
+            <div class="hud-card radar-panel blue-glow" data-connect="radar">
                 <div class="card-inner radar-layout">
                     <div class="radar-text-content">
                         <span class="radar-header"><i class="fa-solid fa-bell"></i> RECORDATORIOS</span>
                         <p class="radar-description">
-                            De los productos principales, <br>
-                            <span class="highlight-text-red">10 de los registrados</span> <br>
+                            De los productos principales,<br>
+                            <span class="highlight-text-red">10 de los registrados</span><br>
                             están por debajo del stock mínimo.
                         </p>
                     </div>
@@ -303,13 +369,14 @@
                             <div class="radar-circle c3"></div>
                             <div class="radar-crosshair-h"></div>
                             <div class="radar-crosshair-v"></div>
-                            <span class="radar-blip"></span>
+                            <span class="radar-blip b1"></span>
+                            <span class="radar-blip b2"></span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="hud-card bar-chart-panel purple-glow">
+            <div class="hud-card bar-chart-panel purple-glow" data-connect="chart">
                 <div class="card-inner">
                     <span class="chart-panel-title">CANTIDAD DE PROD. VENDIDOS</span>
                     <div class="main-chart-wrapper">
@@ -319,27 +386,7 @@
             </div>
         </section>
     </main>
-</div>-->
-
-<div class="container">
-
-<div class="parent">
-    <div class="div1">1</div>
-    <div class="div6">6</div>
-    <div class="div11">11</div>
-    <div class="div12">12</div>
-    <div class="div13">13</div>
-    <div class="div14">14</div>
-    <div class="div15">15</div>
-    <div class="div16">16</div>
-    <div class="div17">17</div>
-    <div class="div19">19</div>
-    <div class="div21">21</div>
 </div>
-</div>
-
-
-
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="assets/js/main.js"></script>
