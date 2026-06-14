@@ -335,61 +335,43 @@ function initNavigation() {
     const accordionItems = document.querySelectorAll('[data-accordion]');
     if (!accordionItems.length) return;
 
+    // Renderizado preventivo si algún item iniciara abierto por defecto
     accordionItems.forEach(item => {
-        const submenu = item.querySelector('.submenu');
-        if (submenu && !item.classList.contains('is-open')) {
-            submenu.style.maxHeight = '0px';
-            submenu.style.display = 'block';
+        if (item.classList.contains('is-open')) {
+            drawConnectorLines(item);
         }
     });
-
-    function closeAccordionItem(item) {
-        item.classList.remove('is-open');
-        const submenu = item.querySelector('.submenu');
-        const toggle = item.querySelector('[data-toggle]');
-        if (submenu) {
-            submenu.style.maxHeight = '0px';
-        }
-        if (toggle) toggle.setAttribute('aria-expanded', 'false');
-    }
-
-    function openAccordionItem(item) {
-        item.classList.add('is-open');
-        const submenu = item.querySelector('.submenu');
-        const toggle = item.querySelector('[data-toggle]');
-        
-        if (submenu) {
-            submenu.style.maxHeight = 'none';
-            const height = submenu.scrollHeight;
-            submenu.style.maxHeight = '0px';
-            
-            submenu.offsetHeight; 
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    submenu.style.maxHeight = height + 'px';
-                    drawConnectorLines(item);
-                });
-            });
-        }
-        if (toggle) toggle.setAttribute('aria-expanded', 'true');
-    }
 
     accordionItems.forEach(item => {
         const toggle = item.querySelector('[data-toggle]');
         if (!toggle) return;
+        
         toggle.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            
             const isOpen = item.classList.contains('is-open');
+            
+            // Comportamiento Acordeón Único: Cierra los demás menús hermanos
             accordionItems.forEach(other => {
-                if (other !== item) closeAccordionItem(other);
+                if (other !== item) {
+                    other.classList.remove('is-open');
+                    const otherToggle = other.querySelector('[data-toggle]');
+                    if (otherToggle) otherToggle.setAttribute('aria-expanded', 'false');
+                }
             });
             
             if (isOpen) {
-                closeAccordionItem(item);
+                item.classList.remove('is-open');
+                toggle.setAttribute('aria-expanded', 'false');
             } else {
-                openAccordionItem(item);
+                item.classList.add('is-open');
+                toggle.setAttribute('aria-expanded', 'true');
+                
+                // Un micro-delay para asegurar que el árbol del DOM se estabilice antes de trazar el SVG
+                setTimeout(() => {
+                    drawConnectorLines(item);
+                }, 40); 
             }
         });
     });
@@ -400,12 +382,14 @@ function initNavigation() {
         if (!svg || !subItems.length) return;
         
         const inner = accordionItem.querySelector('.submenu__inner');
-        const svgHeight = inner.offsetHeight;
+        // scrollHeight obtiene el tamaño real del bloque de botones ignorando el colapso visual del padre
+        const svgHeight = inner.scrollHeight;
+        if (!svgHeight) return;
+
         const color = getComputedStyle(accordionItem).color;
-        
         const rawId = svg.id || 'default';
         const filterId = 'nodeGlow-' + rawId.replace('lines-', '');
-        const nodeX = 8; 
+        const nodeX = 8;
         const branchEnd = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sub-indent'), 10) || 18;
         
         svg.setAttribute('viewBox', `0 0 ${branchEnd + 4} ${svgHeight}`);

@@ -199,9 +199,11 @@ body:has(.dashboard-container)::after {
     margin: 0;
     position: relative;
     z-index: 20;
-    max-height: calc(100vh - 240px - 75px); 
+
+    max-height: calc(100vh - 240px - 85px); 
     overflow-y: auto;
-    padding-right: 8px; 
+    
+    padding-right: 14px; 
     padding-left: 2px;
     scrollbar-width: none;
 }
@@ -375,20 +377,34 @@ body:has(.dashboard-container)::after {
 
 /*Submenu layout*/
 .submenu {
-    overflow: hidden;
-    max-height: 0;
+    display: grid;
+    grid-template-rows: 0fr; /* Arranca colapsado de forma nativa */
     opacity: 0;
-    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    visibility: hidden;
+    transition: grid-template-rows 0.32s cubic-bezier(0.25, 1, 0.5, 1), 
+                opacity 0.22s ease, 
+                visibility 0.22s ease;
     position: relative;
 }
+
 .nav-item.is-open > .submenu {
+    grid-template-rows: 1fr;
     opacity: 1;
+    visibility: visible;
 }
+
 .submenu__inner {
-    position: relative;
+    overflow: hidden; 
+    padding-top: 0;
+    padding-bottom: 0;
+    transition: padding 0.32s var(--transition-smooth);
+}
+
+.nav-item.is-open > .submenu .submenu__inner {
     padding-top: 10px;
     padding-bottom: 8px;
 }
+
 .submenu__lines {
     position: absolute;
     top: 0;
