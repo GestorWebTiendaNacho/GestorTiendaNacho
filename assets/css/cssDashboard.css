@@ -1,0 +1,149 @@
+body {
+margin:0;
+font-family: 'Segoe UI';
+background: radial-gradient(circle, #050b18, #020611);
+color:white;
+}
+
+.dashboard {
+display:flex;
+height:100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+width:240px;
+background: rgba(0,20,40,0.6);
+backdrop-filter: blur(12px);
+padding:20px;
+}
+
+.nav {
+width:100%;
+margin:10px 0;
+padding:12px;
+border-radius:14px;
+background:transparent;
+border:1px solid rgba(0,255,255,0.2);
+color:white;
+cursor:pointer;
+}
+
+.nav:hover {
+box-shadow:0 0 10px cyan;
+}
+
+.sub {
+margin-left:10px;
+}
+
+.sub button {
+display:block;
+margin:5px 0;
+background:none;
+border:none;
+color:#aaa;
+}
+
+/* MAIN */
+.main {
+flex:1;
+padding:20px;
+}
+
+/* HEADER */
+.header {
+display:flex;
+justify-content:space-between;
+}
+
+/* CARDS */
+.cards {
+display:flex;
+gap:20px;
+margin-top:20px;
+}
+
+.card {
+flex:1;
+padding:20px;
+border-radius:20px;
+text-align:center;
+background: rgba(255,255,255,0.05);
+}
+
+.card.blue { box-shadow:0 0 20px cyan; }
+.card.orange { box-shadow:0 0 20px orange; }
+.card.red { box-shadow:0 0 20px red; }
+.card.purple { box-shadow:0 0 20px violet; }
+
+/* CONTENT */
+.content {
+display:flex;
+margin-top:20px;
+gap:20px;
+}
+
+.table-panel {
+flex:3;
+}
+
+.side-panels {
+flex:1;
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+.panel {
+background: rgba(255,255,255,0.05);
+padding:20px;
+border-radius:20px;
+}
+
+/* MINI PANELS */
+.mini {
+padding:15px;
+border-radius:15px;
+}
+
+.mini.orange { box-shadow:0 0 10px orange; }
+.mini.red { box-shadow:0 0 10px red; }
+.mini.purple { box-shadow:0 0 10px violet; }
+
+/* TABLE */
+table {
+width:100%;
+}
+
+td, th {
+padding:10px;
+}
+
+.danger { color:red; }
+.warning { color:orange; }
+
+/* BOTTOM */
+.bottom {
+display:flex;
+gap:20px;
+margin-top:20px;
+}
+
+.reminder {
+flex:1;
+}
+
+#chart {
+flex:2;
+background: rgba(255,255,255,0.05);
+border-radius:20px;
+}
+
+/* CANVAS */
+#lines {
+position:fixed;
+top:0;
+left:0;
+pointer-events:none;
+}

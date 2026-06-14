@@ -1,0 +1,129 @@
+
+<link rel="stylesheet" href="assets/css/cssDashboard.css">
+
+<div class="dashboard">
+
+  <!-- SIDEBAR -->
+
+  <aside class="sidebar">
+    <h2>DEPÓSITO</h2>
+
+```
+<button class="nav active">🏠 INICIO</button>
+
+<button class="nav orange">🛒 PEDIDOS</button>
+<div class="sub">
+  <button>MANUAL</button>
+  <button>ASISTIDA</button>
+</div>
+
+<button class="nav purple">📊 REPORTES</button>
+<div class="sub">
+  <button>TOP PROD</button>
+  <button>CRÍTICOS</button>
+  <button>VENDIDOS</button>
+  <button>MÁS INFO</button>
+</div>
+
+<button class="nav blue">⚙ CONFIGURACIÓN</button>
+```
+
+  </aside>
+
+  <!-- MAIN -->
+
+  <main class="main">
+
+```
+<!-- HEADER -->
+<div class="header">
+  <span class="status">🟢 SISTEMA ACTIVO</span>
+  <span class="user">USUARIO: ADMIN</span>
+</div>
+
+<!-- CARDS -->
+<div class="cards">
+  <div class="card blue">
+    <h3>TOP PRODUCTOS</h3>
+    <p>248</p>
+  </div>
+
+  <div class="card orange">
+    <h3>TOP PROD. VENDIDOS</h3>
+    <p>1,842</p>
+  </div>
+
+  <div class="card red">
+    <h3>TOP PROD. PEDIDOS</h3>
+    <p>762</p>
+  </div>
+
+  <div class="card purple">
+    <h3>TOP PEDIDOS MÁS INFO</h3>
+    <p>96%</p>
+  </div>
+</div>
+
+
+<div class="content">
+
+  <!-- TABLA -->
+  <div class="panel table-panel">
+    <h3>PRODUCTOS CRÍTICOS</h3>
+
+    <table>
+      <tr>
+        <th>SKU</th><th>PRODUCTO</th><th>STOCK</th><th>MÍNIMO</th><th>PROVEEDOR</th>
+      </tr>
+
+      <tr><td>SKU-001</td><td>Sensor</td><td class="danger">5</td><td>20</td><td>A</td></tr>
+      <tr><td>SKU-002</td><td>Batería</td><td class="warning">8</td><td>15</td><td>B</td></tr>
+      <tr><td>SKU-003</td><td>Circuito</td><td class="danger">3</td><td>10</td><td>C</td></tr>
+    </table>
+  </div>
+
+  <!-- RIGHT PANELS -->
+  <div class="side-panels">
+
+    <div class="mini orange">
+      <h4>TOP VENDIDOS</h4>
+      <p>1° SKU-44</p>
+      <p>2° SKU-20</p>
+    </div>
+
+    <div class="mini red">
+      <h4>TOP PEDIDOS</h4>
+      <p>1° SKU-160</p>
+      <p>2° SKU-180</p>
+    </div>
+
+    <div class="mini purple">
+      <h4>MÁS INFO</h4>
+      <p>SKU-3</p>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- FOOT -->
+<div class="bottom">
+
+  <div class="panel reminder">
+    <h3>RECORDATORIOS</h3>
+    <p>10 productos debajo del mínimo</p>
+  </div>
+
+  <canvas id="chart"></canvas>
+
+</div>
+```
+
+  </main>
+
+</div>
+
+<canvas id="lines"></canvas>
+
+<script src="assets/js/main.js"></script>
+<script src="assets/js/jsDashboard.js"></script>
