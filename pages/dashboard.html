@@ -3,42 +3,99 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="assets/css/cssDashboard.css">
 
-<div class="hud">
 
-  <!-- overlay líneas -->
-  <svg class="hud-lines" viewBox="0 0 1200 800">
-    <path d="M100 200 H400 L500 150 H900" />
-    <path d="M300 600 H700 L900 500" />
+<div class="hud-root">
+
+  <!-- FONDO -->
+  <div class="hud-bg"></div>
+
+  <!-- SVG LÍNEAS -->
+  <svg class="hud-overlay" viewBox="0 0 1600 900">
+    <path class="line cyan" d="M200 180 H600 L700 140 H1200" />
+    <path class="line purple" d="M300 650 H900 L1200 500" />
+    <path class="line orange" d="M100 400 H400 L500 450 H900" />
   </svg>
 
-  <!-- GRID -->
-  <div class="hud-grid">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">DEPÓSITO</div>
 
-    <div class="hud-card cyan">
-      <div class="hud-border"></div>
-      <h3>TOP PRODUCTOS</h3>
-      <div class="value">248</div>
+    <div class="menu">
+      <button class="btn active">INICIO</button>
+
+      <div class="submenu">
+        <button class="btn">PEDIDOS</button>
+        <div class="submenu-items">
+          <span>MANUAL</span>
+          <span>ASISTIDA</span>
+        </div>
+      </div>
+
+      <div class="submenu">
+        <button class="btn">REPORTES</button>
+        <div class="submenu-items">
+          <span>TOP</span>
+          <span>CRÍTICOS</span>
+        </div>
+      </div>
     </div>
+  </aside>
 
-    <div class="hud-card orange">
-      <div class="hud-border"></div>
-      <h3>VENDIDOS</h3>
-      <div class="value">1842</div>
-    </div>
+  <!-- MAIN -->
+  <main class="main">
 
-    <div class="hud-card red">
-      <div class="hud-border"></div>
-      <h3>PEDIDOS</h3>
-      <div class="value">762</div>
-    </div>
+    <!-- HEADER -->
+    <header class="header">
+      <div class="status">● SISTEMA ACTIVO</div>
+      <div class="user">ADMIN</div>
+    </header>
 
-    <div class="hud-card purple">
-      <div class="hud-border"></div>
-      <h3>INFO</h3>
-      <div class="value">96%</div>
-    </div>
+    <!-- CARDS -->
+    <section class="cards">
+      <div class="card cyan"><span>TOP PRODUCTOS</span><b>248</b></div>
+      <div class="card orange"><span>VENDIDOS</span><b>1842</b></div>
+      <div class="card red"><span>PEDIDOS</span><b>762</b></div>
+      <div class="card purple"><span>INFO</span><b>96%</b></div>
+    </section>
 
-  </div>
+    <!-- CONTENIDO -->
+    <section class="content">
+
+      <!-- TABLA -->
+      <div class="panel table">
+        <h3>PRODUCTOS CRÍTICOS</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Producto</th>
+              <th>Stock</th>
+              <th>Mín</th>
+              <th>Prov</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>001</td><td>Sensor</td><td class="low">5</td><td>20</td><td>A</td></tr>
+            <tr><td>002</td><td>Batería</td><td class="mid">8</td><td>15</td><td>B</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- LATERAL -->
+      <div class="sidepanels">
+        <div class="mini orange">TOP VENTAS</div>
+        <div class="mini red">TOP PEDIDOS</div>
+      </div>
+
+    </section>
+
+    <!-- GRÁFICOS -->
+    <section class="charts">
+      <canvas id="radar"></canvas>
+      <canvas id="bars"></canvas>
+    </section>
+
+  </main>
 
 </div>
 
