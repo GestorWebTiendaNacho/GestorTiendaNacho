@@ -3,207 +3,43 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="assets/css/cssDashboard.css">
 
-<div class="cyber-dashboard-root">
+<div class="hud">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar-cyber">
-    <div class="brand-zone">
-      <div class="brand-glitch">DEPÓSITO</div>
+  <!-- overlay líneas -->
+  <svg class="hud-lines" viewBox="0 0 1200 800">
+    <path d="M100 200 H400 L500 150 H900" />
+    <path d="M300 600 H700 L900 500" />
+  </svg>
+
+  <!-- GRID -->
+  <div class="hud-grid">
+
+    <div class="hud-card cyan">
+      <div class="hud-border"></div>
+      <h3>TOP PRODUCTOS</h3>
+      <div class="value">248</div>
     </div>
 
-    <nav class="nav-menu">
-
-      <div class="nav-group">
-        <button class="btn-nav active">
-          <i class="fas fa-home"></i> INICIO
-        </button>
-      </div>
-
-      <div class="nav-group">
-        <button class="btn-nav orange toggle-menu-btn">
-          <i class="fas fa-box"></i> PEDIDOS
-          <i class="fas fa-chevron-down ml-auto-cyber"></i>
-        </button>
-        <div class="sub-menu" style="--menu-clr:#f59e0b;">
-          <button>MANUAL</button>
-          <button>ASISTIDA</button>
-        </div>
-      </div>
-
-      <div class="nav-group">
-        <button class="btn-nav purple toggle-menu-btn">
-          <i class="fas fa-chart-bar"></i> REPORTES
-          <i class="fas fa-chevron-down ml-auto-cyber"></i>
-        </button>
-        <div class="sub-menu" style="--menu-clr:#a855f7;">
-          <button>TOP PROD</button>
-          <button>CRÍTICOS</button>
-          <button>VENDIDOS</button>
-          <button>MÁS INFO</button>
-        </div>
-      </div>
-
-      <div class="mt-auto-cyber">
-        <button class="btn-nav">
-          <i class="fas fa-cog"></i> CONFIGURACIÓN
-        </button>
-      </div>
-
-    </nav>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main-workspace">
-
-    <!-- HEADER -->
-    <div class="cyber-header">
-      <div class="system-pulse">
-        <div class="pulse-indicator"></div>
-        SISTEMA ACTIVO
-      </div>
-
-      <div class="user-badge">
-        <i class="fas fa-user"></i> USUARIO ADMIN
-      </div>
+    <div class="hud-card orange">
+      <div class="hud-border"></div>
+      <h3>VENDIDOS</h3>
+      <div class="value">1842</div>
     </div>
 
-    <!-- CARDS -->
-    <div class="cards-grid">
-
-      <div class="cyber-card" style="--card-clr:#00f0ff;--card-clr-rgb:0,240,255;">
-        <div class="card-title">TOP PRODUCTOS</div>
-        <div class="card-body">
-          <div>
-            <span class="data-num">248</span>
-            <div class="data-lbl">PRODUCTOS</div>
-          </div>
-          <div class="icon-box"><i class="fas fa-chart-bar"></i></div>
-        </div>
-        <button class="card-action-btn">VER REPORTE</button>
-      </div>
-
-      <div class="cyber-card" style="--card-clr:#f59e0b;--card-clr-rgb:245,158,11;">
-        <div class="card-title">TOP PROD. VENDIDOS</div>
-        <div class="card-body">
-          <div>
-            <span class="data-num">1,842</span>
-            <div class="data-lbl">UNIDADES</div>
-          </div>
-          <div class="icon-box"><i class="fas fa-arrow-up"></i></div>
-        </div>
-        <button class="card-action-btn">VER REPORTE</button>
-      </div>
-
-      <div class="cyber-card" style="--card-clr:#ef4444;--card-clr-rgb:239,68,68;">
-        <div class="card-title">TOP PROD. PEDIDOS</div>
-        <div class="card-body">
-          <div>
-            <span class="data-num">762</span>
-            <div class="data-lbl">PEDIDOS</div>
-          </div>
-          <div class="icon-box"><i class="fas fa-file-alt"></i></div>
-        </div>
-        <button class="card-action-btn">VER REPORTE</button>
-      </div>
-
-      <div class="cyber-card" style="--card-clr:#a855f7;--card-clr-rgb:168,85,247;">
-        <div class="card-title">TOP PEDIDOS MÁS INFO</div>
-        <div class="card-body">
-          <div>
-            <span class="data-num">96%</span>
-            <div class="data-lbl">CUMPLIMIENTO</div>
-          </div>
-          <div class="icon-box"><i class="fas fa-info-circle"></i></div>
-        </div>
-        <button class="card-action-btn">VER REPORTE</button>
-      </div>
-
+    <div class="hud-card red">
+      <div class="hud-border"></div>
+      <h3>PEDIDOS</h3>
+      <div class="value">762</div>
     </div>
 
-    <!-- CONTENIDO -->
-    <div class="workspace-split">
-
-      <!-- TABLA -->
-      <div class="panel-cyber col-custom-left" style="--panel-clr:#00f0ff;--panel-clr-rgb:0,240,255;">
-        <div class="panel-header">PRODUCTOS CRÍTICOS</div>
-
-        <div class="overflow-x-auto">
-          <table class="cyber-table">
-            <thead>
-              <tr>
-                <th>SKU</th>
-                <th>PRODUCTO</th>
-                <th>STOCK</th>
-                <th>MÍNIMO</th>
-                <th>PROVEEDOR</th>
-                <th>CATEGORÍA</th>
-                <th>ACCIÓN</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>SKU-001</td>
-                <td>Sensor de temperatura</td>
-                <td style="color:#ef4444;">5</td>
-                <td>20</td>
-                <td>A</td>
-                <td>Electrónica</td>
-                <td><button class="table-row-btn">VER</button></td>
-              </tr>
-              <tr>
-                <td>SKU-002</td>
-                <td>Batería 12V</td>
-                <td style="color:#f59e0b;">8</td>
-                <td>15</td>
-                <td>B</td>
-                <td>Energía</td>
-                <td><button class="table-row-btn">VER</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- WIDGETS DERECHA -->
-      <div class="right-widgets-stack">
-
-        <div class="mini-panel-cyber" style="--panel-clr:#f59e0b;">
-          <div class="mini-header">TOP VENDIDOS</div>
-          <div class="mini-content">
-            <div class="mini-row"><span>1° PROD</span><strong>1250</strong></div>
-            <div class="mini-row"><span>2° PROD</span><strong>930</strong></div>
-          </div>
-          <button class="mini-footer-btn">VER REPORTE</button>
-        </div>
-
-        <div class="mini-panel-cyber" style="--panel-clr:#ef4444;">
-          <div class="mini-header">TOP PEDIDOS</div>
-          <div class="mini-content">
-            <div class="mini-row"><span>1°</span><strong>320</strong></div>
-          </div>
-          <button class="mini-footer-btn">VER REPORTE</button>
-        </div>
-
-      </div>
-
+    <div class="hud-card purple">
+      <div class="hud-border"></div>
+      <h3>INFO</h3>
+      <div class="value">96%</div>
     </div>
 
-    <!-- BOTTOM -->
-    <div class="bottom-split">
+  </div>
 
-      <div class="panel-cyber flex-1" style="--panel-clr:#00f0ff;">
-        <div class="panel-header">RECORDATORIOS</div>
-        <canvas id="cyberInjectedRadar"></canvas>
-      </div>
-
-      <div class="panel-cyber flex-1" style="--panel-clr:#a855f7;">
-        <div class="panel-header">VENTAS</div>
-        <canvas id="cyberInjectedHistogram"></canvas>
-      </div>
-
-    </div>
-
-  </main>
 </div>
 
 <script src="assets/js/main.js"></script>
