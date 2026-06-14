@@ -58,7 +58,7 @@
 /* ── Global Reset & Background ── */
 .dashboard-container,
 .dashboard-container * {
-    flex: 1; 
+    flex: auto; 
     box-sizing: border-box;
     overflow-y: auto !important;
     scrollbar-width: thin !important;
