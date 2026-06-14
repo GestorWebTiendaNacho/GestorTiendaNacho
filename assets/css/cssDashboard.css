@@ -72,7 +72,6 @@
     color: #ffffff;
 }
 
-/* Tech grid texture + scanline overlay on body when dashboard present */
 body:has(.dashboard-container) {
     background-color: var(--bg-base) !important;
     background-image:
@@ -99,7 +98,7 @@ body:has(.dashboard-container)::after {
     z-index: 0;
 }
 
-/* ── Canvas Layers ── */
+/* ── Canvas Background Layers ── */
 #connections,
 #particles {
     position: fixed;
@@ -109,14 +108,10 @@ body:has(.dashboard-container)::after {
     height: 100%;
     pointer-events: none;
 }
-
 #connections { z-index: 1; opacity: 0.55; }
 #particles   { z-index: 0; opacity: 0.35; }
 
-/* ═══════════════════════════════════════
-   SIDEBAR
-   ═══════════════════════════════════════ */
-/* Distribución principal enviando el sidebar al extremo derecho */
+/* ── App Layout Architecture ── */
 .app-layout {
     display: flex;
     flex-direction: row-reverse; 
@@ -131,7 +126,7 @@ body:has(.dashboard-container)::after {
     color: #fff;
 }
 
-/* Sidebar adaptada a la derecha con efecto Flotante */
+/* ── Floating Asymmetrical Sidebar ── */
 .sidebar {
     width: var(--sidebar-width);
     min-height: 100vh;
@@ -140,13 +135,9 @@ body:has(.dashboard-container)::after {
     position: relative;
     flex-shrink: 0;
     backdrop-filter: blur(8px);
-    
-    /* EFECTO DE DESPEGUE: Sombra proyectada hacia la izquierda */
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6), 
                 -2px 0 15px rgba(0, 212, 255, 0.12);
     border-left: 1px solid rgba(0, 212, 255, 0.15);
-
-    /* Clip path espejado para las esquinas del lado derecho */
     clip-path: polygon(
         var(--corner-cut) 0,
         100% 0,
@@ -167,7 +158,6 @@ body:has(.dashboard-container)::after {
     z-index: 10;
 }
 
-/* Reposicionamiento simétrico de las muescas decorativas */
 .sidebar__hatch {
     position: absolute;
     pointer-events: none;
@@ -178,7 +168,7 @@ body:has(.dashboard-container)::after {
 .sidebar__hatch--top {
     top: 4px;
     left: 4px;
-    transform: scaleX(-1); /* Reflejo horizontal */
+    transform: scaleX(-1);
 }
 .sidebar__hatch--bottom {
     bottom: 4px;
@@ -209,7 +199,7 @@ body:has(.dashboard-container)::after {
     position: relative;
 }
 
-/* Estilo Base de Botones */
+/* ── HUD Angular Poly-Buttons ── */
 .nav-btn {
     display: flex;
     align-items: center;
@@ -230,28 +220,13 @@ body:has(.dashboard-container)::after {
     box-sizing: border-box;
     transition: transform 0.3s var(--transition-smooth), background 0.3s;
     outline: none;
-    
-    clip-path: polygon(
-        10px 0,
-        calc(100% - 10px) 0,
-        100% 50%,
-        calc(100% - 10px) 100%,
-        10px 100%,
-        0 50%
-    );
+    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
 }
 
 .nav-btn--sub {
     height: var(--sub-btn-height);
     font-size: 0.72rem;
-    clip-path: polygon(
-        8px 0,
-        calc(100% - 8px) 0,
-        100% 50%,
-        calc(100% - 8px) 100%,
-        8px 100%,
-        0 50%
-    );
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
 }
 
 .nav-btn__wrap {
@@ -259,7 +234,6 @@ body:has(.dashboard-container)::after {
     display: block;
 }
 
-/* Bordes de luz de los botones individuales */
 .nav-btn__wrap::after {
     content: '';
     position: absolute;
@@ -268,28 +242,14 @@ body:has(.dashboard-container)::after {
     border: 1px solid currentColor;
     opacity: 0.4;
     transition: opacity 0.3s, box-shadow 0.3s;
-    clip-path: polygon(
-        10px 0,
-        calc(100% - 10px) 0,
-        100% 50%,
-        calc(100% - 10px) 100%,
-        10px 100%,
-        0 50%
-    );
+    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
 }
 
 .nav-btn__wrap--sub::after {
-    clip-path: polygon(
-        8px 0,
-        calc(100% - 8px) 0,
-        100% 50%,
-        calc(100% - 8px) 100%,
-        8px 100%,
-        0 50%
-    );
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
 }
 
-/* LÍNEA DE LUZ INFERIOR ANIMADA (Hover Effect) */
+/* Kinetic Glow Line Animation */
 .nav-btn__glow-line {
     position: absolute;
     bottom: 0;
@@ -313,7 +273,7 @@ body:has(.dashboard-container)::after {
     transition: opacity 0.2s;
 }
 
-/* Comportamiento Hover general */
+/* Interactive States */
 .nav-btn__wrap:hover .nav-btn,
 .nav-btn__wrap:focus-within .nav-btn {
     transform: translateY(-2px);
@@ -334,7 +294,7 @@ body:has(.dashboard-container)::after {
     100% { left: 100%; }
 }
 
-/* Temas Cromáticos */
+/* Chromatic Theme Variants */
 .theme-cyan   { color: var(--cyan); }
 .theme-orange { color: var(--orange); }
 .theme-purple { color: var(--purple); }
@@ -345,7 +305,7 @@ body:has(.dashboard-container)::after {
 .theme-purple .nav-btn { background: linear-gradient(135deg, var(--purple-dim), var(--bg-btn)); }
 .theme-teal .nav-btn   { background: linear-gradient(135deg, var(--teal-dim), var(--bg-btn)); }
 
-/* Iconografía */
+/* Iconography & Labels */
 .nav-btn__icon {
     flex-shrink: 0;
     width: 18px;
@@ -361,8 +321,6 @@ body:has(.dashboard-container)::after {
     stroke: currentColor;
     fill: none;
     stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
 }
 .nav-btn__label {
     flex: 1;
@@ -386,7 +344,7 @@ body:has(.dashboard-container)::after {
     transform: rotate(180deg);
 }
 
-/* Estructura del Submenú (Oculto por defecto) */
+/* Submenu layout */
 .submenu {
     overflow: hidden;
     max-height: 0;
@@ -420,15 +378,15 @@ body:has(.dashboard-container)::after {
     margin: 0;
 }
 
-/* Responsivo: Despliegue desde la Derecha en Mobile */
+/* Responsive Overrides */
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
         top: 0;
-        right: 0; /* Cambiado a la derecha */
+        right: 0;
         left: auto;
         z-index: 100;
-        transform: translateX(100%); /* Esconde hacia la derecha */
+        transform: translateX(100%);
     }
     .sidebar.is-open {
         transform: translateX(0);

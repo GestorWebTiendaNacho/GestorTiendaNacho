@@ -3,6 +3,7 @@
  * Circuit connections · Particles · Sparklines · Charts · Nav
  */
 document.addEventListener('DOMContentLoaded', () => {
+    // Core Visual & Interactive initializers
     initCircuitConnections();
     initParticles();
     initSparklines();
@@ -183,7 +184,6 @@ function initParticles() {
             ctx.fill();
         });
 
-        // Connect nearby particles with faint lines
         for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
                 const dx = particles[i].x - particles[j].x;
@@ -199,7 +199,6 @@ function initParticles() {
                 }
             }
         }
-
         requestAnimationFrame(animate);
     }
 
@@ -236,12 +235,11 @@ function initSparklines() {
         ctx.closePath();
 
         const fillGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        fillGrad.addColorStop(0, hexToRgba(color, 0.15));
+        fillGrad.addColorStop(0, hexToRgba(color, 0.15)); // Corregido: Ya no arrojará error de referencia
         fillGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = fillGrad;
         ctx.fill();
 
-        // Line stroke with glow
         ctx.beginPath();
         ctx.strokeStyle = color;
         ctx.lineWidth = 1.5;
@@ -257,16 +255,21 @@ function initSparklines() {
     });
 }
 
-function hexToRgba(hex, alpha) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+function hexToRgba(hex, alpha = 1) {
+    let cleanHex = hex.replace('#', '');
+    if (cleanHex.length === 3) {
+        cleanHex = cleanHex.split('').map(char => char + char).join('');
+    }
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 /* ─────────────────────────────────────────
    Main bar chart — Cantidad de Prod. Vendidos
    ───────────────────────────────────────── */
+
 function initMainBarChart() {
     const canvas = document.getElementById('hudBarChart');
     if (!canvas || typeof Chart === 'undefined') return;
@@ -347,82 +350,82 @@ function initMainBarChart() {
 /* ─────────────────────────────────────────
    Sidebar navigation interactions
    ───────────────────────────────────────── */
-(function () {
-        'use strict';
-        const accordionItems = document.querySelectorAll('[data-accordion]');
+function initNavigation() {
+    const accordionItems = document.querySelectorAll('[data-accordion]');
+    if (!accordionItems.length) return;
 
-        function closeAccordionItem(item) {
-            item.classList.remove('is-open');
-            const submenu = item.querySelector('.submenu');
-            const toggle = item.querySelector('[data-toggle]');
-            if (submenu) submenu.style.maxHeight = '0';
-            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    function closeAccordionItem(item) {
+        item.classList.remove('is-open');
+        const submenu = item.querySelector('.submenu');
+        const toggle = item.querySelector('[data-toggle]');
+        if (submenu) submenu.style.maxHeight = '0';
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function openAccordionItem(item) {
+        item.classList.add('is-open');
+        const submenu = item.querySelector('.submenu');
+        const toggle = item.querySelector('[data-toggle]');
+        if (submenu) {
+            submenu.style.maxHeight = 'none';
+            const height = submenu.scrollHeight;
+            submenu.style.maxHeight = '0';
+            requestAnimationFrame(() => {
+                submenu.style.maxHeight = height + 'px';
+                drawConnectorLines(item);
+            });
         }
+        if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    }
 
-        function openAccordionItem(item) {
-            item.classList.add('is-open');
-            const submenu = item.querySelector('.submenu');
-            const toggle = item.querySelector('[data-toggle]');
-            if (submenu) {
-                submenu.style.maxHeight = 'none';
-                const height = submenu.scrollHeight;
-                submenu.style.maxHeight = '0';
-                requestAnimationFrame(() => {
-                    submenu.style.maxHeight = height + 'px';
-                    drawConnectorLines(item);
-                });
+    accordionItems.forEach(item => {
+        const toggle = item.querySelector('[data-toggle]');
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+            const isOpen = item.classList.contains('is-open');
+            accordionItems.forEach(other => {
+                if (other !== item) closeAccordionItem(other);
+            });
+            if (isOpen) {
+                closeAccordionItem(item);
+            } else {
+                openAccordionItem(item);
             }
-            if (toggle) toggle.setAttribute('aria-expanded', 'true');
-        }
-
-        accordionItems.forEach(item => {
-            const toggle = item.querySelector('[data-toggle]');
-            if (!toggle) return;
-            toggle.addEventListener('click', () => {
-                const isOpen = item.classList.contains('is-open');
-                accordionItems.forEach(other => {
-                    if (other !== item) closeAccordionItem(other);
-                });
-                if (isOpen) {
-                    closeAccordionItem(item);
-                } else {
-                    openAccordionItem(item);
-                }
-            });
         });
+    });
 
-        function drawConnectorLines(accordionItem) {
-            const svg = accordionItem.querySelector('.submenu__lines');
-            const subItems = accordionItem.querySelectorAll('.submenu__list > li');
-            if (!svg || !subItems.length) return;
-            
-            const inner = accordionItem.querySelector('.submenu__inner');
-            const svgHeight = inner.offsetHeight;
-            const color = getComputedStyle(accordionItem).color;
-            const filterId = 'nodeGlow-' + svg.id.replace('lines-', '');
-            const nodeX = 14;
-            const branchEnd = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sub-indent'), 10) || 28;
-            
-            svg.setAttribute('viewBox', `0 0 ${branchEnd + 4} ${svgHeight}`);
-            svg.style.height = svgHeight + 'px';
-            
-            const centers = Array.from(subItems).map(li => li.offsetTop + li.offsetHeight / 2);
-            const lastCenter = centers[centers.length - 1];
-            
-            let paths = `<line x1="${nodeX}" y1="0" x2="${nodeX}" y2="${lastCenter}" stroke="${color}" stroke-width="1" opacity="0.65"/>`;
-            centers.forEach(cy => {
-                const elbowX = nodeX + 6;
-                paths += `<polyline points="${nodeX},${cy} ${elbowX},${cy} ${branchEnd},${cy}" fill="none" stroke="${color}" stroke-width="1" opacity="0.65"/>`;
-                paths += `<circle cx="${nodeX}" cy="${cy}" r="3" fill="${color}" opacity="0.9" filter="url(#${filterId})"/>`;
-                paths += `<circle cx="${branchEnd}" cy="${cy}" r="2" fill="${color}" opacity="0.75"/>`;
-            });
-            
-            const glowDef = `<defs><filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter></defs>`;
-            svg.innerHTML = glowDef + paths;
-        }
-    })();
+    function drawConnectorLines(accordionItem) {
+        const svg = accordionItem.querySelector('.submenu__lines');
+        const subItems = accordionItem.querySelectorAll('.submenu__list > li');
+        if (!svg || !subItems.length) return;
+        
+        const inner = accordionItem.querySelector('.submenu__inner');
+        const svgHeight = inner.offsetHeight;
+        const color = getComputedStyle(accordionItem).color;
+        const filterId = 'nodeGlow-' + svg.id.replace('lines-', '');
+        const nodeX = 14;
+        const branchEnd = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sub-indent'), 10) || 28;
+        
+        svg.setAttribute('viewBox', `0 0 ${branchEnd + 4} ${svgHeight}`);
+        svg.style.height = svgHeight + 'px';
+        
+        const centers = Array.from(subItems).map(li => li.offsetTop + li.offsetHeight / 2);
+        const lastCenter = centers[centers.length - 1];
+        
+        let paths = `<line x1="${nodeX}" y1="0" x2="${nodeX}" y2="${lastCenter}" stroke="${color}" stroke-width="1" opacity="0.65"/>`;
+        centers.forEach(cy => {
+            const elbowX = nodeX + 6;
+            paths += `<polyline points="${nodeX},${cy} ${elbowX},${cy} ${branchEnd},${cy}" fill="none" stroke="${color}" stroke-width="1" opacity="0.65"/>`;
+            paths += `<circle cx="${nodeX}" cy="${cy}" r="3" fill="${color}" opacity="0.9" filter="url(#${filterId})"/>`;
+            paths += `<circle cx="${branchEnd}" cy="${cy}" r="2" fill="${color}" opacity="0.75"/>`;
+        });
+        
+        const glowDef = `<defs><filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter></defs>`;
+        svg.innerHTML = glowDef + paths;
+    }
+}
 
 /* ─────────────────────────────────────────
    Live HUD clock in top bar
