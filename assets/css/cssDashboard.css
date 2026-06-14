@@ -124,7 +124,7 @@ body:has(.dashboard-container)::after {
     flex-grow: 1;
     padding: 24px;
     color: #fff;
-    margin-right: var(--sidebar-width);
+    margin-left: var(--sidebar-width);
     margin-top: 250px; 
 }
 
@@ -140,7 +140,7 @@ body:has(.dashboard-container)::after {
     position: fixed;
     /* CORREGIDO: Comienza inmediatamente abajo del encabezado de 250px */
     top: 250px; 
-    right: 0;
+    left: 0 !important;
     z-index: 5001 !important;
 
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6), 
@@ -205,7 +205,6 @@ body:has(.dashboard-container)::after {
     gap: var(--btn-gap);
     padding: 0;
     margin: 0;
-    /* CORREGIDO: Garantiza posicionamiento sobre las capas decorativas internas */
     position: relative;
     z-index: 20;
 }
