@@ -19,6 +19,28 @@
     --font-hud-data: 'Share Tech Mono', monospace;
     --clip-kpi: polygon(0 0, 88% 0, 100% 18%, 100% 100%, 12% 100%, 0 82%);
     --clip-nav: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+
+    --sidebar-width: 280px;
+    --sidebar-padding: 24px 16px;
+    --bg-sidebar: rgba(4, 8, 18, 0.85);
+    --corner-cut: 26px;
+    --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --cyan: #00d4ff;
+    --cyan-glow: rgba(0, 212, 255, 0.4);
+    --cyan-dim: rgba(0, 212, 255, 0.08);
+    --orange: #ff9f43;
+    --orange-dim: rgba(255, 159, 67, 0.08);
+    --purple: #a55eea;
+    --purple-dim: rgba(165, 94, 234, 0.08);
+    --teal: #20bf6b;
+    --teal-dim: rgba(32, 191, 107, 0.08);
+    --btn-gap: 12px;
+    --btn-height: 46px;
+    --sub-btn-height: 38px;
+    --bg-btn: rgba(10, 22, 44, 0.7);
+    --text-primary: #ffffff;
+    --sub-indent: 28px;
+    font-family: sans-serif;
 }
 
 /* Override site layout for full-bleed dashboard */
@@ -106,6 +128,7 @@ body {
     flex-direction: row-reverse; 
     min-height: 100vh;
     overflow-x: hidden;
+    z-index: 5000 !important;
 }
 
 .main-content {
