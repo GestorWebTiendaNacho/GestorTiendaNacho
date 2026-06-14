@@ -108,8 +108,8 @@ body:has(.dashboard-container)::after {
     height: 100%;
     pointer-events: none;
 }
-#connections { z-index: 1; opacity: 0.55; }
-#particles   { z-index: 0; opacity: 0.35; }
+#connections { z-index: 4500; opacity: 0.55; }
+#particles   { z-index: 40000; opacity: 0.35; }
 
 /* ── App Layout Architecture ── */
 .app-layout {
@@ -120,24 +120,26 @@ body:has(.dashboard-container)::after {
     z-index: 5000 !important;
 }
 
-.main-content {
+.main-hud {
     flex-grow: 1;
     padding: 24px;
     color: #fff;
-    margin-right: var(--sidebar-width); /* <-- Espacio reservado para la sidebar */
+    margin-right: var(--sidebar-width);
+    margin-top: 250px; 
 }
 
 /* ── Floating Asymmetrical Sidebar ── */
 .sidebar {
     width: var(--sidebar-width);
-    height: 100vh;
+    /* CORREGIDO: Altura ajustada restando el espacio del header base */
+    height: calc(100vh - 250px); 
     padding: var(--sidebar-padding);
     background: var(--bg-sidebar);
     backdrop-filter: blur(8px);
     
-    /* Cambios clave para flotar de arriba a abajo */
     position: fixed;
-    top: 0;
+    /* CORREGIDO: Comienza inmediatamente abajo del encabezado de 250px */
+    top: 250px; 
     right: 0;
     z-index: 5001 !important;
 
@@ -191,6 +193,9 @@ body:has(.dashboard-container)::after {
     text-shadow: 0 0 15px var(--cyan-glow);
     margin-bottom: 28px;
     text-align: center;
+    /* CORREGIDO: z-index superior para quedar por encima de los vectores del SVG frame */
+    position: relative;
+    z-index: 20; 
 }
 
 .sidebar__nav {
@@ -200,6 +205,9 @@ body:has(.dashboard-container)::after {
     gap: var(--btn-gap);
     padding: 0;
     margin: 0;
+    /* CORREGIDO: Garantiza posicionamiento sobre las capas decorativas internas */
+    position: relative;
+    z-index: 20;
 }
 
 .nav-item {
