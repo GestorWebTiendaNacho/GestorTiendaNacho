@@ -21,7 +21,7 @@
     --clip-nav: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
 
     --sidebar-width: 150px;
-    --sidebar-padding: 24px 10px;
+    --sidebar-padding: 24px 6px;    
     --btn-gap: 24px; 
     
     --bg-sidebar: rgba(4, 8, 18, 0.92);
@@ -182,12 +182,9 @@ body:has(.dashboard-container)::after {
 }
 
 .sidebar__header {
-    font-size: 1.1rem;
-    font-weight: 900;
-    letter-spacing: 0.2em;
-    color: var(--cyan);
-    text-shadow: 0 0 15px var(--cyan-glow);
-    margin-bottom: 32px;
+    font-size: 0.92rem; 
+    letter-spacing: 0.15em;
+    margin-bottom: 20px;
     text-align: center;
     position: relative;
     z-index: 20; 
@@ -202,6 +199,15 @@ body:has(.dashboard-container)::after {
     margin: 0;
     position: relative;
     z-index: 20;
+    max-height: calc(100vh - 240px - 75px); 
+    overflow-y: auto;
+    padding-right: 8px; 
+    padding-left: 2px;
+    scrollbar-width: none;
+}
+
+.sidebar__nav::-webkit-scrollbar {
+    display: none; 
 }
 
 .nav-item {
@@ -212,16 +218,16 @@ body:has(.dashboard-container)::after {
 .nav-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px; 
     width: 100%;
     height: var(--btn-height);
-    padding: 0 10px 0 12px;
+    padding: 0 6px 0 10px; 
     background: var(--bg-btn);
     border: none;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 0.68rem; 
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--text-primary);
     text-decoration: none;
@@ -234,7 +240,10 @@ body:has(.dashboard-container)::after {
 
 .nav-btn--sub {
     height: var(--sub-btn-height);
-    font-size: 0.68rem;
+    padding: 0 4px 0 8px;
+    
+    font-size: 0.62rem;
+    
     clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
 }
 
