@@ -116,7 +116,7 @@ body:has(.dashboard-container)::after {
     display: flex;
     flex-direction: row-reverse; 
     min-height: 100vh;
-    overflow-x: hidden;
+    position: relative;
     z-index: 5000 !important;
 }
 
@@ -124,20 +124,27 @@ body:has(.dashboard-container)::after {
     flex-grow: 1;
     padding: 24px;
     color: #fff;
+    margin-right: var(--sidebar-width); /* <-- Espacio reservado para la sidebar */
 }
 
 /* ── Floating Asymmetrical Sidebar ── */
 .sidebar {
     width: var(--sidebar-width);
-    min-height: 100vh;
+    height: 100vh;
     padding: var(--sidebar-padding);
     background: var(--bg-sidebar);
-    position: relative;
-    flex-shrink: 0;
     backdrop-filter: blur(8px);
+    
+    /* Cambios clave para flotar de arriba a abajo */
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 5001 !important;
+
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6), 
                 -2px 0 15px rgba(0, 212, 255, 0.12);
     border-left: 1px solid rgba(0, 212, 255, 0.15);
+
     clip-path: polygon(
         var(--corner-cut) 0,
         100% 0,
