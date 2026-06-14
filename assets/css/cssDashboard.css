@@ -58,6 +58,7 @@
 /* ── Global Reset & Background ── */
 .dashboard-container,
 .dashboard-container * {
+    flex: 1; 
     box-sizing: border-box;
     overflow-y: auto !important;
     scrollbar-width: thin !important;
@@ -404,9 +405,16 @@ body:has(.dashboard-container)::after {
     transition: padding 0.32s var(--transition-smooth);
 }
 
-.nav-item.is-open > .submenu .submenu__inner {
-    padding-top: 10px;
-    padding-bottom: 8px;
+.submenu__inner {
+    min-height: 0;
+    width: 100%;
+}
+
+.nav-item.is-open > .submenu {
+    display: grid !important;
+    grid-template-rows: 1fr !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .submenu__lines {

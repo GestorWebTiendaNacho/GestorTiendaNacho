@@ -1,15 +1,4 @@
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Core Visual & Interactive initializers
-    initCircuitConnections();
-    initParticles();
-    initSparklines();
-    initMainBarChart();
-    initNavigation();
-    initHudClock();
-    initPagination();
-    initSidebarAccordion();
-});
 
 function initCircuitConnections() {
     const canvas = document.getElementById('connections');
@@ -332,58 +321,86 @@ function initMainBarChart() {
 }
 
 /* Sidebar navigation interactions */
-function initNavigation() {
-    const accordionItems = document.querySelectorAll('#sidebarNav [data-accordion]');
-    
+document.addEventListener('DOMContentLoaded', () => {
+    initCircuitConnections();
+    initParticles();
+    initSparklines();
+    initMainBarChart();
+    initNavigation();
+    initHudClock();
+    initPagination();
+
+    // Buscamos directamente por la clase estructural de tu CSS (.nav-item)
+    const accordionItems = document.querySelectorAll('.nav-item');
+
     accordionItems.forEach(item => {
-        const toggleBtn = item.querySelector('.nav-btn[data-toggle]');
-        if (!toggleBtn) return;
+        // Buscamos el botón principal dentro de este ítem
+        const toggleBtn = item.querySelector('.nav-btn');
+        // Verificamos si este ítem realmente tiene un submenú asociado
+        const hasSubmenu = item.querySelector('.submenu');
+
+        if (!toggleBtn || !hasSubmenu) return;
 
         toggleBtn.addEventListener('click', (e) => {
+            // Detenemos la navegación del enlace para que actúe como trigger del HUD
             e.preventDefault();
-            
+            e.stopPropagation();
+
             const isOpen = item.classList.contains('is-open');
+
+            // 1. Cerrar todos los demás menús (Efecto Acordeón estricto)
             accordionItems.forEach(otherItem => {
                 if (otherItem !== item) {
                     otherItem.classList.remove('is-open');
-                    const otherBtn = otherItem.querySelector('.nav-btn[data-toggle]');
-                    if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
                 }
             });
+
+            // 2. Alternar el estado de este menú
             if (isOpen) {
                 item.classList.remove('is-open');
-                toggleBtn.setAttribute('aria-expanded', 'false');
             } else {
                 item.classList.add('is-open');
-                toggleBtn.setAttribute('aria-expanded', 'true');
-                drawSubmenuLines(item);
+                
+                // Ejecutar el renderizado de líneas en el siguiente ciclo de ejecución
+                // para garantizar que las dimensiones ya existan en el DOM
+                setTimeout(() => {
+                    drawSubmenuLines(item);
+                }, 10);
             }
         });
     });
-    accordionItems.forEach(item => {
-        if (item.classList.contains('is-open')) {
-            drawSubmenuLines(item);
-        }
-    });
-}
+});
 
 function drawSubmenuLines(accordionItem) {
     const svg = accordionItem.querySelector('.submenu__lines');
     const innerContainer = accordionItem.querySelector('.submenu__inner');
     const subItems = accordionItem.querySelectorAll('.submenu__list > li');
+
     if (!svg || !innerContainer || !subItems.length) return;
-    const totalHeight = innerContainer.scrollHeight;
-    if (!totalHeight) return;
+
+    // Forzamos el cálculo de la altura real del contenido interno
+    const totalHeight = innerContainer.getBoundingClientRect().height || innerContainer.scrollHeight;
+    if (totalHeight === 0) return;
+
+    // Sincronizamos dimensiones con tu CSS (22px de ancho asignado)
     svg.setAttribute('viewBox', `0 0 22 ${totalHeight}`);
-    const themeColor = window.getComputedStyle(accordionItem).color || '#00d4ff';
-    const toggleId = accordionItem.querySelector('.nav-btn[data-toggle]').getAttribute('data-toggle');
-    const filterId = `hudGlow-${toggleId}`;
+
+    // Extraemos el color dinámico del tema asignado en el CSS (.theme-cyan, .theme-orange, etc.)
+    const themeColor = window.getComputedStyle(accordionItem).color || '#00f0ff';
+    
+    // Generamos un ID único para que el filtro de brillo no colisione con otros submenús
+    const randomId = Math.random().toString(36).substr(2, 9);
+    const filterId = `hudGlow-${randomId}`;
+
+    // Mapeo exacto de los centros de los subbotones
     const centers = Array.from(subItems).map(li => {
         return li.offsetTop + (li.offsetHeight / 2);
     });
+
     const lastCenter = centers[centers.length - 1];
     const trunkX = 5;
     const connectX = 12;
+
     let svgContent = `
         <defs>
             <filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
@@ -394,16 +411,14 @@ function drawSubmenuLines(accordionItem) {
                 </feMerge>
             </filter>
         </defs>
-        <line x1="${trunkX}" y1="0" x2="${trunkX}" y2="${lastCenter}" stroke="${themeColor}" stroke-width="1" opacity="0.4" />
+        <line x1="${trunkX}" y1="0" x2="${trunkX}" y2="${lastCenter}" stroke="${themeColor}" stroke-width="1" opacity="0.3" />
     `;
 
     centers.forEach(y => {
         svgContent += `
-            <line x1="${trunkX}" y1="${y}" x2="${connectX}" y2="${y}" stroke="${themeColor}" stroke-width="1" opacity="0.6" />
-            
+            <line x1="${trunkX}" y1="${y}" x2="${connectX}" y2="${y}" stroke="${themeColor}" stroke-width="1" opacity="0.5" />
             <circle cx="${trunkX}" cy="${y}" r="2" fill="${themeColor}" filter="url(#${filterId})" />
-            
-            <circle cx="${connectX}" cy="${y}" r="1" fill="${themeColor}" opacity="0.8" />
+            <circle cx="${connectX}" cy="${y}" r="1.5" fill="${themeColor}" />
         `;
     });
 
