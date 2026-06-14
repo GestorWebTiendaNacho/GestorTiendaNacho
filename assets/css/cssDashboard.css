@@ -116,12 +116,6 @@ body:has(.dashboard-container)::after {
 /* ═══════════════════════════════════════
    SIDEBAR
    ═══════════════════════════════════════ */
-
-body {
-    margin: 450px 0 0;
-    background-color: #030712;
-}
-
 /* Distribución principal enviando el sidebar al extremo derecho */
 .app-layout {
     display: flex;
