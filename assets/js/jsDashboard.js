@@ -150,3 +150,182 @@ function initMainBarChart() {
         }
     });
 }
+
+/*----NUEVOS CODIGOS DE PRUEBA PARA NUEVA SECCIÓN DE PRUEBA----*/
+
+        class TiltEffect {
+            constructor() {
+                this.cards = document.querySelectorAll('[data-tilt]');
+                this.init();
+            }
+
+            init() {
+                this.cards.forEach(card => {
+                    card.addEventListener('mouseenter', this.handleMouseEnter.bind(this));
+                    card.addEventListener('mousemove', this.handleMouseMove.bind(this));
+                    card.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
+                });
+            }
+
+            handleMouseEnter(e) {
+                e.target.style.transition = 'none';
+            }
+
+            handleMouseMove(e) {
+                const card = e.target;
+                const rect = card.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const mouseX = e.clientX - centerX;
+                const mouseY = e.clientY - centerY;
+                
+                const rotateX = (mouseY / (rect.height / 2)) * -15;
+                const rotateY = (mouseX / (rect.width / 2)) * 15;
+                
+                card.style.transform = `
+                    perspective(1000px) 
+                    rotateX(${rotateX}deg) 
+                    rotateY(${rotateY}deg) 
+                    translateZ(20px)
+                `;
+                
+                const glowX = ((mouseX + rect.width / 2) / rect.width) * 100;
+                const glowY = ((mouseY + rect.height / 2) / rect.height) * 100;
+                
+                card.style.background = `
+                    radial-gradient(
+                        circle at ${glowX}% ${glowY}%, 
+                        rgba(255, 255, 255, 0.1) 0%, 
+                        transparent 50%
+                    ),
+                    linear-gradient(135deg, #1a1f26, #0f1419)
+                `;
+            }
+
+            handleMouseLeave(e) {
+                const card = e.target;
+                card.style.transition = 'all 0.3s ease';
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+                card.style.background = 'linear-gradient(135deg, #1a1f26, #0f1419)';
+            }
+        }
+
+        class PulseEffect {
+            constructor() {
+                this.cards = document.querySelectorAll('.card');
+                this.init();
+            }
+
+            init() {
+                this.cards.forEach((card, index) => {
+                    setTimeout(() => {
+                        this.addPulse(card);
+                    }, index * 100);
+                });
+            }
+
+            addPulse(card) {
+                card.addEventListener('click', () => {
+                    card.style.animation = 'pulse 0.6s ease';
+                    setTimeout(() => {
+                        card.style.animation = '';
+                    }, 600);
+                });
+            }
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new TiltEffect();
+            new PulseEffect();
+            
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = 'all 0.6s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        class ParticleEffect {
+            constructor() {
+                this.canvas = document.createElement('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.init();
+            }
+
+            init() {
+                this.canvas.style.position = 'fixed';
+                this.canvas.style.top = '0';
+                this.canvas.style.left = '0';
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = '100%';
+                this.canvas.style.pointerEvents = 'none';
+                this.canvas.style.zIndex = '-1';
+                this.canvas.style.opacity = '0.3';
+                
+                document.body.appendChild(this.canvas);
+                
+                this.resize();
+                this.createParticles();
+                this.animate();
+                
+                window.addEventListener('resize', this.resize.bind(this));
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            createParticles() {
+                for (let i = 0; i < 50; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        size: Math.random() * 2 + 1
+                    });
+                }
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    if (particle.x < 0 || particle.x > this.canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > this.canvas.height) particle.vy *= -1;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                    this.ctx.fill();
+                });
+                
+                requestAnimationFrame(this.animate.bind(this));
+            }
+        }
+
+        setTimeout(() => {
+            new ParticleEffect();
+        }, 1000);
