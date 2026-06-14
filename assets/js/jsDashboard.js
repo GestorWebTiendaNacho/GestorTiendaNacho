@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     initHudClock();
     initPagination();
+    initSidebarAccordion();
 });
 
 function initCircuitConnections() {
@@ -413,6 +414,83 @@ function initNavigation() {
     }
 }
 
+function initSidebarAccordion() {
+    const accordionItems = document.querySelectorAll('#sidebarNav [data-accordion]');
+    
+    accordionItems.forEach(item => {
+        const toggleBtn = item.querySelector('.nav-btn[data-toggle]');
+        if (!toggleBtn) return;
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            const isOpen = item.classList.contains('is-open');
+            accordionItems.forEach(otherItem => {
+                if (otherItem !== item) {
+                    otherItem.classList.remove('is-open');
+                    const otherBtn = otherItem.querySelector('.nav-btn[data-toggle]');
+                    if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+            if (isOpen) {
+                item.classList.remove('is-open');
+                toggleBtn.setAttribute('aria-expanded', 'false');
+            } else {
+                item.classList.add('is-open');
+                toggleBtn.setAttribute('aria-expanded', 'true');
+                drawSubmenuLines(item);
+            }
+        });
+    });
+    accordionItems.forEach(item => {
+        if (item.classList.contains('is-open')) {
+            drawSubmenuLines(item);
+        }
+    });
+}
+
+function drawSubmenuLines(accordionItem) {
+    const svg = accordionItem.querySelector('.submenu__lines');
+    const innerContainer = accordionItem.querySelector('.submenu__inner');
+    const subItems = accordionItem.querySelectorAll('.submenu__list > li');
+    if (!svg || !innerContainer || !subItems.length) return;
+    const totalHeight = innerContainer.scrollHeight;
+    if (!totalHeight) return;
+    svg.setAttribute('viewBox', `0 0 22 ${totalHeight}`);
+    const themeColor = window.getComputedStyle(accordionItem).color || '#00d4ff';
+    const toggleId = accordionItem.querySelector('.nav-btn[data-toggle]').getAttribute('data-toggle');
+    const filterId = `hudGlow-${toggleId}`;
+    const centers = Array.from(subItems).map(li => {
+        return li.offsetTop + (li.offsetHeight / 2);
+    });
+    const lastCenter = centers[centers.length - 1];
+    const trunkX = 5;
+    const connectX = 12;
+    let svgContent = `
+        <defs>
+            <filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.2" result="blur"/>
+                <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <line x1="${trunkX}" y1="0" x2="${trunkX}" y2="${lastCenter}" stroke="${themeColor}" stroke-width="1" opacity="0.4" />
+    `;
+
+    centers.forEach(y => {
+        svgContent += `
+            <line x1="${trunkX}" y1="${y}" x2="${connectX}" y2="${y}" stroke="${themeColor}" stroke-width="1" opacity="0.6" />
+            
+            <circle cx="${trunkX}" cy="${y}" r="2" fill="${themeColor}" filter="url(#${filterId})" />
+            
+            <circle cx="${connectX}" cy="${y}" r="1" fill="${themeColor}" opacity="0.8" />
+        `;
+    });
+
+    svg.innerHTML = svgContent;
+}
 /* Live HUD clock in top bar */
 function initHudClock() {
     const el = document.getElementById('hudClock');
