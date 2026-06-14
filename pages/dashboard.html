@@ -1,63 +1,325 @@
 
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="assets/css/cssDashboard.css">
 
+<canvas id="connections"></canvas>
 
-<canvas id="connections"></canvas> <div class="dashboard"> 
-    <!-- SIDEBAR --> 
-     <aside class="sidebar"> 
-        <h2 class="logo">⚡ CORE</h2> <ul> 
-            <li class="active">Dashboard</li> 
-            <li>Analytics</li> 
-            <li>Inventario</li> 
-            <li>Settings</li> </ul> 
-        </aside> 
-        <!-- MAIN --> 
-    <main class="main"> 
-        <header class="topbar"> 
-        <h1>System Control</h1> 
-        <div class="status">ONLINE</div> 
-    </header> 
+<div class="dashboard-container">
+    <aside class="sidebar-hud">
+        <div class="sidebar-brand">
+            <h2>DEPÓSITO</h2>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <div class="nav-item active">
+                <i class="fa-solid fa-house icon-cyan"></i>
+                <span>INICIO</span>
+            </div>
+            
+            <div class="nav-group open">
+                <div class="nav-item group-title orange-trigger">
+                    <i class="fa-solid fa-cart-shopping icon-orange"></i>
+                    <span>PEDIDOS</span>
+                    <i class="fa-solid fa-chevron-down arrow"></i>
+                </div>
+                <div class="sub-nav">
+                    <div class="nav-item sub-item"><i class="fa-solid fa-hand-pointer"></i> MANUAL</div>
+                    <div class="nav-item sub-item"><i class="fa-solid fa-robot"></i> ASISTIDA</div>
+                </div>
+            </div>
+            
+            <div class="nav-group open">
+                <div class="nav-item group-title purple-trigger">
+                    <i class="fa-solid fa-chart-simple icon-purple"></i>
+                    <span>REPORTES</span>
+                    <i class="fa-solid fa-chevron-down arrow"></i>
+                </div>
+                <div class="sub-nav">
+                    <div class="nav-item sub-item"><i class="fa-solid fa-trophy"></i> TOP PROD</div>
+                    <div class="nav-item sub-item"><i class="fa-solid fa-triangle-exclamation"></i> CRÍTICOS</div>
+                    <div class="nav-item sub-item"><i class="fa-solid fa-dollar-sign"></i> VENDIDOS</div>
+                    <div class="nav-item sub-item"><i class="fa-solid fa-circle-info"></i> MÁS INFO</div>
+                </div>
+            </div>
+            
+            <div class="nav-item configuration-btn">
+                <i class="fa-solid fa-gear icon-blue"></i>
+                <span>CONFIGURACIÓN</span>
+            </div>
+        </nav>
+    </aside>
 
-    <!-- CARDS --> 
-<section class="cards"> 
-    <div class="card blue"> 
-        <h3>Productos</h3> <p>248</p> 
-    </div> 
-    <div class="card orange"> 
-        <h3>Vendidos</h3> <p>1,842</p> 
-    </div> 
-    <div class="card red"> <h3>Pedidos</h3> <p>762</p> 
-    </div> 
-</section> 
+    <main class="main-hud">
+        <header class="topbar-hud">
+            <div class="system-status">
+                <span class="pulse-dot"></span>
+                <span class="status-text">SISTEMA ACTIVO</span>
+                <svg class="heartbeat-svg" viewBox="0 0 100 20">
+                    <polyline points="0,10 30,10 35,2 40,18 45,10 70,10 75,5 80,12 85,10 100,10"></polyline>
+                </svg>
+            </div>
+            <div class="user-profile">
+                <div class="user-info">
+                    <span class="user-role">USUARIO</span>
+                    <span class="user-name">ADMINISTRADOR</span>
+                </div>
+                <div class="user-avatar-hexagon">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <i class="fa-solid fa-chevron-down profile-arrow"></i>
+            </div>
+        </header>
 
-<!-- GRID --> 
- <section class="grid"> 
-    <!-- CHART --> 
-     <div class="panel chart"> 
-        <h3>Actividad</h3> 
-        <canvas id="chart"></canvas> 
-    </div> 
-    <!-- TABLE --> 
-     <div class="panel"> <h3>Productos Críticos</h3> 
-        <table> 
-            <tr>
-                <th>Producto</th>
-                <th>Stock</th>
-            </tr> <tr>
-                <td>Sensor</td>
-                <td class="danger">5</td>
-            </tr> 
-            <tr>
-                <td>Batería</td>
-                <td class="warning">8</td>
-            </tr> 
-        </table> 
-    </div> 
-</section> 
-</main> 
-</div> 
+        <section class="kpi-row">
+            <div class="hud-card kpi-card cyan-glow">
+                <div class="card-inner">
+                    <span class="card-title">TOP PRODUCTOS</span>
+                    <div class="card-body">
+                        <div class="card-icon-box"><i class="fa-solid fa-chart-bar"></i></div>
+                        <div class="card-value-container">
+                            <span class="card-value">248</span>
+                            <span class="card-unit">PRODUCTOS</span>
+                        </div>
+                    </div>
+                    <div class="mini-sparkline"><canvas class="spark-canvas" data-color="#00f0ff"></canvas></div>
+                    <button class="hud-btn-action">VER REPORTE COMPLETO</button>
+                </div>
+            </div>
+
+            <div class="hud-card kpi-card orange-glow">
+                <div class="card-inner">
+                    <span class="card-title">TOP PROD. VENDIDOS</span>
+                    <div class="card-body">
+                        <div class="card-icon-box"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="card-value-container">
+                            <span class="card-value">1,842</span>
+                            <span class="card-unit">UNIDADES</span>
+                        </div>
+                    </div>
+                    <div class="mini-sparkline"><canvas class="spark-canvas" data-color="#ff9f00"></canvas></div>
+                    <button class="hud-btn-action">VER REPORTE COMPLETO</button>
+                </div>
+            </div>
+
+            <div class="hud-card kpi-card red-glow">
+                <div class="card-inner">
+                    <span class="card-title">TOP PROD. PEDIDOS</span>
+                    <div class="card-body">
+                        <div class="card-icon-box"><i class="fa-solid fa-clipboard-list"></i></div>
+                        <div class="card-value-container">
+                            <span class="card-value">762</span>
+                            <span class="card-unit">PEDIDOS</span>
+                        </div>
+                    </div>
+                    <div class="mini-sparkline"><canvas class="spark-canvas" data-color="#ff3c3c"></canvas></div>
+                    <button class="hud-btn-action">VER REPORTE COMPLETO</button>
+                </div>
+            </div>
+
+            <div class="hud-card kpi-card purple-glow">
+                <div class="card-inner">
+                    <span class="card-title">TOP PEDIDOS MÁS INFO</span>
+                    <div class="card-body">
+                        <div class="card-icon-box"><i class="fa-solid fa-circle-info"></i></div>
+                        <div class="card-value-container">
+                            <span class="card-value">96%</span>
+                            <span class="card-unit">CUMPLIMIENTO</span>
+                        </div>
+                    </div>
+                    <div class="mini-sparkline"><canvas class="spark-canvas" data-color="#a855f7"></canvas></div>
+                    <button class="hud-btn-action">VER REPORTE COMPLETO</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="hud-card main-panel table-panel blue-glow">
+                <div class="card-inner">
+                    <span class="panel-header-title">PRODUCTOS CRÍTICOS</span>
+                    
+                    <div class="table-wrapper">
+                        <table class="hud-table">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>PRODUCTO</th>
+                                    <th class="text-center">STOCK</th>
+                                    <th class="text-center">MÍNIMO</th>
+                                    <th>PROVEEDOR</th>
+                                    <th>CATEGORÍA</th>
+                                    <th class="text-center">ACCIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>SKU-001</td>
+                                    <td>SENSOR DE TEMPERATURA</td>
+                                    <td class="text-center stock-critical">5</td>
+                                    <td class="text-center">20</td>
+                                    <td>PROVEEDOR A</td>
+                                    <td>ELECTRÓNICA</td>
+                                    <td class="text-center"><button class="btn-table-action">VER <i class="fa-solid fa-angles-right"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>SKU-002</td>
+                                    <td>BATERÍA 12V 7A</td>
+                                    <td class="text-center stock-critical">8</td>
+                                    <td class="text-center">15</td>
+                                    <td>PROVEEDOR B</td>
+                                    <td>ENERGÍA</td>
+                                    <td class="text-center"><button class="btn-table-action">VER <i class="fa-solid fa-angles-right"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>SKU-003</td>
+                                    <td>CIRCUITO INTEGRADO 555</td>
+                                    <td class="text-center stock-critical">3</td>
+                                    <td class="text-center">10</td>
+                                    <td>PROVEEDOR C</td>
+                                    <td>ELECTRÓNICA</td>
+                                    <td class="text-center"><button class="btn-table-action">VER <i class="fa-solid fa-angles-right"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>SKU-004</td>
+                                    <td>CHIP MICROCONTROLADOR</td>
+                                    <td class="text-center stock-critical">2</td>
+                                    <td class="text-center">8</td>
+                                    <td>PROVEEDOR C</td>
+                                    <td>ELECTRÓNICA</td>
+                                    <td class="text-center"><button class="btn-table-action">VER <i class="fa-solid fa-angles-right"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>SKU-005</td>
+                                    <td>RESISTENCIA 1K OHM</td>
+                                    <td class="text-center stock-warning">12</td>
+                                    <td class="text-center">25</td>
+                                    <td>PROVEEDOR D</td>
+                                    <td>COMPONENTES</td>
+                                    <td class="text-center"><button class="btn-table-action">VER <i class="fa-solid fa-angles-right"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>SKU-006</td>
+                                    <td>TRANSISTOR TIP31</td>
+                                    <td class="text-center stock-critical">6</td>
+                                    <td class="text-center">12</td>
+                                    <td>PROVEEDOR D</td>
+                                    <td>SEMICONDUCTORES</td>
+                                    <td class="text-center"><button class="btn-table-action">VER <i class="fa-solid fa-angles-right"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>SKU-007</td>
+                                    <td>POTENCIÓMETRO 10K</td>
+                                    <td class="text-center stock-critical">9</td>
+                                    <td class="text-center">20</td>
+                                    <td>PROVEEDOR E</td>
+                                    <td>COMPONENTES</td>
+                                    <td class="text-center"><button class="btn-table-action">VER <i class="fa-solid fa-angles-right"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>SKU-008</td>
+                                    <td>DISPLAY LCD 16X2</td>
+                                    <td class="text-center stock-critical">4</td>
+                                    <td class="text-center">10</td>
+                                    <td>PROVEEDOR F</td>
+                                    <td>PANTALLAS</td>
+                                    <td class="text-center"><button class="btn-table-action">VER <i class="fa-solid fa-angles-right"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="panel-footer-hud">
+                        <div class="total-products-badge">
+                            TOTAL PRODUCTOS: <span class="badge-value">248</span>
+                        </div>
+                        <div class="hud-pagination">
+                            <button class="pag-btn"><i class="fa-solid fa-angles-left"></i></button>
+                            <button class="pag-btn active">1</button>
+                            <button class="pag-btn">2</button>
+                            <button class="pag-btn">3</button>
+                            <button class="pag-btn">4</button>
+                            <button class="pag-btn">5</button>
+                            <button class="pag-btn"><i class="fa-solid fa-angles-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-widgets-column">
+                <div class="hud-card sub-panel orange-glow-dim">
+                    <div class="card-inner">
+                        <span class="sub-panel-title"><i class="fa-solid fa-arrow-trend-up"></i> TOP PROD. VENDIDOS</span>
+                        <ul class="ranking-list">
+                            <li><span class="rank-pos">1°</span> <span class="rank-sku">CINVA BBR-SKU-44</span> <span class="rank-val">1,250</span></li>
+                            <li><span class="rank-pos">2°</span> <span class="rank-sku">CIVIAZON-SKU-20</span> <span class="rank-val">930</span></li>
+                            <li><span class="rank-pos">3°</span> <span class="rank-sku">CHIPM-SKU-28</span> <span class="rank-val">620</span></li>
+                        </ul>
+                        <button class="btn-subpanel-action">VER REPORTE COMPLETO</button>
+                    </div>
+                </div>
+
+                <div class="hud-card sub-panel red-glow-dim">
+                    <div class="card-inner">
+                        <span class="sub-panel-title"><i class="fa-solid fa-boxes-stacked"></i> TOP PROD. PEDIDOS</span>
+                        <ul class="ranking-list">
+                            <li><span class="rank-pos">1°</span> <span class="rank-sku">CLIPS-SKU-160</span> <span class="rank-val">320</span></li>
+                            <li><span class="rank-pos">2°</span> <span class="rank-sku">HENGER-SKU-180</span> <span class="rank-val">210</span></li>
+                            <li><span class="rank-pos">3°</span> <span class="rank-sku">SIMILACRO-SKU-100</span> <span class="rank-val">150</span></li>
+                        </ul>
+                        <button class="btn-subpanel-action">VER REPORTE COMPLETO</button>
+                    </div>
+                </div>
+
+                <div class="hud-card sub-panel purple-glow-dim">
+                    <div class="card-inner">
+                        <span class="sub-panel-title"><i class="fa-solid fa-circle-nodes"></i> TOP PEDIDOS MÁS INFO</span>
+                        <ul class="ranking-list">
+                            <li><span class="rank-sku no-pos">BAKUN-TS01-SKU-3</span> <span class="rank-val text-purple">51</span></li>
+                            <li><span class="rank-sku no-pos">TS01-MRPL-SKU-3</span> <span class="rank-val text-purple">51</span></li>
+                            <li><span class="rank-sku no-pos">BAKUN-S1</span> <span class="rank-val text-purple">51</span></li>
+                        </ul>
+                        <button class="btn-subpanel-action">VER REPORTE COMPLETO</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bottom-grid-hud">
+            <div class="hud-card radar-panel blue-glow">
+                <div class="card-inner radar-layout">
+                    <div class="radar-text-content">
+                        <span class="radar-header"><i class="fa-solid fa-bell"></i> RECORDATORIOS</span>
+                        <p class="radar-description">
+                            De los productos principales, <br>
+                            <span class="highlight-text-red">10 de los registrados</span> <br>
+                            están por debajo del stock mínimo.
+                        </p>
+                    </div>
+                    <div class="radar-widget">
+                        <div class="radar-scope">
+                            <div class="radar-sweep"></div>
+                            <div class="radar-circle c1"></div>
+                            <div class="radar-circle c2"></div>
+                            <div class="radar-circle c3"></div>
+                            <div class="radar-crosshair-h"></div>
+                            <div class="radar-crosshair-v"></div>
+                            <span class="radar-blip"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-card bar-chart-panel purple-glow">
+                <div class="card-inner">
+                    <span class="chart-panel-title">CANTIDAD DE PROD. VENDIDOS</span>
+                    <div class="main-chart-wrapper">
+                        <canvas id="hudBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="assets/js/main.js"></script>
