@@ -95,417 +95,328 @@ body:has(.dashboard-container)::after {
    SIDEBAR
    ═══════════════════════════════════════ */
 
-        .sidebar {
-            width: var(--sidebar-width);
-            min-height: 100vh;
-            padding: var(--sidebar-padding);
-            background: var(--bg-sidebar);
-            position: relative;
-            flex-shrink: 0;
-            /* Chamfered top-right & bottom-left */
-            clip-path: polygon(
-                0 0,
-                calc(100% - var(--corner-cut)) 0,
-                100% var(--corner-cut),
-                100% 100%,
-                var(--corner-cut) 100%,
-                0 calc(100% - var(--corner-cut))
-            );
-            transition: transform 0.35s var(--transition-smooth);
-        }
+body {
+    margin: 0;
+    background-color: #030712;
+}
 
-        /* SVG border overlay — segmented chamfered frame */
-        .sidebar__border {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
+/* Distribución principal enviando el sidebar al extremo derecho */
+.app-layout {
+    display: flex;
+    flex-direction: row-reverse; 
+    min-height: 100vh;
+    overflow-x: hidden;
+}
 
-        /* Decorative hatch marks on chamfered corners */
-        .sidebar__hatch {
-            position: absolute;
-            pointer-events: none;
-            z-index: 11;
-        }
+.main-content {
+    flex-grow: 1;
+    padding: 24px;
+    color: #fff;
+}
 
-        .sidebar__hatch--top {
-            top: 2px;
-            right: 2px;
-            width: 20px;
-            height: 20px;
-        }
+/* Sidebar adaptada a la derecha con efecto Flotante */
+.sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    padding: var(--sidebar-padding);
+    background: var(--bg-sidebar);
+    position: relative;
+    flex-shrink: 0;
+    backdrop-filter: blur(8px);
+    
+    /* EFECTO DE DESPEGUE: Sombra proyectada hacia la izquierda */
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6), 
+                -2px 0 15px rgba(0, 212, 255, 0.12);
+    border-left: 1px solid rgba(0, 212, 255, 0.15);
 
-        .sidebar__hatch--bottom {
-            bottom: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-        }
+    /* Clip path espejado para las esquinas del lado derecho */
+    clip-path: polygon(
+        var(--corner-cut) 0,
+        100% 0,
+        100% calc(100% - var(--corner-cut)),
+        calc(100% - var(--corner-cut)) 100%,
+        0 100%,
+        0 var(--corner-cut)
+    );
+    transition: transform 0.35s var(--transition-smooth);
+}
 
-        /* Side decorative nodes (right edge) */
-        .sidebar__nodes {
-            position: absolute;
-            right: -1px;
-            top: 35%;
-            bottom: 25%;
-            width: 12px;
-            pointer-events: none;
-            z-index: 11;
-        }
+.sidebar__border {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
 
-        /* Header */
-        .sidebar__header {
-            font-family: var(--font-display);
-            font-size: 1.35rem;
-            font-weight: 900;
-            letter-spacing: 0.18em;
-            color: var(--cyan);
-            text-shadow: 0 0 20px var(--cyan-glow), 0 0 40px rgba(0, 212, 255, 0.25);
-            margin-bottom: 28px;
-            padding-left: 4px;
-            position: relative;
-            z-index: 2;
-        }
+/* Reposicionamiento simétrico de las muescas decorativas */
+.sidebar__hatch {
+    position: absolute;
+    pointer-events: none;
+    z-index: 11;
+    width: 20px;
+    height: 20px;
+}
+.sidebar__hatch--top {
+    top: 4px;
+    left: 4px;
+    transform: scaleX(-1); /* Reflejo horizontal */
+}
+.sidebar__hatch--bottom {
+    bottom: 4px;
+    right: 4px;
+    transform: scaleX(-1);
+}
 
-        /* Nav list */
-        .sidebar__nav {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: var(--btn-gap);
-            position: relative;
-            z-index: 2;
-        }
+.sidebar__header {
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    color: var(--cyan);
+    text-shadow: 0 0 15px var(--cyan-glow);
+    margin-bottom: 28px;
+    text-align: center;
+}
 
-        .nav-item {
-            position: relative;
-        }
+.sidebar__nav {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--btn-gap);
+    padding: 0;
+    margin: 0;
+}
 
-        /* ============================================================
-           NAV BUTTONS — shared base
-           ============================================================ */
-        .nav-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            height: var(--btn-height);
-            padding: 0 14px 0 12px;
-            background: var(--bg-btn);
-            border: none;
-            cursor: pointer;
-            font-family: var(--font-body);
-            font-size: 0.82rem;
-            font-weight: 700;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: var(--text-primary);
-            text-decoration: none;
-            position: relative;
-            transition:
-                transform 0.3s var(--transition-smooth),
-                box-shadow 0.3s var(--transition-smooth),
-                background 0.3s var(--transition-smooth);
-            /* Hexagonal pointed ends */
-            clip-path: polygon(
-                10px 0,
-                calc(100% - 10px) 0,
-                100% 50%,
-                calc(100% - 10px) 100%,
-                10px 100%,
-                0 50%
-            );
-            outline: none;
-        }
+.nav-item {
+    position: relative;
+}
 
-        .nav-btn--sub {
-            height: var(--sub-btn-height);
-            font-size: 0.72rem;
-            letter-spacing: 0.1em;
-            clip-path: polygon(
-                8px 0,
-                calc(100% - 8px) 0,
-                100% 50%,
-                calc(100% - 8px) 100%,
-                8px 100%,
-                0 50%
-            );
-        }
+/* Estilo Base de Botones */
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: var(--btn-height);
+    padding: 0 14px 0 16px;
+    background: var(--bg-btn);
+    border: none;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-decoration: none;
+    position: relative;
+    box-sizing: border-box;
+    transition: transform 0.3s var(--transition-smooth), background 0.3s;
+    outline: none;
+    
+    clip-path: polygon(
+        10px 0,
+        calc(100% - 10px) 0,
+        100% 50%,
+        calc(100% - 10px) 100%,
+        10px 100%,
+        0 50%
+    );
+}
 
-        /* Decorative side bracket on main buttons */
-        .nav-btn::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 15%;
-            bottom: 15%;
-            width: 3px;
-            background: currentColor;
-            opacity: 0.5;
-            box-shadow: 3px 0 0 currentColor;
-            transition: opacity 0.3s;
-        }
+.nav-btn--sub {
+    height: var(--sub-btn-height);
+    font-size: 0.72rem;
+    clip-path: polygon(
+        8px 0,
+        calc(100% - 8px) 0,
+        100% 50%,
+        calc(100% - 8px) 100%,
+        8px 100%,
+        0 50%
+    );
+}
 
-        .nav-btn--sub::before {
-            width: 2px;
-            box-shadow: 2px 0 0 currentColor;
-        }
+.nav-btn__wrap {
+    position: relative;
+    display: block;
+}
 
-        /* Glowing border via inset box-shadow on wrapper */
-        .nav-btn__wrap {
-            position: relative;
-            display: block;
-        }
+/* Bordes de luz de los botones individuales */
+.nav-btn__wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 1px solid currentColor;
+    opacity: 0.4;
+    transition: opacity 0.3s, box-shadow 0.3s;
+    clip-path: polygon(
+        10px 0,
+        calc(100% - 10px) 0,
+        100% 50%,
+        calc(100% - 10px) 100%,
+        10px 100%,
+        0 50%
+    );
+}
 
-        .nav-btn__wrap::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            clip-path: inherit;
-            pointer-events: none;
-            border: 1px solid currentColor;
-            opacity: 0.7;
-            box-shadow: 0 0 8px currentColor, inset 0 0 6px rgba(0, 0, 0, 0.4);
-            transition: opacity 0.3s, box-shadow 0.3s;
-        }
+.nav-btn__wrap--sub::after {
+    clip-path: polygon(
+        8px 0,
+        calc(100% - 8px) 0,
+        100% 50%,
+        calc(100% - 8px) 100%,
+        8px 100%,
+        0 50%
+    );
+}
 
-        .nav-btn__wrap {
-            clip-path: polygon(
-                10px 0,
-                calc(100% - 10px) 0,
-                100% 50%,
-                calc(100% - 10px) 100%,
-                10px 100%,
-                0 50%
-            );
-        }
+/* LÍNEA DE LUZ INFERIOR ANIMADA (Hover Effect) */
+.nav-btn__glow-line {
+    position: absolute;
+    bottom: 0;
+    left: 12px;
+    right: 12px;
+    height: 2px;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 3;
+}
+.nav-btn__glow-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    filter: drop-shadow(0 0 4px currentColor);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
 
-        .nav-btn__wrap--sub {
-            clip-path: polygon(
-                8px 0,
-                calc(100% - 8px) 0,
-                100% 50%,
-                calc(100% - 8px) 100%,
-                8px 100%,
-                0 50%
-            );
-        }
+/* Comportamiento Hover general */
+.nav-btn__wrap:hover .nav-btn,
+.nav-btn__wrap:focus-within .nav-btn {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.05);
+}
+.nav-btn__wrap:hover::after,
+.nav-btn__wrap:focus-within::after {
+    opacity: 1;
+    box-shadow: 0 0 10px currentColor, inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+.nav-btn__wrap:hover .nav-btn__glow-line::after {
+    opacity: 1;
+    animation: glowTravel 1.2s ease-in-out infinite;
+}
 
-        /* Animated glow line on bottom border (hover) */
-        .nav-btn__glow-line {
-            position: absolute;
-            bottom: 0;
-            left: 10px;
-            right: 10px;
-            height: 2px;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: 3;
-        }
+@keyframes glowTravel {
+    0%   { left: -60%; }
+    100% { left: 100%; }
+}
 
-        .nav-btn__glow-line::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 60%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                currentColor,
-                transparent
-            );
-            filter: blur(1px);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
+/* Temas Cromáticos */
+.theme-cyan   { color: var(--cyan); }
+.theme-orange { color: var(--orange); }
+.theme-purple { color: var(--purple); }
+.theme-teal   { color: var(--teal); }
 
-        .nav-btn__wrap:hover .nav-btn__glow-line::after,
-        .nav-btn__wrap:focus-within .nav-btn__glow-line::after {
-            opacity: 1;
-            animation: glowTravel 1.2s ease-in-out infinite;
-        }
+.theme-cyan .nav-btn   { background: linear-gradient(135deg, var(--cyan-dim), var(--bg-btn)); }
+.theme-orange .nav-btn { background: linear-gradient(135deg, var(--orange-dim), var(--bg-btn)); }
+.theme-purple .nav-btn { background: linear-gradient(135deg, var(--purple-dim), var(--bg-btn)); }
+.theme-teal .nav-btn   { background: linear-gradient(135deg, var(--teal-dim), var(--bg-btn)); }
 
-        @keyframes glowTravel {
-            0%   { left: -60%; }
-            100% { left: 100%; }
-        }
+/* Iconografía */
+.nav-btn__icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 4px currentColor);
+}
+.nav-btn__icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.nav-btn__label {
+    flex: 1;
+    text-align: left;
+    text-shadow: 0 0 8px currentColor;
+}
+.nav-btn__chevron {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.35s var(--transition-smooth);
+}
+.nav-btn__chevron svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+}
 
-        /* Lift effect on hover */
-        .nav-btn__wrap:hover .nav-btn,
-        .nav-btn__wrap:focus-within .nav-btn {
-            transform: translateY(-3px) scale(1.01);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-        }
+.nav-item.is-open > .nav-btn__wrap .nav-btn__chevron {
+    transform: rotate(180deg);
+}
 
-        .nav-btn__wrap:hover::after,
-        .nav-btn__wrap:focus-within::after {
-            opacity: 1;
-            box-shadow: 0 0 14px currentColor, 0 0 4px currentColor, inset 0 0 6px rgba(0, 0, 0, 0.3);
-        }
+/* Estructura del Submenú (Oculto por defecto) */
+.submenu {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.4s var(--transition-smooth), opacity 0.3s ease;
+    position: relative;
+}
+.nav-item.is-open > .submenu {
+    opacity: 1;
+}
+.submenu__inner {
+    position: relative;
+    padding-top: 8px;
+    padding-bottom: 4px;
+}
+.submenu__lines {
+    position: absolute;
+    top: 0;
+    left: 14px;
+    width: calc(var(--sub-indent) + 4px);
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+.submenu__list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: var(--sub-indent);
+    margin: 0;
+}
 
-        /* Active state */
-        .nav-btn__wrap.is-active::after {
-            opacity: 1;
-            box-shadow: 0 0 16px currentColor, 0 0 6px currentColor;
-        }
-
-        .nav-btn__wrap.is-active .nav-btn {
-            background: color-mix(in srgb, currentColor 12%, var(--bg-btn));
-        }
-
-        /* Color themes */
-        .theme-cyan  { color: var(--cyan); }
-        .theme-orange { color: var(--orange); }
-        .theme-purple { color: var(--purple); }
-        .theme-teal   { color: var(--teal); }
-
-        .theme-cyan .nav-btn  { background: linear-gradient(135deg, var(--cyan-dim), var(--bg-btn)); }
-        .theme-orange .nav-btn { background: linear-gradient(135deg, var(--orange-dim), var(--bg-btn)); }
-        .theme-purple .nav-btn { background: linear-gradient(135deg, var(--purple-dim), var(--bg-btn)); }
-        .theme-teal .nav-btn   { background: linear-gradient(135deg, var(--teal-dim), var(--bg-btn)); }
-
-        /* Icon */
-        .nav-btn__icon {
-            flex-shrink: 0;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            filter: drop-shadow(0 0 4px currentColor);
-        }
-
-        .nav-btn--sub .nav-btn__icon {
-            width: 15px;
-            height: 15px;
-        }
-
-        .nav-btn__icon svg {
-            width: 100%;
-            height: 100%;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .nav-btn__label {
-            flex: 1;
-            text-align: left;
-            text-shadow: 0 0 8px currentColor;
-        }
-
-        /* Chevron for expandable items */
-        .nav-btn__chevron {
-            flex-shrink: 0;
-            width: 14px;
-            height: 14px;
-            transition: transform 0.35s var(--transition-smooth);
-            filter: drop-shadow(0 0 4px currentColor);
-        }
-
-        .nav-btn__chevron svg {
-            width: 100%;
-            height: 100%;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .nav-item.is-open > .nav-btn__wrap .nav-btn__chevron {
-            transform: rotate(180deg);
-        }
-
-        /* ============================================================
-           SUBMENU — slide + fade + connecting lines
-           ============================================================ */
-        .submenu {
-            overflow: hidden;
-            max-height: 0;
-            opacity: 0;
-            transition:
-                max-height 0.45s var(--transition-smooth),
-                opacity 0.35s var(--transition-smooth);
-            position: relative;
-        }
-
-        .nav-item.is-open > .submenu {
-            opacity: 1;
-        }
-
-        .submenu__inner {
-            position: relative;
-            padding-top: 6px;
-            padding-bottom: 2px;
-        }
-
-        /* SVG tree connector lines */
-        .submenu__lines {
-            position: absolute;
-            top: 0;
-            left: 14px;
-            width: calc(var(--sub-indent) + 4px);
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .submenu__list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-left: var(--sub-indent);
-            position: relative;
-            z-index: 2;
-        }
-
-        /* ============================================================
-           RESPONSIVE
-           ============================================================ */
-        @media (max-width: 768px) {
-            .sidebar-toggle {
-                display: flex;
-            }
-
-            .sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                z-index: 100;
-                transform: translateX(-100%);
-                min-height: 100vh;
-                box-shadow: 4px 0 30px rgba(0, 0, 0, 0.6);
-            }
-
-            .sidebar.is-open {
-                transform: translateX(0);
-            }
-
-            .sidebar-overlay.is-visible {
-                display: block;
-                opacity: 1;
-            }
-
-            .main-content {
-                padding: 4rem 1.5rem 2rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            :root {
-                --sidebar-width: 260px;
-                --sidebar-padding: 14px;
-            }
-        }
+/* Responsivo: Despliegue desde la Derecha en Mobile */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        right: 0; /* Cambiado a la derecha */
+        left: auto;
+        z-index: 100;
+        transform: translateX(100%); /* Esconde hacia la derecha */
+    }
+    .sidebar.is-open {
+        transform: translateX(0);
+    }
+}
 
 /* ═══════════════════════════════════════
    MAIN CONTENT AREA
