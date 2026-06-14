@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
    Animated HUD circuit connection lines
    Links sidebar nodes to dashboard panels
    ───────────────────────────────────────── */
-/*function initCircuitConnections() {
+function initCircuitConnections() {
     const canvas = document.getElementById('connections');
     if (!canvas) return;
 
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Rebuild paths after layout settles
     setTimeout(buildPaths, 500);
-}*/
+}
 
 /* ─────────────────────────────────────────
    Ambient floating particles (scanning HUD)
@@ -366,13 +366,22 @@ function initNavigation() {
         item.classList.add('is-open');
         const submenu = item.querySelector('.submenu');
         const toggle = item.querySelector('[data-toggle]');
+        
         if (submenu) {
+            // Forzamos un reflow limpio para garantizar que el navegador calcule el alto real
             submenu.style.maxHeight = 'none';
-            const height = submenu.scrollHeight;
+            const height = submenu.getBoundingClientRect().height || submenu.scrollHeight;
             submenu.style.maxHeight = '0';
+            
+            // Forzar un reflow leyendo una propiedad de layout
+            submenu.offsetHeight; 
+
+            // El doble requestAnimationFrame asegura que el estado '0' se aplique antes de pasar al alto final
             requestAnimationFrame(() => {
-                submenu.style.maxHeight = height + 'px';
-                drawConnectorLines(item);
+                requestAnimationFrame(() => {
+                    submenu.style.maxHeight = height + 'px';
+                    drawConnectorLines(item);
+                });
             });
         }
         if (toggle) toggle.setAttribute('aria-expanded', 'true');
@@ -381,11 +390,17 @@ function initNavigation() {
     accordionItems.forEach(item => {
         const toggle = item.querySelector('[data-toggle]');
         if (!toggle) return;
-        toggle.addEventListener('click', () => {
+        
+        // CORREGIDO: Pasamos el parámetro 'e' del evento click
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault(); // CRÍTICO: Evita que el enlace recargue la página o rompa el JS
+            
             const isOpen = item.classList.contains('is-open');
+            
             accordionItems.forEach(other => {
                 if (other !== item) closeAccordionItem(other);
             });
+            
             if (isOpen) {
                 closeAccordionItem(item);
             } else {
@@ -402,7 +417,10 @@ function initNavigation() {
         const inner = accordionItem.querySelector('.submenu__inner');
         const svgHeight = inner.offsetHeight;
         const color = getComputedStyle(accordionItem).color;
-        const filterId = 'nodeGlow-' + svg.id.replace('lines-', '');
+        
+        // Salvaguarda por si el SVG no tiene un ID definido en el HTML base inyectado
+        const rawId = svg.id || 'default';
+        const filterId = 'nodeGlow-' + rawId.replace('lines-', '');
         const nodeX = 14;
         const branchEnd = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sub-indent'), 10) || 28;
         

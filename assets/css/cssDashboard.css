@@ -20,7 +20,7 @@
     --clip-kpi: polygon(0 0, 88% 0, 100% 18%, 100% 100%, 12% 100%, 0 82%);
     --clip-nav: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
 
-    --sidebar-width: 280px;
+    --sidebar-width: 220px;
     --sidebar-padding: 24px 16px;
     --bg-sidebar: rgba(4, 8, 18, 0.85);
     --corner-cut: 26px;
@@ -125,28 +125,23 @@ body:has(.dashboard-container)::after {
     padding: 24px;
     color: #fff;
     margin-left: var(--sidebar-width);
-    margin-top: 250px; 
+    margin-top: 240px; 
 }
 
 /* ── Floating Asymmetrical Sidebar ── */
 .sidebar {
     width: var(--sidebar-width);
-    /* CORREGIDO: Altura ajustada restando el espacio del header base */
-    height: calc(100vh - 250px); 
+    height: calc(100vh - 240px); 
     padding: var(--sidebar-padding);
     background: var(--bg-sidebar);
     backdrop-filter: blur(8px);
-    
     position: fixed;
-    /* CORREGIDO: Comienza inmediatamente abajo del encabezado de 250px */
-    top: 250px; 
+    top: 240px; 
     left: 0 !important;
     z-index: 5001 !important;
-
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6), 
                 -2px 0 15px rgba(0, 212, 255, 0.12);
     border-left: 1px solid rgba(0, 212, 255, 0.15);
-
     clip-path: polygon(
         var(--corner-cut) 0,
         100% 0,
@@ -225,7 +220,7 @@ body:has(.dashboard-container)::after {
     border: none;
     cursor: pointer;
     font-size: 0.82rem;
-    font-weight: 700;
+    font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--text-primary);
