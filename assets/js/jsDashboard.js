@@ -1,142 +1,91 @@
-document.addEventListener("DOMContentLoaded", () => {
-  inicializarRadar();
-  inicializarHistograma();
-});
+(() => {
+      // Ejecución diferida controlada para asegurar el montado en el DOM inyectado
+      setTimeout(() => {
+        initRadar();
+        initHistogram();
+      }, 50);
 
-// ==========================================
-// RENDER COMPONENTE: RADAR TÁCTICO DE ALERTAS
-// ==========================================
-function inicializarRadar() {
-  const canvas = document.getElementById("radarCanvas");
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext("2d");
-  const size = 112; // Sincronizado con Tailwind w-28
-  canvas.width = size;
-  canvas.height = size;
-  
-  const cx = size / 2;
-  const cy = size / 2;
-  const rMax = size / 2 - 5;
-  let angle = 0;
+      function initRadar() {
+        const canvas = document.getElementById("cyberInjectedRadar");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const size = 96;
+        canvas.width = size; canvas.height = size;
+        const cx = size/2, cy = size/2, rMax = size/2 - 4;
+        let angle = 0;
 
-  function drawRadar() {
-    ctx.clearRect(0, 0, size, size);
+        function draw() {
+          ctx.clearRect(0,0,size,size);
+          ctx.strokeStyle = "rgba(0, 240, 255, 0.15)";
+          ctx.lineWidth = 1;
+          for(let r=rMax; r>0; r-=16) {
+            ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+          }
+          ctx.beginPath();
+          ctx.moveTo(cx-rMax, cy); ctx.lineTo(cx+rMax, cy);
+          ctx.moveTo(cx, cy-rMax); ctx.lineTo(cx, cy+rMax);
+          ctx.stroke();
 
-    // Circunferencias de guía
-    ctx.strokeStyle = "rgba(0, 240, 255, 0.15)";
-    ctx.lineWidth = 1;
-    
-    for (let r = rMax; r > 0; r -= 18) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+          ctx.save();
+          ctx.translate(cx,cy); ctx.rotate(angle);
+          let grad = ctx.createRadialGradient(0,0,0,0,0,rMax);
+          grad.addColorStop(0, "transparent"); grad.addColorStop(1, "rgba(0, 240, 255, 0.35)");
+          ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,rMax,0,0.5); ctx.lineTo(0,0);
+          ctx.fillStyle = grad; ctx.fill();
+          ctx.restore();
 
-    // Ejes transversales en cruz
-    ctx.beginPath();
-    ctx.moveTo(cx - rMax, cy); ctx.lineTo(cx + rMax, cy);
-    ctx.moveTo(cx, cy - rMax); ctx.lineTo(cx, cy + rMax);
-    ctx.strokeStyle = "rgba(0, 240, 255, 0.1)";
-    ctx.stroke();
+          // Target crítico simulado
+          ctx.beginPath(); ctx.arc(cx+16, cy-14, 3, 0, Math.PI*2);
+          ctx.fillStyle = `rgba(239, 68, 68, ${Math.abs(Math.sin(Date.now()*0.004))})`;
+          ctx.fill();
 
-    // Línea de barrido (Sweep line)
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(angle);
-    
-    // Gradiente de desvanecimiento de estela
-    let sweepGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, rMax);
-    sweepGrad.addColorStop(0, "rgba(239, 68, 68, 0)");
-    sweepGrad.addColorStop(1, "rgba(239, 68, 68, 0.4)");
-    
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, rMax, 0, 0.4); // Apertura del haz
-    ctx.lineTo(0, 0);
-    ctx.fillStyle = sweepGrad;
-    ctx.fill();
-    ctx.restore();
+          angle += 0.02;
+          requestAnimationFrame(draw);
+        }
+        draw();
+      }
 
-    // Punto crítico parpadeante (Simulación de objetivo detectado)
-    ctx.beginPath();
-    ctx.arc(cx + 15, cy - 20, 3, 0, Math.PI * 2);
-    let alpha = Math.abs(Math.sin(Date.now() * 0.005));
-    ctx.fillStyle = `rgba(239, 68, 68, ${alpha})`;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = "#ef4444";
-    ctx.fill();
-    ctx.shadowBlur = 0; // Reset shadow
+      function initHistogram() {
+        const canvas = document.getElementById("cyberInjectedHistogram");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = 100;
 
-    angle += 0.025;
-    requestAnimationFrame(drawRadar);
-  }
-  drawRadar();
-}
+        const dataPoints = [30, 45, 35, 70, 50, 85, 60, 90, 40, 95];
+        const barW = 14, gap = 10, offsetBottom = 14;
 
-// ==========================================
-// RENDER COMPONENTE: HISTOGRAMA CYAN GLOW
-// ==========================================
-function inicializarHistograma() {
-  const canvas = document.getElementById("histogramaCanvas");
-  if (!canvas) return;
+        function render() {
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          ctx.strokeStyle = "rgba(168, 85, 247, 0.2)";
+          ctx.beginPath(); ctx.moveTo(0, canvas.height-offsetBottom); ctx.lineTo(canvas.width, canvas.height-offsetBottom);
+          ctx.stroke();
 
-  const ctx = canvas.getContext("2d");
-  
-  // Ajuste dinámico de dimensiones físicas
-  canvas.width = canvas.parentElement.clientWidth;
-  canvas.height = 110;
+          dataPoints.forEach((val, i) => {
+            const x = 15 + i * (barW + gap);
+            const h = (val / 100) * (canvas.height - offsetBottom - 10);
+            const y = canvas.height - offsetBottom - h;
 
-  const sampleData = [35, 55, 40, 75, 45, 90, 60, 85, 50, 95];
-  const barWidth = 16;
-  const gap = 12;
-  const paddingBottom = 15;
-  const paddingTop = 10;
+            // Renderizado de la barra con efecto de brillo neón
+            ctx.shadowBlur = 6; ctx.shadowColor = "#00f0ff";
+            ctx.fillStyle = "#00f0ff";
+            ctx.fillRect(x, y, barW, h);
+            ctx.shadowBlur = 0;
 
-  function drawHistogram() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Línea base horizontal (Suelo métrico)
-    ctx.strokeStyle = "rgba(168, 85, 247, 0.2)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height - paddingBottom);
-    ctx.lineTo(canvas.width, canvas.height - paddingBottom);
-    ctx.stroke();
-
-    // Dibujo secuencial de barras con efecto Neón
-    sampleData.forEach((val, i) => {
-      const x = 20 + i * (barWidth + gap);
-      const maxH = canvas.height - paddingBottom - paddingTop;
-      const h = (val / 100) * maxH;
-      const y = canvas.height - paddingBottom - h;
-
-      // Configurar sombra de neón (Glow)
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = "#00f0ff";
-      
-      // Cuerpo de la barra principal
-      ctx.fillStyle = "#00f0ff";
-      ctx.fillRect(x, y, barWidth, h);
-      
-      // Apagar sombra para textos para no perjudicar legibilidad
-      ctx.shadowBlur = 0;
-
-      // Etiquetas del eje X (SKU)
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
-      ctx.font = "8px 'Share Tech Mono'";
-      ctx.textAlign = "center";
-      ctx.fillText(`U${i+1}`, x + barWidth/2, canvas.height - 4);
-    });
-  }
-  
-  drawHistogram();
-
-  // Escuchar redimensionamiento de pantalla para no perder ratio
-  window.addEventListener("resize", () => {
-    if(canvas && canvas.parentElement) {
-      canvas.width = canvas.parentElement.clientWidth;
-      drawHistogram();
-    }
-  });
-}
+            // Texto de identificación del eje
+            ctx.fillStyle = "rgba(255,255,255,0.3)";
+            ctx.font = "8px 'Share Tech Mono'";
+            ctx.textAlign = "center";
+            ctx.fillText(`P${i+1}`, x + barW/2, canvas.height - 3);
+          });
+        }
+        render();
+        window.addEventListener("resize", () => {
+          if (canvas && canvas.parentElement) {
+            canvas.width = canvas.parentElement.clientWidth;
+            render();
+          }
+        });
+      }
+    })();
