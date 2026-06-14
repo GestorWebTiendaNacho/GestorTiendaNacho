@@ -118,7 +118,7 @@ body:has(.dashboard-container)::after {
    ═══════════════════════════════════════ */
 
 body {
-    margin: 0;
+    margin: 450px 0 0;
     background-color: #030712;
 }
 
