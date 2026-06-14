@@ -20,13 +20,15 @@
     --clip-kpi: polygon(0 0, 88% 0, 100% 18%, 100% 100%, 12% 100%, 0 82%);
     --clip-nav: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
 
-    --sidebar-width: 220px;
-    --sidebar-padding: 24px 16px;
-    --bg-sidebar: rgba(4, 8, 18, 0.85);
+    --sidebar-width: 150px;
+    --sidebar-padding: 24px 10px;
+    --btn-gap: 24px; 
+    
+    --bg-sidebar: rgba(4, 8, 18, 0.92);
     --corner-cut: 26px;
-    --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: cubic-bezier(0.25, 1, 0.5, 1);
     --cyan: #00d4ff;
-    --cyan-glow: rgba(0, 212, 255, 0.4);
+    --cyan-glow: rgba(0, 212, 255, 0.5);
     --cyan-dim: rgba(0, 212, 255, 0.08);
     --orange: #ff9f43;
     --orange-dim: rgba(255, 159, 67, 0.08);
@@ -34,12 +36,11 @@
     --purple-dim: rgba(165, 94, 234, 0.08);
     --teal: #20bf6b;
     --teal-dim: rgba(32, 191, 107, 0.08);
-    --btn-gap: 12px;
-    --btn-height: 46px;
-    --sub-btn-height: 38px;
-    --bg-btn: rgba(10, 22, 44, 0.7);
+    --btn-height: 44px;
+    --sub-btn-height: 36px;
+    --bg-btn: rgba(8, 18, 36, 0.85);
     --text-primary: #ffffff;
-    --sub-indent: 28px;
+    --sub-indent: 18px;
     font-family: sans-serif;
 }
 
@@ -134,14 +135,14 @@ body:has(.dashboard-container)::after {
     height: calc(100vh - 240px); 
     padding: var(--sidebar-padding);
     background: var(--bg-sidebar);
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
     position: fixed;
     top: 240px; 
     left: 0 !important;
     z-index: 5001 !important;
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6), 
-                -2px 0 15px rgba(0, 212, 255, 0.12);
-    border-left: 1px solid rgba(0, 212, 255, 0.15);
+    box-shadow: -15px 0 45px rgba(0, 0, 0, 0.8), 
+                -2px 0 20px rgba(0, 212, 255, 0.15);
+    border-left: 1px solid rgba(0, 212, 255, 0.2);
     clip-path: polygon(
         var(--corner-cut) 0,
         100% 0,
@@ -181,14 +182,13 @@ body:has(.dashboard-container)::after {
 }
 
 .sidebar__header {
-    font-size: 1.35rem;
+    font-size: 1.1rem;
     font-weight: 900;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.2em;
     color: var(--cyan);
     text-shadow: 0 0 15px var(--cyan-glow);
-    margin-bottom: 28px;
+    margin-bottom: 32px;
     text-align: center;
-    /* CORREGIDO: z-index superior para quedar por encima de los vectores del SVG frame */
     position: relative;
     z-index: 20; 
 }
@@ -212,35 +212,37 @@ body:has(.dashboard-container)::after {
 .nav-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     height: var(--btn-height);
-    padding: 0 14px 0 16px;
+    padding: 0 10px 0 12px;
     background: var(--bg-btn);
     border: none;
     cursor: pointer;
-    font-size: 0.82rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-primary);
     text-decoration: none;
     position: relative;
     box-sizing: border-box;
-    transition: transform 0.3s var(--transition-smooth), background 0.3s;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.25s, filter 0.25s;
     outline: none;
-    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
 }
 
 .nav-btn--sub {
     height: var(--sub-btn-height);
-    font-size: 0.72rem;
-    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+    font-size: 0.68rem;
+    clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
 }
 
 .nav-btn__wrap {
     position: relative;
     display: block;
+    /* Evitamos cortes visuales por sombras */
+    overflow: visible; 
 }
 
 .nav-btn__wrap::after {
@@ -249,21 +251,21 @@ body:has(.dashboard-container)::after {
     inset: 0;
     pointer-events: none;
     border: 1px solid currentColor;
-    opacity: 0.4;
-    transition: opacity 0.3s, box-shadow 0.3s;
-    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+    opacity: 0.3;
+    transition: opacity 0.25s, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s;
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
 }
 
 .nav-btn__wrap--sub::after {
-    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+    clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
 }
 
 /* Kinetic Glow Line Animation */
 .nav-btn__glow-line {
     position: absolute;
     bottom: 0;
-    left: 12px;
-    right: 12px;
+    left: 10px;
+    right: 10px;
     height: 2px;
     overflow: hidden;
     pointer-events: none;
@@ -282,20 +284,26 @@ body:has(.dashboard-container)::after {
     transition: opacity 0.2s;
 }
 
-/* Interactive States */
+/* MODIFICADO: Estado Interactivo "Despegue Radical" */
 .nav-btn__wrap:hover .nav-btn,
 .nav-btn__wrap:focus-within .nav-btn {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.05);
+    /* Despegue violento hacia arriba y a la derecha con un leve escalado de presencia */
+    transform: translateY(-6px) translateX(4px) scale(1.02);
+    background: rgba(14, 32, 66, 0.95);
+    /* Inyección de brillo cromático directo por filtrado de hardware */
+    filter: drop-shadow(-4px 6px 8px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 6px currentColor);
 }
+
 .nav-btn__wrap:hover::after,
 .nav-btn__wrap:focus-within::after {
     opacity: 1;
-    box-shadow: 0 0 10px currentColor, inset 0 0 4px rgba(0, 0, 0, 0.5);
+    transform: translateY(-6px) translateX(4px) scale(1.02);
+    box-shadow: inset 0 0 8px currentColor;
 }
+
 .nav-btn__wrap:hover .nav-btn__glow-line::after {
     opacity: 1;
-    animation: glowTravel 1.2s ease-in-out infinite;
+    animation: glowTravel 1s ease-in-out infinite;
 }
 
 @keyframes glowTravel {
@@ -317,8 +325,8 @@ body:has(.dashboard-container)::after {
 /* Iconography & Labels */
 .nav-btn__icon {
     flex-shrink: 0;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -335,10 +343,13 @@ body:has(.dashboard-container)::after {
     flex: 1;
     text-align: left;
     text-shadow: 0 0 8px currentColor;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .nav-btn__chevron {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     transition: transform 0.35s var(--transition-smooth);
 }
 .nav-btn__chevron svg {
@@ -353,12 +364,12 @@ body:has(.dashboard-container)::after {
     transform: rotate(180deg);
 }
 
-/* Submenu layout */
+/*Submenu layout*/
 .submenu {
     overflow: hidden;
     max-height: 0;
     opacity: 0;
-    transition: max-height 0.4s var(--transition-smooth), opacity 0.3s ease;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
     position: relative;
 }
 .nav-item.is-open > .submenu {
@@ -366,13 +377,13 @@ body:has(.dashboard-container)::after {
 }
 .submenu__inner {
     position: relative;
-    padding-top: 8px;
-    padding-bottom: 4px;
+    padding-top: 10px;
+    padding-bottom: 8px;
 }
 .submenu__lines {
     position: absolute;
     top: 0;
-    left: 14px;
+    left: 8px;
     width: calc(var(--sub-indent) + 4px);
     height: 100%;
     pointer-events: none;
@@ -382,7 +393,7 @@ body:has(.dashboard-container)::after {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
     padding-left: var(--sub-indent);
     margin: 0;
 }
@@ -402,9 +413,8 @@ body:has(.dashboard-container)::after {
     }
 }
 
-/* ═══════════════════════════════════════
-   MAIN CONTENT AREA
-   ═══════════════════════════════════════ */
+
+/* MAIN CONTENT AREA═════════════════ */
 .main-hud {
     flex: 1;
     display: flex;

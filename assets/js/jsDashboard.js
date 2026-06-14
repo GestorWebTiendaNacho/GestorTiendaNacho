@@ -1,7 +1,4 @@
-/**
- * DEPÓSITO HUD Dashboard — Interactive Layer
- * Circuit connections · Particles · Sparklines · Charts · Nav
- */
+
 document.addEventListener('DOMContentLoaded', () => {
     // Core Visual & Interactive initializers
     initCircuitConnections();
@@ -13,10 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initPagination();
 });
 
-/* ─────────────────────────────────────────
-   Animated HUD circuit connection lines
-   Links sidebar nodes to dashboard panels
-   ───────────────────────────────────────── */
 function initCircuitConnections() {
     const canvas = document.getElementById('connections');
     if (!canvas) return;
@@ -140,9 +133,6 @@ function initCircuitConnections() {
     setTimeout(buildPaths, 500);
 }
 
-/* ─────────────────────────────────────────
-   Ambient floating particles (scanning HUD)
-   ───────────────────────────────────────── */
 function initParticles() {
     const canvas = document.getElementById('particles');
     if (!canvas) return;
@@ -207,9 +197,6 @@ function initParticles() {
     animate();
 }
 
-/* ─────────────────────────────────────────
-   Mini sparkline graphs inside KPI cards
-   ───────────────────────────────────────── */
 function initSparklines() {
     document.querySelectorAll('.spark-canvas').forEach(canvas => {
         const color = canvas.dataset.color || '#00f0ff';
@@ -265,10 +252,6 @@ function hexToRgba(hex, alpha = 1) {
     const b = parseInt(cleanHex.substring(4, 6), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-
-/* ─────────────────────────────────────────
-   Main bar chart — Cantidad de Prod. Vendidos
-   ───────────────────────────────────────── */
 
 function initMainBarChart() {
     const canvas = document.getElementById('hudBarChart');
@@ -347,18 +330,26 @@ function initMainBarChart() {
     });
 }
 
-/* ─────────────────────────────────────────
-   Sidebar navigation interactions
-   ───────────────────────────────────────── */
+/* Sidebar navigation interactions */
 function initNavigation() {
     const accordionItems = document.querySelectorAll('[data-accordion]');
     if (!accordionItems.length) return;
+
+    accordionItems.forEach(item => {
+        const submenu = item.querySelector('.submenu');
+        if (submenu && !item.classList.contains('is-open')) {
+            submenu.style.maxHeight = '0px';
+            submenu.style.display = 'block';
+        }
+    });
 
     function closeAccordionItem(item) {
         item.classList.remove('is-open');
         const submenu = item.querySelector('.submenu');
         const toggle = item.querySelector('[data-toggle]');
-        if (submenu) submenu.style.maxHeight = '0';
+        if (submenu) {
+            submenu.style.maxHeight = '0px';
+        }
         if (toggle) toggle.setAttribute('aria-expanded', 'false');
     }
 
@@ -368,15 +359,12 @@ function initNavigation() {
         const toggle = item.querySelector('[data-toggle]');
         
         if (submenu) {
-            // Forzamos un reflow limpio para garantizar que el navegador calcule el alto real
             submenu.style.maxHeight = 'none';
-            const height = submenu.getBoundingClientRect().height || submenu.scrollHeight;
-            submenu.style.maxHeight = '0';
+            const height = submenu.scrollHeight;
+            submenu.style.maxHeight = '0px';
             
-            // Forzar un reflow leyendo una propiedad de layout
             submenu.offsetHeight; 
 
-            // El doble requestAnimationFrame asegura que el estado '0' se aplique antes de pasar al alto final
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     submenu.style.maxHeight = height + 'px';
@@ -390,13 +378,10 @@ function initNavigation() {
     accordionItems.forEach(item => {
         const toggle = item.querySelector('[data-toggle]');
         if (!toggle) return;
-        
-        // CORREGIDO: Pasamos el parámetro 'e' del evento click
         toggle.addEventListener('click', (e) => {
-            e.preventDefault(); // CRÍTICO: Evita que el enlace recargue la página o rompa el JS
-            
+            e.preventDefault();
+            e.stopPropagation();
             const isOpen = item.classList.contains('is-open');
-            
             accordionItems.forEach(other => {
                 if (other !== item) closeAccordionItem(other);
             });
@@ -418,11 +403,10 @@ function initNavigation() {
         const svgHeight = inner.offsetHeight;
         const color = getComputedStyle(accordionItem).color;
         
-        // Salvaguarda por si el SVG no tiene un ID definido en el HTML base inyectado
         const rawId = svg.id || 'default';
         const filterId = 'nodeGlow-' + rawId.replace('lines-', '');
-        const nodeX = 14;
-        const branchEnd = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sub-indent'), 10) || 28;
+        const nodeX = 8; 
+        const branchEnd = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sub-indent'), 10) || 18;
         
         svg.setAttribute('viewBox', `0 0 ${branchEnd + 4} ${svgHeight}`);
         svg.style.height = svgHeight + 'px';
@@ -434,20 +418,18 @@ function initNavigation() {
         centers.forEach(cy => {
             const elbowX = nodeX + 6;
             paths += `<polyline points="${nodeX},${cy} ${elbowX},${cy} ${branchEnd},${cy}" fill="none" stroke="${color}" stroke-width="1" opacity="0.65"/>`;
-            paths += `<circle cx="${nodeX}" cy="${cy}" r="3" fill="${color}" opacity="0.9" filter="url(#${filterId})"/>`;
-            paths += `<circle cx="${branchEnd}" cy="${cy}" r="2" fill="${color}" opacity="0.75"/>`;
+            paths += `<circle cx="${nodeX}" cy="${cy}" r="2.5" fill="${color}" opacity="0.9" filter="url(#${filterId})"/>`;
+            paths += `<circle cx="${branchEnd}" cy="${cy}" r="1.5" fill="${color}" opacity="0.75"/>`;
         });
         
         const glowDef = `<defs><filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            <feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter></defs>`;
         svg.innerHTML = glowDef + paths;
     }
 }
 
-/* ─────────────────────────────────────────
-   Live HUD clock in top bar
-   ───────────────────────────────────────── */
+/* Live HUD clock in top bar */
 function initHudClock() {
     const el = document.getElementById('hudClock');
     if (!el) return;
@@ -460,9 +442,7 @@ function initHudClock() {
     setInterval(tick, 1000);
 }
 
-/* ─────────────────────────────────────────
-   Table pagination active state
-   ───────────────────────────────────────── */
+/* Table pagination active state */
 function initPagination() {
     document.querySelectorAll('.hud-pagination .pag-btn').forEach(btn => {
         if (btn.textContent.trim().match(/^\d+$/)) {
