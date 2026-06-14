@@ -347,31 +347,188 @@ function initMainBarChart() {
 /* ─────────────────────────────────────────
    Sidebar navigation interactions
    ───────────────────────────────────────── */
-function initNavigation() {
-    // Toggle nav groups (Pedidos, Reportes)
-    document.querySelectorAll('.nav-group .group-title').forEach(title => {
-        title.addEventListener('click', () => {
-            const group = title.closest('.nav-group');
-            group.classList.toggle('open');
-        });
-    });
+        (function () {
+            'use strict';
 
-    // Active state on nav items
-    document.querySelectorAll('.sidebar-nav > .nav-item:not(.group-title)').forEach(item => {
-        item.addEventListener('click', () => {
-            document.querySelectorAll('.sidebar-nav > .nav-item').forEach(n => n.classList.remove('active'));
-            item.classList.add('active');
-        });
-    });
+            /* ----------------------------------------------------------
+               Accordion — only one submenu open at a time
+               ---------------------------------------------------------- */
+            const accordionItems = document.querySelectorAll('[data-accordion]');
 
-    // Sub-item click
-    document.querySelectorAll('.sub-item').forEach(sub => {
-        sub.addEventListener('click', (e) => {
-            e.stopPropagation();
-            document.querySelectorAll('.sidebar-nav > .nav-item').forEach(n => n.classList.remove('active'));
-        });
-    });
-}
+            function closeAccordionItem(item) {
+                item.classList.remove('is-open');
+                const submenu = item.querySelector('.submenu');
+                const toggle = item.querySelector('[data-toggle]');
+                if (submenu) submenu.style.maxHeight = '0';
+                if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            function openAccordionItem(item) {
+                item.classList.add('is-open');
+                const submenu = item.querySelector('.submenu');
+                const toggle = item.querySelector('[data-toggle]');
+                if (submenu) {
+                    submenu.style.maxHeight = 'none';
+                    const height = submenu.scrollHeight;
+                    submenu.style.maxHeight = '0';
+                    requestAnimationFrame(() => {
+                        submenu.style.maxHeight = height + 'px';
+                        drawConnectorLines(item);
+                    });
+                    submenu.addEventListener('transitionend', function onEnd(e) {
+                        if (e.propertyName === 'max-height') {
+                            drawConnectorLines(item);
+                            submenu.removeEventListener('transitionend', onEnd);
+                        }
+                    });
+                }
+                if (toggle) toggle.setAttribute('aria-expanded', 'true');
+            }
+
+            accordionItems.forEach(item => {
+                const toggle = item.querySelector('[data-toggle]');
+                if (!toggle) return;
+
+                toggle.addEventListener('click', () => {
+                    const isOpen = item.classList.contains('is-open');
+
+                    // Close all other accordion items
+                    accordionItems.forEach(other => {
+                        if (other !== item) closeAccordionItem(other);
+                    });
+
+                    if (isOpen) {
+                        closeAccordionItem(item);
+                    } else {
+                        openAccordionItem(item);
+                    }
+                });
+            });
+
+            /* ----------------------------------------------------------
+               SVG connector lines — tree branches to sub-items
+               ---------------------------------------------------------- */
+            function drawConnectorLines(accordionItem) {
+                const svg = accordionItem.querySelector('.submenu__lines');
+                const subItems = accordionItem.querySelectorAll('.submenu__list > li');
+                if (!svg || !subItems.length) return;
+
+                const inner = accordionItem.querySelector('.submenu__inner');
+                const svgHeight = inner.offsetHeight;
+                const color = getComputedStyle(accordionItem).color;
+                const filterId = 'nodeGlow-' + svg.id.replace('lines-', '');
+
+                const nodeX = 14;
+                const branchEnd = parseInt(getComputedStyle(document.documentElement)
+                    .getPropertyValue('--sub-indent'), 10) || 28;
+
+                svg.setAttribute('viewBox', `0 0 ${branchEnd + 4} ${svgHeight}`);
+                svg.style.height = svgHeight + 'px';
+
+                const centers = subItems.map(li => li.offsetTop + li.offsetHeight / 2);
+                const lastCenter = centers[centers.length - 1];
+
+                let paths = `<line x1="${nodeX}" y1="0" x2="${nodeX}" y2="${lastCenter}" stroke="${color}" stroke-width="1" opacity="0.65"/>`;
+
+                centers.forEach(cy => {
+                    const elbowX = nodeX + 6;
+                    paths += `<polyline points="${nodeX},${cy} ${elbowX},${cy} ${branchEnd},${cy}" fill="none" stroke="${color}" stroke-width="1" opacity="0.65"/>`;
+                    paths += `<circle cx="${nodeX}" cy="${cy}" r="3" fill="${color}" opacity="0.9" filter="url(#${filterId})"/>`;
+                    paths += `<circle cx="${branchEnd}" cy="${cy}" r="2" fill="${color}" opacity="0.75"/>`;
+                });
+
+                const glowDef = `<defs><filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter></defs>`;
+
+                svg.innerHTML = glowDef + paths;
+            }
+
+            // Draw lines for any initially open items
+            accordionItems.forEach(item => {
+                if (item.classList.contains('is-open')) drawConnectorLines(item);
+            });
+
+            /* ----------------------------------------------------------
+               Active state — highlight selected nav item
+               ---------------------------------------------------------- */
+            const navLinks = document.querySelectorAll('[data-nav]');
+
+            function setActive(navId) {
+                document.querySelectorAll('.nav-btn__wrap.is-active').forEach(w => w.classList.remove('is-active'));
+                const link = document.querySelector(`[data-nav="${navId}"]`);
+                if (link) {
+                    const wrap = link.closest('.nav-btn__wrap');
+                    if (wrap) wrap.classList.add('is-active');
+                }
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const navId = link.getAttribute('data-nav');
+                    setActive(navId);
+
+                    // Close mobile sidebar on navigation
+                    if (window.innerWidth <= 768) closeMobileSidebar();
+                });
+            });
+
+            // Set initial active from hash or default to inicio
+            const initialNav = window.location.hash.slice(1) || 'inicio';
+            setActive(initialNav);
+
+            /* ----------------------------------------------------------
+               Mobile sidebar toggle
+               ---------------------------------------------------------- */
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            function openMobileSidebar() {
+                sidebar.classList.add('is-open');
+                sidebarOverlay.classList.add('is-visible');
+                sidebarToggle.setAttribute('aria-expanded', 'true');
+            }
+
+            function closeMobileSidebar() {
+                sidebar.classList.remove('is-open');
+                sidebarOverlay.classList.remove('is-visible');
+                sidebarToggle.setAttribute('aria-expanded', 'false');
+            }
+
+            sidebarToggle.addEventListener('click', () => {
+                if (sidebar.classList.contains('is-open')) {
+                    closeMobileSidebar();
+                } else {
+                    openMobileSidebar();
+                }
+            });
+
+            sidebarOverlay.addEventListener('click', closeMobileSidebar);
+
+            /* ----------------------------------------------------------
+               Recalculate submenu heights & lines on resize
+               ---------------------------------------------------------- */
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    accordionItems.forEach(item => {
+                        if (item.classList.contains('is-open')) {
+                            const submenu = item.querySelector('.submenu');
+                            if (submenu) submenu.style.maxHeight = submenu.scrollHeight + 'px';
+                            drawConnectorLines(item);
+                        }
+                    });
+                }, 150);
+            });
+
+            // Keyboard: Escape closes mobile sidebar
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeMobileSidebar();
+            });
+        })();
+
 
 /* ─────────────────────────────────────────
    Live HUD clock in top bar

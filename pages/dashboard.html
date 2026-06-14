@@ -10,87 +10,257 @@
 
 <div class="dashboard-container">
     <!-- ═══ LEFT SIDEBAR ═══ -->
-    <aside class="sidebar-hud" id="sidebarHud">
-        <div class="sidebar-brand">
-            <div class="brand-accent"></div>
-            <h2>DEPÓSITO</h2>
-            <span class="brand-sub">CONTROL HUB v2.4</span>
-        </div>
+    <div class="app-layout">
+        <!-- ============================================================
+             SIDEBAR NAVIGATION
+             ============================================================ -->
+        <aside class="sidebar" id="sidebar" role="navigation" aria-label="Menú principal">
 
-        <nav class="sidebar-nav">
-            <div class="nav-item active" data-node="inicio">
-                <div class="nav-shape cyan-theme">
-                    <i class="fa-solid fa-house"></i>
-                    <span>INICIO</span>
-                </div>
-            </div>
+            <!-- Segmented chamfered border (SVG) -->
+            <svg class="sidebar__border" viewBox="0 0 280 800" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                    <filter id="borderGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="2" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <!-- Main frame with chamfered corners -->
+                <path
+                    d="M 0 0 L 254 0 L 280 26 L 280 800 L 14 800 L 0 786 Z"
+                    fill="none"
+                    stroke="#00d4ff"
+                    stroke-width="1"
+                    stroke-dasharray="40 6 12 6 60 6 20 6"
+                    filter="url(#borderGlow)"
+                    opacity="0.85"
+                />
+                <!-- Top-right decorative extension -->
+                <line x1="280" y1="120" x2="296" y2="120" stroke="#00d4ff" stroke-width="1" opacity="0.6"/>
+                <circle cx="298" cy="120" r="2.5" fill="#00d4ff" opacity="0.8"/>
+                <line x1="280" y1="200" x2="292" y2="200" stroke="#00d4ff" stroke-width="1" opacity="0.5"/>
+                <circle cx="294" cy="200" r="2" fill="#00d4ff" opacity="0.6"/>
+                <line x1="280" y1="320" x2="296" y2="320" stroke="#00d4ff" stroke-width="1" opacity="0.4"/>
+                <circle cx="298" cy="320" r="2.5" fill="#00d4ff" opacity="0.5"/>
+            </svg>
 
-            <div class="nav-group open" data-group="pedidos">
-                <div class="nav-item group-title orange-theme">
-                    <div class="nav-shape orange-theme">
-                        <i class="fa-solid fa-cart-shopping"></i>
-                        <span>PEDIDOS</span>
-                        <i class="fa-solid fa-chevron-down arrow"></i>
+            <!-- Corner hatch decorations -->
+            <svg class="sidebar__hatch sidebar__hatch--top" viewBox="0 0 20 20" aria-hidden="true">
+                <line x1="18" y1="2" x2="8" y2="12" stroke="#00d4ff" stroke-width="1" opacity="0.7"/>
+                <line x1="16" y1="2" x2="6" y2="12" stroke="#00d4ff" stroke-width="1" opacity="0.5"/>
+                <line x1="14" y1="2" x2="4" y2="12" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
+            </svg>
+            <svg class="sidebar__hatch sidebar__hatch--bottom" viewBox="0 0 20 20" aria-hidden="true">
+                <line x1="2" y1="18" x2="12" y2="8" stroke="#00d4ff" stroke-width="1" opacity="0.7"/>
+                <line x1="2" y1="16" x2="12" y2="6" stroke="#00d4ff" stroke-width="1" opacity="0.5"/>
+                <line x1="2" y1="14" x2="12" y2="4" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
+                <line x1="2" y1="12" x2="10" y2="4" stroke="#00d4ff" stroke-width="1" opacity="0.2"/>
+            </svg>
+
+            <h1 class="sidebar__header">DEPÓSITO</h1>
+
+            <ul class="sidebar__nav" id="sidebarNav">
+
+                <!-- INICIO -->
+                <li class="nav-item theme-cyan">
+                    <div class="nav-btn__wrap">
+                        <a href="#inicio" class="nav-btn" data-nav="inicio">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Inicio</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
                     </div>
-                </div>
-                <div class="sub-nav orange-line">
-                    <div class="nav-item sub-item"><i class="fa-solid fa-hand-pointer"></i> MANUAL</div>
-                    <div class="nav-item sub-item"><i class="fa-solid fa-robot"></i> ASISTIDA</div>
-                </div>
-            </div>
+                </li>
 
-            <div class="nav-item" data-node="recepcion">
-                <div class="nav-shape cyan-theme">
-                    <i class="fa-solid fa-truck-ramp-box"></i>
-                    <span>RECEPCIÓN</span>
-                </div>
-            </div>
-
-            <div class="nav-item" data-node="semanal">
-                <div class="nav-shape cyan-theme">
-                    <i class="fa-solid fa-calendar-week"></i>
-                    <span>SEMANAL</span>
-                </div>
-            </div>
-
-            <div class="nav-item" data-node="proveedores">
-                <div class="nav-shape cyan-theme">
-                    <i class="fa-solid fa-industry"></i>
-                    <span>PROVEEDORES</span>
-                </div>
-            </div>
-
-            <div class="nav-item" data-node="historial">
-                <div class="nav-shape cyan-theme">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span>HISTORIAL</span>
-                </div>
-            </div>
-
-            <div class="nav-group open" data-group="reportes">
-                <div class="nav-item group-title purple-theme">
-                    <div class="nav-shape purple-theme">
-                        <i class="fa-solid fa-chart-simple"></i>
-                        <span>REPORTES</span>
-                        <i class="fa-solid fa-chevron-down arrow"></i>
+                <!-- PEDIDOS (accordion) -->
+                <li class="nav-item theme-orange" data-accordion>
+                    <div class="nav-btn__wrap">
+                        <button type="button" class="nav-btn" data-toggle="pedidos" aria-expanded="false" aria-controls="submenu-pedidos">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M2 2h2l2.5 12h11l2-8H6"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Pedidos</span>
+                            <span class="nav-btn__chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </button>
+                        <span class="nav-btn__glow-line"></span>
                     </div>
-                </div>
-                <div class="sub-nav purple-line">
-                    <div class="nav-item sub-item"><i class="fa-solid fa-trophy"></i> TOP PROD</div>
-                    <div class="nav-item sub-item"><i class="fa-solid fa-triangle-exclamation"></i> CRÍTICOS</div>
-                    <div class="nav-item sub-item"><i class="fa-solid fa-dollar-sign"></i> VENDIDOS</div>
-                    <div class="nav-item sub-item"><i class="fa-solid fa-circle-info"></i> MÁS INFO</div>
-                </div>
-            </div>
+                    <div class="submenu" id="submenu-pedidos" role="region" aria-label="Submenú Pedidos">
+                        <div class="submenu__inner">
+                            <svg class="submenu__lines" id="lines-pedidos" aria-hidden="true"></svg>
+                            <ul class="submenu__list">
+                                <li>
+                                    <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                        <a href="#manual" class="nav-btn nav-btn--sub" data-nav="manual">
+                                            <span class="nav-btn__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+                                            </span>
+                                            <span class="nav-btn__label">Manual</span>
+                                        </a>
+                                        <span class="nav-btn__glow-line"></span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                        <a href="#asistidos" class="nav-btn nav-btn--sub" data-nav="asistidos">
+                                            <span class="nav-btn__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="13" r="1" fill="currentColor"/><circle cx="15" cy="13" r="1" fill="currentColor"/><path d="M9 16h6"/></svg>
+                                            </span>
+                                            <span class="nav-btn__label">Asistidos</span>
+                                        </a>
+                                        <span class="nav-btn__glow-line"></span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
 
-            <div class="nav-item configuration-btn" data-node="config">
-                <div class="nav-shape cyan-theme">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>CONFIGURACIÓN</span>
-                </div>
-            </div>
-        </nav>
-    </aside>
+                <!-- RECEPCIÓN -->
+                <li class="nav-item theme-teal">
+                    <div class="nav-btn__wrap">
+                        <a href="#recepcion" class="nav-btn" data-nav="recepcion">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Recepción</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>
+
+                <!-- SEMANAL -->
+                <li class="nav-item theme-teal">
+                    <div class="nav-btn__wrap">
+                        <a href="#semanal" class="nav-btn" data-nav="semanal">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Semanal</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>
+
+                <!-- PROVEEDORES -->
+                <li class="nav-item theme-teal">
+                    <div class="nav-btn__wrap">
+                        <a href="#proveedores" class="nav-btn" data-nav="proveedores">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Proveedores</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>
+
+                <!-- HISTORIAL -->
+                <li class="nav-item theme-teal">
+                    <div class="nav-btn__wrap">
+                        <a href="#historial" class="nav-btn" data-nav="historial">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Historial</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>
+
+                <!-- REPORTES (accordion) -->
+                <li class="nav-item theme-purple" data-accordion>
+                    <div class="nav-btn__wrap">
+                        <button type="button" class="nav-btn" data-toggle="reportes" aria-expanded="false" aria-controls="submenu-reportes">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Reportes</span>
+                            <span class="nav-btn__chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </button>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                    <div class="submenu" id="submenu-reportes" role="region" aria-label="Submenú Reportes">
+                        <div class="submenu__inner">
+                            <svg class="submenu__lines" id="lines-reportes" aria-hidden="true"></svg>
+                            <ul class="submenu__list">
+                                <li>
+                                    <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                        <a href="#top-prov" class="nav-btn nav-btn--sub" data-nav="top-prov">
+                                            <span class="nav-btn__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24"><path d="M6 9H4.5a1 1 0 00-1 1v10a1 1 0 001 1h3a1 1 0 001-1V10a1 1 0 00-1-1zM12.5 5h-3a1 1 0 00-1 1v14a1 1 0 001 1h3a1 1 0 001-1V6a1 1 0 00-1-1zM20 13h-3a1 1 0 00-1 1v6a1 1 0 001 1h3a1 1 0 001-1v-6a1 1 0 00-1-1z"/></svg>
+                                            </span>
+                                            <span class="nav-btn__label">Top Prov.</span>
+                                        </a>
+                                        <span class="nav-btn__glow-line"></span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                        <a href="#top-ventas" class="nav-btn nav-btn--sub" data-nav="top-ventas">
+                                            <span class="nav-btn__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-9.5L2 9h7z"/></svg>
+                                            </span>
+                                            <span class="nav-btn__label">Top Ventas</span>
+                                        </a>
+                                        <span class="nav-btn__glow-line"></span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                        <a href="#top-pedidos" class="nav-btn nav-btn--sub" data-nav="top-pedidos">
+                                            <span class="nav-btn__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M2 2h2l2.5 12h11l2-8H6"/></svg>
+                                            </span>
+                                            <span class="nav-btn__label">Top Pedidos</span>
+                                        </a>
+                                        <span class="nav-btn__glow-line"></span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                        <a href="#mes-actual" class="nav-btn nav-btn--sub" data-nav="mes-actual">
+                                            <span class="nav-btn__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="16" y1="14" x2="16" y2="14.01"/></svg>
+                                            </span>
+                                            <span class="nav-btn__label">Mes actual</span>
+                                        </a>
+                                        <span class="nav-btn__glow-line"></span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+
+                <!-- RECORDATORIOS -->
+                <li class="nav-item theme-cyan">
+                    <div class="nav-btn__wrap">
+                        <a href="#recordatorios" class="nav-btn" data-nav="recordatorios">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Recordatorios</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>
+
+            </ul>
+        </aside>
+
+        <!-- Main content area -->
+        <main class="main-content">
+            <p class="main-content__placeholder">Contenido principal</p>
+        </main>
+    </div>
 
     <!-- ═══ MAIN CONTENT ═══ -->
     <main class="main-hud">
