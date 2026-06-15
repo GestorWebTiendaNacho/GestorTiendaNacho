@@ -1,0 +1,293 @@
+/*---cssMenuProv---*/  
+:root {
+    --card-size: 240px;
+    --glass-depth: #1e293b;
+    --lex-gold: #c2902e;
+    --neon-blue: #00f2ff;
+    --neon-green: #00ff9d;
+    --neon-purple: #bc13fe;
+    --neon-red: #ff3131;
+    --neon-orange: #ff6b00;
+    --neon-orange-glow: rgba(255, 107, 0, 0.4);
+}
+* {
+    scrollbar-width: none !important;
+}
+
+h1 {
+    font-size: 1.5rem; 
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 800;
+    margin: 0;
+    padding:0;
+    line-height: 1.2;
+    background: linear-gradient(
+        to bottom, 
+        #ffffff 0%, 
+        var(--lex-gold) 50%, 
+        #8a651e 100% 
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(194, 144, 46, 0.3));
+    text-align: center;
+}
+
+.container-deposito {
+    position: relative;
+    margin-bottom: 8rem;
+    padding: 0.5rem 2rem;
+    padding-top: 1.8rem;
+    border-radius: 20px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(194, 144, 46, 0.4);
+    backdrop-filter: blur(20px);
+    width: fit-content; 
+    max-width: 90%; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+}
+
+
+
+/* COLORES NEÓN */
+.orange-glow { color: var(--neon-orange); }
+.blue-glow { color: var(--neon-blue); }
+.gold-glow { color: var(--neon-green); }
+.red-glow {color: var(--neon-red);}
+.purple-glow {color: var(--neon-purple);}
+
+
+/*--------------NUEVO MENU RADIAL----------------*/
+.menu-radial {
+  position: relative;
+  width: 0;
+  height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 105px !important;
+}
+
+/* Botones Base */
+.btn-radial {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); 
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Disparador Central */
+.btn-radial.trigger {
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+.btn-radial.trigger:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Iconos de los botones */
+.btn-radial i {
+font-size: 8rem; 
+color: white;
+display: flex;
+align-items: center;
+justify-content: center;
+line-height: 1; 
+margin: 0;
+padding: 0;
+transition: all 0.3s ease;
+filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8));
+}
+
+/* Etiquetas de texto */
+.label-radial {
+  position: absolute;
+  bottom: -30px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.btn-radial:hover .label-radial {
+  opacity: 1;
+  color: white;
+}
+
+/* Estado Inactivo */
+.rotater {
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition: all 0.6s ease;
+}
+
+.menu-radial.active .rotater {
+    pointer-events: auto;
+}
+
+.btn-icon {
+    opacity: 0;
+    transform: scale(0);
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+
+/* PEDIDOS - Oro*/
+.btn-icon.gold-glow:hover i { 
+    text-shadow: 0 0 10px var(--lex-gold), 0 0 20px var(--lex-gold); 
+    color: var(--lex-gold);
+}
+.btn-icon.gold-glow:hover { 
+    box-shadow: 0 0 20px var(--lex-gold), inset 0 0 10px var(--lex-gold);
+    background: rgba(0, 255, 157, 0.1);
+    border-color: var(--lex-gold);
+}
+
+/* RECEPCIÓN - Púrpura */
+.btn-icon.purple-glow:hover { 
+    box-shadow: 0 0 20px var(--neon-purple), inset 0 0 10px var(--neon-purple);
+    background: rgba(188, 19, 254, 0.1); /* Color púrpura con transparencia */
+    border-color: var(--neon-purple);
+}
+
+.btn-icon.purple-glow:hover i {
+    color: var(--neon-purple);
+    text-shadow: 0 0 15px var(--neon-purple);
+}
+
+/* BASE PROVEEDORES - Naranja */
+.btn-icon.orange-glow:hover { 
+    border-color: var(--neon-orange); 
+    background: rgba(0, 255, 157, 0.1);
+    box-shadow: 0 0 20px var(--neon-orange), inset 0 0 10px var(--neon-orange);
+}
+.btn-icon.orange-glow:hover i {
+    text-shadow: 0 0 10px var(--neon-orange), 0 0 20px var(--neon-orange);
+    color: var(--neon-orange);
+}
+
+/* HISTORIAL - Verde */
+.btn-icon.green-glow:hover { 
+    border-color: var(--neon-green); 
+    box-shadow: 0 0 20px var(--neon-green), inset 0 0 10px var(--neon-green);   
+    background: rgba(0, 255, 157, 0.1);
+}
+.btn-icon.green-glow:hover i {
+  text-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+  color: var(--neon-green);
+}
+
+/* NEON BLUE */
+.btn-icon.blue-glow:hover { 
+    border-color: var(--neon-blue); 
+    box-shadow: 0 0 20px var(--neon-blue), inset 0 0 10px var(--neon-blue);
+    background: rgba(0, 255, 157, 0.1);
+}
+.btn-icon.blue-glow:hover i { 
+    text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+    color: var(--neon-blue);
+}
+
+
+
+
+/* Ajuste de los iconos dentro del botón radial */
+.btn-radial i {
+    font-size: 1.8rem;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8));
+}
+
+.btn-radial:hover i {
+    transform: scale(1.2);
+}
+
+/* Botón central (Trigger */
+.btn-radial.trigger {
+    z-index: 100;
+    background: var(--glass-depth);
+    border: 2px solid var(--neon-red);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 2px 5px rgba(255,255,255,0.1);
+}
+
+
+/* Distribución Radial */
+.menu-radial.active .rotater:nth-child(1) { transform: rotate(0deg); }
+.menu-radial.active .rotater:nth-child(2) { transform: rotate(72deg); }
+.menu-radial.active .rotater:nth-child(3) { transform: rotate(144deg); }
+.menu-radial.active .rotater:nth-child(4) { transform: rotate(216deg); }
+.menu-radial.active .rotater:nth-child(5) { transform: rotate(288deg); }
+
+.menu-radial.active .btn-icon {
+  opacity: 1;
+  transform: translate(-50%, -160px) rotate(0deg);
+}
+
+/* Corregir la rotación del icono para que siempre mire hacia arriba */
+.menu-radial.active .rotater:nth-child(1) .btn-icon { transform: translateY(-190px) rotate(0deg); }
+.menu-radial.active .rotater:nth-child(2) .btn-icon { transform: translateY(-190px) rotate(-72deg); }
+.menu-radial.active .rotater:nth-child(3) .btn-icon { transform: translateY(-190px) rotate(-144deg); }
+.menu-radial.active .rotater:nth-child(4) .btn-icon { transform: translateY(-190px) rotate(-216deg); }
+.menu-radial.active .rotater:nth-child(5) .btn-icon { transform: translateY(-190px) rotate(-288deg); }
+
+/* Animación del icono de hamburguesa a X */
+.line {
+  width: 25px;
+  height: 3px;
+  background: white;
+  display: block;
+  position: relative;
+  transition: 0.3s;
+}
+
+
+.line::before, .line::after {
+  content: '';
+  width: 25px;
+  height: 3px;
+  background: white;
+  position: absolute;
+  left: 0;
+  transition: 0.3s;
+}
+.line::before { top: -8px; }
+.line::after { top: 8px; }
+
+.menu-radial.active .line { background: transparent; }
+.menu-radial.active .line::before { transform: rotate(45deg); top: 0; border: 2px solid var(--neon-red);}
+.menu-radial.active .line::after { transform: rotate(-45deg); top: 0; border: 2px solid var(--neon-red);}
+
+.btn-radial.trigger:hover { 
+    box-shadow: 0 0 20px var(--neon-red), inset 0 0 10px var(--neon-red);
+    text-shadow: 0 0 10px var(--neon-red), 0 0 20px var(--neon-red);
+    background: rgba(0, 255, 157, 0.1);
+}

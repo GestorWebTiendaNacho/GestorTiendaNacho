@@ -1,0 +1,127 @@
+/*-------------HEADER------*/
+@import 'https://fonts.googleapis.com/css?family=Lily+Script+One';
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap");
+:root {
+    /* Paleta Neón Lex-Tech */
+    --lex-gold: #c2902e;
+    --lex-gold-glow: rgba(194, 144, 46, 0.3);
+    --lex-gold-dark: #926a1f;
+    --neon-blue: #00f2ff;
+    --neon-green: #00ff9d;
+    --neon-purple: #bc13fe;
+    --neon-red: #ff3131;
+    --neon-orange: #ff6b00;
+    --neon-orange-glow: rgba(255, 107, 0, 0.4);
+    
+    /* Fondos Profundos */
+    --bg-dark: #020617;
+    --card-dark: #0f172a;
+    --terminal-black: #000000;
+    
+    /* Sombras Neón */
+    --glow-blue: 0 0 15px rgba(0, 242, 255, 0.3);
+    --glow-green: 0 0 20px rgba(0, 255, 157, 0.2);
+}
+.logo-nacho {
+    z-index: 10;
+    margin-right: 23px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.img-logo {
+    height: 95px;
+    width: auto;
+    filter: drop-shadow(0 0 5px var(--lex-gold-glow)); 
+    transition: transform 0.3s ease;
+}
+
+.img-logo:hover {
+    transform: scale(1.08);
+}
+
+
+.header-content-left {
+    position: relative;
+    z-index: 10 !important;
+    width: auto;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.header-lex {
+    position: relative;
+    z-index: 2502;
+    border-radius: 25px !important; 
+    overflow: hidden; 
+    background-color: transparent !important;
+
+    margin-top: 15px !important;   
+    margin-bottom: 10px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    width: 95% !important;
+    box-sizing: border-box !important;
+    min-width: 650px;
+    height: 85px !important;
+    padding: 0.5rem 3rem !important; 
+    max-width: 1100px;
+}
+
+.header-lex::before {
+    content: "";
+    position: absolute;
+    inset: 3px; 
+    background-color: var(--bg-dark) !important;
+    border-radius: 22px; 
+    z-index: 2;
+    pointer-events: none;
+}
+
+.header-lex::after {
+    content: "";
+    position: absolute;
+    top: -150%; left: -50%; width: 200%; height: 400%;
+    background: conic-gradient(from 0deg, transparent 0%, var(--lex-gold) 10%, rgba(194, 144, 46, 0.5) 20%, 
+        transparent 40%);
+    opacity: 1;
+    animation: luzRecorrido 4s linear infinite;
+    z-index: 1; 
+    pointer-events: none;
+}
+.header-content-left .flex {
+    justify-content: flex-start !important;
+}
+.header-lex:hover::after {
+    filter: brightness(1.5);
+    animation-duration: 2s;
+}
+
+@keyframes luzRecorrido {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+
+
+.text-gold {
+    color: var(--lex-gold);
+    background: linear-gradient(135deg, #fde68a 0%, #c2902e 50%, #926a1f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.border-gold {
+    border-color: var(--lex-gold-dark) !important;
+}
+

@@ -1,0 +1,114 @@
+/*-----cssHome-----*/
+:root {
+    --card-size: 320px;
+    --glass-depth: #1e293b;
+    --lex-gold: #c2902e;
+}
+
+.container-viewport {
+    padding: 3rem;
+    perspective: 2500px;
+}
+
+.malewicz-card-compact {
+    position: relative;
+    width: var(--card-size);
+    height: var(--card-size);
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 30px;
+    backdrop-filter: blur(55px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        inset 0 2px 2px rgba(255, 255, 255, 0.2),
+        inset 0 -10px 20px rgba(0, 0, 0, 0.4);
+
+    transform-style: preserve-3d;
+    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+    overflow: visible;
+}
+
+.card-content {
+    position: relative;
+    z-index: 10;
+    transform: translateZ(60px); 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.malewicz-card-compact:hover {
+    transform: rotateX(25deg) rotateY(-25deg) translateY(-20px);
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        30px 40px 70px rgba(0, 0, 0, 0.7),
+        inset 0 2px 5px rgba(255, 255, 255, 0.4);
+}
+
+/* --- ELEMENTOS INTERNOS --- */
+.icon-box-compact {
+    width: 90px;
+    height: 90px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    filter: drop-shadow(0 15px 15px rgba(0,0,0,0.5));
+}
+.icon-box-compact:hover .bi.bi-box-seam { color: var(--neon-orange); filter: drop-shadow(0 0 5px var(--neon-orange)); }
+.icon-box-compact:hover .bi.bi-truck { color: var(--neon-purple); filter: drop-shadow(0 0 5px var(--neon-purple)); }
+.icon-box-compact:hover .bi.bi-database-fill-gear { color: var(--neon-green); filter: drop-shadow(0 0 5px var(--neon-green)); }
+
+.card-title-compact {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.card-description-compact {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    max-width: 180px;
+    text-align: center;
+    margin-bottom: 25px;
+    line-height: 1.2;
+}
+
+/* BOTÓN INTEGRADO EN EL BLOQUE */
+.btn-morphic-compact {
+    width: 85%;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--lex-gold);
+    color: var(--lex-gold);
+    font-weight: 800;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+}
+
+.btn-morphic-compact:hover {
+    background: var(--lex-gold);
+    color: var(--bg-dark);
+    transform: scale(1.05) translateZ(20px);
+    box-shadow: 0 0 30px var(--lex-gold-glow);
+}
+
+/* COLORES NEÓN */
+.orange-glow { color: var(--neon-orange); }
+.blue-glow { color: var(--neon-purple); }
+.gold-glow { color: var(--neon-green); }

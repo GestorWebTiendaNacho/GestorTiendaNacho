@@ -1,0 +1,257 @@
+<link rel="stylesheet" href="assets/css/cssStock.css">
+<link rel="stylesheet" href="assets/css/cssStock-sync.css">
+
+<div class="main-admin-container">
+    
+    <header class="admin-header">
+        <h1>ADMINISTRACIÓN N.I.C.O.</h1>
+    </header>
+
+    <div class="container-box">
+        
+        <div class="center-core" id="core-trigger">
+            <span>Administración</span>
+        </div>
+        
+        <div class="box box-1">
+            <div class="cover">
+                <img src="https://lh3.googleusercontent.com/u/0/d/1KjZMSkzO1Yzy2G12JpUBl7KJM2fnza9L" alt="Sync">
+            </div> 
+            <button onclick="abrirModalSincronizacion()">
+                <div class="flex items-center justify-end gap-2 pr-1">
+                    <i class="bi bi-arrow-repeat text-emerald-400"></i>
+                    ACTUALIZACIÓN STOCK
+                </div>
+            </button>
+        </div>
+
+        <div class="box box-2">
+            <div class="cover">
+                <img src="https://lh3.googleusercontent.com/u/0/d/1lDkvA4gglikYyHlwP8pkoM00-ZS0MV58" alt="Respaldo">
+            </div> 
+            <button onclick="window.ejecutarProtocoloRescate()">
+                <div class="flex items-center justify-end gap-2 pr-1">
+                    <i class="bi bi-shield-fill-exclamation text-red-400"></i>
+                    RESPALDAR BASE
+                </div>
+            </button>
+        </div>
+
+        <div class="box box-3">
+            <div class="cover">
+                <img src="https://lh3.googleusercontent.com/u/0/d/1yQxy7LmAb-VntNzsrABlA-Np1IDAuw-v" alt="Stock Masivo"> 
+            </div>
+            <button onclick="crearBackupCSV()">
+                <div class="flex items-center justify-end gap-2 pr-1">
+                    <i class="bi bi-database-down text-blue-400"></i>
+                    DESC. STOCK MASIVO
+                </div>
+            </button>
+        </div>
+
+        <div class="box box-4">
+            <div class="cover">
+                <img src="https://lh3.googleusercontent.com/u/0/d/1RYGw7Y-Hz1W6Mz7SOHnkmFulLrlxlejy" alt="Ventas">
+            </div>
+            <button onclick="abrirModalVenta()">
+                <div class="flex items-center justify-end gap-2 pr-1">
+                    <i class="bi bi-gear-fill text-orange-400"></i>
+                    ACTUALIZAR VENTAS
+                </div>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+<div id="modal-sync-canvases" class="fixed inset-0 hidden items-center justify-center z-[10000] bg-slate-950/80 backdrop-blur-xl overflow-y-auto">
+    <div class="main-sync-container w-full max-w-4xl mx-auto px-4">
+        <button onclick="window.iniciarProceso()" id="btn-sync" class="btn-lex-minimal">
+            <i class="bi bi-arrow-repeat"></i><span id="btn-text">EJECUTAR SINCRONIZACIÓN</span>
+        </button>
+
+        <div class="flex flex-col items-center py-6 gap-8 mt-4 w-full">
+
+            <div class="sync-grid w-full">
+                <div class="card-glass-CB">
+                    <h3 class="label-gauge">CONTABILIUM API</h3>
+                    <div class="canvas-wrapper">
+                        <div id="placeholder_cb" class="logo-placeholder">
+                            <div class="icon-circle circle-cb">
+                                <img src="https://lh3.googleusercontent.com/u/0/d/1yzOmjbU3Q0NdD_WS7TDDGLl3tpGvR8uK" alt="Contabilium" class="logo-plataforma-sync">
+                            </div>
+                        </div>
+                        <canvas id="cvs_descarga" width="280" height="280"></canvas>
+                    </div>
+                </div>
+                  
+                <div class="card-glass-TN">
+                    <h3 class="label-gauge">TIENDANUBE SYNC</h3>
+                    <div class="canvas-wrapper">
+                        <div id="placeholder_tn" class="logo-placeholder">
+                            <div class="icon-circle circle-tn">
+                                <img src="https://lh3.googleusercontent.com/u/0/d/12-J3OP1M1ZpR-yHdwJ0l63WFakaFU_M2" alt="Tienda Nube" class="logo-plataforma-sync">
+                            </div>
+                        </div>
+                        <canvas id="cvs_impacto" width="280" height="280"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <section class="stats-grid w-full">
+                <div class="stat-mini-card s-blue">
+                    <p>PROCESADOS</p>
+                    <span id="txt-procesados">0</span> 
+                    <div class="neon-line"></div>
+                </div>
+                <div class="stat-mini-card s-gold">
+                    <p>TIEMPO</p>
+                    <span id="txt-time-real">00:00:00</span> 
+                    <div class="neon-line"></div>
+                </div>
+                <div class="stat-mini-card s-red">
+                    <p>FALTANTES</p>
+                    <span id="txt-faltantes">0</span> 
+                    <div class="neon-line"></div>
+                </div>
+            </section>
+
+            <div class="log-frame-premium w-full">
+                <div id="log-container" class="terminal-style p-4">
+                    <div class="text-slate-500 italic"># SISTEMA LISTO... ESPERANDO INSTRUCCIONES...</div>
+                </div>
+            </div>
+            
+            <button onclick="cerrarModalSincronizacion()" class="btn-modal-ok">
+                CERRAR PANEL
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-report" class="fixed inset-0 hidden items-center justify-center z-[10001] bg-slate-950/80 backdrop-blur-xl">
+        <div class="p-10 max-w-sm w-full border border-gold/20 rounded-[40px] bg-slate-900 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <div class="w-16 h-1 w-1/3 bg-gold/30 mx-auto mb-6 rounded-full"></div>
+            <h2 class="text-xl font-bold text-white mb-8 text-center tracking-tight">SINCRONIZACIÓN COMPLETADA</h2>
+            
+            <div class="space-y-6 mb-10">
+                <div class="flex flex-col items-center">
+                    <span class="text-slate-500 text-[10px] tracking-widest uppercase mb-1">Registros Actualizados Totales</span>
+                    <span id="mdl-desc" class="text-3xl font-light text-white">0</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 pt-6 border-t border-slate-800">
+                    <div class="text-center">
+                        <span class="block text-slate-500 text-[9px] uppercase">Sincronizados</span>
+                        <span id="mdl-proc" class="text-emerald-400 font-bold">0</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block text-slate-500 text-[9px] uppercase">Actualizados</span>
+                        <span id="mdl-ign" class="text-red-500 font-bold">0</span>
+                    </div>
+                </div>
+                <div class="text-center pt-4">
+                    <span class="block text-slate-500 text-[9px] uppercase">Tiempo Empleado</span>
+                    <span id="mdl-time" class="text-gold font-mono">00:00:00</span>
+                </div>
+            </div>
+
+            <button onclick="cerrarModalReporte()" class="w-full py-4 rounded-2xl bg-gold text-slate-950 font-bold hover:scale-[1.02] active:scale-95 transition-all duration-200 shadow-lg shadow-gold/20">
+                FINALIZAR
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div id="modal-ventas" class="fixed inset-0 hidden items-center justify-center z-[10000] bg-slate-950/85 backdrop-blur-xl overflow-y-auto px-4 py-6">
+    <div class="p-6 md:p-8 max-w-5xl w-full border border-gold/20 rounded-[32px] shadow-[0_0_60px_rgba(0,0,0,0.7)] text-white" style="background-color: var(--mv-bg-main);">
+        
+        <div class="mb-6 text-center border-b border-slate-800/60 pb-4">
+            <h2 class="text-2xl font-black tracking-wider bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent uppercase">
+                Sistema de Actualización de Ventas
+            </h2>
+            <p class="text-xs text-slate-400 mt-1 font-mono tracking-tight">Módulo de sincronización masiva mediante pasarela externa GitHub/GAS</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+            
+            <div class="md:col-span-7 flex flex-col justify-between space-y-3 p-5 rounded-2xl border border-slate-800/60 leading-relaxed text-left" style="background-color: var(--mv-bg-card);">
+                
+                <div class="text-xs space-y-4">
+                    <div>
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">1.- PREPARATIVOS:</span> 
+                        Contar con el archivo histórico de ventas descargado localmente desde la suite de <span class="text-slate-100 font-semibold">Contabilium</span>. Puedes ingresar directamente desde este enlace: 
+                        <a href="https://app.contabilium.com/modulos/reportes/historicoStock.aspx" target="_blank" class="text-blue-400 font-mono underline hover:text-blue-300 transition-colors break-all block mt-1">
+                            https://app.contabilium.com/modulos/reportes/historicoStock.aspx
+                        </a> 
+                    </div>
+                    
+                    <div class="border-t border-slate-800/40 pt-2">
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">2.- SELECCIÓN DE ARCHIVO:</span> 
+                        Haz clic en el botón de la derecha <span class="text-slate-300 italic">"Seleccionar Documento"</span> y asocia tu planilla Excel. El sistema comprobará la codificación binaria de inmediato.
+                    </div>
+                    
+                    <div class="border-t border-slate-800/40 pt-2">
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">3.- PROCESAMIENTO:</span> 
+                        Al habilitarse el botón verde, presiónalo para iniciar la desestructuración de filas y la inserción remota. <span class="text-amber-400 font-medium">No cierres la pestaña durante este proceso</span>.
+                    </div>
+                    
+                    <div class="border-t border-slate-800/40 pt-2">
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">4.- FINALIZACIÓN:</span> 
+                        La terminal LexTech te confirmará el éxito de la operación indicando el número exacto de registros impactados en tu base histórica.
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="md:col-span-5 flex flex-col justify-center space-y-6 p-5 rounded-2xl border border-slate-800/40 bg-slate-950/40">
+                
+                <div class="flex flex-col items-center justify-center w-full">
+                    <input type="file" id="input-archivo-ventas" accept=".xlsx, .xls" class="hidden" onchange="window.manejarSeleccionArchivoVentas(this)">
+                    
+                    <button onclick="document.getElementById('input-archivo-ventas').click()" class="px-4 py-6 border-2 border-dashed border-slate-700/80 hover:border-gold/40 rounded-xl bg-slate-900/60 flex flex-col items-center gap-3 transition-all cursor-pointer group w-full justify-center min-h-[140px]">
+                        <i class="bi bi-file-earmark-spreadsheet text-3xl text-slate-500 group-hover:text-gold transition-colors duration-300"></i>
+                        <span id="label-archivo-ventas" class="text-slate-400 group-hover:text-slate-200 text-xs font-semibold tracking-wide text-center max-w-[200px] break-words transition-colors">
+                            Seleccionar Documento (.xlsx)
+                        </span>
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-3 w-full">
+                    
+                    <button id="btn-procesar-ventas" onclick="window.ejecutarProcesamientoVentas()" disabled class="btn-neon-process w-full py-4 rounded-xl font-black text-xs tracking-widest active:scale-[0.98] duration-150 cursor-pointer text-center uppercase">
+                        <i class="bi bi-cloud-arrow-up-fill mr-2 text-sm"></i>Procesar Archivo
+                    </button>
+                    
+                    <button onclick="window.cerrarModalVenta()" class="btn-neon-close w-full py-3 rounded-xl font-bold text-xs tracking-widest active:scale-[0.98] duration-150 cursor-pointer text-center uppercase">
+                        Cerrar Ventana
+                    </button>
+                    
+                </div>
+
+            </div>
+            
+        </div>
+        
+    </div>
+  
+</div>
+<div id="overlay-carga" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.9); z-index: 10000; justify-content: center; align-items: center;">
+  <div class="loader">
+    <div class="intern"></div>
+    <div class="external-shadow">
+      <div class="central"></div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://www.rgraph.net/libraries/RGraph.common.core.js"></script>
+<script src="https://www.rgraph.net/libraries/RGraph.gauge.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/jsStock.js"></script>

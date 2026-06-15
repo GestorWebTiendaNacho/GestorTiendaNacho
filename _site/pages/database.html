@@ -1,0 +1,56 @@
+<!-----dataBase.html ---------->
+<link rel="stylesheet" href="assets/css/cssBase.css">
+
+<div id="modalBienvenida" class="modal-lex-overlay">
+  <div class="modal-lex-content text-center">
+    <h2 class="n-title mb-4" style="color: var(--lex-gold); text-shadow: var(--glow-blue);">SISTEMA DE DEPÓSITOS</h2>
+    <p class="n-overtitle mb-5">SELECCIONE PORTAL DE ACCESO</p>
+    
+      <div class="d-flex justify-content-center gap-5 flex-wrap">
+            <div class="deposito-btn" onclick="window.seleccionarDeposito('CB')">
+              <div class="icon-circle circle-cb">
+                <img src="https://lh3.googleusercontent.com/u/0/d/1yzOmjbU3Q0NdD_WS7TDDGLl3tpGvR8uK" alt="Contabilium" class="logo-plataforma">
+              </div>
+              <p class="n-overtitle mt-3" style="color: var(--neon-blue);">CONTABILIUM</p>
+            </div>
+            
+            <div class="deposito-btn" onclick="window.seleccionarDeposito('TN')">
+              <div class="icon-circle circle-tn">
+                <img src="https://lh3.googleusercontent.com/u/0/d/12-J3OP1M1ZpR-yHdwJ0l63WFakaFU_M2" alt="Tienda Nube" class="logo-plataforma">
+              </div>
+              <p class="n-overtitle mt-3" style="color: var(--neon-purple);">TIENDA NUBE</p>
+            </div>
+      </div>
+  </div>
+</div>
+
+
+<div id="panelStock" class="container-fluid mt-4" style="display:none;">
+    <div class="card-form-glass p-4">
+        <div class="row align-items-center mb-4">
+            <div class="col">
+                <h3 id="labelDeposito" class="m-0" style="color: var(--lex-gold); font-weight: 900; letter-spacing: 2px;">PANEL</h3>
+            </div>
+            <div class="col-auto" id="btnExportContainer">
+                </div>
+        </div>
+        <div id="loadingMessage" class="text-center py-5" style="display: none;">
+            <div class="loader-wrapper">
+                <div class="custom-spinner"></div>
+            </div>
+            <p class="n-overtitle mt-3" style="color: var(--lex-gold);">Sincronizando Base de Datos...</p>
+        </div>
+        <div class="card-data-premium" id="DepositosTableContainer" style="display: none;">
+            </div>
+    </div>
+      <div class="returnSelectionContainer" id="btnBackContainer">
+        <button onclick="regresarASeleccion()" class="returDepos-btn">
+          <i class="fi fi-br-arrow-left"></i>
+          <span>CAMBIAR DEPÓSITO</span>
+        </button>
+      </div>
+</div>
+
+
+<script src="assets/js/main.js"></script>
+<script src="assets/js/jsBase.js"></script>
