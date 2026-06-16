@@ -563,187 +563,172 @@ body:has(.dashboard-container)::after {
 .kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    perspective: 1200px;
+    gap: 18px;
+    padding: 20px;
+    background: #01040a; 
 }
 
-/* ── HUD Cards (Estilo Malevich + Neomorfismo de Alivio) ── */
-.hud-card {
+/* ── VARIABLES DE COLOR ELECTRIZADO ── */
+:root {
+    --color-cyan: #00f0ff;
+    --color-orange: #ff9f00;
+    --color-red: #ff3c3c;
+    --color-purple: #a855f7;
+    
+    /* MÁSCARA POLIGONAL SIMÉTRICA DE 45° (Los quiebres HUD reales) */
+    --hud-cut: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px);
+}
+
+/* ── CONTENEDOR PADRE (Maneja el filtro de Neón Externo) ── */
+.hud-card-wrapper {
     position: relative;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    padding: 2px; /* Grosor del bisel */
-    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), filter 0.35s ease;
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.hud-card-wrapper:hover {
+    transform: translateY(-4px) scale(1.01);
 }
 
-.hud-card:hover { 
-    transform: translateY(-8px) scale(1.015);
-}
-
-.card-inner {
-    width: 100%;
+/* ── EL BORDE DE LA TARJETA (Capa externa recortada) ── */
+.hud-card-edge {
+    position: relative;
+    background: rgba(255, 255, 255, 0.15); /* Base de micro-borde HUD */
+    clip-path: var(--hud-cut);
+    padding: 1.5px; /* Grosor exacto de la línea de quiebre */
     height: 100%;
-    background: linear-gradient(135deg, #050f26 0%, #020714 100%);
-    padding: 16px;
+}
+
+/* ── EL CONTENEDOR INTERNO (Capa oscura recortada) ── */
+.card-inner {
+    background: #020712; /* Fondo denso original */
+    clip-path: var(--hud-cut);
+    padding: 24px 20px; /* Margen interno generoso para proteger textos del quiebre */
     display: flex;
     flex-direction: column;
-    position: relative;
+    height: 100%;
 }
 
-/* Variantes Cromáticas HUD con Doble Capa de Drop-Shadow (Neomorfismo Puro) */
-.cyan-glow { 
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, var(--hud-cyan, #00f0ff) 100%); 
-    filter: drop-shadow(-6px 8px 12px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 10px rgba(0, 240, 255, 0.25));
-}
-.cyan-glow:hover {
-    filter: drop-shadow(-10px 16px 18px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 22px rgba(0, 240, 255, 0.6));
-}
+/* ── ASIGNACIÓN DE NEONES Y FILTROS COMPUESTOS ── */
+.cyan-glow { filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.25)); }
+.cyan-glow .hud-card-edge { background: linear-gradient(135deg, var(--color-cyan) 0%, rgba(0, 240, 255, 0.2) 100%); }
+.cyan-glow:hover { filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.55)); }
 
-.orange-glow { 
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, var(--hud-orange, #ff9f00) 100%); 
-    filter: drop-shadow(-6px 8px 12px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 10px rgba(255, 159, 0, 0.25));
-}
-.orange-glow:hover {
-    filter: drop-shadow(-10px 16px 18px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 22px rgba(255, 159, 0, 0.6));
-}
+.orange-glow { filter: drop-shadow(0 0 10px rgba(255, 159, 0, 0.25)); }
+.orange-glow .hud-card-edge { background: linear-gradient(135deg, var(--color-orange) 0%, rgba(255, 159, 0, 0.2) 100%); }
+.orange-glow:hover { filter: drop-shadow(0 0 20px rgba(255, 159, 0, 0.55)); }
 
-.red-glow { 
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, var(--hud-red, #ff3c3c) 100%); 
-    filter: drop-shadow(-6px 8px 12px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 10px rgba(255, 60, 60, 0.25));
-}
-.red-glow:hover {
-    filter: drop-shadow(-10px 16px 18px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 22px rgba(255, 60, 60, 0.6));
-}
+.red-glow { filter: drop-shadow(0 0 10px rgba(255, 60, 60, 0.25)); }
+.red-glow .hud-card-edge { background: linear-gradient(135deg, var(--color-red) 0%, rgba(255, 60, 60, 0.2) 100%); }
+.red-glow:hover { filter: drop-shadow(0 0 20px rgba(255, 60, 60, 0.55)); }
 
-.purple-glow { 
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, var(--hud-purple, #a855f7) 100%); 
-    filter: drop-shadow(-6px 8px 12px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 10px rgba(168, 85, 247, 0.25));
-}
-.purple-glow:hover {
-    filter: drop-shadow(-10px 16px 18px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 22px rgba(168, 85, 247, 0.6));
-}
+.purple-glow { filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.25)); }
+.purple-glow .hud-card-edge { background: linear-gradient(135deg, var(--color-purple) 0%, rgba(168, 85, 247, 0.2) 100%); }
+.purple-glow:hover { filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.55)); }
 
-/* Cortes Irregulares de Tarjetas */
-.kpi-card {
-    clip-path: var(--clip-kpi);
-    animation: borderPulse 4s infinite ease-in-out;
-}
-.kpi-card .card-inner {
-    clip-path: var(--clip-kpi);
-}
-
-/* Brackets de Esquina Decorativos */
-.card-corner-bracket {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    z-index: 10;
-    pointer-events: none;
-}
-.card-corner-bracket.tl { top: 6px; left: 6px; border-top: 2px solid; border-left: 2px solid; }
-.card-corner-bracket.br { bottom: 6px; right: 6px; border-bottom: 2px solid; border-right: 2px solid; }
-
-.cyan-glow   .card-corner-bracket { border-color: var(--hud-cyan); }
-.orange-glow .card-corner-bracket { border-color: var(--hud-orange); }
-.red-glow    .card-corner-bracket { border-color: var(--hud-red); }
-.purple-glow .card-corner-bracket { border-color: var(--hud-purple); }
-
-/* Textos e Iconos internos */
+/* ── COMPONENTES DE TEXTO INTERNO ── */
 .card-title {
-    font-family: var(--font-hud-label);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
-    margin-bottom: 12px;
-    text-transform: uppercase;
+    font-family: var(--font-hud-label), sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    margin-bottom: 22px;
 }
-.cyan-glow   .card-title { color: var(--hud-cyan); }
-.orange-glow .card-title { color: var(--hud-orange); }
-.red-glow    .card-title { color: var(--hud-red); }
+.cyan-glow .card-title   { color: var(--color-cyan); }
+.orange-glow .card-title { color: var(--color-orange); }
+.red-glow .card-title    { color: var(--color-red); }
 .purple-glow .card-title { color: #d8b4fe; }
 
 .card-body {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+    gap: 16px;
+    margin-bottom: 12px;
 }
 
-.card-icon-ring {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
+/* ── CONTENEDORES DE ICONO (Squircles HUD Perfectos) ── */
+.card-icon-box {
+    width: 62px;
+    height: 62px;
+    border-radius: 18px; /* Curva suave exacta de la foto */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 24px;
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
 }
-.cyan-glow   .card-icon-ring { background: rgba(0, 240, 255, 0.08);   border: 1px solid rgba(0, 240, 255, 0.3);  color: var(--hud-cyan); }
-.orange-glow .card-icon-ring { background: rgba(255, 159, 0, 0.08);  border: 1px solid rgba(255, 159, 0, 0.3); color: var(--hud-orange); }
-.red-glow    .card-icon-ring { background: rgba(255, 60, 60, 0.08);   border: 1px solid rgba(255, 60, 60, 0.3);  color: var(--hud-red); }
-.purple-glow .card-icon-ring { background: rgba(168, 85, 247, 0.08);  border: 1px solid rgba(168, 85, 247, 0.3); color: var(--hud-purple); }
+.cyan-glow .card-icon-box   { background: radial-gradient(circle, rgba(0,240,255,0.2) 0%, transparent 80%); border: 1.5px solid var(--color-cyan); color: var(--color-cyan); }
+.orange-glow .card-icon-box { background: radial-gradient(circle, rgba(255,159,0,0.2) 0%, transparent 80%); border: 1.5px solid var(--color-orange); color: var(--color-orange); }
+.red-glow .card-icon-box    { background: radial-gradient(circle, rgba(255,60,60,0.2) 0%, transparent 80%); border: 1.5px solid var(--color-red); color: var(--color-red); }
+.purple-glow .card-icon-box { background: radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 80%); border: 1.5px solid var(--color-purple); color: var(--color-purple); }
 
-.card-value-container { display: flex; flex-direction: column; }
+/* ── RENDERIZADO DE DATOS MÉTRICOS ── */
+.card-value-container {
+    display: flex;
+    flex-direction: column;
+}
 .card-value {
-    font-family: var(--font-hud-data);
-    font-size: 28px;
-    font-weight: bold;
+    font-family: var(--font-hud-data), monospace;
+    font-size: 32px;
+    font-weight: 700;
     line-height: 1;
 }
+.cyan-glow .card-value   { color: var(--color-cyan); }
+.orange-glow .card-value { color: var(--color-orange); }
+.red-glow .card-value    { color: var(--color-red); }
+.purple-glow .card-value { color: #ffffff; }
+
 .card-unit {
-    font-family: var(--font-hud-label);
-    font-size: 8px;
-    color: #64748b;
-    margin-top: 2px;
-    letter-spacing: 1px;
-}
-.mini-sparkline { height: 28px; width: 100%; margin-bottom: 12px; opacity: 0.85; }
-.spark-canvas { width: 100%; height: 100%; display: block; }
-
-/* ── BOTONES: Cápsulas de Oro Líquido, Relieve Extruido y Neón ── */
-.hud-btn-action {
-    background: rgba(212, 175, 55, 0.05); /* Traslúcido de base */
-    border: 1px solid rgba(212, 175, 55, 0.35); /* Adiós borde blanco crudo, hola aura dorada fina */
-    color: #e6c262; /* Texto dorado de alta legibilidad HUD */
-    font-family: var(--font-hud-header);
-    font-size: 8px;
+    font-family: var(--font-hud-label), sans-serif;
+    font-size: 9px;
     font-weight: 700;
-    padding: 6px 16px;
-    
-    /* Ajustes dimensionales: Ajustado al texto y centrado */
-    width: max-content; 
-    margin: 14px auto 0; 
-    display: block;
+    color: #475569;
+    margin-top: 5px;
+    letter-spacing: 0.5px;
+}
+
+/* ── FOOTER: SPARKLINE + BOTÓN SEPARADOS ── */
+.card-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+}
+.mini-sparkline {
+    height: 16px;
+    width: 100px;
+    align-self: flex-end;
+    margin-bottom: 16px;
+    opacity: 0.85;
+}
+.spark-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* ── BOTÓN DE ACCIÓN POLIGONAL HUD ORO ── */
+.hud-btn-action {
+    background: rgba(212, 175, 55, 0.04);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    color: #e6c262;
+    font-family: var(--font-hud-header), sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    width: 100%;
+    padding: 9px 0;
     cursor: pointer;
-    
-    clip-path: none !important; /* Eliminamos los cortes poligonales para forzar la píldora */
-    border-radius: 50px; /* Forma de Cápsula Perfecta */
+    text-transform: uppercase;
     letter-spacing: 0.8px;
-    position: relative;
-    transition: all 0.25s ease-in-out;
     
-    /* Brillo de atmósfera neón tenue */
-    box-shadow: 
-        0 0 8px rgba(212, 175, 55, 0.15),
-        inset 0 0 4px rgba(212, 175, 55, 0.1);
+    /* Quiebre angular en las 4 mini esquinas del botón original */
+    clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+    
+    transition: all 0.2s ease-in-out;
 }
-
-/* Reacción interactiva del botón cápsula */
 .hud-btn-action:hover {
-    background: rgba(212, 175, 55, 0.18); /* Gana un poco de cuerpo al tacto */
+    background: rgba(212, 175, 55, 0.16);
     color: #ffffff;
-    border-color: rgba(255, 215, 0, 0.8);
-    
-    /* Ignición de luz de neón dorada expansiva */
-    box-shadow: 
-        0 0 12px #ffd700, 
-        0 0 25px rgba(255, 215, 0, 0.35),
-        inset 0 0 6px rgba(255, 215, 0, 0.2);
-    transform: translateY(-2px); /* Salto cinético controlado */
+    border-color: #ffd700;
+    box-shadow: 0 0 12px rgba(255, 183, 0, 0.5), inset 0 0 6px rgba(255, 215, 0, 0.2);
 }
-
 .hud-btn-action:active {
-    transform: translateY(0);
     background: rgba(212, 175, 55, 0.3);
 }
 
@@ -1100,7 +1085,7 @@ body:has(.dashboard-container)::after {
     box-shadow: 0 0 8px #ffd700;
 }
 
-/* ════════ BOTTOM SECTION — Radar + Bar Chart════════════ */
+/* ════════ BOTTOM SECTION ════════════ */
 .bottom-grid-hud {
     display: grid;
     grid-template-columns: 400px 1fr;
@@ -1115,7 +1100,7 @@ body:has(.dashboard-container)::after {
 }
 
 .radar-header {
-    font-size: 11px;
+    font-size: 16px;
     color: var(--hud-cyan);
     font-weight: bold;
     display: flex;
@@ -1128,7 +1113,7 @@ body:has(.dashboard-container)::after {
 
 .radar-description {
     font-family: var(--font-hud-label);
-    font-size: 11px;
+    font-size: 16px;
     line-height: 1.6;
     color: #94a3b8;
 }
@@ -1138,58 +1123,6 @@ body:has(.dashboard-container)::after {
     font-weight: bold;
     text-shadow: 0 0 10px rgba(255, 60, 60, 0.4);
 }
-
-/* Military radar scope animation */
-.radar-widget { width: 110px; height: 110px; flex-shrink: 0; }
-
-.radar-scope {
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(30, 58, 138, 0.25) 0%, rgba(4, 10, 24, 0.9) 100%);
-    border: 1px solid rgba(255, 60, 60, 0.3);
-    border-radius: 50%;
-    position: relative;
-    overflow: hidden;
-    box-shadow: inset 0 0 15px rgba(255, 60, 60, 0.1), 0 0 20px rgba(255, 60, 60, 0.1);
-}
-
-.radar-sweep {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: conic-gradient(from 0deg, rgba(255, 60, 60, 0.45) 0deg, transparent 70deg);
-    border-radius: 50%;
-    transform-origin: center;
-    animation: radarRotation 3.5s infinite linear;
-}
-
-.radar-circle {
-    position: absolute;
-    border: 1px dashed rgba(255, 60, 60, 0.15);
-    border-radius: 50%;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.radar-circle.c1 { width: 30%; height: 30%; }
-.radar-circle.c2 { width: 60%; height: 60%; }
-.radar-circle.c3 { width: 90%; height: 90%; }
-
-.radar-crosshair-h { position: absolute; width: 100%; height: 1px; background: rgba(255, 60, 60, 0.12); top: 50%; }
-.radar-crosshair-v { position: absolute; width: 1px; height: 100%; background: rgba(255, 60, 60, 0.12); left: 50%; }
-
-.radar-blip {
-    position: absolute;
-    width: 5px;
-    height: 5px;
-    background: var(--hud-red);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--hud-red);
-    animation: blipPulse 2s infinite ease-out;
-}
-
-.radar-blip.b1 { top: 35%; left: 60%; animation-delay: 0s; }
-.radar-blip.b2 { top: 55%; left: 30%; animation-delay: 1s; }
 
 /* Bar chart panel */
 .bar-chart-panel .card-inner { padding: 12px 16px; }
@@ -1222,16 +1155,6 @@ body:has(.dashboard-container)::after {
     to { stroke-dashoffset: -48; }
 }
 
-@keyframes radarRotation {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
-
-@keyframes blipPulse {
-    0%   { transform: scale(1); opacity: 1; }
-    100% { transform: scale(2.5); opacity: 0; }
-}
-
 @keyframes borderPulse {
     0%, 100% { filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.2)); }
     50%       { filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.35)); }
@@ -1247,9 +1170,7 @@ body:has(.dashboard-container)::after {
     50%       { box-shadow: 0 0 20px rgba(0, 240, 255, 0.45); }
 }
 
-/* ═══════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════ */
+/* ══════RESPONSIVE═════════════════ */
 @media (max-width: 1400px) {
     .kpi-row { grid-template-columns: repeat(2, 1fr); }
     .dashboard-grid { grid-template-columns: 1fr 240px; }
