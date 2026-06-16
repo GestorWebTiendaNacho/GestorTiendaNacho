@@ -405,7 +405,6 @@ window.ejecutarProcesamientoVentas = function() {
     if (btnProcesar) btnProcesar.disabled = true; 
 
     const overlayCarga = document.getElementById('overlay-carga');
-    
     if (overlayCarga) overlayCarga.style.display = 'flex';
 
     const reader = new FileReader();
@@ -428,11 +427,9 @@ window.ejecutarProcesamientoVentas = function() {
                 ]);
 
             const totalFilas = filasProcesadas.length;
-            
-            // Definimos bloques estables de 5000 registros para optimizar la red
             const TAMANIO_BLOQUE = 5000;
 
-            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío por bloques de 5 columnas...`);
+            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío...`);
 
             for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
                 const bloque = filasProcesadas.slice(i, i + TAMANIO_BLOQUE);
@@ -448,7 +445,8 @@ window.ejecutarProcesamientoVentas = function() {
                         action: 'procesarBloqueVentas',
                         data: {
                             valores: bloque,
-                            esPrimerBloque: esPrimerBloque
+                            esPrimerBloque: esPrimerBloque,
+                            indiceInicio: i // 🔥 CORRECCIÓN: Le decimos al servidor en qué registro vamos
                         }
                     })
                 });
@@ -473,7 +471,6 @@ window.ejecutarProcesamientoVentas = function() {
 
         } catch (err) {
             console.error("🚨 Error procesando bloques:", err);
-            
             if (overlayCarga) overlayCarga.style.display = 'none';
             
             Swal.fire({
@@ -489,7 +486,6 @@ window.ejecutarProcesamientoVentas = function() {
             if (inputArchivo) inputArchivo.value = "";
         }
     };
-
     reader.readAsArrayBuffer(archivoBlob);
 };
 
