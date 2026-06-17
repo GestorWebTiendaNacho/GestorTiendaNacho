@@ -407,6 +407,10 @@ window.ejecutarProcesamientoVentas = function() {
     const overlayCarga = document.getElementById('overlay-carga');
     if (overlayCarga) overlayCarga.style.display = 'flex';
 
+    // Opcional: Si tenés un texto descriptivo dentro de tu overlay, podés inicializarlo acá
+    const textoOverlay = document.getElementById('texto-overlay-carga'); // Ajustá el ID si existe
+    if (textoOverlay) textoOverlay.innerText = "Subiendo bloques de datos crudos...";
+
     const reader = new FileReader();
     reader.onload = async function(e) {
         try {
@@ -431,10 +435,15 @@ window.ejecutarProcesamientoVentas = function() {
 
             console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío...`);
 
+            // ── PASO 1: SUBIDA DE BLOQUES (DATOS CRUDOS) ──
             for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
                 const bloque = filasProcesadas.slice(i, i + TAMANIO_BLOQUE);
                 const esPrimerBloque = (i === 0);
                 
+                if (textoOverlay) {
+                    textoOverlay.innerText = `Subiendo filas: ${i} de ${totalFilas}...`;
+                }
+
                 const respuesta = await fetch(URL_GAS_GLOBAL, {
                     method: 'POST',
                     mode: 'cors',
@@ -446,7 +455,7 @@ window.ejecutarProcesamientoVentas = function() {
                         data: {
                             valores: bloque,
                             esPrimerBloque: esPrimerBloque,
-                            indiceInicio: i // 🔥 CORRECCIÓN: Le decimos al servidor en qué registro vamos
+                            indiceInicio: i
                         }
                     })
                 });
@@ -456,11 +465,43 @@ window.ejecutarProcesamientoVentas = function() {
                 }
             }
 
+            // ── PASO 2: DISPARO EXCLUSIVO DEL CÁLCULO DE PROMEDIOS ──
+            console.log("[LexTech-Client] Todos los bloques fueron subidos. Iniciando consolidación de promedios...");
+            if (textoOverlay) {
+                textoOverlay.innerText = "Calculando promedios de los últimos 90 días... (No cierres la página)";
+            }
+
+            const respuestaConsolidacion = await fetch(URL_GAS_GLOBAL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    action: 'generarResumenPromedios90Dias' // Ejecuta la función del Paso 2 directamente
+                })
+            });
+
+            if (!respuestaConsolidacion.ok) {
+                throw new Error("El historial se subió, pero falló el cálculo estadístico de los 90 días.");
+            }
+
+            // Intentamos leer la respuesta del servidor para ver cuántos SKUs procesó
+            let mensajeServidor = `Se cargaron con éxito las ${totalFilas} filas filtradas.`;
+            try {
+                const textoRespuesta = await respuestaConsolidacion.text();
+                if (textoRespuesta) mensajeServidor += `\n\n${textoRespuesta}`;
+            } catch (e) {
+                console.warn("No se pudo leer el texto de respuesta del servidor", e);
+            }
+
+            // Apagamos el overlay de carga ya que todo terminó
             if (overlayCarga) overlayCarga.style.display = 'none';
 
+            // Alerta de Éxito Absoluto
             Swal.fire({
                 title: '🚀 PROCESAMIENTO COMPLETADO',
-                text: `Se cargaron con éxito las ${totalFilas} filas filtradas en Historial_Ventas.`,
+                text: mensajeServidor,
                 icon: 'success',
                 background: '#0f172a',
                 color: '#fff',
