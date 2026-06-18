@@ -533,3 +533,67 @@ function initPagination() {
         }
     });
 }
+
+/*---SECCION CARDS KPIS---*/
+async function cargarTopProveedorCard() {
+  try {
+    const respuesta = await fetch(URL_GAS_GLOBAL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        action: "obtenerTopProveedorDashboard"
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (resultado.status === "success") {
+      renderizarTopProveedor(resultado.reply);
+    } else {
+      console.error("🚨 Error devuelto por GAS:", resultado.message);
+    }
+  } catch (error) {
+    console.error("❌ Error de red al conectar con la API de GAS:", error);
+  }
+}
+
+/**
+ * Modifica el DOM de la Card 1 aplicando jerarquía de tamaños
+ * @param {Object} datos - Objeto con posicion, proveedor y unidades
+ */
+function renderizarTopProveedor(datos) {
+  const contenedorValor = document.querySelector('.cyan-glow .card-value-container');
+  
+  if (!contenedorValor) {
+    console.warn("⚠️ No se encontró el contenedor '.card-value-container' dentro de '.cyan-glow'.");
+    return;
+  }
+
+  // Estructuramos el HTML interno: Posición y Unidades arriba (Grandes), Proveedor abajo (Chico)
+  contenedorValor.style.display = "flex";
+  contenedorValor.style.direction = "ltr"; 
+  contenedorValor.style.flexDirection = "column";
+  contenedorValor.style.gap = "4px";
+
+  contenedorValor.innerHTML = `
+    <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+      <span class="card-value" style="font-size: 2.8rem; font-weight: 800; color: #00f0ff; line-height: 1;">
+        ${datos.posicion}
+      </span>
+      <span class="card-unit" style="font-size: 1.4rem; font-weight: 600; color: #ffffff; letter-spacing: 0.5px;">
+        ${datos.unidades.toLocaleString('es-AR')} UND.
+      </span>
+    </div>
+    <div class="card-supplier-subtext" style="font-size: 0.85rem; color: #a0aec0; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; margin-top: 2px;">
+      ${datos.proveedor}
+    </div>
+  `;
+}
+
+// Ejecución automática cuando la ventana o el DOM terminen de cargar
+document.addEventListener("DOMContentLoaded", () => {
+  cargarTopProveedorCard();
+});
