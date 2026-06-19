@@ -1492,6 +1492,80 @@ function ejecutarAccionFilaProducto(sku) {
   console.log(`Abriendo traza de auditoría para el módulo de inventario. SKU objetivo: ${sku}`);
 }
 
+//  SECCION MINITABLA VENTAS //
+async function cargarWidgetTopVendidos() {
+  try {
+    const respuesta = await fetch(URL_GAS_GLOBAL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "obtenerTopVendidos" })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (resultado.status === "success") {
+      renderizarMiniTablaWidget(resultado.reply);
+    }
+  } catch (error) {
+    console.error("❌ Error al enlazar el Widget 1:", error);
+    const contenedor = document.querySelector('[data-connect="widget1"] .card-value');
+    if (contenedor) contenedor.textContent = "ERR_CONN";
+  }
+}
+
+function renderizarMiniTablaWidget(payload) {
+  const contenedorValue = document.querySelector('[data-connect="widget1"] .card-value');
+  if (!contenedorValue) return;
+
+  const encabezados = payload.headers;
+  const filas = payload.items;
+
+  if (filas.length === 0) {
+    contenedorValue.innerHTML = `<span style="color: #a0aec0; font-size: 0.85em;">DATA EMPTY</span>`;
+    return;
+  }
+
+  contenedorValue.style.color = "unset";
+  contenedorValue.style.fontSize = "unset";
+
+  let htmlTabla = `
+    <div class="hud-mini-table-wrapper" style="width: 100%; margin: 10px 0 14px 0;">
+      <table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.8em; text-align: left;">
+        <thead>
+          <tr style="border-bottom: 1px solid rgba(255, 136, 0, 0.4); color: rgba(255, 255, 255, 0.6); text-transform: uppercase;">
+            <th style="padding: 4px 2px; font-weight: 600;">${encabezados[0]}</th>
+            <th style="padding: 4px 2px; text-align: center; font-weight: 600;">${encabezados[1]}</th>
+            <th style="padding: 4px 2px; text-align: right; font-weight: 600;">${encabezados[2]}</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  filas.forEach(fila => {
+    htmlTabla += `
+      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s;">
+        <td style="padding: 6px 2px; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">
+          ${fila.campo1}
+        </td>
+        <td style="padding: 6px 2px; text-align: center; color: #4df53e; font-weight: bold;">
+          ${fila.campo2}
+        </td>
+        <td style="padding: 6px 2px; text-align: right; color: #ff8800;">
+          ${typeof fila.campo3 === 'number' ? fila.campo3.toLocaleString() : fila.campo3}
+        </td>
+      </tr>
+    `;
+  });
+
+  htmlTabla += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  contenedorValue.innerHTML = htmlTabla;
+}
 
 
 // EJECUCIÓN DIRECTA //
@@ -1500,6 +1574,7 @@ cargarTopProductoCard();  // Ejecución inmediata de Card 2
 cargarTopPedidosCard();   // Ejecución inmediata de Card 3
 cargarEstadoMes();   // Ejecución inmediata de Card 4
 cargarTablaProductosCriticos(); //Carga de tabla central
+cargarWidgetTopVendidos();
 
 
 document.querySelectorAll('.card-inner-cyan, .card-inner-orange, .card-inner-red, .card-inner-purple').forEach(card => {
