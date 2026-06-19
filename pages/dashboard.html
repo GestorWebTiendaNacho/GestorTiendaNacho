@@ -4,6 +4,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/cssDashboard.css">
 
+
 <!-- Canvas: animated HUD circuit connections -->
 <canvas id="connections"></canvas>
 <!-- Canvas: ambient scanning particles -->
@@ -242,39 +243,38 @@
 
         <!-- KPI Metric Cards -->
 <section class="kpi-row">
-<div class="hud-card-wrapper cyan-glow">
-    <div class="hud-card-edge">
-        <div class="card-inner">
-            <span class="card-title">TOP PROVEEDORES</span>
-            <div class="card-body">
-                <div class="card-icon-box">
-                    <i class="fa-solid fa-chart-bar"></i>
+    <div class="hud-card-wrapper cyan-glow">
+        <div class="hud-card-edge">
+            <div class="card-inner-cyan">
+                <span class="card-title-cyan">TOP PROVEEDORES</span>
+                <div class="card-body">
+                    <div class="card-icon-box-cyan">
+                        <i class="fa-solid fa-chart-bar"></i>
+                    </div>
+                    <div class="card-value-container">
+                        <span class="card-value" style="color: #4df53e; font-size: 1.2em;">CONECTANDO...</span>
+                    </div>
                 </div>
-                <div class="card-value-container">
-                    <span class="card-value" style="color: #a0aec0; font-size: 1.5rem;">CONECTANDO...</span>
+                <div class="card-footer">
+                    <div class="mini-sparkline">
+                        <canvas class="spark-canvas" data-color="#00f0ff"></canvas>
+                    </div>
+                    <button class="hud-btn-action">VER REPORTE COMPLETO</button>
                 </div>
-            </div>
-            <div class="card-footer">
-                <div class="mini-sparkline">
-                    <canvas class="spark-canvas" data-color="#00f0ff"></canvas>
-                </div>
-                <button class="hud-btn-action">VER REPORTE COMPLETO</button>
             </div>
         </div>
     </div>
-</div>
 
     <div class="hud-card-wrapper orange-glow">
         <div class="hud-card-edge">
-            <div class="card-inner">
-                <span class="card-title">TOP PROD. VENDIDOS</span>
+            <div class="card-inner-orange">
+                <span class="card-title-orange">TOP PROD. VENDIDOS</span>
                 <div class="card-body">
-                    <div class="card-icon-box">
+                    <div class="card-icon-box-orange">
                         <i class="fa-solid fa-chart-line"></i>
                     </div>
                     <div class="card-value-container">
-                        <span class="card-value">1,842</span>
-                        <span class="card-unit">UNIDADES</span>
+                        <span class="card-value" style="color: #4df53e; font-size: 1.2em;">CONECTANDO...</span>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -289,15 +289,14 @@
 
     <div class="hud-card-wrapper red-glow">
         <div class="hud-card-edge">
-            <div class="card-inner">
-                <span class="card-title">TOP PROD. PEDIDOS</span>
+            <div class="card-inner-red">
+                <span class="card-title-red">TOP PROD. PEDIDOS</span>
                 <div class="card-body">
-                    <div class="card-icon-box">
+                    <div class="card-icon-box-red">
                         <i class="fa-solid fa-clipboard-list"></i>
                     </div>
                     <div class="card-value-container">
-                        <span class="card-value">762</span>
-                        <span class="card-unit">PEDIDOS</span>
+                        <span class="card-value" style="color: #4df53e; font-size: 1.2em;">CONECTANDO...</span>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -312,15 +311,14 @@
 
     <div class="hud-card-wrapper purple-glow">
         <div class="hud-card-edge">
-            <div class="card-inner">
-                <span class="card-title">PEDIDOS DEL MES ACTUAL</span>
+            <div class="card-inner-purple">
+                <span class="card-title-purple">PEDIDOS DEL MES ACTUAL</span>
                 <div class="card-body">
-                    <div class="card-icon-box">
+                    <div class="card-icon-box-purple">
                         <i class="fa-solid fa-circle-info"></i>
                     </div>
                     <div class="card-value-container">
-                        <span class="card-value">96%</span>
-                        <span class="card-unit">CUMPLIMIENTO</span>
+                        <span class="card-value" style="color: #4df53e; font-size: 1.2em;">CONECTANDO...</span>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -336,6 +334,7 @@
 
         <!-- Main Grid: Table + Side Widgets -->
         <section class="dashboard-grid">
+            <!---SECCION DE LA TABLA---->
             <div class="hud-card main-panel table-panel blue-glow" data-connect="table">
                 <div class="panel-corner tl"></div>
                 <div class="panel-corner tr"></div>
@@ -454,6 +453,7 @@
                 </div>
             </div>
 
+            <!--SECCION MINICARDS LATERALES-->
             <div class="side-widgets-column">
                 <div class="hud-card sub-panel orange-glow-dim" data-connect="widget1">
                     <div class="card-inner">

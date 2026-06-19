@@ -53,6 +53,28 @@
     --text-primary: #ffffff;
     --sub-indent: 18px;
     font-family: sans-serif;
+
+    --color-cyan: #00f0ff;
+    --color-orange: #ff9f00;
+    --color-red: #ff3c3c;
+    --color-purple: #a855f7;
+    
+   --cyan-soft: rgba(0, 240, 255, 0.6);
+  --cyan-dim: rgba(0, 240, 255, 0.25);
+  --bg-dark-1: rgba(1, 8, 15, 0.97);
+  --bg-dark-2: rgba(2, 18, 30, 0.92);
+  --bg-dark-3: rgba(3, 25, 40, 0.88);
+
+  --hud-cut: polygon(
+    0% 12px,
+    12px 0%,
+    calc(100% - 40px) 0%,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0% calc(100% - 12px)
+  );
 }
 
 /* Override site layout for full-bleed dashboard */
@@ -565,77 +587,447 @@ body:has(.dashboard-container)::after {
     grid-template-columns: repeat(4, 1fr);
     gap: 18px;
     padding: 20px;
-    background: #01040a; 
+    background: transparent; 
 }
 
 /* ── VARIABLES DE COLOR ELECTRIZADO ── */
-:root {
-    --color-cyan: #00f0ff;
-    --color-orange: #ff9f00;
-    --color-red: #ff3c3c;
-    --color-purple: #a855f7;
-    
-    /* MÁSCARA POLIGONAL SIMÉTRICA DE 45° (Los quiebres HUD reales) */
-    --hud-cut: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px);
-}
 
-/* ── CONTENEDOR PADRE (Maneja el filtro de Neón Externo) ── */
 .hud-card-wrapper {
     position: relative;
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
+
 .hud-card-wrapper:hover {
-    transform: translateY(-4px) scale(1.01);
+    transform: translateY(-10px) scale(1.03);
 }
 
 /* ── EL BORDE DE LA TARJETA (Capa externa recortada) ── */
 .hud-card-edge {
     position: relative;
-    background: rgba(255, 255, 255, 0.15); /* Base de micro-borde HUD */
+    background: rgba(255, 255, 255, 0.45);
     clip-path: var(--hud-cut);
-    padding: 1.5px; /* Grosor exacto de la línea de quiebre */
+    padding: 2.5px; 
     height: 100%;
 }
 
 /* ── EL CONTENEDOR INTERNO (Capa oscura recortada) ── */
-.card-inner {
-    background: #020712; /* Fondo denso original */
+
+/*---CARD CYAN---*/
+/* El borde contenedor gradiente neón de alta tensión */
+.cyan-glow, .orange-glow, .red-glow, .purple-glow, .hud-card-edge { 
+    background: none; 
+}
+
+.cyan-glow { 
+    filter: drop-shadow(0 0 5px rgba(0, 240, 255, 0.4)) 
+            drop-shadow(0 0 15px rgba(0, 240, 255, 0.2));
+    transition: filter 0.3s ease;
+}
+
+/* El cuerpo de la Card */
+.card-inner-cyan {
+    background: transparent !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 
+        inset 0 0 0 1.5px rgba(0, 240, 255, 0.3),
+        inset 6px 6px 8px rgba(255, 255, 255, 0.18), 
+        inset -6px -6px 12px rgba(0, 240, 255, 0.4),
+        inset 0 0 20px rgba(0, 240, 255, 0.15);
+        
     clip-path: var(--hud-cut);
-    padding: 24px 20px; /* Margen interno generoso para proteger textos del quiebre */
+    padding: 24px 20px; 
     display: flex;
     flex-direction: column;
     height: 100%;
+    z-index: 1;
+    position: relative; 
+    overflow: hidden;   
 }
 
-/* ── ASIGNACIÓN DE NEONES Y FILTROS COMPUESTOS ── */
-.cyan-glow { filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.25)); }
-.cyan-glow .hud-card-edge { background: linear-gradient(135deg, var(--color-cyan) 0%, rgba(0, 240, 255, 0.2) 100%); }
-.cyan-glow:hover { filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.55)); }
-
-.orange-glow { filter: drop-shadow(0 0 10px rgba(255, 159, 0, 0.25)); }
-.orange-glow .hud-card-edge { background: linear-gradient(135deg, var(--color-orange) 0%, rgba(255, 159, 0, 0.2) 100%); }
-.orange-glow:hover { filter: drop-shadow(0 0 20px rgba(255, 159, 0, 0.55)); }
-
-.red-glow { filter: drop-shadow(0 0 10px rgba(255, 60, 60, 0.25)); }
-.red-glow .hud-card-edge { background: linear-gradient(135deg, var(--color-red) 0%, rgba(255, 60, 60, 0.2) 100%); }
-.red-glow:hover { filter: drop-shadow(0 0 20px rgba(255, 60, 60, 0.55)); }
-
-.purple-glow { filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.25)); }
-.purple-glow .hud-card-edge { background: linear-gradient(135deg, var(--color-purple) 0%, rgba(168, 85, 247, 0.2) 100%); }
-.purple-glow:hover { filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.55)); }
-
-/* ── COMPONENTES DE TEXTO INTERNO ── */
-.card-title {
-    font-family: var(--font-hud-label), sans-serif;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.8px;
-    margin-bottom: 22px;
+/* LUZ EN MOVIMIENTO POR EL BORDE INFERIOR */
+.card-inner-cyan::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -60%;
+    width: 60%; 
+    height: 3px;         
+    
+    /* Gradiente neón con núcleo blanco de alta energía */
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(0, 240, 255, 0.8) 50%, 
+        #ffffff 65%, 
+        rgba(0, 240, 255, 0.8) 100%
+    );
+    
+    filter: drop-shadow(0 0 5px #00f0ff);
+    animation: hubelectrico 3.0s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
-.cyan-glow .card-title   { color: var(--color-cyan); }
-.orange-glow .card-title { color: var(--color-orange); }
-.red-glow .card-title    { color: var(--color-red); }
-.purple-glow .card-title { color: #d8b4fe; }
+
+/* Título con propiedad de luminiscencia fósforo */
+.cyan-glow .card-title-cyan { 
+    color: #00f0ff; 
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+
+    text-shadow: 
+        0 0 4px rgba(0, 240, 255, 1),
+        0 0 12px rgba(0, 240, 255, 0.8);
+}
+
+.card-title-cyan {
+  color: var(--cyan);
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+
+  text-shadow:
+    0 0 4px rgba(0, 240, 255, 1),
+    0 0 12px rgba(0, 240, 255, 0.8);
+}
+
+/* Caja de Icono optimizada estilo Radar */
+.card-icon-box-cyan {
+  border-radius: 18px;
+  background: radial-gradient(
+    circle at 50% 40%, 
+    rgba(0, 240, 255, 0.25) 0%, 
+    rgba(0, 240, 255, 0.08) 40%,
+    transparent 80%);
+
+    width: 62px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
+    border: 1.5px solid rgba(0, 240, 255, 0.9);
+    box-shadow:
+    0 0 12px rgba(0, 240, 255, 0.35),
+    inset 0 0 12px rgba(0, 240, 255, 0.2);
+    color: var(--cyan);
+}
+
+
+/*---CARD ORANGE---*/
+
+.orange-glow { 
+    filter: drop-shadow(0 0 5px rgba(255, 136, 0, 0.4)) 
+            drop-shadow(0 0 15px rgba(255, 136, 0, 0.2));
+    transition: filter 0.3s ease;
+}
+
+.card-inner-orange {
+    background: transparent !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 
+        inset 0 0 0 1.5px rgba(255, 136, 0, 0.3),       
+        inset 6px 6px 8px rgba(255, 255, 255, 0.18),    
+        inset -6px -6px 12px rgba(255, 136, 0, 0.4),    
+        inset 0 0 20px rgba(255, 136, 0, 0.15);        
+    clip-path: var(--hud-cut);
+    padding: 24px 20px; 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    z-index: 1;
+    position: relative; 
+    overflow: hidden;   
+}
+
+.card-inner-orange::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -60%;          
+    width: 60%;          
+    height: 3px;         
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 136, 0, 0.8) 50%, 
+        #ffffff 75%, 
+        rgba(255, 136, 0, 0.8) 100%
+    );
+    filter: drop-shadow(0 0 5px #ff8800);
+    animation: hubelectrico 3.0s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.orange-glow .card-title-orange { 
+    color: #ff8800; 
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 
+        0 0 4px rgba(255, 136, 0, 1),
+        0 0 12px rgba(255, 136, 0, 0.8);
+}
+
+.card-title-orange {
+    color: #ff8800;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow:
+        0 0 4px rgba(255, 136, 0, 1),
+        0 0 12px rgba(255, 136, 0, 0.8);
+}
+
+.card-icon-box-orange {
+    border-radius: 18px;
+    background: radial-gradient(
+        circle at 50% 40%, 
+        rgba(255, 136, 0, 0.25) 0%, 
+        rgba(255, 136, 0, 0.08) 40%,
+        transparent 80%
+    );
+    width: 62px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 1.5px solid rgba(255, 136, 0, 0.9);
+    box-shadow:
+        0 0 12px rgba(255, 136, 0, 0.35),
+        inset 0 0 12px rgba(255, 136, 0, 0.2);
+    color: #ff8800;
+}
+
+
+/*---CARD RED---*/
+.red-glow { 
+    filter: drop-shadow(0 0 5px rgba(255, 34, 34, 0.4)) 
+            drop-shadow(0 0 15px rgba(255, 34, 34, 0.2));
+    transition: filter 0.3s ease;
+}
+
+.card-inner-red {
+    background: transparent !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 
+        inset 0 0 0 1.5px rgba(255, 34, 34, 0.3),       
+        inset 6px 6px 8px rgba(255, 255, 255, 0.18),    
+        inset -6px -6px 12px rgba(255, 34, 34, 0.4),    
+        inset 0 0 20px rgba(255, 34, 34, 0.15);        
+    clip-path: var(--hud-cut);
+    padding: 24px 20px; 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    z-index: 1;
+    position: relative; 
+    overflow: hidden;   
+}
+
+.card-inner-red::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -60%;          
+    width: 60%;          
+    height: 3px;         
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 34, 34, 0.8) 50%, 
+        #ffffff 65%, 
+        rgba(255, 34, 34, 0.8) 100%
+    );
+    filter: drop-shadow(0 0 5px #ff2222);
+    animation: hubelectrico 3.0s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.red-glow .card-title-red { 
+    color: #ff2222; 
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 
+        0 0 4px rgba(255, 34, 34, 1),
+        0 0 12px rgba(255, 34, 34, 0.8);
+}
+
+.card-title-red {
+    color: #ff2222;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow:
+        0 0 4px rgba(255, 34, 34, 1),
+        0 0 12px rgba(255, 34, 34, 0.8);
+}
+
+.card-icon-box-red {
+    border-radius: 18px;
+    background: radial-gradient(
+        circle at 50% 40%, 
+        rgba(255, 34, 34, 0.25) 0%, 
+        rgba(255, 34, 34, 0.08) 40%,
+        transparent 80%
+    );
+    width: 62px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 1.5px solid rgba(255, 34, 34, 0.9);
+    box-shadow:
+        0 0 12px rgba(255, 34, 34, 0.35),
+        inset 0 0 12px rgba(255, 34, 34, 0.2);
+    color: #ff2222;
+}
+
+/*---CARD PURPLE---*/
+.purple-glow { 
+    filter: drop-shadow(0 0 5px rgba(192, 132, 252, 0.4)) 
+            drop-shadow(0 0 15px rgba(192, 132, 252, 0.2));
+    transition: filter 0.3s ease;
+}
+
+.card-inner-purple {
+    background: transparent !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 
+        inset 0 0 0 1.5px rgba(192, 132, 252, 0.3),       
+        inset 6px 6px 8px rgba(255, 255, 255, 0.18),    
+        inset -6px -6px 12px rgba(192, 132, 252, 0.4),    
+        inset 0 0 20px rgba(192, 132, 252, 0.15);        
+    clip-path: var(--hud-cut);
+    padding: 24px 20px; 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    z-index: 1;
+    position: relative; 
+    overflow: hidden;   
+}
+
+.card-inner-purple::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -60%;          
+    width: 60%;          
+    height: 3px;         
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(192, 132, 252, 0.8) 50%, 
+        #ffffff 65%, 
+        rgba(192, 132, 252, 0.8) 100%
+    );
+    filter: drop-shadow(0 0 5px #c084fc);
+    animation: hubelectrico 3.0s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.purple-glow .card-title-purple { 
+    color: #c084fc; 
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 
+        0 0 4px rgba(192, 132, 252, 1),
+        0 0 12px rgba(192, 132, 252, 0.8);
+}
+
+.card-title-purple {
+    color: #c084fc;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow:
+        0 0 4px rgba(192, 132, 252, 1),
+        0 0 12px rgba(192, 132, 252, 0.8);
+}
+
+.card-icon-box-purple {
+    border-radius: 18px;
+    background: radial-gradient(
+        circle at 50% 40%, 
+        rgba(192, 132, 252, 0.25) 0%, 
+        rgba(192, 132, 252, 0.08) 40%,
+        transparent 80%
+    );
+    width: 62px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 1.5px solid rgba(192, 132, 252, 0.9);
+    box-shadow:
+        0 0 12px rgba(192, 132, 252, 0.35),
+        inset 0 0 12px rgba(192, 132, 252, 0.2);
+    color: #c084fc;
+}
+
+/* Animación de traslación cíclica */
+@keyframes hubelectrico {
+    0% {
+        left: -60%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes btnScan {
+  to { transform: translateX(100%); }
+}
+
+.card-inner-orange::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(800px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 136, 0, 0.12), transparent 40%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+.card-inner-red::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(800px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 34, 34, 0.12), transparent 40%);
+    z-index: -1;
+    pointer-events: none;
+}
+.card-inner-cyan::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /* Usamos las variables calculadas por el JS para mover el centro del neón */
+    background: radial-gradient(
+        800px circle at var(--mx, 50%) var(--my, 50%), 
+        rgba(0, 240, 255, 0.12), 
+        transparent 40%
+    );
+    z-index: -1;
+    pointer-events: none; /* Evita que interfiera con clicks */
+}
+
+.card-inner-purple::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        800px circle at var(--mx, 50%) var(--my, 50%), 
+        rgba(192, 132, 252, 0.12), 
+        transparent 40%
+    );
+    z-index: -1;
+    pointer-events: none;
+}
+
 
 .card-body {
     display: flex;
@@ -643,38 +1035,6 @@ body:has(.dashboard-container)::after {
     gap: 16px;
     margin-bottom: 12px;
 }
-
-/* ── CONTENEDORES DE ICONO (Squircles HUD Perfectos) ── */
-.card-icon-box {
-    width: 62px;
-    height: 62px;
-    border-radius: 18px; /* Curva suave exacta de la foto */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
-}
-.cyan-glow .card-icon-box   { background: radial-gradient(circle, rgba(0,240,255,0.2) 0%, transparent 80%); border: 1.5px solid var(--color-cyan); color: var(--color-cyan); }
-.orange-glow .card-icon-box { background: radial-gradient(circle, rgba(255,159,0,0.2) 0%, transparent 80%); border: 1.5px solid var(--color-orange); color: var(--color-orange); }
-.red-glow .card-icon-box    { background: radial-gradient(circle, rgba(255,60,60,0.2) 0%, transparent 80%); border: 1.5px solid var(--color-red); color: var(--color-red); }
-.purple-glow .card-icon-box { background: radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 80%); border: 1.5px solid var(--color-purple); color: var(--color-purple); }
-
-/* ── RENDERIZADO DE DATOS MÉTRICOS ── */
-.card-value-container {
-    display: flex;
-    flex-direction: column;
-}
-.card-value {
-    font-family: var(--font-hud-data), monospace;
-    font-size: 32px;
-    font-weight: 700;
-    line-height: 1;
-}
-.cyan-glow .card-value   { color: var(--color-cyan); }
-.orange-glow .card-value { color: var(--color-orange); }
-.red-glow .card-value    { color: var(--color-red); }
-.purple-glow .card-value { color: #ffffff; }
 
 .card-unit {
     font-family: var(--font-hud-label), sans-serif;
@@ -684,6 +1044,7 @@ body:has(.dashboard-container)::after {
     margin-top: 5px;
     letter-spacing: 0.5px;
 }
+
 
 /* ── FOOTER: SPARKLINE + BOTÓN SEPARADOS ── */
 .card-footer {
@@ -704,7 +1065,7 @@ body:has(.dashboard-container)::after {
 }
 
 /* ── BOTÓN DE ACCIÓN POLIGONAL HUD ORO ── */
-.hud-btn-action {
+/*--.hud-btn-action {
     background: rgba(212, 175, 55, 0.04);
     border: 1px solid rgba(212, 175, 55, 0.45);
     color: #e6c262;
@@ -716,8 +1077,6 @@ body:has(.dashboard-container)::after {
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    
-    /* Quiebre angular en las 4 mini esquinas del botón original */
     clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
     
     transition: all 0.2s ease-in-out;
@@ -727,9 +1086,69 @@ body:has(.dashboard-container)::after {
     color: #ffffff;
     border-color: #ffd700;
     box-shadow: 0 0 12px rgba(255, 183, 0, 0.5), inset 0 0 6px rgba(255, 215, 0, 0.2);
+}--*/
+.hud-btn-action {
+    margin-top: auto;
+    padding: 7px 14px;
+    font-size: 12px;
+    letter-spacing: 1.2px;
+    clip-path: var(--hud-cut);
+    color: #ffd36b;
+    border-radius: 5px;
+    border-color: #ffd36b;
+    border: 1px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: transparent;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    align-self: flex-start;
 }
+
+.hud-btn-action:hover {
+    color: #fff3c4;
+
+    border-color: rgba(255, 220, 140, 1);
+
+    box-shadow:
+        0 0 10px rgba(255, 211, 107, 0.5),
+        0 0 20px rgba(255, 211, 107, 0.25),
+        inset 0 0 8px rgba(255, 211, 107, 0.25);
+
+    transform: translateY(-1px);
+}
+
 .hud-btn-action:active {
-    background: rgba(212, 175, 55, 0.3);
+    transform: translateY(0);
+
+    background: linear-gradient(
+        180deg,
+        rgba(15, 22, 30, 1),
+        rgba(5, 10, 15, 1)
+    );
+
+    box-shadow:
+        inset 0 2px 6px rgba(0,0,0,0.8);
+}
+
+.hud-btn-action::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background: linear-gradient(
+        120deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.25),
+        transparent 70%
+    );
+
+    transform: translateX(-100%);
+}
+
+.hud-btn-action:hover::after {
+    animation: btnScan 0.8s ease;
 }
 
 /* ═══════════MAIN TABLE PANEL════════════ */
@@ -1182,4 +1601,327 @@ body:has(.dashboard-container)::after {
     .sidebar-nav { flex-direction: row; flex-wrap: wrap; }
     .dashboard-grid { grid-template-columns: 1fr; }
     .bottom-grid-hud { grid-template-columns: 1fr; }
+}
+
+/*SECCION SWAL CARDS KPIS*/
+/*PROVEEDORES*/
+.swal-topprov {
+  margin-top: 220px !important;
+  background: rgba(6, 13, 22, 0.70) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 2px solid #00f0ff !important;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.35), inset 0 0 20px rgba(0, 240, 255, 0.15) !important;
+  border-radius: 0px !important;
+}
+
+/* Título del Reporte */
+.swal-topprov .swal2-title {
+  font-family: monospace !important;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* Encabezado Fijo (Sticky) para la tabla interna */
+.swal-topprov th {
+  position: sticky !important;
+  top: 0;
+  background-color: #101f30 !important;
+  z-index: 10;
+  box-shadow: inset 0 -2px 0 #00f0ff; /* Línea neón inferior */
+}
+
+/* Botón Confirmar: Exportar Excel (Estilo HUD Cyan) */
+.hud-btn-confirm-excel {
+  font-family: monospace !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  margin: 8px !important;
+  background: #00f0ff !important;
+  color: #000000 !important;
+  border: 1px solid #00f0ff !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35) !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.hud-btn-confirm-excel:hover {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.65) !important;
+  transform: translateY(-2px);
+}
+
+/* Botón Cancelar: Cerrar Reporte (Estilo HUD Opagado) */
+.hud-btn-cancel-custom {
+  font-family: monospace !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  margin: 8px !important;
+  background: rgba(16, 31, 48, 0.4) !important;
+  color: #a0aec0 !important;
+  border: 1px solid #4a5568 !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.hud-btn-cancel-custom:hover {
+  color: #ffffff !important;
+  background: rgba(0, 240, 255, 0.1) !important;
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+/*----VENTAS----*/
+body .swal2-container .swal2-popup.swal-topventas {
+  margin-top: 220px !important; 
+  background: rgba(6, 13, 22, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 2px solid #ff9f00 !important;
+  box-shadow: 0 0 35px rgba(255, 159, 0, 0.4), inset 0 0 20px rgba(255, 159, 0, 0.15) !important;
+  border-radius: 0px !important;
+  padding: 20px !important;
+}
+
+/* Título del Reporte */
+body .swal2-container .swal-topventas .swal2-title {
+  color: #ffffff !important;
+  font-family: monospace !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  margin-top: 10px !important;
+}
+
+/* Encabezado Fijo (Sticky) Naranja */
+body .swal2-container .swal-topventas th {
+  position: sticky !important;
+  top: 0 !important;
+  background-color: #1a1105 !important; /* Fondo oscuro cálido */
+  color: #ff9f00 !important;
+  font-family: monospace !important;
+  z-index: 99 !important;
+  box-shadow: inset 0 -2px 0 #ff9f00 !important; /* Línea neón inferior naranja */
+}
+
+/* Botón Confirmar: Exportar Excel (Estilo HUD Naranja) */
+body .swal2-container .swal-topventas .hud-btn-confirm-excel-orange {
+  font-family: monospace !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 5px !important; /* Respetamos tus bordes de 5px */
+  cursor: pointer !important;
+  margin: 10px !important;
+  background: #ff9f00 !important;
+  color: #000000 !important;
+  border: 1px solid #ff9f00 !important;
+  box-shadow: 0 0 12px rgba(255, 159, 0, 0.35) !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body .swal2-container .swal-topventas .hud-btn-confirm-excel-orange:hover {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.7) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Botón Cancelar: Cerrar Reporte (Estilo HUD Apagado Naranja) */
+body .swal2-container .swal-topventas .hud-btn-cancel-orange {
+  font-family: monospace !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 5px !important; /* Respetamos tus bordes de 5px */
+  cursor: pointer !important;
+  margin: 10px !important;
+  background: rgba(31, 22, 16, 0.5) !important;
+  color: #a0aec0 !important;
+  border: 1px solid #5c4314 !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body .swal2-container .swal-topventas .hud-btn-cancel-orange:hover {
+  color: #ffffff !important;
+  background: rgba(255, 159, 0, 0.15) !important;
+  border-color: #ff9f00 !important;
+  box-shadow: 0 0 15px rgba(255, 159, 0, 0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+/*----PRODUCTOS----*/
+body .swal2-container .swal2-popup.swal-toppedidos {
+  margin-top: 220px !important;
+  background: rgba(6, 13, 22, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 2px solid #ff3c3c !important;
+  box-shadow: 0 0 35px rgba(255, 60, 60, 0.4), inset 0 0 20px rgba(255, 60, 60, 0.15) !important;
+  border-radius: 0px !important;
+  padding: 20px !important;
+}
+
+/* Título del Reporte */
+body .swal2-container .swal-toppedidos .swal2-title {
+  color: #ffffff !important;
+  font-family: monospace !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  margin-top: 10px !important;
+}
+
+/* Encabezado Fijo (Sticky) Rojo */
+body .swal2-container .swal-toppedidos th {
+  position: sticky !important;
+  top: 0 !important;
+  background-color: #1a0505 !important; /* Fondo oscuro rojizo */
+  color: #ff3c3c !important;
+  font-family: monospace !important;
+  z-index: 99 !important;
+  box-shadow: inset 0 -2px 0 #ff3c3c !important; /* Línea neón inferior */
+}
+
+/* Botón Confirmar: Exportar Excel (Estilo HUD Rojo) */
+body .swal2-container .swal-toppedidos .hud-btn-confirm-excel-red {
+  font-family: monospace !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  margin: 10px !important;
+  background: #ff3c3c !important;
+  color: #000000 !important;
+  border: 1px solid #ff3c3c !important;
+  box-shadow: 0 0 12px rgba(255, 60, 60, 0.35) !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body .swal2-container .swal-toppedidos .hud-btn-confirm-excel-red:hover {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.7) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Botón Cancelar: Cerrar Reporte (Estilo HUD Apagado Rojo) */
+body .swal2-container .swal-toppedidos .hud-btn-cancel-red {
+  font-family: monospace !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  margin: 10px !important;
+  background: rgba(31, 16, 16, 0.5) !important;
+  color: #a0aec0 !important;
+  border: 1px solid #5c1414 !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body .swal2-container .swal-toppedidos .hud-btn-cancel-red:hover {
+  color: #ffffff !important;
+  background: rgba(255, 60, 60, 0.15) !important;
+  border-color: #ff3c3c !important;
+  box-shadow: 0 0 15px rgba(255, 60, 60, 0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+
+
+/*----MENSUAL----*/
+body .swal2-container .swal2-popup.swal-estadomensual {
+  margin-top: 220px !important;
+  background: rgba(6, 13, 22, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 2px solid #c084fc !important;
+  box-shadow: 0 0 35px rgba(192, 132, 252, 0.4), inset 0 0 20px rgba(192, 132, 252, 0.15) !important;
+  border-radius: 0px !important;
+  padding: 20px !important;
+}
+
+body .swal2-container .swal-estadomensual .swal2-title {
+  color: #ffffff !important;
+  font-family: monospace !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  margin-top: 10px !important;
+}
+
+/* Encabezado Fijo Morado Oscuro */
+body .swal2-container .swal-estadomensual th {
+  position: sticky !important;
+  top: 0 !important;
+  background-color: #150a21 !important; /* Corregido: Fondo oscuro morado */
+  color: #c084fc !important;
+  font-family: monospace !important;
+  z-index: 99 !important;
+  box-shadow: inset 0 -2px 0 #c084fc !important;
+}
+
+/* Botón Confirmar: Exportar Excel (Estilo HUD Purple) */
+body .swal2-container .swal-estadomensual .hud-btn-confirm-excel-purple {
+  font-family: monospace !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  margin: 10px !important;
+  background: #c084fc !important;
+  color: #000000 !important;
+  border: 1px solid #c084fc !important;
+  box-shadow: 0 0 12px rgba(192, 132, 252, 0.35) !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body .swal2-container .swal-estadomensual .hud-btn-confirm-excel-purple:hover {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.7) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Botón Cancelar: Cerrar Reporte (Estilo HUD Apagado Purple) */
+body .swal2-container .swal-estadomensual .hud-btn-cancel-purple {
+  font-family: monospace !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  margin: 10px !important;
+  background: rgba(26, 16, 31, 0.5) !important; /* Fondo oscuro cálido morado */
+  color: #a0aec0 !important;
+  border: 1px solid #4c145c !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
+  color: #ffffff !important;
+  background: rgba(192, 132, 252, 0.15) !important;
+  border-color: #c084fc !important;
+  box-shadow: 0 0 15px rgba(192, 132, 252, 0.4) !important;
+  transform: translateY(-2px) !important;
 }
