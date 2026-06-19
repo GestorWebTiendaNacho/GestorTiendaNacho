@@ -1411,7 +1411,7 @@ function renderizarPaginaTabla() {
   const paginaItems = listaProductosCriticos.slice(inicio, fin);
 
   if (paginaItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="color:#a0aec0; font-family:monospace; padding:20px;">SISTEMA SIN ALERTAS ACTIVAS</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:#a0aec0; font-family:monospace; padding:20px;">SISTEMA SIN ALERTAS ACTIVAS</td></tr>`;
     return;
   }
 
@@ -1431,6 +1431,7 @@ function renderizarPaginaTabla() {
       <td class="text-center">${item.minimo}</td>
       <td>${item.proveedor}</td>
       <td>${item.categoria}</td>
+      <td>${item.promedio}</td>
       <td class="text-center">
         <button class="btn-table-action" data-sku="${item.sku}">
           VER <i class="fa-solid fa-angles-right"></i>
@@ -1545,13 +1546,13 @@ function renderizarMiniTablaWidget(payload) {
   filas.forEach(fila => {
     htmlTabla += `
       <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s;">
-        <td style="padding: 6px 2px; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">
+        <td style="padding: 6px 2px; color: #ff8800; font-weight: bold; white-space: nowrap; font-size: 0.8em; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">
           ${fila.campo1}
         </td>
-        <td style="padding: 6px 2px; text-align: center; color: #4df53e; font-weight: bold;">
+        <td style="padding: 6px 2px; text-align: center; color: #e4e8e3; font-weight: bold; white-space: nowrap; overflow: hidden; font-size: 0.8em; text-overflow: ellipsis; max-width: 75px;" title="${fila.campo2 || ''}">
           ${fila.campo2}
         </td>
-        <td style="padding: 6px 2px; text-align: right; color: #ff8800;">
+        <td style="padding: 6px 2px; text-align: right; font-size: 0.8em; color: #ff8800;">
           ${typeof fila.campo3 === 'number' ? fila.campo3.toLocaleString() : fila.campo3}
         </td>
       </tr>
