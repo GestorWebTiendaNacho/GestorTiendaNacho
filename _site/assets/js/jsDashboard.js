@@ -592,7 +592,6 @@ function renderizarTopProveedor(datos) {
   `;
     const btnReporte = document.querySelector('.cyan-glow .hud-btn-action');
     if (btnReporte) {
-        // Clonamos para evitar duplicación de listeners si se recarga la subpágina
         const btnNuevo = btnReporte.cloneNode(true);
         btnReporte.parentNode.replaceChild(btnNuevo, btnReporte);
         btnNuevo.addEventListener("click", abrirModalRankingProveedores);
