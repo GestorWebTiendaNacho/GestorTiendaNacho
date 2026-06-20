@@ -1371,7 +1371,7 @@ function ejecutarDescargaLocalExcelMes(matriz) {
 // SECCION TABLA CENTRAL //
 let listaProductosCriticos = [];
 let paginaActualTabla = 1;
-const filasPorPagina = 8;
+const filasPorPagina = 17;
 
 
 async function cargarTablaProductosCriticos() {
@@ -1434,7 +1434,7 @@ function renderizarPaginaTabla() {
       <td>${item.promedio}</td>
       <td class="text-center">
         <button class="btn-table-action" data-sku="${item.sku}">
-          VER <i class="fa-solid fa-angles-right"></i>
+          PEDIR <i class="fa-solid fa-angles-right"></i>
         </button>
       </td>
     `;
@@ -1568,6 +1568,170 @@ function renderizarMiniTablaWidget(payload) {
   contenedorValue.innerHTML = htmlTabla;
 }
 
+// SECCION MINI TABLA PEDIDOS //
+async function cargarWidgetTopPedidos() {
+  try {
+    const respuesta = await fetch(URL_GAS_GLOBAL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "obtenerTopPedidos" })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (resultado.status === "success") {
+      renderizarMiniTablaWidget2(resultado.reply);
+    }
+  } catch (error) {
+    console.error("❌ Error al enlazar el Widget 2:", error);
+    const contenedor = document.querySelector('[data-connect="widget2"] .card-value');
+    if (contenedor) contenedor.textContent = "ERR_CONN";
+  }
+}
+
+function renderizarMiniTablaWidget2(payload) {
+  const contenedorValue = document.querySelector('[data-connect="widget2"] .card-value');
+  if (!contenedorValue) return;
+
+  const encabezados = payload.headers;
+  const filas = payload.items;
+
+  if (filas.length === 0) {
+    contenedorValue.innerHTML = `<span style="color: #a0aec0; font-size: 0.85em;">DATA EMPTY</span>`;
+    return;
+  }
+
+  contenedorValue.style.color = "unset";
+  contenedorValue.style.fontSize = "unset";
+
+  let htmlTabla = `
+    <div class="hud-mini-table-wrapper" style="width: 100%; margin: 10px 0 14px 0;">
+      <table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.8em; text-align: left;">
+        <thead>
+          <tr style="border-bottom: 1px solid rgba(255, 68, 68, 0.4); color: rgba(255, 255, 255, 0.6); text-transform: uppercase;">
+            <th style="padding: 4px 2px; font-weight: 600;">${encabezados[0]}</th>
+            <th style="padding: 4px 2px; text-align: center; font-weight: 600;">${encabezados[1]}</th>
+            <th style="padding: 4px 2px; text-align: right; font-weight: 600;">${encabezados[2]}</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  filas.forEach(fila => {
+    htmlTabla += `
+      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s;">
+        <td style="padding: 6px 2px; color: #ff4444; font-weight: bold; white-space: nowrap; font-size: 0.8em; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">
+          ${fila.campo1}
+        </td>
+        <td style="padding: 6px 2px; text-align: center; color: #e4e8e3; font-weight: bold; white-space: nowrap; overflow: hidden; font-size: 0.8em; text-overflow: ellipsis; max-width: 75px;" title="${fila.campo2 || ''}">
+          ${fila.campo2}
+        </td>
+        <td style="padding: 6px 2px; text-align: right; font-size: 0.8em; color: #ff4444;">
+          ${typeof fila.campo3 === 'number' ? fila.campo3.toLocaleString() : fila.campo3}
+        </td>
+      </tr>
+    `;
+  });
+
+  htmlTabla += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  contenedorValue.innerHTML = htmlTabla;
+}
+
+
+// SECCION MINI TABLE MENSUAL //
+async function cargarWidgetMesActual() {
+  try {
+    const respuesta = await fetch(URL_GAS_GLOBAL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "obtenerDatosMesActual" })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (resultado.status === "success") {
+      renderizarMiniTablaWidget3(resultado.reply);
+    }
+  } catch (error) {
+    console.error("❌ Error al enlazar el Widget 3:", error);
+    const contenedor = document.querySelector('[data-connect="widget3"] .card-value');
+    if (contenedor) contenedor.textContent = "ERR_CONN";
+  }
+}
+
+function renderizarMiniTablaWidget3(payload) {
+  const contenedorValue = document.querySelector('[data-connect="widget3"] .card-value');
+  if (!contenedorValue) return;
+
+  const encabezados = payload.headers;
+  const filas = payload.items;
+
+  if (filas.length === 0) {
+    contenedorValue.innerHTML = `<span style="color: #a0aec0; font-size: 0.85em;">DATA EMPTY</span>`;
+    return;
+  }
+
+  contenedorValue.style.color = "unset";
+  contenedorValue.style.fontSize = "unset";
+
+  let htmlTabla = `
+    <div class="hud-mini-table-wrapper" style="width: 100%; margin: 10px 0 14px 0; overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.75em; text-align: left;">
+        <thead>
+          <tr style="border-bottom: 1px solid rgba(189, 0, 255, 0.4); color: rgba(255, 255, 255, 0.6); text-transform: uppercase;">
+            <th style="padding: 4px 2px; font-weight: 600;">${encabezados[0]}</th>
+            <th style="padding: 4px 2px; font-weight: 600;">${encabezados[1]}</th>
+            <th style="padding: 4px 2px; text-align: center; font-weight: 600;">${encabezados[2]}</th>
+            <th style="padding: 4px 2px; text-align: center; font-weight: 600;">${encabezados[3]}</th>
+            <th style="padding: 4px 2px; text-align: center; font-weight: 600;">${encabezados[4]}</th>
+            <th style="padding: 4px 2px; text-align: right; font-weight: 600;">${encabezados[5]}</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  filas.forEach(fila => {
+    htmlTabla += `
+      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s;">
+        <td style="padding: 6px 2px; color: #bd00ff; font-size: 0.8em; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55px;" title="${fila.campo1 || ''}">
+          ${fila.campo1}
+        </td>
+        <td style="padding: 6px 2px; color: #e4e8e3; font-size: 0.8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70px;" title="${fila.campo2 || ''}">
+          ${fila.campo2}
+        </td>
+        <td style="padding: 6px 2px; text-align: center; font-size: 0.8em; color: #4df53e; font-weight: bold;">
+          ${fila.campo3}
+        </td>
+        <td style="padding: 6px 2px; text-align: center; font-size: 0.8em; color: #e4e8e3;">
+          ${fila.campo4}
+        </td>
+        <td style="padding: 6px 2px; text-align: center; font-size: 0.8em; color: #e4e8e3;">
+          ${fila.campo5}
+        </td>
+        <td style="padding: 6px 2px; text-align: right; color: #bd00ff; font-size: 0.8em; font-weight: bold;">
+          ${typeof fila.campo6 === 'number' ? fila.campo6.toLocaleString() : fila.campo6}
+        </td>
+      </tr>
+    `;
+  });
+
+  htmlTabla += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  contenedorValue.innerHTML = htmlTabla;
+}
+
+
+
+
 
 // EJECUCIÓN DIRECTA //
 cargarTopProveedorCard(); // Ejecución de Card 1
@@ -1576,6 +1740,8 @@ cargarTopPedidosCard();   // Ejecución inmediata de Card 3
 cargarEstadoMes();   // Ejecución inmediata de Card 4
 cargarTablaProductosCriticos(); //Carga de tabla central
 cargarWidgetTopVendidos();
+cargarWidgetTopPedidos();
+cargarWidgetMesActual();
 
 
 document.querySelectorAll('.card-inner-cyan, .card-inner-orange, .card-inner-red, .card-inner-purple').forEach(card => {

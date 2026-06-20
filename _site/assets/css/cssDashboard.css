@@ -586,7 +586,7 @@ body:has(.dashboard-container)::after {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 18px;
-    padding: 20px;
+    padding: 10px 20px 2px 20px;    
     background: transparent; 
 }
 
@@ -1153,15 +1153,16 @@ body:has(.dashboard-container)::after {
 
 /* ═══════════MAIN TABLE PANEL════════════ */
 .dashboard-grid {
+    margin-top: 2px;
     display: grid;
     grid-template-columns: 1fr 280px;
-    gap: 12px;
+    gap: 8px;
     flex: 1;
     min-height: 0;
 }
 
 .main-panel .card-inner {
-    padding: 16px;
+    padding: 12px;
     clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
 }
 
@@ -1201,6 +1202,14 @@ body:has(.dashboard-container)::after {
     background: linear-gradient(90deg, rgba(0, 240, 255, 0.4), transparent);
 }
 
+/*.table-panel {
+}
+
+.table-panel:hover {
+    filter: drop-shadow(-8px 12px 14px rgba(0, 0, 0, 0.7)) 
+            drop-shadow(0 0 16px rgba(168, 85, 247, 0.45));
+}*/
+
 .table-wrapper {
     overflow-x: auto;
     flex: 1;
@@ -1212,6 +1221,18 @@ body:has(.dashboard-container)::after {
     width: 100%;
     border-collapse: collapse;
     font-family: var(--font-hud-data);
+
+}
+.table-effect-wrapper {
+    transition: filter 0.3s ease, transform 0.3s ease !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+.table-effect-wrapper:hover {
+    transform: translateX(-4px) !important;
+    filter: drop-shadow(-8px 12px 14px rgba(0, 0, 0, 0.7)) 
+            drop-shadow(0 0 16px rgba(168, 85, 247, 0.45)) !important;
 }
 
 .hud-table th {
@@ -1327,6 +1348,7 @@ body:has(.dashboard-container)::after {
 
 /* ════RIGHT SIDE WIDGETS═════════ */
 .side-widgets-column {
+    padding-top: 2px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -1337,18 +1359,16 @@ body:has(.dashboard-container)::after {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(0, 0, 0, 0.9) 100%);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    padding: 2px; /* Grosor exacto de la arista extruida */
+    padding: 2px; 
     transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), filter 0.3s ease;
-    
-    /* El truco del volumen neomórfico oscuro: bloque extruido + sombra ambiental pesada */
     box-shadow: 
-        -4px -4px 10px rgba(255, 255, 255, 0.02), /* Luz ambiental superior */
-        5px 8px 16px rgba(0, 0, 0, 0.65);       /* Sombra arrojada dura inferior */
+        -4px -4px 10px rgba(255, 255, 255, 0.02), 
+        5px 8px 16px rgba(0, 0, 0, 0.65);      
 }
 
 .sub-panel .card-inner { 
     background: #030a1a;
-    padding: 12px; 
+    padding: 8px; 
     width: 100%;
     height: 100%;
     display: flex;
