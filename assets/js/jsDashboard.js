@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sb = document.getElementById('sidebarNav');
     console.log("🔍 [DIAGNÓSTICO 3] ¿Existe #sidebarNav?:", sb ? "SÍ ✅" : "NO ❌");
 });
-document.addEventListener('DOMContentLoaded', () => {
+
+/*document.addEventListener('DOMContentLoaded', () => {
 
     const sidebarNav = document.getElementById('sidebarNav');
     
@@ -64,32 +65,35 @@ document.addEventListener('DOMContentLoaded', () => {
     try { initNavigation(); } catch (err) { console.error("Fallo en initNavigation:", err); }
     try { initHudClock(); } catch (err) { console.error("Fallo en initHudClock:", err); }
     try { initPagination(); } catch (err) { console.error("Fallo en initPagination:", err); }
-});
+});*/
 
 function initSidebarAccordion() {
     const sidebarNav = document.getElementById('sidebarNav');
     if (!sidebarNav) {
-        console.error("❌ [HUD Error] No se encontró el contenedor #sidebarNav");
+        console.warn("⚠️ [HUD] No se encontró el contenedor #sidebarNav en esta página.");
         return;
     }
 
-    console.log("✅ [HUD] Inicializando escuchador del Sidebar de forma segura.");
+    console.log("✅ [HUD] Inicializando acordeón único del Sidebar.");
 
     sidebarNav.addEventListener('click', (e) => {
+        // Buscamos el botón interactivo del menú
         const toggleBtn = e.target.closest('.nav-item .nav-btn');
         if (!toggleBtn) return;
 
         const item = toggleBtn.closest('.nav-item');
         const hasSubmenu = item.querySelector('.submenu');
 
+        // Si el botón no tiene submenú (es un link común), dejamos que prosiga normalmente
         if (!hasSubmenu) return;
 
+        // Frenamos comportamiento nativo del botón/ancla
         e.preventDefault();
-        e.stopPropagation();
 
         const isOpen = item.classList.contains('is-open');
         const accordionItems = sidebarNav.querySelectorAll('.nav-item');
 
+        // CERRAR LOS DEMÁS MENÚS ABIERTOS (Comportamiento acordeón)
         accordionItems.forEach(otherItem => {
             if (otherItem !== item && otherItem.querySelector('.submenu')) {
                 otherItem.classList.remove('is-open');
@@ -98,6 +102,7 @@ function initSidebarAccordion() {
             }
         });
 
+        // TOGGLE: Abrir o cerrar el menú actual
         if (isOpen) {
             item.classList.remove('is-open');
             toggleBtn.setAttribute('aria-expanded', 'false');
@@ -105,11 +110,12 @@ function initSidebarAccordion() {
             item.classList.add('is-open');
             toggleBtn.setAttribute('aria-expanded', 'true');
             
+            // Disparador del SVG de líneas dinámicas con delay para esperar al render
             setTimeout(() => {
                 if (typeof drawSubmenuLines === 'function') {
                     drawSubmenuLines(item);
                 }
-            }, 250);
+            }, 150);
         }
     });
 }
@@ -1368,9 +1374,9 @@ function ejecutarDescargaLocalExcelMes(matriz) {
 
 
 // SECCION TABLA CENTRAL //
-let listaProductosCriticos = [];
-let paginaActualTabla = 1;
-const filasPorPagina = 17;
+var listaProductosCriticos = [];
+var paginaActualTabla = 1;
+var filasPorPagina = 17;
 
 
 async function cargarTablaProductosCriticos() {

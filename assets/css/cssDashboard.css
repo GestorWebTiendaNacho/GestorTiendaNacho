@@ -324,13 +324,10 @@ body:has(.dashboard-container)::after {
     transition: opacity 0.2s;
 }
 
-/* MODIFICADO: Estado Interactivo "Despegue Radical" */
 .nav-btn__wrap:hover .nav-btn,
 .nav-btn__wrap:focus-within .nav-btn {
-    /* Despegue violento hacia arriba y a la derecha con un leve escalado de presencia */
     transform: translateY(-6px) translateX(4px) scale(1.02);
     background: rgba(14, 32, 66, 0.95);
-    /* Inyección de brillo cromático directo por filtrado de hardware */
     filter: drop-shadow(-4px 6px 8px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 6px currentColor);
 }
 
@@ -465,7 +462,6 @@ body:has(.dashboard-container)::after {
     margin: 0;
 }
 
-/* Responsive Overrides */
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
@@ -484,7 +480,7 @@ body:has(.dashboard-container)::after {
     pointer-events: none !important; /* Hace que los clics atraviesen los efectos visuales y golpeen los botones */
 }
 .nav-btn, .submenu {
-    pointer-events: auto !important; /* Asegura que los botones sí reaccionen */
+    pointer-events: auto !important;
 }
 
 
@@ -604,7 +600,7 @@ body:has(.dashboard-container)::after {
     transform: translateY(-10px) scale(1.03);
 }
 
-/* ── EL BORDE DE LA TARJETA (Capa externa recortada) ── */
+/* ── EL BORDE DE LA TARJETA ── */
 .hud-card-edge {
     position: relative;
     background: rgba(255, 255, 255, 0.45);
@@ -613,10 +609,8 @@ body:has(.dashboard-container)::after {
     height: 100%;
 }
 
-/* ── EL CONTENEDOR INTERNO (Capa oscura recortada) ── */
 
 /*---CARD CYAN---*/
-/* El borde contenedor gradiente neón de alta tensión */
 .cyan-glow, .orange-glow, .red-glow, .purple-glow, .hud-card-edge { 
     background: none; 
 }
@@ -1065,28 +1059,7 @@ body:has(.dashboard-container)::after {
 }
 
 /* ── BOTÓN DE ACCIÓN POLIGONAL HUD ORO ── */
-/*--.hud-btn-action {
-    background: rgba(212, 175, 55, 0.04);
-    border: 1px solid rgba(212, 175, 55, 0.45);
-    color: #e6c262;
-    font-family: var(--font-hud-header), sans-serif;
-    font-size: 9px;
-    font-weight: 800;
-    width: 100%;
-    padding: 9px 0;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
-    
-    transition: all 0.2s ease-in-out;
-}
-.hud-btn-action:hover {
-    background: rgba(212, 175, 55, 0.16);
-    color: #ffffff;
-    border-color: #ffd700;
-    box-shadow: 0 0 12px rgba(255, 183, 0, 0.5), inset 0 0 6px rgba(255, 215, 0, 0.2);
-}--*/
+
 .hud-btn-action {
     margin-top: auto;
     padding: 7px 14px;
@@ -1201,14 +1174,6 @@ body:has(.dashboard-container)::after {
     height: 1px;
     background: linear-gradient(90deg, rgba(0, 240, 255, 0.4), transparent);
 }
-
-/*.table-panel {
-}
-
-.table-panel:hover {
-    filter: drop-shadow(-8px 12px 14px rgba(0, 0, 0, 0.7)) 
-            drop-shadow(0 0 16px rgba(168, 85, 247, 0.45));
-}*/
 
 .table-wrapper {
     overflow-x: auto;

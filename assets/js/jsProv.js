@@ -930,11 +930,12 @@ function filtrarProductosMain() {
 function cerrarModal_Pedidos() {
     const modal = document.getElementById('modal-pedidos');
     const contenido = document.getElementById('modal-contenido');
-    const paginaPrincipal = document.getElementById('page-principal-depos');
-
+    const paginaPrincipal = document.getElementById('dashboard');
+    const paginaDashboard = document.getElementById('page-dashboard') || document.getElementById('dashboard');
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        modal.style.display = 'none';
     }
 
     if (contenido) {
@@ -942,13 +943,18 @@ function cerrarModal_Pedidos() {
     }
 
     if (paginaPrincipal) {
-        paginaPrincipal.style.display = 'flex';
+        paginaPrincipal.style.display = 'none';
     }
 
     if (typeof navegar === "function") {
-        navegar('proveedores');
+        navegar('dashboard'); 
     } else {
-        console.warn("La función global 'navegar' no está configurada en este ecosistema.");
+
+        if (paginaDashboard) {
+            paginaDashboard.style.display = 'flex';
+        } else {
+            console.warn("La función global 'navegar' o el contenedor del dashboard no se encontraron.");
+        }
     }
 }
 
@@ -1420,8 +1426,8 @@ if (!window.NicoController) {
             tamanoVisual: 180
         };
 
-        let animationFrameId = null;
-        let estaActivo = false;
+        var animationFrameId = null;
+        var estaActivo = false;
 
         function iniciar() {
             const currentCanvas = document.getElementById("canvas-nico");
@@ -1509,9 +1515,9 @@ window.avatarIdle   = () => window.NicoController && NicoController.cambiarA("ES
 window.avatarHablar = () => window.NicoController && NicoController.cambiarA("RESPONDE");
 
 // Variables globales de grabación
-let mediaRecorder = null;
-let chunksAudio = [];
-let estaGrabando = false;
+var mediaRecorder = null;
+var chunksAudio = [];
+var estaGrabando = false;
 
 // 1. MANEJO DEL MICRÓFONO MULTINAVEGADOR (BRAVE, CHROME, LINUX)
 async function alternarMicrofono() {
@@ -1892,7 +1898,7 @@ document.addEventListener("DOMContentLoaded", () => {
  * @param {Array} datos 
  * @param {number|string} fila  */
 
-const CONFIG_RECEPCION = {
+var CONFIG_RECEPCION = {
     HOJA_GAS: 'Estado_Pedidos',
     ENCABEZADOS: ['ID PEDIDO', 'FECHA PEDIDO', 'PROVEEDOR', 'ESTATUS', 'SKU', 'PRODUCTO', 'COSTO UNIT.', 'NUEVA FECHA', 'OBSERVACIONES', 'ACCIONES']
 };
@@ -2860,7 +2866,7 @@ function renderizarTablaHistorialGeneral(pedidos) {
 
 
 /*-------------------SECCION DATOS SEMANALES------------------------------*/
-let navegacionSemanal = {
+var navegacionSemanal = {
     semanaActual: null,
     diaActual: null
 };

@@ -1,8 +1,10 @@
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/cssDashboard.css">
+<link rel="stylesheet" href="assets/css/cssProv.css">
+<link rel="stylesheet" href="assets/css/cssMenuProv.css">
 
 
 <!-- Canvas: animated HUD circuit connections -->
@@ -59,7 +61,7 @@
             <ul class="sidebar__nav" id="sidebarNav">
                 <li class="nav-item theme-cyan">
                     <div class="nav-btn__wrap">
-                        <a href="#inicio" class="nav-btn" data-nav="inicio">
+                        <a href="#" class="nav-btn" data-nav="inicio" onclick="navegar('home'); return false;">
                             <span class="nav-btn__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
                             </span>
@@ -87,7 +89,7 @@
                             <ul class="submenu__list">
                                 <li>
                                     <div class="nav-btn__wrap nav-btn__wrap--sub">
-                                        <a href="#manual" class="nav-btn nav-btn--sub" data-nav="manual">
+                                        <a href="#" class="nav-btn nav-btn--sub" data-nav="manual" onclick="abrirModalPedidosManual()">
                                             <span class="nav-btn__icon" aria-hidden="true">
                                                 <svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
                                             </span>
@@ -98,7 +100,7 @@
                                 </li>
                                 <li>
                                     <div class="nav-btn__wrap nav-btn__wrap--sub">
-                                        <a href="#asistidos" class="nav-btn nav-btn--sub" data-nav="asistidos">
+                                        <a href="#" class="nav-btn nav-btn--sub" data-nav="asistidos" onclick="abrirModalPedidos_Autoasist()">
                                             <span class="nav-btn__icon" aria-hidden="true">
                                                 <svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="13" r="1" fill="currentColor"/><circle cx="15" cy="13" r="1" fill="currentColor"/><path d="M9 16h6"/></svg>
                                             </span>
@@ -113,7 +115,7 @@
                 </li>
                 <li class="nav-item theme-teal">
                     <div class="nav-btn__wrap">
-                        <a href="#recepcion" class="nav-btn" data-nav="recepcion">
+                        <a href="#" class="nav-btn" data-nav="recepcion" onclick="verEstadoPedidos()">
                             <span class="nav-btn__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                             </span>
@@ -124,7 +126,7 @@
                 </li>
                 <li class="nav-item theme-red">
                     <div class="nav-btn__wrap">
-                        <a href="#semanal" class="nav-btn" data-nav="semanal">
+                        <a href="#" class="nav-btn" data-nav="semanal" onclick="abrirModalSemanal()">
                             <span class="nav-btn__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
                             </span>
@@ -135,7 +137,7 @@
                 </li>
                 <li class="nav-item theme-yellow">
                     <div class="nav-btn__wrap">
-                        <a href="#proveedores" class="nav-btn" data-nav="proveedores">
+                        <a href="#" class="nav-btn" data-nav="proveedores" onclick="abrirModuloProveedores()">
                             <span class="nav-btn__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
                             </span>
@@ -146,7 +148,7 @@
                 </li>
                 <li class="nav-item theme-green">
                     <div class="nav-btn__wrap">
-                        <a href="#historial" class="nav-btn" data-nav="historial">
+                        <a href="#" class="nav-btn" data-nav="historial" onclick="abrirHistorialGeneral()">
                             <span class="nav-btn__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             </span>
@@ -174,7 +176,7 @@
                             <ul class="submenu__list">
                                 <li>
                                     <div class="nav-btn__wrap nav-btn__wrap--sub">
-                                        <a href="#top-prov" class="nav-btn nav-btn--sub" data-nav="top-prov">
+                                        <a href="#" class="nav-btn nav-btn--sub" data-nav="top-prov" onclick="abrirModalRankingProductos()">
                                             <span class="nav-btn__icon" aria-hidden="true">
                                                 <svg viewBox="0 0 24 24"><path d="M6 9H4.5a1 1 0 00-1 1v10a1 1 0 001 1h3a1 1 0 001-1V10a1 1 0 00-1-1zM12.5 5h-3a1 1 0 00-1 1v14a1 1 0 001 1h3a1 1 0 001-1V6a1 1 0 00-1-1zM20 13h-3a1 1 0 00-1 1v6a1 1 0 001 1h3a1 1 0 001-1v-6a1 1 0 00-1-1z"/></svg>
                                             </span>
@@ -185,7 +187,7 @@
                                 </li>
                                 <li>
                                     <div class="nav-btn__wrap nav-btn__wrap--sub">
-                                        <a href="#top-ventas" class="nav-btn nav-btn--sub" data-nav="top-ventas">
+                                        <a href="#" class="nav-btn nav-btn--sub" data-nav="top-ventas" onclick="abrirModalRankingProveedores()">
                                             <span class="nav-btn__icon" aria-hidden="true">
                                                 <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-9.5L2 9h7z"/></svg>
                                             </span>
@@ -196,7 +198,7 @@
                                 </li>
                                 <li>
                                     <div class="nav-btn__wrap nav-btn__wrap--sub">
-                                        <a href="#top-pedidos" class="nav-btn nav-btn--sub" data-nav="top-pedidos">
+                                        <a href="#" class="nav-btn nav-btn--sub" data-nav="top-pedidos" onclick="abrirModalRankingPedidos()">
                                             <span class="nav-btn__icon" aria-hidden="true">
                                                 <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-9.5L2 9h7z"/></svg>
                                             </span>
@@ -207,7 +209,7 @@
                                 </li>
                                 <li>
                                     <div class="nav-btn__wrap nav-btn__wrap--sub">
-                                        <a href="#mes-curso" class="nav-btn nav-btn--sub" data-nav="mes-curso">
+                                        <a href="#" class="nav-btn nav-btn--sub" data-nav="mes-curso" onclick="abrirModalMensual()">
                                             <span class="nav-btn__icon" aria-hidden="true">
                                                 <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-9.5L2 9h7z"/></svg>
                                             </span>
@@ -426,7 +428,7 @@
 
                 </div>
             </div>
-
+            <!---SECCION GRÁFICO DE BARRAS -->
             <div class="hud-card bar-chart-panel purple-glow" data-connect="chart">
                 <div class="card-inner">
                     <span class="chart-panel-title">CANTIDAD DE PROD. VENDIDOS</span>
@@ -438,7 +440,329 @@
         </section>
     </main>
 </div>
+<!-- MODAL PEDIDOS -->
+<div id="modal-pedidos" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[9999] hidden items-center justify-center p-2 lg:p-6">
+
+    <div id="contenedor-estilo-malevich" class="flex flex-col relative shadow-[0_0_60px_rgba(0,0,0,0.7)]">
+        
+            <div class="p-5 border-b-4 border-lex-gold bg-slate-950 flex justify-between items-center relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-1 h-8 bg-lex-gold"></div> 
+                    <h3 id="modal-titulo" class="text-slate-100 text-sm font-black tracking-[4px] uppercase italic"></h3>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <div class="bg-slate-900 border-2 border-slate-700 px-4 py-1 flex items-center gap-3">
+                        <i class="fas fa-search text-lex-gold text-xs"></i>
+                        <input type="text" id="filtro-tabla-global" onkeyup="filtrarTabla()" placeholder="FILTRAR..." class="bg-transparent border-none text-[10px] text-cyan-400 focus:outline-none uppercase w-48">
+                    </div>
+
+                    <button onclick="cerrarModal_Pedidos()" class="group flex items-center gap-2 px-3 py-1 border border-red-500/30 bg-red-500/10 hover:bg-red-500 hover:border-red-400 transition-all duration-300 rounded-lg ml-4">
+                        <span class="text-[9px] font-black text-red-500 group-hover:text-white tracking-widest">CERRAR TERMINAL</span>
+                        <i class="fas fa-times text-red-500 group-hover:text-white text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="modal-contenido" class="custom-scroll relative bg-slate-950/40">                
+                <!----Aqupi se inserta la tabla---->
+            </div>
+            
+            <div class="absolute bottom-0 right-0 w-24 h-1 bg-lex-gold"></div>
+            <div class="absolute bottom-0 right-0 w-1 h-24 bg-lex-gold"></div>
+    </div>
+</div>
+<div id="overlay-carga" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.9); z-index: 10000; justify-content: center; align-items: center;">
+  <div class="loader">
+    <div class="intern"></div>
+    <div class="external-shadow">
+      <div class="central"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PEDIDOS AUTOASISTIDOS -->
+<div id="modal-pedidos-autoasistidos" class="contenedor-maestro-nico bg-slate-950">
+           <div class="cuerpo-aplicacion-nico">
+            
+            <main class="panel-central-datos flex-1 overflow-y-auto p-6 bg-slate-900/20 flex flex-col gap-4">
+                <div id="panel-informes-nico" class="p-4 border border-slate-800 flex items-center justify-between bg-slate-900/50 rounded-lg shrink-0">
+                    <span class="font-bold text-slate-100 text-[10px] tracking-widest uppercase flex items-center gap-2">
+                        <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div> PANEL DE INFORMES NICO
+                    </span>
+                                        <button onclick="cerrarModalPedidos_Autoasist()" class="group flex items-center gap-2 px-3 py-1 border border-red-500/30 bg-red-500/10 hover:bg-red-500 hover:border-red-400 transition-all duration-300 rounded-lg ml-4">
+                        <span class="text-[9px] font-black text-red-500 group-hover:text-white tracking-widest">CERRAR TERMINAL</span>
+                        <i class="fas fa-times text-red-500 group-hover:text-white text-xs"></i>
+                    </button>
+                </div> 
+
+                <div class="flex-1 border border-slate-800 bg-slate-950/40 rounded-lg p-4 overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-slate-300 text-sm" id="tabla-nico">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs uppercase tracking-wider">
+                                <th class="p-3 font-semibold text-center w-12">SEL.</th>
+                                <th class="p-3 font-semibold">SKU</th>
+                                <th class="p-3 font-semibold">Detalle del Producto</th>
+                                <th class="p-3 font-semibold text-right">Stock / Mínimo</th>
+                                <th class="p-3 font-semibold">Proveedor / Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-informes-cuerpo">
+                            <tr id="fila-espera-nico" class="border-b border-slate-900/50 hover:bg-slate-900/20 transition-colors">
+                                <td class="p-3 font-mono text-slate-500 text-center py-10" colspan="5">
+                                    <i class="fi fi-rr-chart-connected mr-2"></i> Aguardando procesamiento de órdenes o dictados de voz...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+
+            <aside class="columna-chat-nico shrink-0 bg-slate-900 border-l border-slate-800 z-30">
+                
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-slate-950 to-slate-900">
+                </div>
+                
+                <div class="contenedor-nico-flotante shrink-0 p-2 bg-slate-950/95 backdrop-blur-sm flex justify-center items-center">
+                    <canvas id="canvas-nico" class="h-36 max-w-full bg-slate-900/30 rounded shadow-2xl transition-all"></canvas>
+                </div>
+
+                <div class="p-4 bg-slate-950 border-t border-slate-800 shrink-0 z-40">
+                    <div class="flex bg-slate-900 border border-slate-700 rounded-md p-1 focus-within:border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                        <button id="btn-nico-voz" 
+                                class="px-3 text-slate-500 hover:text-red-400 transition-colors"
+                                title="Mantén para hablar">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <input type="text" id="user-input" placeholder="Comando de systema..." class="flex-1 bg-transparent py-2 px-3 text-xs text-cyan-100 focus:outline-none">
+                        <button onclick="enviarPrompt()" class="px-3 text-cyan-600 hover:text-cyan-400"><i class="fas fa-terminal"></i></button>
+                    </div>
+                </div>
+
+            </aside>
+
+        </div>
+
+</div>
+
+<!-- MODAL RECEPCIÓN -->
+<div id="modalRecepcion" class="modal-recep-overlay hidden">
+  <div class="modal-recep-content">
+    
+    <div class="modal-header-recep">
+      <h3 id="recepcionTitulo" tabindex="-1">SISTEMA DE CONTROL DE RECEPCIÓN</h3> 
+      <button type="button" onclick="cerrarModalRecepcion()" class="btn-closeRecep">&times;</button>
+    </div>
+    
+    <div class="modal-body-recep custom-scrollbar">
+      
+      <div id="workspaceRecepcion" class="w-full p-2"></div>
+      
+      <div id="vistaDetallePedido" style="display: none;">
+        
+        <div id="recepcion-resumen-pedido" class="mb-4"></div>
+        
+        <div class="flex gap-2 mb-4 border-b border-slate-800 pb-2 font-mono text-[11px]">
+          <button type="button" id="tab-RECIBIDO" onclick="cambiarModoGestion('RECIBIDO')" class="px-4 py-1.5 font-bold border-b-2 transition-all duration-200">RECIBIR</button>
+          <button type="button" id="tab-REPROGRAMADO" onclick="cambiarModoGestion('REPROGRAMADO')" class="px-4 py-1.5 font-bold border-b-2 transition-all duration-200">REPROGRAMAR</button>
+          <button type="button" id="tab-CANCELADO" onclick="cambiarModoGestion('CANCELADO')" class="px-4 py-1.5 font-bold border-b-2 transition-all duration-200">CANCELAR</button>
+        </div>
+
+        <form id="formRecepcion" onsubmit="event.preventDefault();">
+          <input type="hidden" id="recepcionID" value="">
+          <input type="hidden" id="recepcionFila" value="">
+          <input type="hidden" id="accionActual" value="RECIBIDO">
+          <input type="hidden" id="inputCalidad" value="0">
+          <input type="hidden" id="inputPorcentaje" value="100">
+          
+          <div id="section-RECIBIDO" class="gestion-section">
+            <div id="contenedorItemsRecepcion" class="w-full mb-4"></div>
+            
+            <div class="flex items-center gap-3 bg-slate-900/20 p-2 rounded border border-slate-900 mb-2">
+              <span class="text-[9px] text-slate-400 font-mono uppercase tracking-wider">Calidad de Entrega:</span>
+              <div class="flex gap-1">
+                <button type="button" onclick="setCalidad(1)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+                <button type="button" onclick="setCalidad(2)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+                <button type="button" onclick="setCalidad(3)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+                <button type="button" onclick="setCalidad(4)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+                <button type="button" onclick="setCalidad(5)" class="btn-star text-slate-600 transition-all text-sm">★</button>
+              </div>
+              <span id="valorPorcentaje" class="text-xs font-mono text-cyan-400 ml-auto font-bold">100%</span>
+            </div>
+          </div>
+
+          <div id="wrapper-reprogramacion" class="gestion-section hidden bg-amber-950/10 border border-amber-900/30 p-3 rounded mb-3">
+            <p class="text-[10px] font-mono text-amber-400 uppercase tracking-widest">
+              Nueva Ventana de Arribo: <span id="display-fecha-reprogramada" class="text-white font-bold ml-1">Sin seleccionar</span>
+            </p>
+          </div>
+
+          <div id="wrapper-causa-cancelacion" class="gestion-section hidden bg-red-950/10 border border-red-900/30 p-3 rounded mb-3">
+            <label for="inputCausa" class="text-[9px] text-red-400 font-mono block mb-1 uppercase tracking-wider">Atribución del Quiebre:</label>
+            <select id="inputCausa" class="w-full bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 p-2 rounded outline-none focus:border-red-500">
+              <option value="proveedor">Responsabilidad Directa del Proveedor</option>
+              <option value="logistica">Falla o Incidente Logístico de Distribución</option>
+            </select>
+          </div>
+
+          <div class="w-full mt-2">
+            <textarea id="inputObservaciones" class="w-full bg-[#020617] border border-slate-800 rounded p-2 text-white text-xs font-mono placeholder-slate-600 outline-none focus:border-cyan-500/50 transition-colors" rows="2" placeholder="Notas generales..."></textarea>
+          </div>
+        </form>
+      </div>
+
+    </div> 
+
+    <div id="section-footer" class="sect-footer" style="display: none;">
+      <button type="button" id="btnConfirmarGestion" onclick="confirmarGestionFinal()" class="btn-accion-pedido">
+        CONFIRMAR GESTIÓN <i class="fi fi-sc-check-double"></i>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL HISTORIAL -->
+<div id="modalHistorialGeneral" class="lex-modal-overlay" style="display: none;">
+  <div class="lex-modal-content max-w-4xl"> <div class="lex-modal-header">
+      <div class="lex-header-group">
+        <h3>HISTORIAL DE COMPRAS</h3>
+        <span class="text-slate-500 text-[10px] uppercase tracking-wider font-mono">Archivo Central de Órdenes</span>
+      </div>
+      <button onclick="cerrarModalHistorialGeneral()" class="lex-btn-close">&times;</button>
+    </div>
+    
+    <div class="lex-modal-body custom-scroll">
+      <div class="mb-4 flex justify-between items-center bg-slate-950/30 p-3 border border-slate-800/80 rounded-lg">
+        <p class="text-slate-400 text-[11px]">Seleccioná un expediente de la lista para auditar su desglose e inversión líquida.</p>
+      </div>
+
+      <div id="contenedorListaGeneralHistorial" class="lex-container-items">
+        </div>
+    </div>
+
+    <div class="lex-modal-footer">
+      <button type="button" onclick="cerrarModalHistorialGeneral()" class="lex-btn-footer">
+        Cerrar Historial
+      </button>
+    </div>
+
+  </div>
+</div>
+<div id="modalDetalleHistorial" class="modal-recep-overlay" style="display: none;">
+  <div class="modal-recep-content !max-w-3xl"> 
+    
+    <!-- Encabezado del Visor -->
+    <div class="modal-header-recep !border-cyan-500/50">
+      <div class="flex flex-col">
+        <h3 id="historialTitulo" class="text-cyan-500 font-bold uppercase tracking-wider text-sm">Detalle de Pedido</h3>
+        <span id="historialSubtitulo" class="text-[9px] text-slate-500 font-mono">ID: ---</span>
+      </div>
+      <!-- Llama a la función de cierre que mantiene congelado el fondo general -->
+      <button onclick="cerrarModalHistorial()" class="btn-closeRecep">&times;</button>
+    </div>
+    
+    <div class="modal-body-recep custom-scroll">
+      <!-- Grilla Informativa de Cabecera (Se llena dinámicamente vía JS) -->
+      <div id="infoGeneralHistorial" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-slate-900/50 border border-slate-800 rounded-lg">
+        <!-- Inyección dinámica de Proveedor, Fechas, Estatus y Calidad -->
+      </div>
+
+      <!-- Tabla de Artículos Compuestos -->
+      <div class="mb-4">
+        <label class="block text-[10px] uppercase text-cyan-500 mb-2 font-bold italic tracking-widest">
+          Desglose de Productos
+        </label>
+        <div id="contenedorItemsHistorial" class="bg-slate-950 border border-slate-800 rounded overflow-hidden">
+          <!-- Inyección dinámica de la tabla de ítems -->
+        </div>
+      </div>
+
+      <!-- Bloque de Anotaciones y Auditoría -->
+      <div class="mb-6">
+        <label class="block text-[10px] uppercase text-slate-500 mb-2 font-bold italic tracking-widest">
+          Notas del Registro
+        </label>
+        <div id="obsHistorial" class="w-full bg-slate-900/30 border border-slate-800 p-3 rounded text-slate-400 text-xs italic min-h-[60px]">
+          Sin observaciones registradas.
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones de Cierre de la Ficha -->
+    <div class="sect-footer !justify-end">
+      <button type="button" onclick="cerrarModalHistorial()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded text-[10px] font-bold uppercase border border-slate-700 transition-colors">
+        Cerrar Consulta
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<div id="modal-reportes-lex" class="modal-lex-overlay">
+    <div class="lex-modal-reportes-content">
+        <div class="lex-modal-reportes-header">
+            <div class="lex-header-group">
+                <h3 id="reportesTitulo">AUDITORIA DE PROVEEDORES</h3>
+            </div>
+            <button onclick="cerrarModalReportes()" class="lex-btn-close">&times;</button>
+        </div> 
+
+        <div id="toolbar-reportes" class="lex-toolbar">
+            <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-neon-blue">
+                <i class="fas fa-sync-alt"></i> SYNC
+            </button>
+            <button onclick="exportarVistaActualALex()" id="btn-descarga-reporte" class="lex-btn-nav lex-neon-green">
+                <i class="fas fa-file-excel"></i> EXPORTAR
+            </button>
+        </div>
+
+        <div id="contenido-reporte-lex" class="modal-lex-body custom-scroll">
+
+        </div>
+
+        <div class="lex-modal-reportes-footer">
+            <span class="status-indicator">SISTEMA DE SOLO LECTURA</span>
+            <button type="button" onclick="cerrarModalReportes()" class="lex-btn-footer">
+                Finalizar Consulta
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<div id="modal-proveedores" class="modal-prov-overlay">
+    <div class="modal-prov-content">
+        
+        <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-slate-950/40">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                <h2 class="text-white text-xs font-black tracking-[0.2em] font-mono uppercase">
+                    SECCIÓN PROVEEDORES
+                </h2>
+            </div>
+            <button onclick="cerrarModuloProveedores()" class="text-slate-500 hover:text-red-400 font-mono text-[10px] tracking-widest uppercase transition-colors">
+                [ ABORTAR_CONEXION ]
+            </button>
+        </div>
+        
+        <div class="px-6 pt-4 flex justify-between items-center gap-4">
+            <div class="relative flex-1 max-w-md">
+                <input type="text" id="filtro-proveedores-buscar" oninput="filtrarTablaProveedores()" placeholder="FILTRAR PROVEEDORES..." 
+                       class="w-full bg-slate-950 border border-slate-800 p-2 pl-4 text-xs font-mono text-slate-300 rounded-md outline-none focus:border-blue-500 transition-colors">
+            </div>
+        </div>
+
+        <div id="modal-proveedores-contenido" class="flex-1 overflow-y-auto p-6">
+        </div>
+    </div>
+</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/jsDashboard.js"></script>
+<script src="https://unpkg.com/@rive-app/canvas@latest"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/jsProv.js"></script>
