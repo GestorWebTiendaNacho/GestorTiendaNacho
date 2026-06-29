@@ -1932,39 +1932,30 @@ document.querySelectorAll('.card-inner-cyan, .card-inner-orange, .card-inner-red
 function toggleHorizMenu(btn) {
     const currentDropdown = btn.nextElementSibling;
     
-    // Cerrar todos los demás dropdowns abiertos
     document.querySelectorAll('.horiz-dropdown').forEach(dd => {
         if (dd !== currentDropdown) dd.classList.remove('is-active');
     });
 
-    // Toggle al actual
     if (currentDropdown) {
         currentDropdown.classList.toggle('is-active');
     }
-
-    // DISPARADORES DINÁMICOS SEGÚN EL BOTÓN CLICKEADO
     const textoBoton = btn.textContent.toUpperCase().trim();
-
     if (textoBoton.includes("INSUMOS")) {
         cargarMenuDinamico("obtenerInsumos", "lista-insumos-dinamica");
     } else if (textoBoton.includes("HERRAMIENTAS")) {
         cargarMenuDinamico("obtenerHerramientas", "sm-herramientas");
     } else if (textoBoton.includes("TELAS")) {
-        cargarMenuDinamico("obtenerTelas", "sm-telas", true); // true = preserva submenú estático
+        cargarMenuDinamico("obtenerTelas", "sm-telas", true);
     } else if (textoBoton.includes("HERRAJES")) {
         cargarMenuDinamico("obtenerHerrajes", "sm-herrajes");
     }
 }
 
-// Abrir el sub-nivel interno de SIMIL CUERO dentro de TELAS
 function toggleNestedMenu(event, btn) {
-    event.stopPropagation(); // Evita que se cierre el menú principal
-    const nestedMenu = btn.nextElementSibling; // El <ul id="sm-simil-cuero">
-    
+    event.stopPropagation(); 
+    const nestedMenu = btn.nextElementSibling;
     if (nestedMenu) {
         nestedMenu.classList.toggle('hidden');
-        
-        // Si se expande (deja de estar oculto), cargamos sus datos de GAS
         if (!nestedMenu.classList.contains('hidden')) {
             cargarMenuDinamico("obtenerSimilcuero", "sm-simil-cuero");
         }
@@ -2025,11 +2016,9 @@ function renderizarMenuDinamico(elementos, containerId, esMenuTelas = false) {
     if (!elementos || elementos.length === 0) {
         const li = document.createElement("li");
         if (esMenuTelas) li.className = "item-dinamico-gas";
-        
         const a = document.createElement("a");
         a.href = "#";
         a.textContent = "No hay registros activos";
-        
         li.appendChild(a);
         listaContenedor.appendChild(li);
         return;
@@ -2038,22 +2027,228 @@ function renderizarMenuDinamico(elementos, containerId, esMenuTelas = false) {
     elementos.forEach(item => {
         const li = document.createElement("li");
         if (esMenuTelas) li.className = "item-dinamico-gas";
+
         const a = document.createElement("a");
         a.href = "#";
         a.textContent = item;
+        
         a.onclick = function(e) {
             e.preventDefault();
-
-            listaContenedor.querySelectorAll('a').forEach(link => {
-                link.classList.remove('active');
-            });
             
+            listaContenedor.querySelectorAll('a').forEach(link => link.classList.remove('active'));
             a.classList.add('active');
             
-            console.log(`[LexTech HUD] Elemento seleccionado en contenedor '${containerId}': ${item}`);
+            let categoriaHoja = "";
+            if (containerId === "lista-insumos-dinamica") categoriaHoja = "INSUMOS";
+            else if (containerId === "sm-herramientas")  categoriaHoja = "HERRAMIENTAS";
+            else if (containerId === "sm-telas")         categoriaHoja = "TELAS";
+            else if (containerId === "sm-herrajes")      categoriaHoja = "HERRAJES";
+            else if (containerId === "sm-simil-cuero")   categoriaHoja = "SIMILCUERO";
+            
+            if (categoriaHoja) {
+                ejecutarConsultaCategoria(categoriaHoja, item);
+            }
         };
 
         li.appendChild(a);
         listaContenedor.appendChild(li);
+    });
+}
+
+function ejecutarConsultaCategoria(categoria, valor) {
+    Swal.fire({
+        title: 'PROCESANDO CONSULTA',
+        html: `Consultando <span style="color:#00f2fe">${valor}</span> en base <span style="color:#ff007f">${categoria}</span>...`,
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Petición ajustada a la arquitectura estricta de tu doPost
+    fetch(URL_GAS_GLOBAL, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ 
+            action: `consultar_${categoria}`, 
+            data: { valor: valor } // ✨ CORREGIDO: Envuelto en 'data' para que GAS lo capture
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close(); 
+        
+        if (data.status === "success") {
+            mostrarModalProductos(categoria, valor, data.reply);
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'ERROR DE CONEXIÓN',
+                text: data.message
+            });
+        }
+    })
+    .catch(error => {
+        Swal.close();
+        console.error("Error en consulta:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'ERROR DE RED',
+            text: 'No se pudo conectar con la base de datos central.'
+        });
+    });
+}
+
+function mostrarModalProductos(categoria, subcategoria, registros) {
+    if (registros.length === 0) {
+        Swal.fire({
+            title: `CONSULTA: ${categoria} - ${subcategoria}`,
+            text: "La consulta se ejecutó pero la planilla no retornó ningún producto para este criterio.",
+            icon: "info"
+        });
+        return;
+    }
+
+    let htmlModal = `
+    <div style="margin-bottom: 15px; display: flex; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid #00f2fe; padding: 8px 12px; border-radius: 4px; box-shadow: inset 0 0 10px rgba(0,242,254,0.1);">
+        <span style="color: #00f2fe; margin-right: 10px; font-family: 'Share Tech Mono', monospace; font-size: 13px; letter-spacing: 1px;">⚡ FILTRAR TERMINAL:</span>
+        <input type="text" id="swal-tabla-buscar" placeholder="Escribí cualquier coincidencia (SKU, Nombre, Proveedor...)" 
+               style="background: transparent; border: none; color: #fff; width: 100%; outline: none; font-family: 'Share Tech Mono', monospace; font-size: 13px;">
+    </div>
+
+    <div style="overflow-x: auto; width: 100%; max-height: 55vh; border: 1px solid rgba(255,255,255,0.12); background: rgba(4, 11, 28, 0.4);">
+        <table id="tabla-dinamica-hud" style="width: 100%; border-collapse: collapse; font-family: 'Share Tech Mono', monospace; text-align: left; font-size: 12px; color: #cbd5e1;">
+            <thead>
+                <tr style="background: rgba(0, 242, 254, 0.08); color: #fff; border-bottom: 2px solid #00f2fe;">
+                    <th style="padding: 12px 8px; position: sticky; top: 0; background: #040b1c; z-index: 10;">SKU</th>
+                    <th style="padding: 12px 8px; position: sticky; top: 0; background: #040b1c; z-index: 10;">PRODUCTO</th>
+                    <th style="padding: 12px 8px; position: sticky; top: 0; background: #040b1c; z-index: 10; text-align: right;">STOCK</th>
+                    <th style="padding: 12px 8px; position: sticky; top: 0; background: #040b1c; z-index: 10; text-align: right;">MÍN</th>
+                    <th style="padding: 12px 8px; position: sticky; top: 0; background: #040b1c; z-index: 10;">CATEGORÍA</th>
+                    <th style="padding: 12px 8px; position: sticky; top: 0; background: #040b1c; z-index: 10; text-align: right;">PROM. VENTAS</th>
+                    <th style="padding: 12px 8px; position: sticky; top: 0; background: #040b1c; z-index: 10;">ID PROV</th>
+                    <th style="padding: 12px 8px; position: sticky; top: 0; background: #040b1c; z-index: 10;">PROVEEDOR</th>
+                    <th style="padding: 12px 8px; position: sticky; top: 0; background: #040b1c; z-index: 10;">SUB CATEGORÍA</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    registros.forEach(fila => {
+        htmlModal += `
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.2);" onmouseover="this.style.background='rgba(0, 242, 254, 0.04)'" onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+            <td style="padding: 10px 8px; color: #00f2fe; font-weight: bold;">${fila[0] || ''}</td>
+            <td style="padding: 10px 8px; color: #fff;">${fila[1] || ''}</td>
+            <td style="padding: 10px 8px; text-align: right; font-weight: bold; color: ${Number(fila[2]) <= Number(fila[3]) ? '#ff007f' : '#10b981'}">${fila[2] !== undefined ? fila[2] : ''}</td>
+            <td style="padding: 10px 8px; text-align: right;">${fila[3] !== undefined ? fila[3] : ''}</td>
+            <td style="padding: 10px 8px; color: #a1a1aa;">${fila[4] || ''}</td>
+            <td style="padding: 10px 8px; text-align: right;">${fila[5] !== undefined ? fila[5] : ''}</td>
+            <td style="padding: 10px 8px; color: #a1a1aa;">${fila[6] || ''}</td>
+            <td style="padding: 10px 8px;">${fila[7] || ''}</td>
+            <td style="padding: 10px 8px; color: #94a3b8;">${fila[8] || ''}</td>
+        </tr>
+        `;
+    });
+
+    htmlModal += `
+            </tbody>
+        </table>
+    </div>
+    `;
+
+    Swal.fire({
+        title: `<span style="font-family:'Orbitron',sans-serif; font-size:16px; letter-spacing:1px; color:#fff;">PANEL DE CONSULTA DE MATERIALES</span><br><span style="font-size:12px; color:#00f2fe; font-family:'Share Tech Mono';">${categoria} &gt; ${subcategoria}</span>`,
+        html: htmlModal,
+        width: '90%',
+        background: '#040b1c',
+        color: '#cbd5e1',
+        confirmButtonText: 'CERRAR TERMINAL',
+        confirmButtonColor: 'rgba(255,255,255,0.08)',
+        customClass: {
+            popup: 'hud-swal-border'
+        },
+        didOpen: () => {
+            const container = Swal.getContainer();
+            const popup = Swal.getPopup();
+
+            if (container) {
+                container.style.zIndex = '9999999'; 
+                container.style.backdropFilter = 'blur(10px)';
+                container.style.webkitBackdropFilter = 'blur(10px)';
+                container.style.backgroundColor = 'rgba(4, 11, 28, 0.75)';
+            }
+
+            if (popup) {
+                popup.style.border = '1px solid #00f2fe';
+                popup.style.boxShadow = '0 0 25px rgba(0, 242, 254, 0.25)';
+            }
+
+            const inputBuscar = document.getElementById('swal-tabla-buscar');
+            const filasTabla = popup.querySelectorAll('#tabla-dinamica-hud tbody tr');
+
+            inputBuscar.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase().trim();
+                filasTabla.forEach(row => {
+                    const textoFila = row.textContent.toLowerCase();
+                    row.style.display = textoFila.includes(term) ? '' : 'none';
+                });
+            });
+
+            const headers = popup.querySelectorAll('#tabla-dinamica-hud thead th');
+            const tbody = popup.querySelector('#tabla-dinamica-hud tbody');
+            let columnaActiva = -1;
+            let ordenAscendente = true;
+
+            headers.forEach((th, index) => {
+                th.style.cursor = 'pointer';
+                th.style.userSelect = 'none';
+                th.style.transition = 'color 0.2s';
+                th.title = "Haga clic para ordenar columna";
+
+                th.addEventListener('mouseenter', () => th.style.color = '#00f2fe');
+                th.addEventListener('mouseleave', () => {
+                    if (columnaActiva !== index) th.style.color = '#fff';
+                });
+
+                th.addEventListener('click', () => {
+                    const filasArray = Array.from(tbody.querySelectorAll('tr'));
+
+                    if (columnaActiva === index) {
+                        ordenAscendente = !ordenAscendente;
+                    } else {
+                        columnaActiva = index;
+                        ordenAscendente = true;
+                    }
+
+                    headers.forEach((h, idx) => {
+                        h.innerHTML = h.innerHTML.replace(/ <span.*<\/span>/g, '');
+                        if (idx !== index) h.style.color = '#fff';
+                    });
+
+                    th.style.color = '#00f2fe';
+                    th.innerHTML += ` <span style="font-size:10px; color:#ff007f;">${ordenAscendente ? '▲' : '▼'}</span>`;
+
+                    const esNumerico = [2, 3, 5].includes(index);
+
+                    filasArray.sort((rowA, rowB) => {
+                        const valA = rowA.children[index].textContent.trim();
+                        const valB = rowB.children[index].textContent.trim();
+
+                        if (esNumerico) {
+                            const numA = parseFloat(valA) || 0;
+                            const numB = parseFloat(valB) || 0;
+                            return ordenAscendente ? numA - numB : numB - numA;
+                        } else {
+                            return ordenAscendente 
+                                ? valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' })
+                                : valB.localeCompare(valA, undefined, { numeric: true, sensitivity: 'base' });
+                        }
+                    });
+
+                    filasArray.forEach(row => tbody.appendChild(row));
+                });
+            });
+        }
     });
 }
