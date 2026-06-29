@@ -1937,25 +1937,38 @@ function toggleHorizMenu(btn) {
         if (dd !== currentDropdown) dd.classList.remove('is-active');
     });
 
-    // Toggle al actual (validamos que exista por las dudas)
+    // Toggle al actual
     if (currentDropdown) {
         currentDropdown.classList.toggle('is-active');
     }
 
-    // CORRECCIÓN: Cambiado 'boton' por 'btn' para que coincida con el parámetro
-    if (btn.textContent.includes("INSUMOS")) {
-        cargarInsumosDinámicos();
+    // DISPARADORES DINÁMICOS SEGÚN EL BOTÓN CLICKEADO
+    const textoBoton = btn.textContent.toUpperCase().trim();
+
+    if (textoBoton.includes("INSUMOS")) {
+        cargarMenuDinamico("obtenerInsumos", "lista-insumos-dinamica");
+    } else if (textoBoton.includes("HERRAMIENTAS")) {
+        cargarMenuDinamico("obtenerHerramientas", "sm-herramientas");
+    } else if (textoBoton.includes("TELAS")) {
+        cargarMenuDinamico("obtenerTelas", "sm-telas", true); // true = preserva submenú estático
+    } else if (textoBoton.includes("HERRAJES")) {
+        cargarMenuDinamico("obtenerHerrajes", "sm-herrajes");
     }
 }
 
 // Abrir el sub-nivel interno de SIMIL CUERO dentro de TELAS
 function toggleNestedMenu(event, btn) {
-    event.stopPropagation(); 
-    const nestedList = btn.nextElementSibling;
-    nestedList.classList.toggle('hidden');
+    event.stopPropagation(); // Evita que se cierre el menú principal
+    const nestedMenu = btn.nextElementSibling; // El <ul id="sm-simil-cuero">
     
-    // Cambiar la flecha indicadora
-    btn.querySelector('span').textContent = nestedList.classList.contains('hidden') ? '▶ SIMIL CUERO' : '▼ SIMIL CUERO';
+    if (nestedMenu) {
+        nestedMenu.classList.toggle('hidden');
+        
+        // Si se expande (deja de estar oculto), cargamos sus datos de GAS
+        if (!nestedMenu.classList.contains('hidden')) {
+            cargarMenuDinamico("obtenerSimilcuero", "sm-simil-cuero");
+        }
+    }
 }
 
 // Cerrar menús si se hace click en cualquier otra parte de la pantalla
@@ -1966,53 +1979,81 @@ window.addEventListener('click', (e) => {
 });
 
 
-async function cargarInsumosDinámicos() {
-  const listaContenedor = document.getElementById("lista-insumos-dinamica");
-  
-  fetch(URL_GAS_GLOBAL, {
-    method: "POST",
-    mode: "cors",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action: "obtenerInsumos" })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === "success") {
-      renderizarListaInsumos(data.reply);
+function cargarMenuDinamico(actionName, containerId, esMenuTelas = false) {
+    const listaContenedor = document.getElementById(containerId);
+    if (!listaContenedor) return;
+
+    // Estado de carga visual (Evita romper la estructura de TELAS)
+    if (esMenuTelas) {
+        listaContenedor.querySelectorAll('.item-dinamico-gas').forEach(el => el.remove());
+        const liLoading = document.createElement("li");
+        liLoading.className = "item-dinamico-gas";
+        liLoading.innerHTML = "<a href='#'>Cargando...</a>";
+        listaContenedor.appendChild(liLoading);
     } else {
-      console.error("Error:", data.message);
+        listaContenedor.innerHTML = "<li><a href='#'>Cargando...</a></li>";
     }
-  })
-  .catch(error => console.error("Error de red:", error));
+
+    // Petición única estructurada a la terminal LexTech de GAS
+    fetch(URL_GAS_GLOBAL, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: actionName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            renderizarMenuDinamico(data.reply, containerId, esMenuTelas);
+        } else {
+            console.error(`Error en backend (${actionName}):`, data.message);
+        }
+    })
+    .catch(error => console.error(`Error de red en ${actionName}:`, error));
 }
 
-function renderizarListaInsumos(insumos) {
-  const listaContenedor = document.getElementById("lista-insumos-dinamica");
-  if (!listaContenedor) return;
+function renderizarMenuDinamico(elementos, containerId, esMenuTelas = false) {
+    const listaContenedor = document.getElementById(containerId);
+    if (!listaContenedor) return;
 
-  listaContenedor.innerHTML = ""; // Vaciar cargador
+    if (esMenuTelas) {
+        listaContenedor.querySelectorAll('.item-dinamico-gas').forEach(el => el.remove());
+    } else {
+        listaContenedor.innerHTML = "";
+    }
 
-  if (insumos.length === 0) {
-    listaContenedor.innerHTML = "<li><a href='#'>No hay insumos activos</a></li>";
-    return;
-  }
+    if (!elementos || elementos.length === 0) {
+        const li = document.createElement("li");
+        if (esMenuTelas) li.className = "item-dinamico-gas";
+        
+        const a = document.createElement("a");
+        a.href = "#";
+        a.textContent = "No hay registros activos";
+        
+        li.appendChild(a);
+        listaContenedor.appendChild(li);
+        return;
+    }
 
-  // Iteramos los datos de la columna BY
-  insumos.forEach(insumo => {
-    const li = document.createElement("li");
-    const a = document.createElement("a");
-    
-    a.href = "#";
-    a.textContent = insumo;
-    
-    // Evitamos que el '#' recargue la página y manejamos el click del insumo
-    a.onclick = function(e) {
-      e.preventDefault();
-      console.log("Insumo seleccionado:", insumo);
-      // Acá podés meter tu función de filtrado de la web
-    };
+    elementos.forEach(item => {
+        const li = document.createElement("li");
+        if (esMenuTelas) li.className = "item-dinamico-gas";
+        const a = document.createElement("a");
+        a.href = "#";
+        a.textContent = item;
+        a.onclick = function(e) {
+            e.preventDefault();
 
-    li.appendChild(a);
-    listaContenedor.appendChild(li);
-  });
+            listaContenedor.querySelectorAll('a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            a.classList.add('active');
+            
+            console.log(`[LexTech HUD] Elemento seleccionado en contenedor '${containerId}': ${item}`);
+        };
+
+        li.appendChild(a);
+        listaContenedor.appendChild(li);
+    });
 }
