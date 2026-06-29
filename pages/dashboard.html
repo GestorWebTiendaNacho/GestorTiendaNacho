@@ -135,6 +135,17 @@
                         <span class="nav-btn__glow-line"></span>
                     </div>
                 </li>
+                <li class="nav-item theme-pink">
+                    <div class="nav-btn__wrap">
+                        <a href="#" class="nav-btn" data-nav="compras" onclick="abrirModalCompras()">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Compras</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>
                 <li class="nav-item theme-yellow">
                     <div class="nav-btn__wrap">
                         <a href="#" class="nav-btn" data-nav="proveedores" onclick="abrirModuloProveedores()">
@@ -334,8 +345,69 @@
             </div>
         </section>
 
+        <!-- BOTONES DE CATEGORIAS -->
+
+        <section class="categorias">
+
+        </section>
+
+
         <!-- Main Grid: Table + Side Widgets -->
         <section class="dashboard-grid">
+        <nav class="hud-horizontal-nav">
+            <div class="nav-horiz-item theme-cyan">
+                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                    <span class="btn-text">INSUMOS</span>
+                    <span class="btn-chevron">▼</span>
+                </button>
+
+                <div class="horiz-dropdown">
+                    <ul id="lista-insumos-dinamica" class="horiz-submenu-list">
+                        </ul>
+                </div>
+            </div>
+
+            <div class="nav-horiz-item theme-orange">
+                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                    <span class="btn-text">HERRAMIENTAS</span>
+                    <span class="btn-chevron">▼</span>
+                </button>
+                <div class="horiz-dropdown">
+                    <ul class="horiz-submenu-list" id="sm-herramientas"></ul>
+                </div>
+            </div>
+
+            <div class="nav-horiz-item theme-pink">
+                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                    <span class="btn-text">TELAS</span>
+                    <span class="btn-chevron">▼</span>
+                </button>
+                <div class="horiz-dropdown">
+                    <ul class="horiz-submenu-list" id="sm-telas">
+                        <li class="nested-horiz-item">
+                            <button class="nested-horiz-btn" onclick="toggleNestedMenu(event, this)">
+                                <span>▶ SIMIL CUERO</span>
+                            </button>
+                            <ul class="nested-submenu-list hidden" id="sm-simil-cuero">
+                                </ul>
+                        </li>
+                        <li class="dropdown-divider"></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="nav-horiz-item theme-purple">
+                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                    <span class="btn-text">HERRAJES</span>
+                    <span class="btn-chevron">▼</span>
+                </button>
+                <div class="horiz-dropdown">
+                    <ul class="horiz-submenu-list" id="sm-herrajes"></ul>
+                </div>
+            </div>
+        </nav>
+
+
             <!---SECCION DE LA TABLA---->
             <div class="table-effect-wrapper">
                 <div class="hud-card main-panel table-panel blue-glow" data-connect="table">
@@ -385,59 +457,10 @@
                     </div>
                 </div>
             </div>
-            <!--SECCION MINICARDS LATERALES-->
-            <div class="side-widgets-column">
-                <div class="hud-card sub-panel orange-glow-dim" data-connect="widget1">
-                    <div class="card-inner">
-                        <span class="sub-panel-title"><i class="fa-solid fa-arrow-trend-up"></i> TOP PROD. VENDIDOS</span>
-                        <span class="card-value" style="color: #4df53e; font-size: 0.90em;">CONECTANDO...</span>
-                        <button class="btn-subpanel-action" onclick="abrirModalRankingProveedores()">VER REPORTE COMPLETO</button>
-                    </div>
-                </div>
 
-                <div class="hud-card sub-panel red-glow-dim" data-connect="widget2">
-                    <div class="card-inner">
-                        <span class="sub-panel-title"><i class="fa-solid fa-boxes-stacked"></i> TOP PROD. PEDIDOS</span>
-                            <span class="card-value" style="color: #4df53e; font-size: 0.90em;">CONECTANDO...</span>
-                        <button class="btn-subpanel-action" onclick="abrirModalRankingPedidos()">VER REPORTE COMPLETO</button>
-                    </div>
-                </div>
-
-                <div class="hud-card sub-panel purple-glow-dim" data-connect="widget3">
-                    <div class="card-inner">
-                        <span class="sub-panel-title"><i class="fa-solid fa-circle-nodes"></i> PEDIDOS MES ACTUAL</span>
-                            <span class="card-value" style="color: #4df53e; font-size: 0.90em;">CONECTANDO...</span>
-                        <button class="btn-subpanel-action" onclick="abrirModalMensual()">VER REPORTE COMPLETO</button>
-                    </div>
-                </div>
-            </div>
         </section>
 
-        <!-- Bottom Section -->
-        <section class="bottom-grid-hud">
-            <div class="hud-card radar-panel blue-glow" data-connect="radar">
-                <div class="card-inner radar-layout">
-                    <div class="radar-text-content">
-                        <span class="radar-header"><i class="fa-solid fa-bell"></i> RECORDATORIOS</span>
-                        <p class="radar-description">
-                            De los productos principales,<br>
-                            <span class="highlight-text-red">10 de los registrados</span><br>
-                            están por debajo del stock mínimo.
-                        </p>
-                    </div>
 
-                </div>
-            </div>
-            <!---SECCION GRÁFICO DE BARRAS -->
-            <div class="hud-card bar-chart-panel purple-glow" data-connect="chart">
-                <div class="card-inner">
-                    <span class="chart-panel-title">CANTIDAD DE PROD. VENDIDOS</span>
-                    <div class="main-chart-wrapper">
-                        <canvas id="hudBarChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </section>
     </main>
 </div>
 <!-- MODAL PEDIDOS -->
@@ -730,8 +753,6 @@
     </div>
 </div>
 
-
-
 <div id="modal-proveedores" class="modal-prov-overlay">
     <div class="modal-prov-content">
         
@@ -758,6 +779,110 @@
         </div>
     </div>
 </div>
+
+
+<div id="modal-compras" class="fixed inset-0 hidden items-center justify-center z-[10000] bg-slate-950/85 backdrop-blur-xl overflow-y-auto px-4 py-6">
+    <div class="p-6 md:p-8 max-w-5xl w-full border border-gold/20 rounded-[32px] shadow-[0_0_60px_rgba(0,0,0,0.7)] text-white" style="background-color: var(--mv-bg-main);">
+        
+        <div class="mb-6 text-center border-b border-slate-800/60 pb-4">
+            <h2 class="text-2xl font-black tracking-wider bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent uppercase">
+                Sistema de Actualización de Compras
+            </h2>
+            <p class="text-xs text-slate-400 mt-1 font-mono tracking-tight">Módulo de sincronización masiva mediante pasarela externa</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+            
+            <div class="md:col-span-7 flex flex-col justify-between space-y-3 p-5 rounded-2xl border border-slate-800/60 leading-relaxed text-left" style="background-color: var(--mv-bg-card);">
+                
+                <div class="text-xs space-y-4">
+                    <div>
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">1.- PREPARATIVOS:</span> 
+                        Contar con el archivo histórico de compras descargado localmente desde la suite de <span class="text-slate-100 font-semibold">Contabilium</span>. Puedes ingresar directamente desde este enlace: 
+                        <a href="https://app.contabilium.com/modulos/reportes/historicoStock.aspx" target="_blank" class="text-blue-400 font-mono underline hover:text-blue-300 transition-colors break-all block mt-1">
+                            https://app.contabilium.com/modulos/reportes/historicoStock.aspx
+                        </a> 
+                    </div>
+                    
+                    <div class="border-t border-slate-800/40 pt-2">
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">2.- SELECCIÓN DE ARCHIVO:</span> 
+                        Haz clic en el botón de la derecha <span class="text-slate-300 italic">"Seleccionar Documento"</span> y asocia tu planilla Excel. El sistema comprobará la codificación binaria de inmediato.
+                    </div>
+                    
+                    <div class="border-t border-slate-800/40 pt-2">
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">3.- PROCESAMIENTO:</span> 
+                        Al habilitarse el botón verde, presiónalo para iniciar la desestructuración de filas y la inserción remota. <span class="text-amber-400 font-medium">No cierres la pestaña durante este proceso</span>.
+                    </div>
+                    
+                    <div class="border-t border-slate-800/40 pt-2">
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">4.- FINALIZACIÓN:</span> 
+                        La terminal te confirmará el éxito de la operación indicando el número exacto de registros impactados en tu base histórica.
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="md:col-span-5 flex flex-col justify-center space-y-6 p-5 rounded-2xl border border-slate-800/40 bg-slate-950/40">
+                
+                <div class="flex flex-col items-center justify-center w-full">
+                    <input type="file" id="input-archivo-compras" accept=".xlsx, .xls" class="hidden" onchange="window.manejarSeleccionArchivoCompras(this)">
+                    
+                    <button onclick="document.getElementById('input-archivo-compras').click()" class="px-4 py-6 border-2 border-dashed border-slate-700/80 hover:border-gold/40 rounded-xl bg-slate-900/60 flex flex-col items-center gap-3 transition-all cursor-pointer group w-full justify-center min-h-[140px]">
+                        <i class="bi bi-file-earmark-spreadsheet text-3xl text-slate-500 group-hover:text-gold transition-colors duration-300"></i>
+                        <span id="label-archivo-compras" class="text-slate-400 group-hover:text-slate-200 text-xs font-semibold tracking-wide text-center max-w-[200px] break-words transition-colors">
+                            Seleccionar Documento (.xlsx)
+                        </span>
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-3 w-full">
+                    
+                    <button id="btn-procesar-compras" onclick="window.ejecutarProcesamientoCompras()" disabled class="btn-neon-process w-full py-4 rounded-xl font-black text-xs tracking-widest active:scale-[0.98] duration-150 cursor-pointer text-center uppercase">
+                        <i class="bi bi-cloud-arrow-up-fill mr-2 text-sm"></i>Procesar Archivo
+                    </button>
+                    
+                    <button onclick="window.cerrarModalCompras()" class="btn-neon-close w-full py-3 rounded-xl font-bold text-xs tracking-widest active:scale-[0.98] duration-150 cursor-pointer text-center uppercase">
+                        Cerrar Ventana
+                    </button>
+                    
+                </div>
+
+            </div>
+            
+        </div>
+        
+    </div>
+  
+</div>
+<div id="overlay-carga" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.9); z-index: 10000; justify-content: center; align-items: center;">
+  <div class="loader">
+    <div class="intern"></div>
+    <div class="external-shadow">
+      <div class="central"></div>
+    </div>
+  </div>
+</div>
+
+
+
+<div id="modal-notificaciones" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.9); z-index: 10000; justify-content: center; align-items: center;">
+        <section class="">
+            <div class="hud-card radar-panel blue-glow" data-connect="radar">
+                <div class="card-inner radar-layout">
+                    <div class="radar-text-content">
+                        <span class="radar-header"><i class="fa-solid fa-bell"></i> RECORDATORIOS</span>
+                        <p class="radar-description">
+                            De los productos principales,<br>
+                            <span class="highlight-text-red">10 de los registrados</span><br>
+                            están por debajo del stock mínimo.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+</div>
+
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

@@ -1734,7 +1734,176 @@ function renderizarMiniTablaWidget3(payload) {
   contenedorValue.innerHTML = htmlTabla;
 }
 
+/*---Seccion COMPRAS --*/
 
+let nombreArchivoCompras = "";
+
+window.abrirModalCompras = function() {
+    const modal = document.getElementById('modal-compras');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.cerrarModalCompras = function() {
+    const modal = document.getElementById('modal-compras');
+    if (modal) {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+    archivoVentasBase64 = null;
+    nombreArchivoCompras = "";
+    document.getElementById('input-archivo-compras').value = "";
+    document.getElementById('label-archivo-compras').innerText = "Seleccionar Documento (.xlsx)";
+    document.getElementById('btn-procesar-compras').disabled = true;
+};
+
+// CAPTURA Y CONVERSIÓN DEL ARCHIVO LOCAL A BASE64
+window.manejarSeleccionArchivoCompras = function(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.getElementById('label-archivo-compras').innerText = `📄 Carga lista: ${file.name}`;
+        document.getElementById('btn-procesar-compras').disabled = false;
+    }
+};
+
+window.ejecutarProcesamientoCompras = function() {
+    const inputArchivo = document.getElementById('input-archivo-compras'); 
+    const archivoBlob = inputArchivo && inputArchivo.files[0] ? inputArchivo.files[0] : null;
+
+    if (!archivoBlob) {
+        console.error("🚨 No se encontró el archivo físico.");
+        return;
+    }
+    
+    const btnProcesar = document.getElementById('btn-procesar-compras');
+    if (btnProcesar) btnProcesar.disabled = true; 
+
+    const overlayCarga = document.getElementById('overlay-carga');
+    if (overlayCarga) overlayCarga.style.display = 'flex';
+
+    const textoOverlay = document.getElementById('texto-overlay-carga');
+    if (textoOverlay) textoOverlay.innerText = "Subiendo bloques de datos crudos...";
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const nombreHoja = workbook.SheetNames[0];
+            const hoja = workbook.Sheets[nombreHoja];
+            
+            // Convertimos la hoja a una matriz de datos pura
+            const rawFilas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
+            const filasProcesadas = rawFilas.slice(1)
+                .filter(fila => fila && fila[0] !== "" && fila[0] !== undefined)
+                .map(fila => [
+                    fila[0],                                 // Columna A: Fecha compra
+                    fila[3] !== undefined ? fila[3] : "",    // Columna B: SKU
+                    fila[4] !== undefined ? fila[4] : "",    // Columna C: Nombre
+                    Math.abs(parseFloat(fila[5]) || 0)       // Columna D: Cantidad (Absoluto)
+                ]);
+
+            const totalFilas = filasProcesadas.length;
+            const TAMANIO_BLOQUE = 5000;
+
+            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío...`);
+
+            // ── PASO 1: SUBIDA DE BLOQUES (DATOS CRUDOS) ──
+            for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
+                const bloque = filasProcesadas.slice(i, i + TAMANIO_BLOQUE);
+                const esPrimerBloque = (i === 0);
+                
+                if (textoOverlay) {
+                    textoOverlay.innerText = `Subiendo filas: ${i} de ${totalFilas}...`;
+                }
+
+                const respuesta = await fetch(URL_GAS_GLOBAL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify({
+                        action: 'procesarBloqueComprass',
+                        data: {
+                            valores: bloque,
+                            esPrimerBloque: esPrimerBloque,
+                            indiceInicio: i
+                        }
+                    })
+                });
+
+                if (!respuesta.ok) {
+                    throw new Error(`Error en el servidor en el bloque que inicia en la fila ${i}`);
+                }
+            }
+
+            // ── PASO 2: DISPARO EXCLUSIVO DEL CÁLCULO DE PROMEDIOS ──
+            console.log("[LexTech-Client] Todos los bloques fueron subidos. Iniciando consolidación de promedios...");
+            if (textoOverlay) {
+                textoOverlay.innerText = "Calculando promedios de los últimos 90 días... (No cierres la página)";
+            }
+
+            const respuestaConsolidacion = await fetch(URL_GAS_GLOBAL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    action: 'generarResumenPromedios90Dias' // Ejecuta la función del Paso 2 directamente
+                })
+            });
+
+            if (!respuestaConsolidacion.ok) {
+                throw new Error("El historial se subió, pero falló el cálculo estadístico de los 90 días.");
+            }
+
+            // Intentamos leer la respuesta del servidor para ver cuántos SKUs procesó
+            let mensajeServidor = `Se cargaron con éxito las ${totalFilas} filas filtradas.`;
+            try {
+                const textoRespuesta = await respuestaConsolidacion.text();
+                if (textoRespuesta) mensajeServidor += `\n\n${textoRespuesta}`;
+            } catch (e) {
+                console.warn("No se pudo leer el texto de respuesta del servidor", e);
+            }
+
+            // Apagamos el overlay de carga ya que todo terminó
+            if (overlayCarga) overlayCarga.style.display = 'none';
+
+            // Alerta de Éxito Absoluto
+            Swal.fire({
+                title: '🚀 PROCESAMIENTO COMPLETADO',
+                text: mensajeServidor,
+                icon: 'success',
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#c2902e'
+            });
+
+            window.cerrarModalCompras();
+
+        } catch (err) {
+            console.error("🚨 Error procesando bloques:", err);
+            if (overlayCarga) overlayCarga.style.display = 'none';
+            
+            Swal.fire({
+                title: '❌ ERROR DE PROCESAMIENTO',
+                text: err.message || 'Ocurrió un problema al fragmentar los datos.',
+                icon: 'error',
+                background: '#0f172a',
+                color: '#fff'
+            });
+            
+            if (btnProcesar) btnProcesar.disabled = false;
+        } finally {
+            if (inputArchivo) inputArchivo.value = "";
+        }
+    };
+    reader.readAsArrayBuffer(archivoBlob);
+};
 
 
 
@@ -1759,3 +1928,91 @@ document.querySelectorAll('.card-inner-cyan, .card-inner-orange, .card-inner-red
     card.style.setProperty('--my', `${y}%`);
   });
 });
+
+function toggleHorizMenu(btn) {
+    const currentDropdown = btn.nextElementSibling;
+    
+    // Cerrar todos los demás dropdowns abiertos
+    document.querySelectorAll('.horiz-dropdown').forEach(dd => {
+        if (dd !== currentDropdown) dd.classList.remove('is-active');
+    });
+
+    // Toggle al actual (validamos que exista por las dudas)
+    if (currentDropdown) {
+        currentDropdown.classList.toggle('is-active');
+    }
+
+    // CORRECCIÓN: Cambiado 'boton' por 'btn' para que coincida con el parámetro
+    if (btn.textContent.includes("INSUMOS")) {
+        cargarInsumosDinámicos();
+    }
+}
+
+// Abrir el sub-nivel interno de SIMIL CUERO dentro de TELAS
+function toggleNestedMenu(event, btn) {
+    event.stopPropagation(); 
+    const nestedList = btn.nextElementSibling;
+    nestedList.classList.toggle('hidden');
+    
+    // Cambiar la flecha indicadora
+    btn.querySelector('span').textContent = nestedList.classList.contains('hidden') ? '▶ SIMIL CUERO' : '▼ SIMIL CUERO';
+}
+
+// Cerrar menús si se hace click en cualquier otra parte de la pantalla
+window.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-horiz-item')) {
+        document.querySelectorAll('.horiz-dropdown').forEach(dd => dd.classList.remove('is-active'));
+    }
+});
+
+
+async function cargarInsumosDinámicos() {
+  const listaContenedor = document.getElementById("lista-insumos-dinamica");
+  
+  fetch(URL_GAS_GLOBAL, {
+    method: "POST",
+    mode: "cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "obtenerInsumos" })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === "success") {
+      renderizarListaInsumos(data.reply);
+    } else {
+      console.error("Error:", data.message);
+    }
+  })
+  .catch(error => console.error("Error de red:", error));
+}
+
+function renderizarListaInsumos(insumos) {
+  const listaContenedor = document.getElementById("lista-insumos-dinamica");
+  if (!listaContenedor) return;
+
+  listaContenedor.innerHTML = ""; // Vaciar cargador
+
+  if (insumos.length === 0) {
+    listaContenedor.innerHTML = "<li><a href='#'>No hay insumos activos</a></li>";
+    return;
+  }
+
+  // Iteramos los datos de la columna BY
+  insumos.forEach(insumo => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    
+    a.href = "#";
+    a.textContent = insumo;
+    
+    // Evitamos que el '#' recargue la página y manejamos el click del insumo
+    a.onclick = function(e) {
+      e.preventDefault();
+      console.log("Insumo seleccionado:", insumo);
+      // Acá podés meter tu función de filtrado de la web
+    };
+
+    li.appendChild(a);
+    listaContenedor.appendChild(li);
+  });
+}
