@@ -1752,17 +1752,17 @@ window.cerrarModalCompras = function() {
         modal.classList.remove('flex');
         modal.classList.add('hidden');
     }
-    archivoVentasBase64 = null;
     nombreArchivoCompras = "";
     document.getElementById('input-archivo-compras').value = "";
     document.getElementById('label-archivo-compras').innerText = "Seleccionar Documento (.xlsx)";
     document.getElementById('btn-procesar-compras').disabled = true;
 };
 
-// CAPTURA Y CONVERSIÓN DEL ARCHIVO LOCAL A BASE64
+// CAPTURA Y VALIDACIÓN DEL ARCHIVO SELECCIONADO
 window.manejarSeleccionArchivoCompras = function(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
+        nombreArchivoCompras = file.name;
         document.getElementById('label-archivo-compras').innerText = `📄 Carga lista: ${file.name}`;
         document.getElementById('btn-procesar-compras').disabled = false;
     }
@@ -1784,7 +1784,7 @@ window.ejecutarProcesamientoCompras = function() {
     if (overlayCarga) overlayCarga.style.display = 'flex';
 
     const textoOverlay = document.getElementById('texto-overlay-carga');
-    if (textoOverlay) textoOverlay.innerText = "Subiendo bloques de datos crudos...";
+    if (textoOverlay) textoOverlay.innerText = "Preparando bloques de datos crudos de compras...";
 
     const reader = new FileReader();
     reader.onload = async function(e) {
@@ -1794,29 +1794,32 @@ window.ejecutarProcesamientoCompras = function() {
             const nombreHoja = workbook.SheetNames[0];
             const hoja = workbook.Sheets[nombreHoja];
             
-            // Convertimos la hoja a una matriz de datos pura
+            // Convertimos la hoja a una matriz indexada pura
             const rawFilas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
+            
+            // Mapeamos estrictamente las 5 columnas requeridas según la estructura del Excel
             const filasProcesadas = rawFilas.slice(1)
                 .filter(fila => fila && fila[0] !== "" && fila[0] !== undefined)
                 .map(fila => [
-                    fila[0],                                 // Columna A: Fecha compra
-                    fila[3] !== undefined ? fila[3] : "",    // Columna B: SKU
-                    fila[4] !== undefined ? fila[4] : "",    // Columna C: Nombre
-                    Math.abs(parseFloat(fila[5]) || 0)       // Columna D: Cantidad (Absoluto)
+                    fila[0],                                 // Índice 0: Fecha compra
+                    fila[2] !== undefined ? fila[2] : "",    // Índice 2: Detalle (Nro Factura / Remito)
+                    fila[3] !== undefined ? fila[3] : "",    // Índice 3: Código SKU
+                    fila[4] !== undefined ? fila[4] : "",    // Índice 4: Nombre del Producto
+                    parseFloat(fila[5]) || 0                 // Índice 5: Cantidad (Real / Algebraica)
                 ]);
 
             const totalFilas = filasProcesadas.length;
             const TAMANIO_BLOQUE = 5000;
 
-            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío...`);
+            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando subida por streaming...`);
 
-            // ── PASO 1: SUBIDA DE BLOQUES (DATOS CRUDOS) ──
+            // ── PASO 1: TRANSMISIÓN DE BLOQUES AL SERVIDOR (A comprasCargadas Col B:F) ──
             for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
                 const bloque = filasProcesadas.slice(i, i + TAMANIO_BLOQUE);
                 const esPrimerBloque = (i === 0);
                 
                 if (textoOverlay) {
-                    textoOverlay.innerText = `Subiendo filas: ${i} de ${totalFilas}...`;
+                    textoOverlay.innerText = `Subiendo compras: ${i} de ${totalFilas} filas...`;
                 }
 
                 const respuesta = await fetch(URL_GAS_GLOBAL, {
@@ -1826,7 +1829,7 @@ window.ejecutarProcesamientoCompras = function() {
                         'Content-Type': 'text/plain;charset=utf-8'
                     },
                     body: JSON.stringify({
-                        action: 'procesarBloqueComprass',
+                        action: 'procesarBloqueCompras', // Nombre exacto de la función en GAS
                         data: {
                             valores: bloque,
                             esPrimerBloque: esPrimerBloque,
@@ -1836,14 +1839,14 @@ window.ejecutarProcesamientoCompras = function() {
                 });
 
                 if (!respuesta.ok) {
-                    throw new Error(`Error en el servidor en el bloque que inicia en la fila ${i}`);
+                    throw new Error(`Error en el servidor al subir el bloque que inicia en la fila ${i}`);
                 }
             }
 
-            // ── PASO 2: DISPARO EXCLUSIVO DEL CÁLCULO DE PROMEDIOS ──
-            console.log("[LexTech-Client] Todos los bloques fueron subidos. Iniciando consolidación de promedios...");
+            // ── PASO 2: ORDEN DE CONSOLIDACIÓN FINAL E IMPACTO DE ID_PEDIDO ──
+            console.log("[LexTech-Client] Todos los bloques crudos fueron almacenados. Solicitando consolidación final...");
             if (textoOverlay) {
-                textoOverlay.innerText = "Calculando promedios de los últimos 90 días... (No cierres la página)";
+                textoOverlay.innerText = "Consolidando compras e indexando IDs únicos por factura...";
             }
 
             const respuestaConsolidacion = await fetch(URL_GAS_GLOBAL, {
@@ -1853,27 +1856,26 @@ window.ejecutarProcesamientoCompras = function() {
                     'Content-Type': 'text/plain;charset=utf-8'
                 },
                 body: JSON.stringify({
-                    action: 'generarResumenPromedios90Dias' // Ejecuta la función del Paso 2 directamente
+                    action: 'consolidarLogACompras' // Dispara la reestructuración, limpieza e ID_PEDIDO
                 })
             });
 
             if (!respuestaConsolidacion.ok) {
-                throw new Error("El historial se subió, pero falló el cálculo estadístico de los 90 días.");
+                throw new Error("Los datos crudos se subieron, pero falló la consolidación lógica en Sheets.");
             }
 
-            // Intentamos leer la respuesta del servidor para ver cuántos SKUs procesó
-            let mensajeServidor = `Se cargaron con éxito las ${totalFilas} filas filtradas.`;
+            let mensajeServidor = `Se cargaron con éxito las ${totalFilas} filas del archivo de compras.`;
             try {
                 const textoRespuesta = await respuestaConsolidacion.text();
-                if (textoRespuesta) mensajeServidor += `\n\n${textoRespuesta}`;
+                if (textoRespuesta) mensajeServidor = textoRespuesta;
             } catch (e) {
-                console.warn("No se pudo leer el texto de respuesta del servidor", e);
+                console.warn("No se pudo extraer la confirmación extendida del servidor.", e);
             }
 
-            // Apagamos el overlay de carga ya que todo terminó
+            // Apagamos el overlay de carga
             if (overlayCarga) overlayCarga.style.display = 'none';
 
-            // Alerta de Éxito Absoluto
+            // Notificación UI Premium de Éxito
             Swal.fire({
                 title: '🚀 PROCESAMIENTO COMPLETADO',
                 text: mensajeServidor,
@@ -1886,12 +1888,12 @@ window.ejecutarProcesamientoCompras = function() {
             window.cerrarModalCompras();
 
         } catch (err) {
-            console.error("🚨 Error procesando bloques:", err);
+            console.error("🚨 Error crítico procesando bloques de compras:", err);
             if (overlayCarga) overlayCarga.style.display = 'none';
             
             Swal.fire({
                 title: '❌ ERROR DE PROCESAMIENTO',
-                text: err.message || 'Ocurrió un problema al fragmentar los datos.',
+                text: err.message || 'Ocurrió un problema de comunicación al fragmentar las compras.',
                 icon: 'error',
                 background: '#0f172a',
                 color: '#fff'
@@ -2056,28 +2058,23 @@ function renderizarMenuDinamico(elementos, containerId, esMenuTelas = false) {
 }
 
 function ejecutarConsultaCategoria(categoria, valor) {
-    Swal.fire({
-        title: 'PROCESANDO CONSULTA',
-        html: `Consultando <span style="color:#00f2fe">${valor}</span> en base <span style="color:#ff007f">${categoria}</span>...`,
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
+    const overlayCarga = document.getElementById('overlay-carga');
+    if (overlayCarga) {
+        overlayCarga.style.display = 'flex'; 
+    }
 
-    // Petición ajustada a la arquitectura estricta de tu doPost
     fetch(URL_GAS_GLOBAL, {
         method: "POST",
         mode: "cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ 
             action: `consultar_${categoria}`, 
-            data: { valor: valor } // ✨ CORREGIDO: Envuelto en 'data' para que GAS lo capture
+            data: { valor: valor } 
         })
     })
     .then(response => response.json())
     .then(data => {
-        Swal.close(); 
+        if (overlayCarga) overlayCarga.style.display = 'none'; 
         
         if (data.status === "success") {
             mostrarModalProductos(categoria, valor, data.reply);
@@ -2085,17 +2082,24 @@ function ejecutarConsultaCategoria(categoria, valor) {
             Swal.fire({
                 icon: 'error',
                 title: 'ERROR DE CONEXIÓN',
-                text: data.message
+                text: data.message,
+                background: '#040b1c',
+                color: '#cbd5e1',
+                confirmButtonColor: '#ff007f'
             });
         }
     })
     .catch(error => {
-        Swal.close();
+        if (overlayCarga) overlayCarga.style.display = 'none';
+        
         console.error("Error en consulta:", error);
         Swal.fire({
             icon: 'error',
             title: 'ERROR DE RED',
-            text: 'No se pudo conectar con la base de datos central.'
+            text: 'No se pudo conectar con la base de datos central.',
+            background: '#040b1c',
+            color: '#cbd5e1',
+            confirmButtonColor: '#ff007f'
         });
     });
 }
