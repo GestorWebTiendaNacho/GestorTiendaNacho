@@ -570,82 +570,174 @@ window.abrirModalPedidosManual = async function() {
     
     contenido.innerHTML = "";
     window.carritoPedidos = []; 
-    titulo.innerText = "PEDIDOS (MANUAL)";
+    titulo.innerText = "SISTEMA DE PEDIDOS (MANUAL)";
     
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    modal.style.display = 'flex';
     
+    // Loader integrado HUD
     contenido.innerHTML = `
-        <div class="p-6 text-center">
-            <h3 class="text-cyan-400 mb-4 font-bold uppercase tracking-widest text-[10px]">Seleccione un Proveedor</h3>
-            <div id="selector-proveedor-container" class="flex flex-col items-center gap-4">
-                <div class="w-8 h-8 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-            </div>
+        <div class="p-12 text-center flex flex-col items-center justify-center">
+            <h3 class="mb-4 font-bold tracking-[3px] text-[11px] text-white" style="font-family: 'Share Tech Mono', monospace;">
+                ESTABLECIENDO ENLACE CON MATRIZ MAESTRA...
+            </h3>
+            <div class="w-9 h-9 border-2 rounded-full animate-spin" 
+                 style="border-color: rgba(0, 242, 254, 0.15); border-top-color: #00f2fe; box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);"></div>
         </div>`;
 
     try {
-        // Llamada al puente de red externo hacia GAS
         const res = await callGoogleScript('obtenerListaProveedoresUnicos', {});
-        
-        // 🔍 PUNTO DE INSPECCIÓN: Veremos exactamente cómo viajan tus datos por GitHub Pages
         console.log("📦 [Debug NICO] Respuesta completa de la API:", res);
 
         let lista = null;
-
-        // Algoritmo de extracción adaptativa de datos
         if (Array.isArray(res)) {
-            // Caso 1: El puente devuelve directamente el array limpio
             lista = res;
         } else if (res && typeof res === 'object') {
-            // Caso 2: El objeto viene envuelto en estructuras clásicas de API JSON
             lista = res.data || res.reply || res.proveedores || res.lista;
-            
-            // Caso 3: Doble envoltura profunda (ej: res.reply.data)
             if (lista && typeof lista === 'object' && !Array.isArray(lista)) {
                 lista = lista.data || lista.proveedores || Object.values(lista);
             }
         }
 
-        // Si logramos capturar o resolver un array válido procedemos al render
         if (Array.isArray(lista)) {
-            const container = document.getElementById('selector-proveedor-container');
-            if (!container) return;
-            
             let options = lista.map(p => {
                 const nombre = p ? String(p).trim() : "";
                 const nombreEscapado = nombre.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                return `<option value="${nombreEscapado}">${nombreEscapado}</option>`;
+                return `<option value="${nombreEscapado}" style="background:#040b1c; color:#fff;">${nombreEscapado}</option>`;
             }).join('');
 
-            container.innerHTML = `
-                <select id="prov-seleccionado" class="bg-slate-900 border border-cyan-500/50 text-white p-2 rounded w-64 focus:border-cyan-400 outline-none text-xs">
-                    <option value="">-- SELECCIONAR PROVEEDOR --</option>
-                    ${options}
-                </select>
-                <div class="flex gap-3 mt-4">
-                    <button onclick="cargarProductosPorProveedor()" class="btn-accion-nico h-10 px-6 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-[10px]">
-                        CARGAR CATÁLOGO
-                    </button>
+            contenido.innerHTML = `
+                <div class="p-8 text-center max-w-xl mx-auto rounded border" 
+                     style="background: rgba(0,0,0,0.2); border-color: rgba(0,242,254,0.15); box-shadow: inset 0 0 20px rgba(0,242,254,0.05); margin-top: 10vh;">
+                    
+                    <div class="flex justify-center gap-3 mb-6" style="font-family: 'Orbitron', sans-serif;">
+                        <button id="btn-modo-prov" onclick="cambiarModoPedido('proveedor')" 
+                            class="px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-cyan-950/40 text-[#00f2fe] border-[#00f2fe]/40 shadow-[0_0_10px_rgba(0,242,254,0.1)]">
+                            POR PROVEEDOR
+                        </button>
+                        <button id="btn-modo-prod" onclick="cambiarModoPedido('producto')" 
+                            class="px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-slate-900/40 text-slate-400 border-slate-800 hover:border-slate-700">
+                            POR PRODUCTOS
+                        </button>
+                    </div>
+
+                    <h3 id="pedido-seccion-titulo" class="mb-5 font-bold uppercase tracking-[4px] text-[11px]" 
+                        style="color: #00f2fe; font-family: 'Orbitron', sans-serif;">
+                        SELECCIONAR PROVEEDOR
+                    </h3>
+                    
+                    <div class="flex flex-col items-center gap-5">
+
+                        <nav id="nav-categorias-productos" class="hud-horizontal-nav hidden w-full justify-center">
+                            <div class="nav-horiz-item theme-cyan">
+                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                                    <span class="btn-text">INSUMOS</span>
+                                    <span class="btn-chevron">▼</span>
+                                </button>
+                                <div class="horiz-dropdown">
+                                    <ul id="lista-insumos-dinamica" class="horiz-submenu-list"></ul>
+                                </div>
+                            </div>
+
+                            <div class="nav-horiz-item theme-orange">
+                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                                    <span class="btn-text">HERRAMIENTAS</span>
+                                    <span class="btn-chevron">▼</span>
+                                </button>
+                                <div class="horiz-dropdown">
+                                    <ul class="horiz-submenu-list" id="sm-herramientas"></ul>
+                                </div>
+                            </div>
+
+                            <div class="nav-horiz-item theme-pink">
+                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                                    <span class="btn-text">TELAS</span>
+                                    <span class="btn-chevron">▼</span>
+                                </button>
+                                <div class="horiz-dropdown">
+                                    <ul class="horiz-submenu-list" id="sm-telas">
+                                        <li class="nested-horiz-item">
+                                            <button class="nested-horiz-btn" onclick="toggleNestedMenu(event, this)">
+                                                <span>▶ SIMIL CUERO</span>
+                                            </button>
+                                            <ul class="nested-submenu-list hidden" id="sm-simil-cuero"></ul>
+                                        </li>
+                                        <li class="dropdown-divider"></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="nav-horiz-item theme-purple">
+                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                                    <span class="btn-text">HERRAJES</span>
+                                    <span class="btn-chevron">▼</span>
+                                </button>
+                                <div class="horiz-dropdown">
+                                    <ul class="horiz-submenu-list" id="sm-herrajes"></ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div id="wrapper-proveedor" class="flex flex-col items-center gap-5 w-full">
+                            <select id="prov-seleccionado" class="text-white p-3 rounded w-72 outline-none text-xs tracking-wider transition-all"
+                                    style="background: #040b1c; border: 1px solid rgba(0, 242, 254, 0.4); font-family: 'Share Tech Mono', monospace; box-shadow: 0 0 10px rgba(0,242,254,0.05);">
+                                <option value="" style="background:#040b1c; color: rgba(255,255,255,0.3);">-- SELECCIONAR PROVEEDOR --</option>
+                                ${options}
+                            </select>
+                            <button onclick="cargarProductosPorProveedor()" class="h-10 px-8 text-slate-950 font-black text-[10px] tracking-widest rounded transition-all duration-200 active:scale-95"
+                                    style="background: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.3); font-family: 'Orbitron', sans-serif;">
+                                INICIALIZAR CATÁLOGO
+                            </button>
+                        </div>
+
+                    </div>
                 </div>`;
         } else {
-            throw new Error("La API no retornó un formato de lista reconocible. Revisa el log de la consola.");
+            throw new Error("Formato de lista de proveedores no reconocido por la terminal.");
         }
-
     } catch (err) {
-        console.error("❌ Error al pedir proveedores desde la terminal externa:", err);
-        const container = document.getElementById('selector-proveedor-container');
-        if (container) {
-            container.innerHTML = `
-                <div class="p-2 border border-red-900/50 bg-red-950/20 rounded max-w-xs mx-auto">
-                    <p class="text-red-500 font-mono text-[9px] uppercase tracking-wider font-bold">
-                        ⚠️ FALLA DE CONFIGURACIÓN API
-                    </p>
-                    <span class="text-slate-400 text-[9px] font-sans block mt-1">${err.message}</span>
-                </div>`;
-        }
+        console.error("❌ Error al pedir proveedores:", err);
+        contenido.innerHTML = `
+            <div class="p-6 border border-red-900/40 bg-red-950/10 rounded max-w-md mx-auto text-center font-mono" style="margin-top: 10vh;">
+                <p class="text-red-400 text-[11px] tracking-widest font-bold">⚠️ CRITICAL_SYNC_FAILURE</p>
+                <span class="text-slate-400 text-[10px] block mt-2 normal-case font-sans">${err.message}</span>
+            </div>`;
     }
 };
 
+// FUNCIÓN PARA INTERCAMBIAR ENTRE ENTORNOS DE TRABAJO (Añadir globalmente)
+window.cambiarModoPedido = function(modo) {
+    const btnProv = document.getElementById('btn-modo-prov');
+    const btnProd = document.getElementById('btn-modo-prod');
+    const navCategorias = document.getElementById('nav-categorias-productos');
+    const wrapperProveedor = document.getElementById('wrapper-proveedor');
+    const seccionTitulo = document.getElementById('pedido-seccion-titulo');
+
+    if (!btnProv || !btnProd || !navCategorias || !wrapperProveedor || !seccionTitulo) return;
+
+    if (modo === 'proveedor') {
+        seccionTitulo.innerText = "SELECCIONAR PROVEEDOR";
+        wrapperProveedor.classList.remove('hidden');
+        navCategorias.classList.add('hidden');
+        navCategorias.classList.remove('flex');
+
+        // Clases de Botón Activo para Proveedor
+        btnProv.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-cyan-950/40 text-[#00f2fe] border-[#00f2fe]/40 shadow-[0_0_10px_rgba(0,242,254,0.1)]";
+        // Clases de Botón Inactivo para Productos
+        btnProd.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-slate-900/40 text-slate-400 border-slate-800 hover:border-slate-700";
+    } else if (modo === 'producto') {
+        seccionTitulo.innerText = "SELECCIONAR POR CATEGORÍA DE PRODUCTO";
+        wrapperProveedor.classList.add('hidden');
+        navCategorias.classList.remove('hidden');
+        navCategorias.classList.add('flex');
+
+        // Clases de Botón Activo para Productos
+        btnProd.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-cyan-950/40 text-[#00f2fe] border-[#00f2fe]/40 shadow-[0_0_10px_rgba(0,242,254,0.1)]";
+        // Clases de Botón Inactivo para Proveedor
+        btnProv.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-slate-900/40 text-slate-400 border-slate-800 hover:border-slate-700";
+    }
+};
 
 async function cargarProductosPorProveedor() {
     const selector = document.getElementById('prov-seleccionado');
@@ -655,7 +747,14 @@ async function cargarProductosPorProveedor() {
 
     if (!prov) {
         if (window.Swal) {
-            Swal.fire('AVISO DEL SISTEMA', 'Por favor, selecciona un proveedor válido de la lista maestro.', 'info');
+            Swal.fire({
+                title: 'AVISO DEL SISTEMA',
+                text: 'Por favor, selecciona un canal de proveedor válido.',
+                icon: 'info',
+                background: '#040b1c',
+                color: '#cbd5e1',
+                confirmButtonColor: 'rgba(0,242,254,0.2)'
+            });
         } else {
             alert("AVISO: Selecciona un proveedor");
         }
@@ -674,51 +773,55 @@ async function cargarProductosPorProveedor() {
             proveedorFiltro: prov 
         });
         
-        if (!res) {
-            throw new Error("Sin respuesta del servidor central.");
-        }
+        if (!res) throw new Error("La consulta central retornó un canal vacío.");
         
         const listaBruta = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
+        // Conservamos tu filtro de rotación real de salidas en los últimos 90 días
         const lista = listaBruta.filter(prod => parseInt(prod.ventas90Dias || 0) > 0);
         window.productosDelProveedorActual = lista; 
 
         if (lista.length > 0) {
             window.carritoPedidos = window.carritoPedidos || [];
             const todosMarcados = lista.every(p => window.carritoPedidos.some(item => String(item.id).trim() === String(p.id).trim()));
+            
             let tablaHtml = `
-                <div class="mb-4 p-4 bg-slate-900/90 border border-slate-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-20 backdrop-blur shadow-xl mx-2">
-                    <div id="contador-items" class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">
-                        Items en orden: <span class="text-cyan-400 font-bold bg-slate-950 px-2 py-1 rounded border border-slate-800/80">${window.carritoPedidos.length}</span>
+                <div class="mb-4 p-3 border rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-20 backdrop-blur shadow-xl"
+                     style="background: rgba(4, 11, 28, 0.9); border-color: rgba(0, 242, 254, 0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                    <div id="contador-items" class="text-[11px] text-slate-400 font-mono tracking-wider">
+                        ITEMS INDEXADOS: <span class="text-[#00f2fe] font-bold bg-black/40 px-2 py-0.5 rounded border border-slate-800">${window.carritoPedidos.length}</span>
                     </div>
-                    <div class="relative w-full sm:w-64">
+                    <div class="relative w-full sm:w-72">
                         <input type="text" id="buscador-productos" onkeyup="filtrarProductosMain()" 
-                               placeholder="FILTRAR PRODUCTOS ACTIVO..." 
-                               class="w-full bg-slate-950 border border-slate-800 p-2 pl-3 text-[10px] text-white rounded-md font-mono focus:border-cyan-500 outline-none placeholder-slate-600 transition-colors">
+                               placeholder="🔍 FILTRAR EN CONEXIÓN ACTIVA..." 
+                               class="w-full bg-black/40 border p-2 pl-3 text-[11px] text-white rounded font-mono focus:border-[#00f2fe] outline-none placeholder-slate-600 transition-colors"
+                               style="border-color: rgba(255,255,255,0.12);">
                     </div>
                     <button onclick="revisarPedido()" 
-                            class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 hover:text-white text-[10px] font-black tracking-widest px-5 py-2.5 rounded-md transition-all uppercase duration-200 active:scale-95 w-full sm:w-auto">
-                        REVISAR PEDIDO →
+                            class="text-slate-950 hover:text-white text-[10px] font-black tracking-widest px-6 py-2 rounded transition-all uppercase duration-200 active:scale-95 w-full sm:w-auto"
+                            style="background: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); font-family: 'Orbitron', sans-serif;">
+                        REVISAR ORDEN →
                     </button>
                 </div>
-                <div class="overflow-x-auto border border-slate-900 bg-slate-950/40 rounded-xl mx-2 mb-4">
-                    <table id="tabla-maestra-pedidos" class="tabla-premium w-full text-left border-collapse">
+
+                <div class="overflow-x-auto border rounded-lg mb-2" style="border-color: rgba(255,255,255,0.08); background: rgba(0,0,0,0.15);">
+                    <table id="tabla-maestra-pedidos" class="w-full text-left border-collapse" style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #cbd5e1;">
                         <thead>
-                            <tr class="bg-slate-950/80 text-cyan-500 border-b border-slate-800 text-[10px] font-black uppercase tracking-wider">
-                                <th class="p-4 text-center w-[60px]">
+                            <tr style="background: rgba(0, 242, 254, 0.06); color: #fff; border-bottom: 2px solid #00f2fe;">
+                                <th class="p-3 text-center w-[50px]">
                                     <input type="checkbox" id="master-check-productos" ${todosMarcados ? 'checked' : ''}
                                            onclick="toggleTodosProductos(this)"
-                                           class="w-4 h-4 accent-cyan-500 rounded border-slate-800 bg-slate-900 cursor-pointer shadow-sm transition-transform active:scale-90">
+                                           class="w-4 h-4 accent-[#00f2fe] cursor-pointer rounded bg-slate-900 border-slate-700">
                                 </th>
-                                <th class="p-4 w-[80px]">ID</th>
-                                <th class="p-4">PRODUCTO</th>
-                                <th class="p-4 w-[120px]">CÓDIGO</th>
-                                <th class="p-4 w-[100px]">STOCK ACT.</th>
-                                <th class="p-4 w-[100px] text-center bg-cyan-950/30 text-cyan-400 border-x border-slate-800/50">ROTACIÓN</th>
-                                <th class="p-4 w-[110px]">COSTO UNIT.</th>
-                                <th class="p-4 w-[100px] text-center">STOCK MÍN.</th>
+                                <th class="p-3 w-[70px]">ID</th>
+                                <th class="p-3">DESCRIPCIÓN DEL MATERIAL</th>
+                                <th class="p-3 w-[110px]">SKU</th>
+                                <th class="p-3 w-[90px] text-right">STOCK</th>
+                                <th class="p-3 w-[100px] text-center" style="background: rgba(0,242,254,0.03); color: #00f2fe;">ROTACIÓN 90D</th>
+                                <th class="p-3 w-[110px] text-right">VALOR UNIT.</th>
+                                <th class="p-3 w-[90px] text-right">MÍNIMO</th>
                             </tr>
                         </thead>
-                        <tbody id="body-pedidos" class="divide-y divide-slate-900/40 text-slate-300 font-mono text-[10px]">`;
+                        <tbody id="body-pedidos" class="divide-y divide-slate-900/40">`;
 
             lista.forEach(prod => {
                 const idStr = String(prod.id || "").trim();
@@ -732,31 +835,48 @@ async function cargarProductosPorProveedor() {
                 const yaSeleccionado = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
                 const checkedAttr = yaSeleccionado ? "checked" : "";
                 
+                // Mapeo dinámico de funciones de escape locales
+                const fnEscapar = typeof escapingForOption === "function" ? escapingForOption : (s) => s.replace(/'/g, "\\'");
+
                 tablaHtml += `
-                    <tr class="hover:bg-cyan-500/5 transition-colors duration-150 ${yaSeleccionado ? 'bg-cyan-950/10' : ''}">
-                        <td class="p-4 text-center">
-                            <input type="checkbox" ${checkedAttr} data-id="${idStr}"
-                                   class="row-checkbox w-4 h-4 accent-cyan-500 rounded border-slate-800 bg-slate-900 cursor-pointer shadow-sm transition-transform active:scale-90" 
-                                   onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${escapingForOption(prov)}', '${stockMinNum}')">
+                    <tr style="background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.05);" 
+                        class="transition-colors duration-150 ${yaSeleccionado ? 'hud-row-active' : ''}"
+                        onmouseover="this.style.background='rgba(0, 242, 254, 0.03)'" 
+                        onmouseout="this.style.background='${yaSeleccionado ? 'rgba(0, 242, 254, 0.05)' : 'rgba(0,0,0,0.15)'}'">
+                        <td class="p-3 text-center">
+                            <input type="checkbox" ${checkedAttr} data-id="${idStr}" class="row-checkbox w-4 h-4 accent-[#00f2fe] cursor-pointer" 
+                                   onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${fnEscapar(prov)}', '${stockMinNum}')">
                         </td>
-                        <td class="p-4 text-slate-500 font-bold">${idStr}</td>
-                        <td class="p-4 font-sans">
-                            <b class="text-slate-200 tracking-tight block text-[11px]">${prod.nombre || "SIN NOMBRE"}</b>
-                        </td>
-                        <td class="p-4 text-cyan-600/80 font-bold">${skuLimpio || "---"}</td>
-                        <td class="p-4 ${alertarStock ? 'text-red-400 font-black animate-pulse bg-red-950/10' : 'text-slate-400'}">
+                        <td class="p-3 text-slate-500 font-bold">${idStr}</td>
+                        <td class="p-3 text-white font-sans text-[12px] font-medium">${prod.nombre || "MATERIAL SIN IDENTIFICAR"}</td>
+                        <td class="p-3 text-[#00f2fe] font-bold">${skuLimpio || "---"}</td>
+                        <td class="p-3 text-right font-bold ${alertarStock ? 'text-[#ff007f]' : 'text-slate-300'}" style="${alertarStock ? 'text-shadow: 0 0 8px rgba(255,0,127,0.3);' : ''}">
                             ${stockNum}
                         </td>
-                        <td class="p-4 text-center font-bold text-emerald-400 bg-emerald-950/5 border-x border-slate-900/40">
-                            ${ventas90Num} <span class="text-[9px] text-slate-500 font-normal">u.</span>
+                        <td class="p-3 text-center font-bold text-emerald-400" style="background: rgba(16, 185, 129, 0.02);">
+                            ${ventas90Num} <span style="font-size: 9px; color: #52525b; font-weight: normal;">u.</span>
                         </td>
-                        <td class="p-4 text-emerald-400 font-bold">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
-                        <td class="p-4 text-slate-500 text-center">${stockMinNum}</td>
+                        <td class="p-3 text-right font-bold text-emerald-400">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                        <td class="p-3 text-right text-slate-500">${stockMinNum}</td>
                     </tr>`;
             });
+            
             tablaHtml += `</tbody></table></div>`;
             contenedor.innerHTML = tablaHtml;
 
+            // Inyección de estilos CSS embebidos para el renglón activo en concordancia con Tailwind
+            if(!document.getElementById('hud-table-styles')) {
+                const style = document.createElement('style');
+                style.id = 'hud-table-styles';
+                style.innerHTML = `
+                    .hud-row-active { background: rgba(0, 242, 254, 0.06) !important; border-left: 2px solid #00f2fe; }
+                    .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: rgba(0, 242, 254, 0.15) !important; color:#00f2fe !important; border: 1px solid #00f2fe !important; font-family:'Share Tech Mono'; font-size:11px; }
+                    .dataTables_wrapper .dataTables_info { color: #71717a !important; font-family:'Share Tech Mono'; font-size:11px; padding-top: 10px; }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Inicializador de DataTables con acoplamiento HUD
             if (window.jQuery && $.fn.DataTable) {
                 setTimeout(() => {
                     if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
@@ -764,12 +884,12 @@ async function cargarProductosPorProveedor() {
                     }
                     $('#tabla-maestra-pedidos').DataTable({
                         "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
-                        "pageLength": 10,
+                        "pageLength": 12,
                         "dom": 'rtip', 
                         "order": [[5, "desc"]], 
                         "autoWidth": false,
                         "columnDefs": [
-                            { "targets": 0, "orderable": false } 
+                            { "targets": [0], "orderable": false }
                         ]
                     });
                 }, 40);
@@ -777,26 +897,25 @@ async function cargarProductosPorProveedor() {
 
         } else {
             contenedor.innerHTML = `
-                <div class="p-12 text-center border border-slate-800 rounded-xl bg-slate-950/40 m-2">
-                    <p class="text-amber-500 uppercase font-mono font-bold text-[10px] tracking-[0.25em]">Sin Artículos Críticos</p>
-                    <p class="text-slate-500 text-[10px] mt-2 font-sans">No se detectaron productos vinculados a "${prov}" con salidas reales en los últimos 90 días.</p>
+                <div class="p-12 text-center border rounded-lg max-w-2xl mx-auto" style="border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.02); margin-top: 5vh;">
+                    <p class="uppercase font-mono font-bold text-[11px] tracking-[3px]" style="color: #f59e0b;">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
+                    <p class="text-slate-400 text-[11px] mt-2 font-sans">No se detectaron artículos del canal "${prov}" con salidas registradas en la ventana de los últimos 90 días.</p>
                 </div>`;
         }
     } catch (err) {
         console.error("❌ Error en compilación de catálogo dirigido:", err);
         contenedor.innerHTML = `
-            <div class="p-8 text-red-500 text-[10px] text-center uppercase font-mono border border-red-900/30 bg-red-950/20 rounded-xl mx-2">
-                CRITICAL_SYNC_ERROR:<br><span class="text-slate-300 block mt-2 normal-case font-sans">${err.message}</span>
+            <div class="p-8 text-center border rounded-lg max-w-xl mx-auto font-mono text-[11px]" style="border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.03); margin-top:5vh;">
+                <span class="text-red-400 font-bold block">CRITICAL_RENDER_ERROR</span>
+                <span class="text-slate-400 block mt-2 font-sans normal-case">${err.message}</span>
             </div>`;
     } finally {
-        // 2. Apagar el overlay SIEMPRE al terminar, pase lo que pase
         if (overlay) overlay.style.display = 'none';
     }
 }
 
 function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, stockMinimo) {
     window.carritoPedidos = window.carritoPedidos || [];
-    
     const idFiltro = String(id).trim();
     const trPadre = checkbox.closest('tr');
 
@@ -817,10 +936,16 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
                 cantidad: cantidadSugerida
             });
         }
-        if (trPadre) trPadre.classList.add('bg-cyan-950/10');
+        if (trPadre) {
+            trPadre.style.background = 'rgba(0, 242, 254, 0.06)';
+            trPadre.classList.add('hud-row-active');
+        }
     } else {
         window.carritoPedidos = window.carritoPedidos.filter(p => String(p.id).trim() !== idFiltro);
-        if (trPadre) trPadre.classList.remove('bg-cyan-950/10');
+        if (trPadre) {
+            trPadre.style.background = 'rgba(0,0,0,0.15)';
+            trPadre.classList.remove('hud-row-active');
+        }
     }
     actualizarContadorVisual();
 }
@@ -841,7 +966,6 @@ function toggleTodosProductos(masterCheck) {
             if (!yaExiste) {
                 const stockAct = parseInt(prod.stock || 0);
                 const stockMin = parseInt(prod.stockMinimo || 0);
-                
                 const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
 
                 window.carritoPedidos.push({
@@ -852,7 +976,7 @@ function toggleTodosProductos(masterCheck) {
                     stock: stockAct,
                     proveedor: prov,
                     stockMinimo: stockMin,
-                    cantidad: cantidadSugerida
+                    amount: cantidadSugerida
                 });
             }
         });
@@ -860,9 +984,11 @@ function toggleTodosProductos(masterCheck) {
         checkboxesVisibles.forEach(cb => {
             cb.checked = true;
             const tr = cb.closest('tr');
-            if (tr) tr.classList.add('bg-cyan-950/10');
+            if (tr) {
+                tr.style.background = 'rgba(0, 242, 254, 0.06)';
+                tr.classList.add('hud-row-active');
+            }
         });
-
     } else {
         window.productosDelProveedorActual.forEach(prod => {
             const idStr = String(prod.id || "").trim();
@@ -872,39 +998,33 @@ function toggleTodosProductos(masterCheck) {
         checkboxesVisibles.forEach(cb => {
             cb.checked = false;
             const tr = cb.closest('tr');
-            if (tr) tr.classList.remove('bg-cyan-950/10');
+            if (tr) {
+                tr.style.background = 'rgba(0,0,0,0.15)';
+                tr.classList.remove('hud-row-active');
+            }
         });
     }
-
-    const contador = document.getElementById('contador-items');
-    if (contador) {
-        const span = contador.querySelector('span');
-        if (span) span.innerText = window.carritoPedidos.length;
-    }
-
-    if (typeof actualizarContadorVisual === "function") actualizarContadorVisual();
+    actualizarContadorVisual();
 }
 
 function actualizarContadorVisual() {
     const contador = document.getElementById('contador-items');
     if (contador) {
         const totalItems = window.carritoPedidos ? window.carritoPedidos.length : 0;
-        contador.innerHTML = `Items en orden: <span class="text-cyan-400 font-bold bg-slate-950 px-2 py-1 rounded border border-slate-800/80">${totalItems}</span>`;
+        contador.innerHTML = `ITEMS INDEXADOS: <span style="color: #00f2fe; font-weight: bold; background: rgba(0,0,0,0.4); padding: 2px 8px; border: 1px solid rgba(0,242,254,0.25); border-radius: 3px;">${totalItems}</span>`;
     }
 }
 
 function filtrarProductosMain() {
     const input = document.getElementById("buscador-productos");
     if (!input) return;
-    
     const filtroText = input.value;
     
     if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
         $('#tabla-maestra-pedidos').DataTable().search(filtroText).draw();
     } else {
-        const tabla = document.getElementById("tabla-pedidos-filtrada") || document.getElementById("tabla-maestra-pedidos");
+        const tabla = document.getElementById("tabla-maestra-pedidos");
         if (!tabla) return;
-
         const tbody = tabla.getElementsByTagName("tbody")[0];
         if (!tbody) return;
         
@@ -914,7 +1034,7 @@ function filtrarProductosMain() {
         for (let i = 0; i < filas.length; i++) {
             let visible = false;
             const celdas = filas[i].getElementsByTagName("td");
-            
+            // Empezamos la iteración desde el índice 1 para omitir la celda del checkbox
             for (let j = 1; j < celdas.length; j++) {
                 const textValue = celdas[j].textContent || celdas[j].innerText;
                 if (textValue.toUpperCase().indexOf(normalizado) > -1) {
@@ -930,31 +1050,19 @@ function filtrarProductosMain() {
 function cerrarModal_Pedidos() {
     const modal = document.getElementById('modal-pedidos');
     const contenido = document.getElementById('modal-contenido');
-    const paginaPrincipal = document.getElementById('dashboard');
     const paginaDashboard = document.getElementById('page-dashboard') || document.getElementById('dashboard');
+    
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         modal.style.display = 'none';
     }
-
-    if (contenido) {
-        contenido.innerHTML = "";
-    }
-
-    if (paginaPrincipal) {
-        paginaPrincipal.style.display = 'none';
-    }
+    if (contenido) contenido.innerHTML = "";
 
     if (typeof navegar === "function") {
         navegar('dashboard'); 
-    } else {
-
-        if (paginaDashboard) {
-            paginaDashboard.style.display = 'flex';
-        } else {
-            console.warn("La función global 'navegar' o el contenedor del dashboard no se encontraron.");
-        }
+    } else if (paginaDashboard) {
+        paginaDashboard.style.display = 'flex';
     }
 }
 

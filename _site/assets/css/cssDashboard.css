@@ -183,6 +183,7 @@ body:has(.dashboard-container)::after {
         0 var(--corner-cut)
     );
     transition: transform 0.35s var(--transition-smooth);
+    margin-top: 318px !important;
 }
 
 .sidebar__nav {
@@ -2159,3 +2160,61 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
 }
 
 .hidden { display: none; }
+
+
+/*NUEVA SECCION BOTONES HEADER */
+.dashboard-grid__main {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center !important;
+}
+
+#headbarNav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center !important;
+    gap: 16px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100% !important; 
+}
+
+/* Posicionamiento relativo para que el submenú flote debajo */
+#headbarNav .nav-item {
+    position: relative;
+}
+
+/* Botones con tamaño incrementado */
+#headbarNav .nav-btn {
+    padding: 12px 24px;
+    font-size: 15px;          
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Iconos de SVG escalados proporcionalmente */
+#headbarNav .nav-btn__icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Ajuste flotante para el Submenú del Headbar */
+#headbarNav .submenu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 220px;
+    margin-top: 8px;
+    z-index: 1000;
+    display: none; 
+}
+
+/* Mostrar submenú cuando el padre tiene la clase activa */
+#headbarNav .nav-item.is-open .submenu {
+    display: block;
+}

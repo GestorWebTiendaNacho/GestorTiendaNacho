@@ -1375,9 +1375,6 @@ function ejecutarDescargaLocalExcelMes(matriz) {
 
 // SECCION TABLA CENTRAL //
 var listaProductosCriticos = [];
-var paginaActualTabla = 1;
-var filasPorPagina = 17;
-
 
 async function cargarTablaProductosCriticos() {
   try {
@@ -1392,15 +1389,13 @@ async function cargarTablaProductosCriticos() {
 
     if (resultado.status === "success") {
       listaProductosCriticos = resultado.reply;
-      paginaActualTabla = 1;
+      // Renderiza directamente todo el set de datos sin intermediarios
       renderizarPaginaTabla();
-      renderizarPaginador();
     }
   } catch (error) {
     console.error("❌ Error de enlace en panel de tabla central:", error);
   }
 }
-
 
 function renderizarPaginaTabla() {
   const tbody = document.querySelector('.table-panel .hud-table tbody');
@@ -1411,16 +1406,13 @@ function renderizarPaginaTabla() {
   
   if (badgeTotal) badgeTotal.textContent = listaProductosCriticos.length;
 
-  const inicio = (paginaActualTabla - 1) * filasPorPagina;
-  const fin = inicio + filasPorPagina;
-  const paginaItems = listaProductosCriticos.slice(inicio, fin);
-
-  if (paginaItems.length === 0) {
+  if (listaProductosCriticos.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:#a0aec0; font-family:monospace; padding:20px;">SISTEMA SIN ALERTAS ACTIVAS</td></tr>`;
     return;
   }
 
-  paginaItems.forEach(item => {
+  // Recorremos la totalidad del array sin usar .slice()
+  listaProductosCriticos.forEach(item => {
     let claseStock = '';
     if (item.stock < item.minimo) {
       claseStock = 'stock-critical';
@@ -1449,43 +1441,12 @@ function renderizarPaginaTabla() {
   asignarEventosAccionTabla();
 }
 
-
-function renderizarPaginador() {
-  const contenedorPaginacion = document.querySelector('.table-panel .hud-pagination');
-  if (!contenedorPaginacion) return;
-
-  const totalPaginas = Math.ceil(listaProductosCriticos.length / filasPorPagina) || 1;
-  contenedorPaginacion.innerHTML = "";
-
-  const btnAnt = document.createElement('button');
-  btnAnt.className = `pag-btn ${paginaActualTabla === 1 ? 'disabled' : ''}`;
-  btnAnt.innerHTML = `<i class="fa-solid fa-angles-left"></i>`;
-  btnAnt.addEventListener('click', () => { if (paginaActualTabla > 1) { paginaActualTabla--; actualizarInterfazTabla(); } });
-  contenedorPaginacion.appendChild(btnAnt);
-
-  for (let i = 1; i <= totalPaginas; i++) {
-    if (i === 1 || i === totalPaginas || (i >= paginaActualTabla - 1 && i <= paginaActualTabla + 1)) {
-      const btnPag = document.createElement('button');
-      btnPag.className = `pag-btn ${paginaActualTabla === i ? 'active' : ''}`;
-      btnPag.textContent = i;
-      btnPag.addEventListener('click', () => { paginaActualTabla = i; actualizarInterfazTabla(); });
-      contenedorPaginacion.appendChild(btnPag);
-    }
-  }
-
-  const btnSig = document.createElement('button');
-  btnSig.className = `pag-btn ${paginaActualTabla === totalPaginas ? 'disabled' : ''}`;
-  btnSig.innerHTML = `<i class="fa-solid fa-angles-right"></i>`;
-  btnSig.addEventListener('click', () => { if (paginaActualTabla < totalPaginas) { paginaActualTabla++; actualizarInterfazTabla(); } });
-  contenedorPaginacion.appendChild(btnSig);
-}
-
-function actualizarInterfazTabla() {
-  renderizarPaginaTabla();
-  renderizarPaginador();
-}
-
 function asignarEventosAccionTabla() {
+  document.querySelectorAll('.btn-table-action').forEach(btn => {
+    // Evitamos duplicidad quitando listeners previos si los hubiera
+    btn.replaceWith(btn.cloneNode(true));
+  });
+
   document.querySelectorAll('.btn-table-action').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const skuSeleccionado = e.currentTarget.getAttribute('data-sku');
@@ -1736,7 +1697,7 @@ function renderizarMiniTablaWidget3(payload) {
 
 /*---Seccion COMPRAS --*/
 
-let nombreArchivoCompras = "";
+var nombreArchivoCompras = "";
 
 window.abrirModalCompras = function() {
     const modal = document.getElementById('modal-compras');
@@ -2255,4 +2216,54 @@ function mostrarModalProductos(categoria, subcategoria, registros) {
             });
         }
     });
+}
+
+
+
+
+function initHeadbarAccordion() {
+    const headbarNav = document.getElementById('headbarNav');
+    if (!headbarNav) {
+        console.warn("⚠️ [HUD] No se encontró el contenedor #headbarNav en esta interfaz.");
+        return;
+    }
+
+    console.log("✅ [HUD] Inicializando acordeón independiente para Headbar Nav superior.");
+
+    headbarNav.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('.nav-item .nav-btn');
+        if (!toggleBtn) return;
+        const item = toggleBtn.closest('.nav-item');
+        const hasSubmenu = item.querySelector('.submenu');
+        if (!hasSubmenu) return;
+        e.preventDefault();
+
+        const isOpen = item.classList.contains('is-open');
+        const accordionItems = headbarNav.querySelectorAll('.nav-item');
+        accordionItems.forEach(otherItem => {
+            if (otherItem !== item && otherItem.querySelector('.submenu')) {
+                otherItem.classList.remove('is-open');
+                const otherBtn = otherItem.querySelector('.nav-btn');
+                if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+        if (isOpen) {
+            item.classList.remove('is-open');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+        } else {
+            item.classList.add('is-open');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+            setTimeout(() => {
+                if (typeof drawSubmenuLines === 'function') {
+                    drawSubmenuLines(item);
+                }
+            }, 150);
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeadbarAccordion);
+} else {
+    initHeadbarAccordion();
 }

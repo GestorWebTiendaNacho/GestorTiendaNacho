@@ -354,147 +354,181 @@
 
         <!-- Main Grid: Table + Side Widgets -->
         <section class="dashboard-grid">
-        <nav class="hud-horizontal-nav">
-            <div class="nav-horiz-item theme-cyan">
-                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
-                    <span class="btn-text">INSUMOS</span>
-                    <span class="btn-chevron">▼</span>
-                </button>
 
-                <div class="horiz-dropdown">
-                    <ul id="lista-insumos-dinamica" class="horiz-submenu-list">
-                        </ul>
-                </div>
-            </div>
+            <div class="dashboard-grid__main" id="headbarNav">  
+                <li class="nav-item theme-orange" data-accordion>
+                    <div class="nav-btn__wrap">
+                        <button type="button" class="nav-btn" data-toggle="pedidos" aria-expanded="false" aria-controls="submenu-pedidos">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M2 2h2l2.5 12h11l2-8H6"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Pedidos</span>
+                            <span class="nav-btn__chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </button>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                    <div class="submenu" id="submenu-pedidos" role="region" aria-label="Submenú Pedidos">
+                        <div class="submenu__inner">
+                            <svg class="submenu__lines" id="lines-pedidos" aria-hidden="true"></svg>
+                            <ul class="submenu__list">
+                                <li>
+                                    <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                        <a href="#" class="nav-btn nav-btn--sub" data-nav="manual" onclick="abrirModalPedidosManual()">
+                                            <span class="nav-btn__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+                                            </span>
+                                            <span class="nav-btn__label">Manual</span>
+                                        </a>
+                                        <span class="nav-btn__glow-line"></span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                        <a href="#" class="nav-btn nav-btn--sub" data-nav="asistidos" onclick="abrirModalPedidos_Autoasist()">
+                                            <span class="nav-btn__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="13" r="1" fill="currentColor"/><circle cx="15" cy="13" r="1" fill="currentColor"/><path d="M9 16h6"/></svg>
+                                            </span>
+                                            <span class="nav-btn__label">Asistidos</span>
+                                        </a>
+                                        <span class="nav-btn__glow-line"></span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
 
-            <div class="nav-horiz-item theme-orange">
-                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
-                    <span class="btn-text">HERRAMIENTAS</span>
-                    <span class="btn-chevron">▼</span>
-                </button>
-                <div class="horiz-dropdown">
-                    <ul class="horiz-submenu-list" id="sm-herramientas"></ul>
-                </div>
-            </div>
+                <li class="nav-item theme-teal">    
+                    <div class="nav-btn__wrap">
+                        <a href="#" class="nav-btn" data-nav="recepcion" onclick="verEstadoPedidos()">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Recepción</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>
 
-            <div class="nav-horiz-item theme-pink">
-                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
-                    <span class="btn-text">TELAS</span>
-                    <span class="btn-chevron">▼</span>
-                </button>
-                <div class="horiz-dropdown">
-                    <ul class="horiz-submenu-list" id="sm-telas">
-                        <li class="nested-horiz-item">
-                            <button class="nested-horiz-btn" onclick="toggleNestedMenu(event, this)">
-                                <span>▶ SIMIL CUERO</span>
-                            </button>
-                            <ul class="nested-submenu-list hidden" id="sm-simil-cuero"></ul>
-                        </li>
-                        <li class="dropdown-divider"></li>
-                        </ul>
-                </div>
-            </div>
+                <li class="nav-item theme-pink">
+                    <div class="nav-btn__wrap">
+                        <a href="#" class="nav-btn" data-nav="compras" onclick="abrirModalCompras()">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Compras</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>      
 
-            <div class="nav-horiz-item theme-purple">
-                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
-                    <span class="btn-text">HERRAJES</span>
-                    <span class="btn-chevron">▼</span>
-                </button>
-                <div class="horiz-dropdown">
-                    <ul class="horiz-submenu-list" id="sm-herrajes"></ul>
-                </div>
-            </div>
-        </nav>
+                <li class="nav-item theme-yellow">
+                    <div class="nav-btn__wrap">
+                        <a href="#" class="nav-btn" data-nav="proveedores" onclick="abrirModuloProveedores()">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Proveedores</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>
+            </div>   
 
 
             <!---SECCION DE LA TABLA---->
-            <div class="table-effect-wrapper">
-                <div class="hud-card main-panel table-panel blue-glow" data-connect="table">
-                    <div class="panel-corner tl"></div>
-                    <div class="panel-corner tr"></div>
-                    <div class="panel-corner bl"></div>
-                    <div class="panel-corner br"></div>
-                    <div class="card-inner">
-                        <div class="panel-header-row">
-                            <span class="panel-header-title">PRODUCTOS CRÍTICOS</span>
-                            <div class="panel-header-line"></div>
-                        </div>
+        <div class="table-effect-wrapper">
+            <div class="hud-card main-panel table-panel blue-glow" data-connect="table">
+                <div class="panel-corner tl"></div>
+                <div class="panel-corner tr"></div>
+                <div class="panel-corner bl"></div>
+                <div class="panel-corner br"></div>
+                <div class="card-inner">
+                    <div class="panel-header-row">
+                        <span class="panel-header-title">PRODUCTOS CRÍTICOS</span>
+                        <div class="panel-header-line"></div>
+                    </div>
 
-                        <div class="table-wrapper">
-                            <table class="hud-table">
-                                <thead>
-                                    <tr>
-                                        <th>SKU</th>
-                                        <th>PRODUCTO</th>
-                                        <th class="text-center">STOCK</th>
-                                        <th class="text-center">MÍNIMO</th>
-                                        <th>PROVEEDOR</th>
-                                        <th>CATEGORÍA</th>
-                                        <th>PROMEDIO</th>
-                                        <th class="text-center">ACCIÓN</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="table-wrapper" style="max-height: 480px; overflow-y: auto; scrollbar-width: thin;">
+                        <table class="hud-table">
+                            <thead style="position: sticky; top: 0; background: #040b1c; z-index: 10;">
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>PRODUCTO</th>
+                                    <th class="text-center">STOCK</th>
+                                    <th class="text-center">MÍNIMO</th>
+                                    <th>PROVEEDOR</th>
+                                    <th>CATEGORÍA</th>
+                                    <th>PROMEDIO</th>
+                                    <th class="text-center">ACCIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
 
-                        <div class="panel-footer-hud">
-                            <div class="total-products-badge">
-                                TOTAL PRODUCTOS: <span class="badge-value">248</span>
-                            </div>
-                            <div class="hud-pagination">
-                                <button class="pag-btn" aria-label="Anterior"><i class="fa-solid fa-angles-left"></i></button>
-                                <button class="pag-btn active">1</button>
-                                <button class="pag-btn">2</button>
-                                <button class="pag-btn">3</button>
-                                <button class="pag-btn">4</button>
-                                <button class="pag-btn">5</button>
-                                <button class="pag-btn" aria-label="Siguiente"><i class="fa-solid fa-angles-right"></i></button>
-                            </div>
+                    <div class="panel-footer-hud" style="justify-content: flex-start;">
+                        <div class="total-products-badge">
+                            TOTAL PRODUCTOS: <span class="badge-value">0</span>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
         </section>
 
 
     </main>
 </div>
-<!-- MODAL PEDIDOS -->
-<div id="modal-pedidos" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[9999] hidden items-center justify-center p-2 lg:p-6">
+<!-- MODAL PEDIDOS MANUAL-->
+<div id="modal-pedidos" class="fixed inset-0 hidden items-center justify-center p-2 lg:p-6 transition-all duration-300" 
+     style="z-index: 9999999; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(4, 11, 28, 0.75);">
 
-    <div id="contenedor-estilo-malevich" class="flex flex-col relative shadow-[0_0_60px_rgba(0,0,0,0.7)]">
+    <div id="contenedor-estilo-malevich" class="flex flex-col relative w-full max-w-7xl rounded-md overflow-hidden" 
+         style="background: #040b1c; border: 1px solid #00f2fe; box-shadow: 0 0 35px rgba(0, 242, 254, 0.2); max-height: 92vh;">
         
-            <div class="p-5 border-b-4 border-lex-gold bg-slate-950 flex justify-between items-center relative z-10">
-                <div class="flex items-center gap-4">
-                    <div class="w-1 h-8 bg-lex-gold"></div> 
-                    <h3 id="modal-titulo" class="text-slate-100 text-sm font-black tracking-[4px] uppercase italic"></h3>
-                </div>
-                
-                <div class="flex items-center gap-2">
-                    <div class="bg-slate-900 border-2 border-slate-700 px-4 py-1 flex items-center gap-3">
-                        <i class="fas fa-search text-lex-gold text-xs"></i>
-                        <input type="text" id="filtro-tabla-global" onkeyup="filtrarTabla()" placeholder="FILTRAR..." class="bg-transparent border-none text-[10px] text-cyan-400 focus:outline-none uppercase w-48">
-                    </div>
-
-                    <button onclick="cerrarModal_Pedidos()" class="group flex items-center gap-2 px-3 py-1 border border-red-500/30 bg-red-500/10 hover:bg-red-500 hover:border-red-400 transition-all duration-300 rounded-lg ml-4">
-                        <span class="text-[9px] font-black text-red-500 group-hover:text-white tracking-widest">CERRAR TERMINAL</span>
-                        <i class="fas fa-times text-red-500 group-hover:text-white text-xs"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div id="modal-contenido" class="custom-scroll relative bg-slate-950/40">                
-                <!----Aqupi se inserta la tabla---->
+        <div class="p-4 flex flex-col md:flex-row justify-between items-center gap-4 relative z-10" 
+             style="background: rgba(0, 242, 254, 0.04); border-bottom: 1px solid rgba(0, 242, 254, 0.25);">
+            
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-7 animate-pulse" style="background: #00f2fe; box-shadow: 0 0 10px #00f2fe;"></div> 
+                <h3 id="modal-titulo" class="text-white text-sm font-bold tracking-[3px] uppercase" style="font-family: 'Orbitron', sans-serif;">
+                    PEDIDOS TERMINAL
+                </h3>
             </div>
             
-            <div class="absolute bottom-0 right-0 w-24 h-1 bg-lex-gold"></div>
-            <div class="absolute bottom-0 right-0 w-1 h-24 bg-lex-gold"></div>
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+                <div class="flex items-center gap-3 px-3 py-1.5 rounded" 
+                     style="background: rgba(0,0,0,0.4); border: 1px solid rgba(0, 242, 254, 0.4); box-shadow: inset 0 0 8px rgba(0,242,254,0.1);">
+                    <i class="fas fa-terminal text-[11px]" style="color: #00f2fe;"></i>
+                    <input type="text" id="filtro-tabla-global" onkeyup="filtrarTabla()" placeholder="BUSCAR EN MATRIZ..." 
+                           class="bg-transparent border-none text-[11px] focus:outline-none uppercase w-44 tracking-widest placeholder-slate-600 text-white"
+                           style="font-family: 'Share Tech Mono', monospace;">
+                </div>
+
+                <button onclick="cerrarModal_Pedidos()" class="group flex items-center gap-2 px-4 py-1.5 border transition-all duration-300 rounded" 
+                        style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08);">
+                    <span class="text-[10px] font-bold tracking-widest text-red-400 group-hover:text-white" style="font-family: 'Share Tech Mono', monospace;">
+                        CERRAR TERMINAL
+                    </span>
+                    <i class="fas fa-times text-red-400 group-hover:text-white text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="modal-contenido" class="custom-scroll relative overflow-y-auto p-4" style="max-height: calc(92vh - 75px); background: rgba(4, 11, 28, 0.3);"> 
+            </div>
+        
+        <div class="absolute bottom-0 right-0 w-16 h-[1px]" style="background: #00f2fe; box-shadow: 0 0 8px #00f2fe;"></div>
+        <div class="absolute bottom-0 right-0 w-[1px] h-16" style="background: #00f2fe; box-shadow: 0 0 8px #00f2fe;"></div>
     </div>
 </div>
-<div id="overlay-carga" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.9); z-index: 10000; justify-content: center; align-items: center;">
+
+<div id="overlay-carga" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.9); z-index: 100000; justify-content: center; align-items: center;">
   <div class="loader">
     <div class="intern"></div>
     <div class="external-shadow">
