@@ -356,7 +356,7 @@
         <section class="dashboard-grid">
 
             <div class="dashboard-grid__main" id="headbarNav">  
-                <li class="nav-item theme-orange" data-accordion>
+                <li class="nav-item theme-orange" data-accordion>   <!-- Botón Pedidos con submenú -->
                     <div class="nav-btn__wrap">
                         <button type="button" class="nav-btn" data-toggle="pedidos" aria-expanded="false" aria-controls="submenu-pedidos">
                             <span class="nav-btn__icon" aria-hidden="true">
@@ -424,16 +424,52 @@
                     </div>
                 </li>      
 
-                <li class="nav-item theme-yellow">
+                <li class="nav-item theme-yellow" data-accordion>  <!---semanal--->
                     <div class="nav-btn__wrap">
-                        <a href="#" class="nav-btn" data-nav="semanal" onclick="abrirModalSemanal()">
-                            <span class="nav-btn__icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
-                            </span>
-                            <span class="nav-btn__label">Semanal</span>
-                        </a>
-                        <span class="nav-btn__glow-line"></span>
-                    </div>
+                            <button type="button" class="nav-btn" data-toggle="semanal" aria-expanded="false" aria-controls="submenu-semanal">
+                                <span class="nav-btn__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                                </span>
+                                <span class="nav-btn__label">Semanal</span>
+                                <span class="nav-btn__chevron" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                </span>
+                            </button>
+                            <span class="nav-btn__glow-line"></span>
+                        </div>
+                        
+                        <div class="submenu" id="submenu-semanal" role="region" aria-label="Submenú Semanal">
+                            <div class="submenu__inner">
+                                <svg class="submenu__lines" id="lines-semanal" aria-hidden="true"></svg>
+                                <ul class="submenu__list">
+                                    
+                                    <li>
+                                        <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                            <a href="#" class="nav-btn nav-btn--sub" data-nav="ver-estado" onclick="abrirModalVerEstado()">
+                                                <span class="nav-btn__icon" aria-hidden="true">
+                                                    <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                </span>
+                                                <span class="nav-btn__label">Ver Estado</span>
+                                            </a>
+                                            <span class="nav-btn__glow-line"></span>
+                                        </div>
+                                    </li>
+                                    
+                                    <li>
+                                        <div class="nav-btn__wrap nav-btn__wrap--sub">
+                                            <a href="#" class="nav-btn nav-btn--sub" data-nav="historial" onclick="abrirModalHistorial()">
+                                                <span class="nav-btn__icon" aria-hidden="true">
+                                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                </span>
+                                                <span class="nav-btn__label">Historial</span>
+                                            </a>
+                                            <span class="nav-btn__glow-line"></span>
+                                        </div>
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                        </div>
                 </li>
             </div>   
 
