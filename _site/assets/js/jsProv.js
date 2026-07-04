@@ -2974,7 +2974,7 @@ function renderizarTablaHistorialGeneral(pedidos) {
 
 
 /*-------------------SECCION DATOS SEMANALES------------------------------*/
-var navegacionSemanal = {
+/*--var navegacionSemanal = {
     semanaActual: null,
     diaActual: null
 };
@@ -3609,7 +3609,7 @@ window.verPedidoDirecto = async function(idPedido) {
             icon: 'error', title: 'Error de Renderizado', text: 'No se pudo procesar adecuadamente la estructura del pedido.', background: '#1e293b', color: '#cbd5e1'
         });
     }
-};
+};--*/
 
 console.log("✅ N.I.C.O. Terminal: Carga finalizada sin errores críticos.");
 

@@ -776,10 +776,8 @@ async function cargarTopProductoCard() {
 }
 
 //PRODUCTOS
-/**
- * Modifica el DOM de la Card 2 aplicando jerarquía de tamaños en color Naranja
- * @param {Object} datos - Objeto con posicion, producto y unidades
- */
+
+
 function renderizarTopProducto(datos) {
   const contenedorValor = document.querySelector('.orange-glow .card-value-container');
   
@@ -817,9 +815,7 @@ function renderizarTopProducto(datos) {
   }
 }
 
-/**
- * Función reservada para el modal extendido de productos
- */
+
 async function abrirModalRankingProductos() {
   // Loader intermitente con look naranja
   Swal.fire({
@@ -924,10 +920,7 @@ async function abrirModalRankingProductos() {
   }
 }
 
-/**
- * Genera la descarga local compatible con Excel para la matriz de Productos
- * @param {Array} matriz 
- */
+
 function ejecutarDescargaLocalExcelProductos(matriz) {
   let contenidoHTML = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -989,9 +982,7 @@ async function cargarTopPedidosCard() {
   }
 }
 
-/**
- * Renderiza el cuerpo de la Card sin aplicar parametrizaciones de formato
- */
+
 function renderizarTopPedidos(datos) {
   const contenedorValor = document.querySelector('.red-glow .card-value-container');
   if (!contenedorValor) return;
@@ -1028,9 +1019,7 @@ function renderizarTopPedidos(datos) {
   }
 }
 
-/**
- * Despliega la terminal de reportes con matriz dinámica de 4 columnas (AE:AH)
- */
+
 async function abrirModalRankingPedidos() {
   Swal.fire({
     title: 'ACCEDIENDO AL SISTEMA...',
@@ -1132,9 +1121,7 @@ async function abrirModalRankingPedidos() {
   }
 }
 
-/**
- * Motor de descarga local nativo para la matriz de Pedidos
- */
+
 function ejecutarDescargaLocalExcelPedidos(matriz) {
   let contenidoHTML = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -2267,3 +2254,642 @@ if (document.readyState === 'loading') {
 } else {
     initHeadbarAccordion();
 }
+
+
+/*-------------------SECCION DATOS SEMANALES------------------------------*/
+var navegacionSemanal = {
+    semanaActual: null,
+    diaActual: null
+};
+
+function abrirModalReportes() {
+    const modal = document.getElementById('modal-reportes-lex');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function cerrarModalReportes() {
+    const modal = document.getElementById('modal-reportes-lex');
+    if (modal) {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        
+        const contenido = document.getElementById('contenido-reporte-lex');
+        if (contenido) contenido.innerHTML = ''; 
+    }
+}
+
+window.abrirModalSemanal = async function() {
+    console.log("🚩 INICIO: abrirModalSemanal");
+    if (typeof abrirModalReportes === "function") abrirModalReportes(); 
+    if (typeof mostrarCargandoLex === "function") mostrarCargandoLex(true);
+
+    try {
+        const res = await callGoogleScript('obtenerDatosReporteSemanal');
+        console.log("📦 Respuesta bruta recibida (Mes):", res);
+        
+        let data = res?.reply?.reply || res?.reply || res;
+        console.log("🔍 Data real extraída (Mes):", data);
+
+        let filasRaw = data?.filas || (Array.isArray(data) ? data : []);
+        let semanasRelativas = data?.semanasRelativas || [];
+
+        if (filasRaw.length > 0 && (filasRaw[0]?.idprov === 'ID PROV' || filasRaw[0]?.[0] === 'ID PROV')) {
+            filasRaw.shift();
+        }
+
+        console.log("📊 Filas listas para renderizar (Mes):", filasRaw.length);
+
+        const contenedor = document.getElementById('contenido-reporte-lex');
+        if (filasRaw.length === 0) {
+            if (contenedor) {
+                contenedor.innerHTML = `<div class="text-slate-400 text-center py-10 font-mono text-xs uppercase tracking-wider">No hay datos disponibles para el reporte mensual.</div>`;
+            }
+            return;
+        }
+
+        if (typeof renderizarVistaMes === "function") {
+            renderizarVistaMes({ filas: filasRaw, semanasRelativas: semanasRelativas });
+        }
+
+    } catch (err) {
+        console.error("❌ ERROR CRÍTICO en abrirModalSemanal:", err);
+    } finally {
+        if (typeof mostrarCargandoLex === "function") mostrarCargandoLex(false);
+    }
+};
+
+/*--function renderizarVistaMes(response) {
+    const data = response?.reply?.filas ? response.reply : response;
+    const { filas, semanasRelativas } = data;
+    
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+    
+    if (titulo) titulo.innerText = "REPORTE MENSUAL DE ENTREGAS";
+
+    const semanaHoy = getWeekNumber(new Date());
+    const semanasHead = (semanasRelativas || []).filter(s => s !== "" && s !== null && s !== undefined);
+
+    const semanasNumeros = semanasHead.map((s, i) => {
+        if (/^\d{1,2}$/.test(String(s).trim())) {
+            return parseInt(s);
+        } else {
+            const fechaSemana = new Date(s);
+            if (!isNaN(fechaSemana.getTime())) {
+                return getWeekNumber(fechaSemana);
+            } else {
+                const match = s.toString().match(/\d+/);
+                return match ? parseInt(match[0]) : (i + 1);
+            }
+        }
+    });
+
+    let html = `
+    <div class="lex-report-toolbar p-3 bg-slate-900/40 rounded-lg mb-4 flex gap-4 items-center border border-slate-800/40">
+        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-btn-nav-header px-3 py-1.5 bg-cyan-950/40 text-cyan-400 border border-cyan-800/50 rounded text-[10px] font-bold hover:bg-cyan-900/40 transition-all">
+            <i class="fas fa-sync-alt mr-1"></i> REFRESCAR HOJA
+        </button>
+        <span class="text-slate-500 font-mono text-[10px] tracking-widest uppercase">
+            Ecosistema: Semana Actual <b class="text-emerald-400 ml-1 font-bold">${semanaHoy}</b>
+        </span>
+    </div>
+
+    <div class="overflow-x-auto custom-scroll border border-slate-800/60 rounded-lg">
+        <table class="lex-table-report w-full text-left border-collapse text-[11px]">
+            <thead>
+                <tr class="bg-arena-dark text-xs font-black text-amber-950 uppercase tracking-widest border-b-2 border-amber-800/40">
+                    <th class="p-4 w-72 sticky left-0 z-10 shadow-[3px_0_6px_-2px_rgba(233, 180, 95, 0.15)] sticky-arena">Proveedor</th>
+                    ${semanasNumeros.map(numSemanaColumna => {
+                        const esActual = (numSemanaColumna === semanaHoy);
+                        const claseSemana = esActual ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-slate-950/40 text-slate-400 border-slate-800';
+
+                        return `
+                        <th class="p-4 text-center w-36"">
+                            <button onclick="verDetalleSemana(${numSemanaColumna})" 
+                                    class="w-full py-1.5 px-2 rounded border flex flex-col items-center justify-center transition-all hover:border-cyan-500/50 group ${claseSemana}">
+                                <span class="text-[7px] text-slate-500 uppercase tracking-tight group-hover:text-cyan-400 transition-colors"><i class="fi fi-br-referral-link-arrow"></i></span>
+                                <span class="text-[10px] font-mono font-bold mt-0.5">SEM ${numSemanaColumna}</span>
+                            </button>
+                        </th>`;
+                    }).join('')}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-amber-800/20 text-base">
+                ${filas.map(f => {
+                    const idprov = f?.idprov || f?.[0] || '';
+                    const nombre = f?.nombre || f?.[1] || 'SIN NOMBRE';
+                    if (!nombre || nombre === 'NOMBRE PROVEEDOR' || idprov === 'ID PROV') return '';
+
+                    return `
+                    <tr class="hover:bg-arena-dark/40 hover:border-y-2 hover:border-amber-700 transition-all duration-150 group">
+                        <td class="p-4 bg-transparent sticky left-0 z-10 shadow-[3px_0_6px_-2px_rgba(233, 180, 95, 0.15)] sticky-arena group-hover:bg-transparent">
+                            <div class="block text-lg font-black text-amber-950 tracking-tight">ID: ${idprov}</div>
+                            <div class="block text-xs font-bold text-amber-800 mt-0.5">${nombre}</div>
+                        </td>
+                        ${semanasNumeros.map((numSemanaColumna, idx) => {
+                            const val = f[`s${idx + 1}`] !== undefined ? f[`s${idx + 1}`] : f[idx + 2];
+                            const esFuturo = numSemanaColumna > semanaHoy;
+                            return `<td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(val, esFuturo)}</td>`;
+                        }).join('')}
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>
+    </div>`;
+
+    if (contenedor) contenedor.innerHTML = html;
+}
+
+async function verDetalleSemana(numSemana) {
+    if (!numSemana) return;
+    mostrarCargandoLex(true);
+    
+    try {
+        const res = await callGoogleScript('procesarFiltradoHoja', { 
+            param: parseInt(numSemana), 
+            tipo: "SEMANA" 
+        });
+        console.log("📦 Respuesta bruta recibida (Semana):", res);
+
+        let data = res?.reply?.reply || res?.reply || res?.filas || res;
+        if (!Array.isArray(data)) data = [];
+
+        renderizarVistaSemanal(data, numSemana); 
+        
+    } catch (e) {
+        console.error("❌ Error en verDetalleSemana:", e);
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+function renderizarVistaSemanal(data, numSemana) {
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+    
+    if (titulo) titulo.innerText = `PLANIFICACIÓN SEMANAL: SEMANA ${numSemana}`;
+    
+    const dias = [
+        { corto: 'LUN', largo: 'LUNES' },
+        { corto: 'MAR', largo: 'MARTES' },
+        { corto: 'MIE', largo: 'MIERCOLES' },
+        { corto: 'JUE', largo: 'JUEVES' },
+        { corto: 'VIE', largo: 'VIERNES' },
+        { corto: 'SAB', largo: 'SABADO' }
+    ];
+    
+    let html = `
+    <div class="lex-report-toolbar mb-4 flex gap-2">
+        <button onclick="abrirModalSemanal()" class="px-3 py-1.5 text-[10px] font-bold bg-emerald-950/30 text-emerald-400 border border-emerald-800/40 rounded hover:bg-emerald-900/30 transition-all">← VOLVER AL MES</button>
+        <button onclick="ejecutarSincronizacionRelampago()" class="px-3 py-1.5 text-[10px] font-bold bg-cyan-950/30 text-cyan-400 border border-cyan-800/40 rounded hover:bg-cyan-900/30 transition-all">
+            <i class="fas fa-sync-alt mr-1"></i> REFRESCAR
+        </button>
+    </div>
+    <div class="overflow-x-auto custom-scroll border border-slate-800/60 rounded-lg">
+        <table class="lex-table-report w-full text-left border-collapse text-[11px]">
+            <thead>
+                <tr class="bg-slate-900 border-b border-slate-800">
+                    <th class="p-2.5 text-amber-500 font-bold uppercase tracking-wider min-w-[200px]">Proveedor / Cuenta</th>
+                    ${dias.map(d => `
+                        <th class="p-1 text-center min-w-[80px]">
+                            <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="w-full py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded font-mono font-bold text-[10px] hover:border-amber-400 transition-colors">
+                                ${d.corto}
+                            </button>
+                        </th>
+                    `).join('')}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-900/60 bg-slate-950/20">`;
+    
+    if (!data || data.length === 0) {
+        html += `<tr><td colspan="7" class="p-10 text-center text-slate-500 font-mono text-xs">No hay datos disponibles para esta semana.</td></tr>`;
+    } else {
+        const filasFiltradas = data.filter(f => {
+            const id = f?.idProveedor || f?.idprov || f?.[0] || '';
+            return id !== 'ID PROV' && id !== '';
+        });
+
+        filasFiltradas.forEach(f => {
+            const idprov = f?.idProveedor || f?.idprov || f?.[0] || '';
+            const nombre = f?.nombreProveedor || f?.nombre || f?.[1] || 'SIN NOMBRE';
+            const s1 = f?.s1 !== undefined ? f.s1 : f?.[2] || 'NO';
+            const s2 = f?.s2 !== undefined ? f.s2 : f?.[3] || 'NO';
+            const s3 = f?.s3 !== undefined ? f.s3 : f?.[4] || 'NO';
+            const s4 = f?.s4 !== undefined ? f.s4 : f?.[5] || 'NO';
+            const s5 = f?.s5 !== undefined ? f.s5 : f?.[6] || 'NO';
+            const s6 = f?.s6 !== undefined ? f.s6 : f?.[7] || 'NO';
+            
+            html += `
+            <tr class="hover:bg-slate-900/30 transition-colors">
+                <td class="p-2.5 border-r border-slate-900/40">
+                    <div class="inline-block px-1.5 py-0.5 text-[8px] font-mono rounded bg-slate-900 text-slate-400 border border-slate-800 mb-1">ID: ${idprov}</div>
+                    <div class="lex-nombre-prov font-bold text-slate-300 uppercase tracking-wide">${nombre}</div>
+                </td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s1, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s2, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s3, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s4, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s5, false)}</td>
+                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s6, false)}</td>
+            </tr>`;
+        });
+    }
+    
+    html += `</tbody></table></div>`;
+    if (contenedor) contenedor.innerHTML = html;
+}
+
+async function verDetalleDia(nombreDia, numSemana) {
+    mostrarCargandoLex(true);
+    
+    if (typeof navegacionSemanal !== 'undefined') {
+        navegacionSemanal.diaActual = nombreDia;
+    }
+    
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    const titulo = document.getElementById('reportesTitulo');
+
+    try {
+        const res = await callGoogleScript('procesarFiltradoHoja', { 
+            param: nombreDia, 
+            tipo: "DIA" 
+        });
+        
+        let data = res?.reply?.reply || res?.reply || res?.filas || res;
+        if (!Array.isArray(data)) data = [];
+
+        if (data.length > 0 && (data[0]?.idProveedor === 'ID PROV' || data[0]?.[0] === 'ID PROV')) {
+            data.shift();
+        }
+        
+        if (titulo) titulo.innerText = `DETALLE: ${nombreDia} - SEMANA ${numSemana}`;
+
+        let html = `
+        <div class="lex-report-toolbar mb-4 flex gap-2">
+            <button onclick="verDetalleSemana(${numSemana})" class="px-3 py-1.5 text-[10px] font-bold bg-emerald-950/30 text-emerald-400 border border-emerald-800/40 rounded hover:bg-emerald-900/30 transition-all">← VOLVER A SEMANA</button>
+            <button onclick="abrirModalSemanal()" class="px-3 py-1.5 text-[10px] font-bold bg-amber-950/30 text-amber-400 border border-amber-800/40 rounded hover:bg-amber-900/30 transition-all">INICIO MES</button>
+        </div>
+        <div class="overflow-x-auto custom-scroll border border-slate-800/60 rounded-lg">
+            <table class="lex-table-report w-full text-left border-collapse text-[11px]">
+                <thead>
+                    <tr class="bg-slate-900 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[9px]">
+                        <th class="p-2.5">PROVEEDOR</th>
+                        <th class="p-2.5 text-center">ESTADO</th>
+                        <th class="p-2.5 text-center">FECHA REGISTRO</th>
+                        <th class="p-2.5 text-center">ID PEDIDO</th>
+                        <th class="p-2.5">OBSERVACIONES</th>
+                        <th class="p-2.5 text-center">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-900/60 bg-slate-950/20">`;
+
+        if (data.length === 0) {
+            html += `<tr><td colspan="6" class="p-10 text-center text-slate-500 font-mono text-xs">No hay pedidos registrados para este día.</td></tr>`;
+        } else {
+            data.forEach(item => {
+                const idProv = item?.idProveedor || item?.idprov || item?.[0] || '';
+                const nombre = item?.nombreProveedor || item?.nombre || item?.[1] || 'SIN NOMBRE';
+                const estado = item?.estado || item?.[2] || 'NO';
+                const fechaReg = item?.fechaRegistro || item?.fecha || item?.[3] || ''; 
+                const idPedido = item?.idPedido || item?.[4] || '';
+                const observaciones = item?.observaciones || item?.[5] || '';
+                const fechaReprog = item?.nuevaFechaReprog || item?.fechaReprog || item?.[6] || '';
+
+                let infoFechaHtml = `<div class="font-mono text-slate-300">${fechaReg || '---'}</div>`;
+                if (fechaReprog && estado.toString().toUpperCase().includes("REPRO")) {
+                    infoFechaHtml += `<div class="text-[9px] text-amber-400 font-mono mt-0.5"><i class="fas fa-calendar-alt mr-1"></i>Reprog: ${fechaReprog}</div>`;
+                }
+
+                html += `
+                <tr class="hover:bg-slate-900/30 transition-colors">
+                    <td class="p-2.5 align-middle">
+                        <div class="inline-block px-1.5 py-0.5 text-[8px] font-mono rounded bg-slate-900 text-slate-400 border border-slate-800 mb-1">ID: ${idProv}</div>
+                        <div class="font-bold text-slate-300 uppercase tracking-wide">${nombre}</div>
+                    </td>
+                    <td class="p-2 text-center align-middle">${formatearEstado(estado)}</td>
+                    <td class="p-2 text-center align-middle">${infoFechaHtml}</td>
+                    <td class="p-2 text-center align-middle text-slate-400 font-mono font-bold text-xs">#${idPedido}</td>
+                    <td class="p-2 align-middle max-width-[200px] text-slate-400 text-[10px] leading-relaxed white-space-normal break-words">
+                        ${observaciones || '<span class="text-slate-600 italic">Sin observaciones</span>'}
+                    </td>
+                    <td class="p-2 text-center align-middle">
+                        <button onclick="verPedidoDirecto('${idPedido}')" class="px-2 py-1 text-[10px] font-bold bg-purple-950/40 text-purple-400 border border-purple-800/50 rounded hover:bg-purple-900/40 transition-colors">
+                            <i class="fas fa-search mr-1"></i> Ver
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        html += `</tbody></table></div>`;
+        if (contenedor) contenedor.innerHTML = html;
+
+    } catch (e) {
+        console.error("❌ Error en verDetalleDia:", e);
+        if (contenedor) contenedor.innerHTML = `<div class="text-red-400 font-mono text-xs p-5">Error al traer detalle diario: ${e.message}</div>`;
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+function getWeekNumber(d) {
+    const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    target.setUTCDate(target.getUTCDate() + 4 - (target.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+    return Math.ceil((((target - yearStart) / 86400000) + 1) / 7);
+}
+
+function formatearEstado(e, esFuturo = false) {
+    const txt = e ? e.toString().toUpperCase().trim() : "";
+    const esNo = !txt || txt === "NO" || txt === "❌ NO";
+
+    if (esNo && esFuturo) return ""; 
+
+    const estiloBase = "display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: monospace; letter-spacing: 0.5px; border: 1px solid;";
+
+    if (esNo) {
+        return `<span style="${estiloBase} background: rgba(239, 68, 68, 0.1); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);">❌ NO</span>`;
+    }
+    if (txt.includes("SI") || txt.includes("✅") || txt.includes("OK")) {
+        return `<span style="${estiloBase} background: rgba(34, 197, 94, 0.1); color: #4ade80; border-color: rgba(34, 197, 94, 0.4); box-shadow: 0 0 8px rgba(34, 197, 94, 0.2);">✅ OK</span>`;
+    }
+    if (txt.includes("REPRO") || txt.includes("⚠️")) {
+        return `<span style="${estiloBase} background: rgba(234, 179, 8, 0.1); color: #facc15; border-color: rgba(234, 179, 8, 0.4); box-shadow: 0 0 8px rgba(234, 179, 8, 0.2);">⚠️ REPROG</span>`;
+    }
+
+    return `<span style="${estiloBase} background: #334155; color: #cbd5e1; border-color: #475569;">${txt}</span>`;
+}
+
+function mostrarCargandoLex(show) {
+    const contenedorPadre = document.getElementById('modal-reportes-lex') || document.getElementById('contenido-reporte-lex');
+    if (!contenedorPadre) return;
+    
+    if (show) {
+        if (document.getElementById('lex-loader-overlay')) return;
+
+        const loader = document.createElement('div');
+        loader.id = "lex-loader-overlay";
+        loader.className = "absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center z-50 rounded-lg animate-fade-in";
+        loader.innerHTML = `
+            <div class="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <span class="text-amber-500 font-mono text-[9px] tracking-[2px] uppercase animate-pulse">ACCEDIENDO AL ARCHIVO MAESTRO...</span>`;
+        contenedorPadre.appendChild(loader);
+    } else {
+        const loader = document.getElementById('lex-loader-overlay');
+        if (loader) loader.remove();
+    }
+}
+
+async function abrirArchivoPedido(idPedido) {
+    mostrarCargandoLex(true);
+    try {
+        const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
+        const data = res?.reply || res;
+
+        if (!data) {
+            alert(`SISTEMA: No se encontró ningún documento asociado al pedido #${idPedido}`);
+            return;
+        }
+
+        const visor = document.getElementById('visor-pdf-lex');
+        const iframe = document.getElementById('pdf-frame-lex');
+        if (!visor || !iframe) return;
+        
+        iframe.style.display = 'none';
+        let visorCSV = document.getElementById('visor-csv-container');
+        if (!visorCSV) {
+            visorCSV = document.createElement('div');
+            visorCSV.id = 'visor-csv-container';
+            visor.appendChild(visorCSV);
+        }
+        visorCSV.innerHTML = '';
+        visorCSV.style.display = 'none';
+
+        if (data.tipo === 'pdf') {
+            const blob = base64ToBlob(data.contenido, 'application/pdf');
+            const url = URL.createObjectURL(blob);
+            iframe.src = url;
+            iframe.style.display = 'block';
+            visor.dataset.currentBlob = url;
+        } else if (data.tipo === 'csv') {
+            visorCSV.innerHTML = `
+                <div class="p-4 text-slate-300">
+                    <h3 class="text-amber-500 font-bold font-mono text-xs mb-3 uppercase tracking-wider">VISTA PREVIA CSV: ${data.nombre}</h3>
+                    <div class="lex-csv-wrapper overflow-auto border border-slate-800 rounded bg-slate-950 p-2">${data.contenido}</div>
+                </div>`;
+            visorCSV.style.display = 'block';
+        }
+
+        visor.style.display = 'flex';
+    } catch (e) {
+        console.error("❌ Fallo crítico en canal de visualización:", e);
+        alert("Error de comunicación con el archivo.");
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+function cerrarVisorLex() {
+    const visor = document.getElementById('visor-pdf-lex');
+    const iframe = document.getElementById('pdf-frame-lex');
+    if (!visor || !iframe) return;
+    
+    if (visor.dataset.currentBlob) {
+        URL.revokeObjectURL(visor.dataset.currentBlob);
+        delete visor.dataset.currentBlob;
+    }
+    iframe.src = "";
+    visor.style.display = 'none';
+}
+
+async function exportarVistaActualALex() {
+    const contenedor = document.getElementById('contenido-reporte-lex') || document.querySelector('.tab-pane.active') || document.body;
+    const tabla = contenedor?.querySelector('table');
+    
+    if (!tabla) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin datos',
+            text: 'No se detectó ninguna tabla activa en pantalla para exportar.',
+            background: '#1e293b', color: '#cbd5e1'
+        });
+        return;
+    }
+
+    mostrarCargandoLex(true);
+
+    try {
+        const filas = [];
+        const headers = [];
+        let colAccionesIdx = -1;
+        
+        tabla.querySelectorAll('thead th').forEach((th, index) => {
+            const textoHeader = th.innerText.trim();
+            if (['ACCIONES', 'ACCION'].includes(textoHeader.toUpperCase())) {
+                colAccionesIdx = index; 
+            } else {
+                headers.push(textoHeader);
+            }
+        });
+        filas.push(headers);
+
+        tabla.querySelectorAll('tbody tr').forEach(tr => {
+            const fila = [];
+            tr.querySelectorAll('td').forEach((td, index) => {
+                if (index === colAccionesIdx) return;
+                const badge = td.querySelector('span');
+                let textoCelda = badge ? badge.innerText.trim() : td.innerText.trim();
+                fila.push(textoCelda.replace(/\n|\r/g, " "));
+            });
+            if (fila.length > 0) filas.push(fila);
+        });
+
+        const elTitulo = document.getElementById('titulo-reporte-lex') || document.querySelector('.active h2') || document.querySelector('.active h3');
+        let nombreArchivo = elTitulo ? elTitulo.innerText.trim() : 'Reporte_Pedidos_Vista_Actual';
+        nombreArchivo = nombreArchivo.toLowerCase().replace(/[^a-z0-9áéíóúñ_-]/gi, '_');
+
+        const contenidoCSV = "\uFEFF" + filas.map(f => 
+            f.map(celda => `"${celda.replace(/"/g, '""')}"`).join(";")
+        ).join("\n");
+
+        const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
+        const urlDescarga = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = urlDescarga;
+        link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`; 
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(urlDescarga);
+
+    } catch (e) {
+        console.error("❌ Falló el wrapper de exportación CSV:", e);
+        Swal.fire({
+            icon: 'error', title: 'Error de Exportación', text: 'Ocurrió un inconveniente al empaquetar los datos.', background: '#1e293b', color: '#cbd5e1'
+        });
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+function base64ToBlob(base64, type) {
+    const bin = atob(base64);
+    const len = bin.length;
+    const arr = new Uint8Array(len);
+    for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: type });
+}
+
+async function ejecutarSincronizacionRelampago() {
+    mostrarCargandoLex(true);
+    try {
+        const res = await callGoogleScript('verificarReporteSemanal');
+        if (res?.status === "success") {
+            await abrirModalSemanal();
+        }
+    } catch (err) {
+        console.error("❌ Falla en Sync:", err);
+    } finally {
+        mostrarCargandoLex(false);
+    }
+}
+
+window.verPedidoDirecto = async function(idPedido) {
+    if (!idPedido || idPedido.trim() === "") {
+        Swal.fire({ icon: 'warning', title: 'Atención', text: 'ID de pedido no válido.', background: '#1e293b', color: '#cbd5e1' });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Buscando registro...',
+        html: `Consultando orden <b style="color:#00f0ff">#${idPedido}</b> en el ecosistema...`,
+        background: '#1e293b', color: '#cbd5e1',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const response = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
+        const laRespuestaReal = response?.reply || response;
+
+        if (!laRespuestaReal || laRespuestaReal.status === 'error') {
+            Swal.fire({
+                icon: 'info', title: 'Información del Sistema', text: laRespuestaReal?.message || 'No se localizó el pedido.', background: '#1e293b', color: '#cbd5e1', confirmButtonColor: '#475569'
+            });
+            return;
+        }
+
+        const resData = laRespuestaReal.data || laRespuestaReal;
+        const proveedor = resData.proveedor || '---';
+        const productos = resData.productos || '---';
+        const estado = resData.estado || '---';
+        const fechaRegistro = resData.fechaRegistro || '---';
+        const observaciones = resData.observaciones || 'Sin comentarios registrados.';
+        const nuevaFechaReprog = resData.nuevaFechaReprog || '';
+        const origenHoja = laRespuestaReal.origen || 'Ecosistema';
+
+        let colorEstado = '#34d399'; 
+        if (estado.toUpperCase().includes('REPRO')) colorEstado = '#eab308';
+        if (estado.toUpperCase().includes('PEND')) colorEstado = '#38bdf8';
+
+        Swal.fire({
+            title: `<span style="font-size:11px; color:#64748b; letter-spacing:1.5px; font-weight:bold;">DETALLE DE PEDIDO • ${origenHoja.toUpperCase()}</span><br>
+                    <span style="color:#00f0ff; font-family:monospace; font-size:22px;">#${idPedido}</span>`,
+            html: `
+                <div style="text-align: left; background: rgba(15, 23, 42, 0.7); padding: 16px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; margin-top:10px;">
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">PROVEEDOR:</span>
+                        <span style="color: #f8fafc; font-weight:600; text-transform:uppercase;">${proveedor}</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">PRODUCTOS / DETALLE:</span>
+                        <div style="background: rgba(15, 23, 42, 0.9); padding: 8px 12px; border-radius: 4px; color: #cbd5e1; border-left: 3px solid #00f0ff; font-size: 12.5px;">
+                            ${productos}
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">ESTADO:</span>
+                        <span style="background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius:4px; color:${colorEstado}; font-weight: bold; font-size: 11px; font-family:monospace;">
+                            ${estado}
+                        </span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">REGISTRO:</span>
+                        <span style="color: #cbd5e1; font-family:monospace;">${fechaRegistro}</span>
+                    </div>
+                    ${nuevaFechaReprog && !["---", ""].includes(nuevaFechaReprog) ? `
+                    <div style="margin-bottom: 10px; border-left: 3px solid #eab308; padding-left: 8px; background: rgba(234, 179, 8, 0.05); padding-top: 4px; padding-bottom: 4px;">
+                        <span style="color: #eab308; font-weight: bold; display:inline-block; width:110px;">REPROGRAMADO:</span>
+                        <span style="color: #fef08a; font-weight: bold; font-family:monospace;">${nuevaFechaReprog}</span>
+                    </div>` : ''}
+                    <hr style="border:0; border-top: 1px dashed #334155; margin: 14px 0;">
+                    <div>
+                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">OBSERVACIONES:</span>
+                        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; color: #94a3b8; font-style: italic; min-height: 40px; word-break: break-word; border: 1px solid rgba(255,255,255,0.01);">
+                            ${observaciones}
+                        </div>
+                    </div>
+                </div>`,
+            background: '#1e293b', color: '#cbd5e1',
+            confirmButtonText: 'ENTENDIDO', confirmButtonColor: '#475569',
+            customClass: {
+                container: 'swal-pedido-container', // <- ¡Esto destruye el bug de capas!
+                popup: 'swal-pedido'
+            }
+        });
+    } catch (error) {
+        console.error("❌ Error en renderizado frontend:", error);
+        Swal.fire({
+            icon: 'error', title: 'Error de Renderizado', text: 'No se pudo procesar adecuadamente la estructura del pedido.', background: '#1e293b', color: '#cbd5e1'
+        });
+    }
+};--*/

@@ -445,7 +445,7 @@
                                     
                                     <li>
                                         <div class="nav-btn__wrap nav-btn__wrap--sub">
-                                            <a href="#" class="nav-btn nav-btn--sub" data-nav="ver-estado" onclick="abrirModalVerEstado()">
+                                            <a href="#" class="nav-btn nav-btn--sub" data-nav="ver-estado" onclick="abrirModalSemanal()">
                                                 <span class="nav-btn__icon" aria-hidden="true">
                                                     <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                                 </span>
@@ -791,36 +791,112 @@
   </div>
 </div>
 
-<div id="modal-reportes-lex" class="modal-lex-overlay">
-    <div class="lex-modal-reportes-content">
-        <div class="lex-modal-reportes-header">
-            <div class="lex-header-group">
-                <h3 id="reportesTitulo">AUDITORIA DE PROVEEDORES</h3>
+
+
+
+<div id="modal-reportes-lex" class="modal-lex-overlay bg-arpillera" role="dialog" aria-modal="true" aria-labelledby="reportesTitulo">
+    <div class="lex-modal-reportes-content bg-arpillera">
+        
+        <div class="lex-modal-reportes-header bg-arpillera">
+            <div class="lex-header-group bg-arpillera">
+                <h3 id="reportesTitulo" class="lex-title bg-arpillera">
+                    CONTROL SEMANAL DE PROVEEDORES
+                </h3>
+                <p class="lex-subtitle">Gestión de estados y logística de depósito</p>
             </div>
-            <button onclick="cerrarModalReportes()" class="lex-btn-close">&times;</button>
+            <button onclick="cerrarModalReportes()" class="lex-btn-close" aria-label="Cerrar tablero">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div> 
 
-        <div id="toolbar-reportes" class="lex-toolbar">
-            <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-neon-blue">
-                <i class="fas fa-sync-alt"></i> SYNC
-            </button>
-            <button onclick="exportarVistaActualALex()" id="btn-descarga-reporte" class="lex-btn-nav lex-neon-green">
-                <i class="fas fa-file-excel"></i> EXPORTAR
-            </button>
+        <div id="toolbar-reportes" class="lex-toolbar bg-arpillera">
+            <div class="lex-filter-group">
+                <select id="filtro-mes-lex" class="lex-select">
+                    <option value="7">Julio 2026</option>
+                    <option value="8">Agosto 2026</option>
+                </select>
+                <select id="filtro-semana-lex" class="lex-select">
+                    <option value="1">Semana 1 (Actual)</option>
+                    <option value="2">Semana 2</option>
+                    <option value="3">Semana 3</option>
+                    <option value="4">Semana 4</option>
+                    <option value="5">Semana 5</option>
+                </select>
+            </div>
+
+            <div class="lex-actions-group">
+                <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-neon-blue">
+                    <i class="fas fa-sync-alt"></i> SYNC
+                </button>
+                <button onclick="exportarVistaActualALex()" id="btn-descarga-reporte" class="lex-btn-nav lex-neon-green">
+                    <i class="fas fa-file-excel"></i> EXPORTAR
+                </button>
+            </div>
         </div>
 
-        <div id="contenido-reporte-lex" class="modal-lex-body custom-scroll">
-
+        <div id="contenido-reporte-lex" class="modal-lex-body bg-arena">
+            <div class="lex-table-container">
+                <table class="lex-table">
+                    <thead>
+                        <tr class="lex-tr-head bg-arena-dark">
+                            <th class="lex-th sticky-arena">Proveedor</th>
+                            <th class="lex-th text-center">Lunes</th>
+                            <th class="lex-th text-center">Martes</th>
+                            <th class="lex-th text-center lex-th-highlight">Miércoles</th>
+                            <th class="lex-th text-center">Jueves</th>
+                            <th class="lex-th text-center">Viernes</th>
+                        </tr>
+                    </thead>
+                    <tbody class="lex-tbody">
+                        <tr class="lex-tr-row group">
+                            <td class="lex-td sticky-arena">
+                                <span class="lex-prov-name">Carolina Cuerdas</span>
+                                <span class="lex-prov-id">ID_PROV: 103</span>
+                            </td>
+                            <td class="lex-td text-center">
+                                <button class="lex-btn-add">+</button>
+                            </td>
+                            <td class="lex-td text-center">
+                                <button class="lex-btn-add">+</button>
+                            </td>
+                            <td class="lex-td lex-td-highlight">
+                                <div class="lex-card-pedido">
+                                    <div class="lex-card-header">
+                                        <span>📦 PEDIDO (Día 4)</span>
+                                        <span class="lex-badge">Contabilium</span>
+                                    </div>
+                                    <p class="lex-card-body">Para retirar</p>
+                                </div>
+                            </td>
+                            <td class="lex-td text-center">
+                                <button class="lex-btn-add">+</button>
+                            </td>
+                            <td class="lex-td text-center">
+                                <button class="lex-btn-add">+</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="lex-modal-reportes-footer">
-            <span class="status-indicator">SISTEMA DE SOLO LECTURA</span>
+        <div class="lex-modal-reportes-footer bg-arena">
+            <span class="status-indicator">
+                <span class="lex-status-dot"></span>
+                TABLERO INTERACTIVO DE DEPÓSITO
+            </span>
             <button type="button" onclick="cerrarModalReportes()" class="lex-btn-footer">
                 Finalizar Consulta
             </button>
         </div>
     </div>
 </div>
+
+
+
+
 
 <div id="modal-proveedores" class="modal-prov-overlay">
     <div class="modal-prov-content">
