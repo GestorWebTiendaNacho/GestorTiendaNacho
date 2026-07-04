@@ -2221,10 +2221,7 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
 
 /*seccion tablero semanal*/
 .bg-arpillera {
-    background-image: url('fondoarpillera.png'); 
-    background-repeat: repeat;
-    background-size: auto;
-    background-position: top left;
+background-color: rgba(238, 223, 166, 0.85) !important;
 }
 
 .sticky-arena {
@@ -2273,16 +2270,16 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     justify-content: space-between;
 }
 
-.lex-title {
+.sem-title {
     font-size: 1.5rem;
     font-weight: 900;
-    color: #451a03;
+    color: #e36d3b !important;
     letter-spacing: -0.025em;
     line-height: 2rem;
     margin: 0;
 }
 
-.lex-subtitle {
+.sem-subtitle {
     font-size: 0.875rem;
     color: #78350f;
     font-weight: 700;
@@ -2357,19 +2354,53 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     box-shadow: 0 0 0 1px #78350f;
 }
 
-.lex-btn-nav {
+.sem-btn-nav {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    border-radius: 0.5rem;
     font-size: 0.875rem;
     font-weight: 900;
-    letter-spacing: 0.05em;
+    color: #f7b58e;
     text-transform: uppercase;
-    border: none;
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    width: auto;                        
+    flex-direction: row;             
+    padding: 8px 18px;                  
+    border-radius: 6px;                 
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    justify-content: center;
+    gap: 8px;                                  
+    border-bottom: 3px solid transparent !important; 
+}
+
+/* Colores Neón */
+.sem-btn-nav.sem-neon-blue:hover {
+    border-bottom: 3px solid #00f0ff !important;
+    color: #00f0ff !important;
+    background: rgba(0, 240, 255, 0.12) !important;
+    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4);
+}
+
+.sem-btn-nav.sem-neon-green:hover {
+    border-bottom: 3px solid #00ff66 !important;
+    color: #00ff66 !important;
+    background: rgba(0, 255, 102, 0.1) !important;
+    box-shadow: 0 4px 20px rgba(0, 255, 102, 0.4);
+}
+
+.sem-btn-nav.sem-neon-purple:hover {
+    border-bottom: 3px solid #cc00ff !important;
+    color: #cc00ff !important;
+    background: rgba(204, 0, 255, 0.12) !important;
+    box-shadow: 0 4px 20px rgba(204, 0, 255, 0.4);
+}
+
+.sem-btn-nav.sem-neon-orange:hover {
+    border-bottom: 3px solid #ff7700 !important;
+    color: #ff7700 !important;
+    background: rgba(255, 119, 0, 0.12) !important;
+    box-shadow: 0 4px 20px rgba(255, 119, 0, 0.4);
 }
 
 .modal-lex-body {
