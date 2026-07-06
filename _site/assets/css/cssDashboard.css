@@ -2565,7 +2565,7 @@ background-color: rgba(238, 223, 166, 0.85) !important;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #451a03;
+    color: #b42e2e !important;
     letter-spacing: 0.025em;
 }
 
@@ -2573,8 +2573,8 @@ background-color: rgba(238, 223, 166, 0.85) !important;
     height: 0.625rem;
     width: 0.625rem;
     border-radius: 9999px;
-    background-color: #b45309;
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    background-color: #109a30 !important;
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .lex-btn-footer {
