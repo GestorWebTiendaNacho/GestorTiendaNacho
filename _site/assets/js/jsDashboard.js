@@ -1732,55 +1732,143 @@ window.ejecutarProcesamientoCompras = function() {
     if (overlayCarga) overlayCarga.style.display = 'flex';
 
     const textoOverlay = document.getElementById('texto-overlay-carga');
-    if (textoOverlay) textoOverlay.innerText = "Preparando bloques de datos crudos de compras...";
+    if (textoOverlay) textoOverlay.innerText = "Analizando y consolidando 325k+ filas en el navegador...";
 
     const reader = new FileReader();
     reader.onload = async function(e) {
         try {
             const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
+            // Agregamos cellDates: true para optimizar la lectura cronológica
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
             const nombreHoja = workbook.SheetNames[0];
             const hoja = workbook.Sheets[nombreHoja];
             
-            // Convertimos la hoja a una matriz indexada pura
             const rawFilas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
-            
-            // Mapeamos estrictamente las 5 columnas requeridas según la estructura del Excel
-            const filasProcesadas = rawFilas.slice(1)
-                .filter(fila => fila && fila[0] !== "" && fila[0] !== undefined)
-                .map(fila => [
-                    fila[0],                                 // Índice 0: Fecha compra
-                    fila[2] !== undefined ? fila[2] : "",    // Índice 2: Detalle (Nro Factura / Remito)
-                    fila[3] !== undefined ? fila[3] : "",    // Índice 3: Código SKU
-                    fila[4] !== undefined ? fila[4] : "",    // Índice 4: Nombre del Producto
-                    parseFloat(fila[5]) || 0                 // Índice 5: Cantidad (Real / Algebraica)
-                ]);
+            const filasUtiles = rawFilas.slice(1).filter(fila => fila && fila[0] !== "" && fila[0] !== undefined);
 
-            const totalFilas = filasProcesadas.length;
-            const TAMANIO_BLOQUE = 5000;
+            console.log(`[LexTech-Client] ${filasUtiles.length} filas crudas detectadas. Consolidando localmente...`);
 
-            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando subida por streaming...`);
+            // ── PASO 1: CONSOLIDACIÓN ULTRA-VELOZ EN EL CLIENTE ──
+          const consolidado = {};
+            filasUtiles.forEach(fila => {
+                const fechaRaw = fila[0];
+                const detalle = fila[2] !== undefined ? String(fila[2]).trim() : ""; 
+                const codigo = fila[3] !== undefined ? String(fila[3]).trim() : "";  
+                const nombre = fila[4] !== undefined ? String(fila[4]).trim() : "";  
+                const cantidad = parseFloat(fila[5]) || 0; 
+                
+                if (!fechaRaw || !codigo) return;
+                
+                let fechaDia = "";
+                let dateObjForSort = null;
 
-            // ── PASO 1: TRANSMISIÓN DE BLOQUES AL SERVIDOR (A comprasCargadas Col B:F) ──
-            for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
-                const bloque = filasProcesadas.slice(i, i + TAMANIO_BLOQUE);
+                // Procesador inteligente multi-formato de fechas
+                if (fechaRaw instanceof Date) {
+                    const dd = String(fechaRaw.getUTCDate()).padStart(2, '0');
+                    const mm = String(fechaRaw.getUTCMonth() + 1).padStart(2, '0');
+                    const yyyy = fechaRaw.getUTCFullYear();
+                    fechaDia = `${dd}/${mm}/${yyyy}`;
+                    dateObjForSort = new Date(yyyy, fechaRaw.getUTCMonth(), fechaRaw.getUTCDate());
+                } else if (typeof fechaRaw === 'string') {
+                    let limpia = fechaRaw.trim().split(" ")[0]; 
+                    if (limpia.includes("-")) { // Si viene YYYY-MM-DD
+                        let p = limpia.split("-");
+                        fechaDia = `${p[2].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[0]}`;
+                        dateObjForSort = new Date(p[0], p[1] - 1, p[2]);
+                    } else if (limpia.includes("/")) { // Si viene DD/MM/YYYY o YYYY/MM/DD
+                        let p = limpia.split("/");
+                        if (p[0].length === 4) {
+                            fechaDia = `${p[2].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[0]}`;
+                            dateObjForSort = new Date(p[0], p[1] - 1, p[2]);
+                        } else {
+                            fechaDia = `${p[0].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[2]}`;
+                            dateObjForSort = new Date(p[2], p[1] - 1, p[0]);
+                        }
+                    }
+                } else if (typeof fechaRaw === 'number') {
+                    // Por si SheetJS lo lee como número de serie de Excel (ej: 46123)
+                    try {
+                        const dateParsed = XLSX.SSF.parse_date_code(fechaRaw);
+                        const dd = String(dateParsed.d).padStart(2, '0');
+                        const mm = String(dateParsed.m).padStart(2, '0');
+                        const yyyy = dateParsed.y;
+                        fechaDia = `${dd}/${mm}/${yyyy}`;
+                        dateObjForSort = new Date(yyyy, dateParsed.m - 1, dateParsed.d);
+                    } catch(e) {
+                        fechaDia = "01/01/2026";
+                        dateObjForSort = new Date(2026, 0, 1);
+                    }
+                }
+                
+                const llave = `${fechaDia}_${codigo}`;
+                
+                if (!consolidado[llave]) {
+                    consolidado[llave] = { 
+                        fecha: fechaDia, 
+                        dateObj: dateObjForSort, // Guardamos el objeto real de ordenamiento
+                        detalle, 
+                        codigo, 
+                        nombre, 
+                        cantidadNeta: 0 
+                    };
+                }
+                consolidado[llave].cantidadNeta += cantidad;
+            });
+
+            // Filtrar saldos positivos
+            let listaFiltrada = Object.values(consolidado).filter(item => item.cantidadNeta > 0);
+
+            // Ordenamiento nativo libre de errores NaN
+            listaFiltrada.sort((a, b) => (a.dateObj || 0) - (b.dateObj || 0));
+
+            // Asignación de ID_PEDIDO único por Factura/Detalle
+            let numeroSecuencialAzar = Math.floor(Math.random() * 501) + 1000; 
+            const mapaFacturas = {};
+
+            const filasConsolidadasFinales = listaFiltrada.map(item => {
+                const factura = item.detalle;
+                if (!mapaFacturas[factura]) {
+                    const partes = item.fecha.split("/");
+                    const yyyymmdd = partes[2] + partes[1] + partes[0];
+                    numeroSecuencialAzar += Math.floor(Math.random() * 3) + 1; 
+                    mapaFacturas[factura] = `PED-${yyyymmdd}-${numeroSecuencialAzar}`;
+                }
+                
+                return [
+                    mapaFacturas[factura], 
+                    item.fecha,            
+                    item.detalle,          
+                    item.codigo,           
+                    item.nombre,           
+                    item.cantidadNeta      
+                ];
+            });
+
+            const totalFilasConsolidadas = filasConsolidadasFinales.length;
+            console.log(`[LexTech-Client] Consolidación completada. Reducido de ${filasUtiles.length} a ${totalFilasConsolidadas} filas útiles.`);
+
+            // ── PASO 2: TRANSMISIÓN DE BLOQUES LIMPIOS AL SERVIDOR (A:F) ──
+            const TAMANIO_BLOQUE = 2000; // Bloques más chicos para asegurar respuestas inmediatas de GAS
+
+            for (let i = 0; i < totalFilasConsolidadas; i += TAMANIO_BLOQUE) {
+                const bloque = filasConsolidadasFinales.slice(i, i + TAMANIO_BLOQUE);
                 const esPrimerBloque = (i === 0);
+                const esUltimoBloque = (i + TAMANIO_BLOQUE >= totalFilasConsolidadas);
                 
                 if (textoOverlay) {
-                    textoOverlay.innerText = `Subiendo compras: ${i} de ${totalFilas} filas...`;
+                    textoOverlay.innerText = `Subiendo datos consolidados: ${i} de ${totalFilasConsolidadas} filas...`;
                 }
 
                 const respuesta = await fetch(URL_GAS_GLOBAL, {
                     method: 'POST',
                     mode: 'cors',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8'
-                    },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
-                        action: 'procesarBloqueCompras', // Nombre exacto de la función en GAS
+                        action: 'procesarBloqueCompras',
                         data: {
                             valores: bloque,
                             esPrimerBloque: esPrimerBloque,
+                            esUltimoBloque: esUltimoBloque,
                             indiceInicio: i
                         }
                     })
@@ -1791,42 +1879,12 @@ window.ejecutarProcesamientoCompras = function() {
                 }
             }
 
-            // ── PASO 2: ORDEN DE CONSOLIDACIÓN FINAL E IMPACTO DE ID_PEDIDO ──
-            console.log("[LexTech-Client] Todos los bloques crudos fueron almacenados. Solicitando consolidación final...");
-            if (textoOverlay) {
-                textoOverlay.innerText = "Consolidando compras e indexando IDs únicos por factura...";
-            }
-
-            const respuestaConsolidacion = await fetch(URL_GAS_GLOBAL, {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8'
-                },
-                body: JSON.stringify({
-                    action: 'consolidarLogACompras' // Dispara la reestructuración, limpieza e ID_PEDIDO
-                })
-            });
-
-            if (!respuestaConsolidacion.ok) {
-                throw new Error("Los datos crudos se subieron, pero falló la consolidación lógica en Sheets.");
-            }
-
-            let mensajeServidor = `Se cargaron con éxito las ${totalFilas} filas del archivo de compras.`;
-            try {
-                const textoRespuesta = await respuestaConsolidacion.text();
-                if (textoRespuesta) mensajeServidor = textoRespuesta;
-            } catch (e) {
-                console.warn("No se pudo extraer la confirmación extendida del servidor.", e);
-            }
-
-            // Apagamos el overlay de carga
+            // Apagamos el overlay de carga con éxito total
             if (overlayCarga) overlayCarga.style.display = 'none';
 
-            // Notificación UI Premium de Éxito
             Swal.fire({
                 title: '🚀 PROCESAMIENTO COMPLETADO',
-                text: mensajeServidor,
+                text: `Se procesaron las ${filasUtiles.length} filas originales y se guardaron ${totalFilasConsolidadas} registros consolidados con éxito.`,
                 icon: 'success',
                 background: '#0f172a',
                 color: '#fff',
