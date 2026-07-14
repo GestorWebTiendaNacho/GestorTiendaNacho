@@ -814,16 +814,17 @@
         <div id="toolbar-reportes" class="lex-toolbar bg-arpillera">
             <div class="lex-filter-group">
                 <select id="filtro-mes-lex" class="lex-select">
-                    <option value="7">Julio 2026</option>
+                    <option value="7" selected>Julio 2026</option>
                     <option value="8">Agosto 2026</option>
                 </select>
                 <select id="filtro-semana-lex" class="lex-select">
-                    <option value="1">Semana 1 (Actual)</option>
+                    <option value="1">Semana 1</option>
                     <option value="2">Semana 2</option>
-                    <option value="3">Semana 3</option>
+                    <option value="3" selected>Semana 3 (Actual)</option>
                     <option value="4">Semana 4</option>
                     <option value="5">Semana 5</option>
                 </select>
+                <input type="text" id="filtro-proveedor-lex" class="lex-select" placeholder="🔍 Filtrar proveedor..." style="margin-left: 12px; max-width: 200px;">
             </div>
 
             <div class="lex-actions-group">
@@ -837,50 +838,7 @@
         </div>
 
         <div id="contenido-reporte-lex" class="modal-lex-body bg-arena">
-            <div class="lex-table-container">
-                <table class="lex-table">
-                    <thead>
-                        <tr class="lex-tr-head bg-arena-dark">
-                            <th class="lex-th sticky-arena">Proveedor</th>
-                            <th class="lex-th text-center">Lunes</th>
-                            <th class="lex-th text-center">Martes</th>
-                            <th class="lex-th text-center lex-th-highlight">Miércoles</th>
-                            <th class="lex-th text-center">Jueves</th>
-                            <th class="lex-th text-center">Viernes</th>
-                        </tr>
-                    </thead>
-                    <tbody class="lex-tbody">
-                        <tr class="lex-tr-row group">
-                            <td class="lex-td sticky-arena">
-                                <span class="lex-prov-name">Carolina Cuerdas</span>
-                                <span class="lex-prov-id">ID_PROV: 103</span>
-                            </td>
-                            <td class="lex-td text-center">
-                                <button class="lex-btn-add">+</button>
-                            </td>
-                            <td class="lex-td text-center">
-                                <button class="lex-btn-add">+</button>
-                            </td>
-                            <td class="lex-td lex-td-highlight">
-                                <div class="lex-card-pedido">
-                                    <div class="lex-card-header">
-                                        <span>📦 PEDIDO (Día 4)</span>
-                                        <span class="lex-badge">Contabilium</span>
-                                    </div>
-                                    <p class="lex-card-body">Para retirar</p>
-                                </div>
-                            </td>
-                            <td class="lex-td text-center">
-                                <button class="lex-btn-add">+</button>
-                            </td>
-                            <td class="lex-td text-center">
-                                <button class="lex-btn-add">+</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
-        </div>
 
         <div class="lex-modal-reportes-footer bg-arena">
             <span class="status-indicator">
@@ -928,18 +886,17 @@
 
 <div id="modal-compras" class="fixed inset-0 hidden items-center justify-center z-[10000] bg-slate-950/85 backdrop-blur-xl overflow-y-auto px-4 py-6">
     <div class="p-6 md:p-8 max-w-5xl w-full border border-gold/20 rounded-[32px] shadow-[0_0_60px_rgba(0,0,0,0.7)] text-white" style="background-color: var(--mv-bg-main);">
-        
         <div class="mb-6 text-center border-b border-slate-800/60 pb-4">
             <h2 class="text-2xl font-black tracking-wider bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent uppercase">
                 Sistema de Actualización de Compras
             </h2>
-            <p class="text-xs text-slate-400 mt-1 font-mono tracking-tight">Módulo de sincronización masiva mediante pasarela externa</p>
+            <div id="display-ultima-fecha" class="text-[10px] text-gold/80 font-mono mt-2 bg-slate-900/50 py-1 px-3 rounded-full inline-block border border-gold/20">
+                Cargando estado de la base...
+            </div>
+            <p class="text-xs text-slate-400 mt-2 font-mono tracking-tight">Módulo de sincronización masiva mediante pasarela externa</p>
         </div>
-        
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
-            
             <div class="md:col-span-7 flex flex-col justify-between space-y-3 p-5 rounded-2xl border border-slate-800/60 leading-relaxed text-left" style="background-color: var(--mv-bg-card);">
-                
                 <div class="text-xs space-y-4">
                     <div>
                         <span class="text-gold font-black tracking-wider block mb-1 text-sm">1.- PREPARATIVOS:</span> 
@@ -948,30 +905,23 @@
                             https://app.contabilium.com/modulos/reportes/historicoStock.aspx
                         </a> 
                     </div>
-                    
                     <div class="border-t border-slate-800/40 pt-2">
                         <span class="text-gold font-black tracking-wider block mb-1 text-sm">2.- SELECCIÓN DE ARCHIVO:</span> 
                         Haz clic en el botón de la derecha <span class="text-slate-300 italic">"Seleccionar Documento"</span> y asocia tu planilla Excel. El sistema comprobará la codificación binaria de inmediato.
                     </div>
-                    
                     <div class="border-t border-slate-800/40 pt-2">
                         <span class="text-gold font-black tracking-wider block mb-1 text-sm">3.- PROCESAMIENTO:</span> 
                         Al habilitarse el botón verde, presiónalo para iniciar la desestructuración de filas y la inserción remota. <span class="text-amber-400 font-medium">No cierres la pestaña durante este proceso</span>.
                     </div>
-                    
                     <div class="border-t border-slate-800/40 pt-2">
                         <span class="text-gold font-black tracking-wider block mb-1 text-sm">4.- FINALIZACIÓN:</span> 
                         La terminal te confirmará el éxito de la operación indicando el número exacto de registros impactados en tu base histórica.
                     </div>
                 </div>
-
             </div>
-
             <div class="md:col-span-5 flex flex-col justify-center space-y-6 p-5 rounded-2xl border border-slate-800/40 bg-slate-950/40">
-                
                 <div class="flex flex-col items-center justify-center w-full">
                     <input type="file" id="input-archivo-compras" accept=".xlsx, .xls" class="hidden" onchange="window.manejarSeleccionArchivoCompras(this)">
-                    
                     <button onclick="document.getElementById('input-archivo-compras').click()" class="px-4 py-6 border-2 border-dashed border-slate-700/80 hover:border-gold/40 rounded-xl bg-slate-900/60 flex flex-col items-center gap-3 transition-all cursor-pointer group w-full justify-center min-h-[140px]">
                         <i class="bi bi-file-earmark-spreadsheet text-3xl text-slate-500 group-hover:text-gold transition-colors duration-300"></i>
                         <span id="label-archivo-compras" class="text-slate-400 group-hover:text-slate-200 text-xs font-semibold tracking-wide text-center max-w-[200px] break-words transition-colors">
@@ -979,25 +929,17 @@
                         </span>
                     </button>
                 </div>
-
                 <div class="flex flex-col gap-3 w-full">
-                    
                     <button id="btn-procesar-compras" onclick="window.ejecutarProcesamientoCompras()" disabled class="btn-neon-process w-full py-4 rounded-xl font-black text-xs tracking-widest active:scale-[0.98] duration-150 cursor-pointer text-center uppercase">
                         <i class="bi bi-cloud-arrow-up-fill mr-2 text-sm"></i>Procesar Archivo
                     </button>
-                    
                     <button onclick="window.cerrarModalCompras()" class="btn-neon-close w-full py-3 rounded-xl font-bold text-xs tracking-widest active:scale-[0.98] duration-150 cursor-pointer text-center uppercase">
                         Cerrar Ventana
                     </button>
-                    
                 </div>
-
             </div>
-            
         </div>
-        
     </div>
-  
 </div>
 <div id="overlay-carga" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.9); z-index: 10000; justify-content: center; align-items: center;">
   <div class="loader">

@@ -1685,6 +1685,7 @@ function renderizarMiniTablaWidget3(payload) {
 /*---Seccion COMPRAS --*/
 
 var nombreArchivoCompras = "";
+window.fechaLimiteCargada = null;
 
 window.abrirModalCompras = function() {
     const modal = document.getElementById('modal-compras');
@@ -1692,6 +1693,7 @@ window.abrirModalCompras = function() {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
+    actualizarFechaUltimaCarga();
 };
 
 window.cerrarModalCompras = function() {
@@ -1707,211 +1709,287 @@ window.cerrarModalCompras = function() {
 };
 
 // CAPTURA Y VALIDACIÓN DEL ARCHIVO SELECCIONADO
+if (!document.getElementById('swal-modal-fix')) {
+    const style = document.createElement('style');
+    style.id = 'swal-modal-fix';
+    style.innerHTML = '.swal2-container { z-index: 999999 !important; }';
+    document.head.appendChild(style);
+}
+
+var nombreArchivoCompras = ""; 
+
 window.manejarSeleccionArchivoCompras = function(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
         nombreArchivoCompras = file.name;
         document.getElementById('label-archivo-compras').innerText = `📄 Carga lista: ${file.name}`;
-        document.getElementById('btn-procesar-compras').disabled = false;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' }); 
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const filasRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            window.filasConsolidadasFinales = filasRaw.filter(fila => fila && fila.length > 1).map(fila => {
+                let dateObj = null;
+                const valorFecha = fila[0];
+                
+                if (valorFecha !== undefined && valorFecha !== null) {
+                    if (valorFecha instanceof Date) {
+                        if (valorFecha.getUTCHours() === 0 && valorFecha.getUTCMinutes() === 0) {
+                            dateObj = new Date(valorFecha.getUTCFullYear(), valorFecha.getUTCMonth(), valorFecha.getUTCDate(), 0, 0, 0, 0);
+                        } else {
+                            dateObj = new Date(valorFecha.getFullYear(), valorFecha.getMonth(), valorFecha.getDate(), 0, 0, 0, 0);
+                        }
+                    } 
+                    // CORRECCIÓN AQUÍ: Procesamos correctamente el número serial de Excel
+                    else if (!isNaN(valorFecha) && String(valorFecha).trim() !== "") {
+                        const num = Number(valorFecha);
+                        // Los días de Excel cuentan desde el 30/12/1899 debido a un bug histórico con el año bisiesto 1900
+                        const fechaExcel = new Date((num - 25569) * 86400 * 1000);
+                        dateObj = new Date(fechaExcel.getUTCFullYear(), fechaExcel.getUTCMonth(), fechaExcel.getUTCDate(), 0, 0, 0, 0);
+                    } 
+                    else {
+                        const stringFecha = String(valorFecha).trim();
+                        const partes = stringFecha.includes("-") ? stringFecha.split("-") : stringFecha.split("/");
+                        
+                        if (partes.length === 3) {
+                            if (partes[0].length === 4) { // AAAA-MM-DD
+                                dateObj = new Date(partes[0], partes[1] - 1, partes[2], 0, 0, 0, 0);
+                            } else { // DD/MM/AAAA
+                                dateObj = new Date(partes[2], partes[1] - 1, partes[0], 0, 0, 0, 0);
+                            }
+                        } else {
+                            dateObj = new Date(stringFecha);
+                            if (dateObj && !isNaN(dateObj)) dateObj.setHours(0, 0, 0, 0);
+                        }
+                    }
+                }
+                
+                if (!dateObj || isNaN(dateObj.getTime())) {
+                    dateObj = new Date(2000, 0, 1, 0, 0, 0, 0);
+                }
+                
+                fila.dateObj = dateObj;
+                return fila;
+            });
+            
+            document.getElementById('btn-procesar-compras').disabled = false;
+        };
+        reader.readAsArrayBuffer(file);
     }
 };
 
-window.ejecutarProcesamientoCompras = function() {
-    const inputArchivo = document.getElementById('input-archivo-compras'); 
-    const archivoBlob = inputArchivo && inputArchivo.files[0] ? inputArchivo.files[0] : null;
+window.ejecutarProcesamientoCompras = async function() {
+    const overlayCarga = document.getElementById('overlay-carga');
+    const btnProcesar = document.getElementById('btn-procesar-compras');
+    
+    const datosOrigen = window.filasConsolidadasFinales || (typeof filasConsolidadasFinales !== 'undefined' ? filasConsolidadasFinales : null);
 
-    if (!archivoBlob) {
-        console.error("🚨 No se encontró el archivo físico.");
+    if (!datosOrigen || !Array.isArray(datosOrigen)) {
+        if (overlayCarga) overlayCarga.style.display = 'none';
+        Swal.fire("Archivo no procesado", "No se encontraron datos en memoria. Selecciona el archivo de nuevo.", "warning");
         return;
     }
     
-    const btnProcesar = document.getElementById('btn-procesar-compras');
-    if (btnProcesar) btnProcesar.disabled = true; 
-
-    const overlayCarga = document.getElementById('overlay-carga');
     if (overlayCarga) overlayCarga.style.display = 'flex';
+    btnProcesar.disabled = true;
 
-    const textoOverlay = document.getElementById('texto-overlay-carga');
-    if (textoOverlay) textoOverlay.innerText = "Analizando y consolidando 325k+ filas en el navegador...";
+    try {
+        const fechaSegura = (window.fechaLimiteCargada instanceof Date && !isNaN(window.fechaLimiteCargada)) 
+                            ? window.fechaLimiteCargada 
+                            : new Date(2000, 0, 1);
+        fechaSegura.setHours(0, 0, 0, 0); 
 
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            // Agregamos cellDates: true para optimizar la lectura cronológica
-            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-            const nombreHoja = workbook.SheetNames[0];
-            const hoja = workbook.Sheets[nombreHoja];
-            
-            const rawFilas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
-            const filasUtiles = rawFilas.slice(1).filter(fila => fila && fila[0] !== "" && fila[0] !== undefined);
+        const filasFiltradas = datosOrigen.filter(item => {
+            if (!item || !Array.isArray(item) || item.length === 0) return false;
 
-            console.log(`[LexTech-Client] ${filasUtiles.length} filas crudas detectadas. Consolidando localmente...`);
-
-            // ── PASO 1: CONSOLIDACIÓN ULTRA-VELOZ EN EL CLIENTE ──
-          const consolidado = {};
-            filasUtiles.forEach(fila => {
-                const fechaRaw = fila[0];
-                const detalle = fila[2] !== undefined ? String(fila[2]).trim() : ""; 
-                const codigo = fila[3] !== undefined ? String(fila[3]).trim() : "";  
-                const nombre = fila[4] !== undefined ? String(fila[4]).trim() : "";  
-                const cantidad = parseFloat(fila[5]) || 0; 
-                
-                if (!fechaRaw || !codigo) return;
-                
-                let fechaDia = "";
-                let dateObjForSort = null;
-
-                // Procesador inteligente multi-formato de fechas
-                if (fechaRaw instanceof Date) {
-                    const dd = String(fechaRaw.getUTCDate()).padStart(2, '0');
-                    const mm = String(fechaRaw.getUTCMonth() + 1).padStart(2, '0');
-                    const yyyy = fechaRaw.getUTCFullYear();
-                    fechaDia = `${dd}/${mm}/${yyyy}`;
-                    dateObjForSort = new Date(yyyy, fechaRaw.getUTCMonth(), fechaRaw.getUTCDate());
-                } else if (typeof fechaRaw === 'string') {
-                    let limpia = fechaRaw.trim().split(" ")[0]; 
-                    if (limpia.includes("-")) { // Si viene YYYY-MM-DD
-                        let p = limpia.split("-");
-                        fechaDia = `${p[2].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[0]}`;
-                        dateObjForSort = new Date(p[0], p[1] - 1, p[2]);
-                    } else if (limpia.includes("/")) { // Si viene DD/MM/YYYY o YYYY/MM/DD
-                        let p = limpia.split("/");
-                        if (p[0].length === 4) {
-                            fechaDia = `${p[2].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[0]}`;
-                            dateObjForSort = new Date(p[0], p[1] - 1, p[2]);
-                        } else {
-                            fechaDia = `${p[0].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[2]}`;
-                            dateObjForSort = new Date(p[2], p[1] - 1, p[0]);
-                        }
-                    }
-                } else if (typeof fechaRaw === 'number') {
-                    // Por si SheetJS lo lee como número de serie de Excel (ej: 46123)
-                    try {
-                        const dateParsed = XLSX.SSF.parse_date_code(fechaRaw);
-                        const dd = String(dateParsed.d).padStart(2, '0');
-                        const mm = String(dateParsed.m).padStart(2, '0');
-                        const yyyy = dateParsed.y;
-                        fechaDia = `${dd}/${mm}/${yyyy}`;
-                        dateObjForSort = new Date(yyyy, dateParsed.m - 1, dateParsed.d);
-                    } catch(e) {
-                        fechaDia = "01/01/2026";
-                        dateObjForSort = new Date(2026, 0, 1);
-                    }
-                }
-                
-                const llave = `${fechaDia}_${codigo}`;
-                
-                if (!consolidado[llave]) {
-                    consolidado[llave] = { 
-                        fecha: fechaDia, 
-                        dateObj: dateObjForSort, // Guardamos el objeto real de ordenamiento
-                        detalle, 
-                        codigo, 
-                        nombre, 
-                        cantidadNeta: 0 
-                    };
-                }
-                consolidado[llave].cantidadNeta += cantidad;
-            });
-
-            // Filtrar saldos positivos
-            let listaFiltrada = Object.values(consolidado).filter(item => item.cantidadNeta > 0);
-
-            // Ordenamiento nativo libre de errores NaN
-            listaFiltrada.sort((a, b) => (a.dateObj || 0) - (b.dateObj || 0));
-
-            // Asignación de ID_PEDIDO único por Factura/Detalle
-            let numeroSecuencialAzar = Math.floor(Math.random() * 501) + 1000; 
-            const mapaFacturas = {};
-
-            const filasConsolidadasFinales = listaFiltrada.map(item => {
-                const factura = item.detalle;
-                if (!mapaFacturas[factura]) {
-                    const partes = item.fecha.split("/");
-                    const yyyymmdd = partes[2] + partes[1] + partes[0];
-                    numeroSecuencialAzar += Math.floor(Math.random() * 3) + 1; 
-                    mapaFacturas[factura] = `PED-${yyyymmdd}-${numeroSecuencialAzar}`;
-                }
-                
-                return [
-                    mapaFacturas[factura], 
-                    item.fecha,            
-                    item.detalle,          
-                    item.codigo,           
-                    item.nombre,           
-                    item.cantidadNeta      
-                ];
-            });
-
-            const totalFilasConsolidadas = filasConsolidadasFinales.length;
-            console.log(`[LexTech-Client] Consolidación completada. Reducido de ${filasUtiles.length} a ${totalFilasConsolidadas} filas útiles.`);
-
-            // ── PASO 2: TRANSMISIÓN DE BLOQUES LIMPIOS AL SERVIDOR (A:F) ──
-            const TAMANIO_BLOQUE = 2000; // Bloques más chicos para asegurar respuestas inmediatas de GAS
-
-            for (let i = 0; i < totalFilasConsolidadas; i += TAMANIO_BLOQUE) {
-                const bloque = filasConsolidadasFinales.slice(i, i + TAMANIO_BLOQUE);
-                const esPrimerBloque = (i === 0);
-                const esUltimoBloque = (i + TAMANIO_BLOQUE >= totalFilasConsolidadas);
-                
-                if (textoOverlay) {
-                    textoOverlay.innerText = `Subiendo datos consolidados: ${i} de ${totalFilasConsolidadas} filas...`;
-                }
-
-                const respuesta = await fetch(URL_GAS_GLOBAL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: 'procesarBloqueCompras',
-                        data: {
-                            valores: bloque,
-                            esPrimerBloque: esPrimerBloque,
-                            esUltimoBloque: esUltimoBloque,
-                            indiceInicio: i
-                        }
-                    })
-                });
-
-                if (!respuesta.ok) {
-                    throw new Error(`Error en el servidor al subir el bloque que inicia en la fila ${i}`);
-                }
+            const primeraCelda = String(item[0] || "").toLowerCase().trim();
+            if (primeraCelda === "fecha" || primeraCelda === "date" || primeraCelda.includes("encabezado")) {
+                return false; 
             }
 
-            // Apagamos el overlay de carga con éxito total
+            if (!item.dateObj || isNaN(item.dateObj.getTime())) {
+                return false;
+            }
+
+            return item.dateObj >= fechaSegura;
+        });
+
+        if (filasFiltradas.length === 0) {
             if (overlayCarga) overlayCarga.style.display = 'none';
-
-            Swal.fire({
-                title: '🚀 PROCESAMIENTO COMPLETADO',
-                text: `Se procesaron las ${filasUtiles.length} filas originales y se guardaron ${totalFilasConsolidadas} registros consolidados con éxito.`,
-                icon: 'success',
-                background: '#0f172a',
-                color: '#fff',
-                confirmButtonColor: '#c2902e'
-            });
-
-            window.cerrarModalCompras();
-
-        } catch (err) {
-            console.error("🚨 Error crítico procesando bloques de compras:", err);
-            if (overlayCarga) overlayCarga.style.display = 'none';
-            
-            Swal.fire({
-                title: '❌ ERROR DE PROCESAMIENTO',
-                text: err.message || 'Ocurrió un problema de comunicación al fragmentar las compras.',
-                icon: 'error',
-                background: '#0f172a',
-                color: '#fff'
-            });
-            
-            if (btnProcesar) btnProcesar.disabled = false;
-        } finally {
-            if (inputArchivo) inputArchivo.value = "";
+            btnProcesar.disabled = false;
+            Swal.fire("No hay datos nuevos", "No se encontraron registros que superen la fecha límite.", "info");
+            return;
         }
-    };
-    reader.readAsArrayBuffer(archivoBlob);
+
+        const agregador = {};
+        filasFiltradas.forEach(fila => {
+            const d = fila.dateObj;
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const fechaKey = `${yyyy}${mm}${dd}`;
+            
+            const factura = String(fila[2] || "").trim();
+            const codigo = String(fila[3] || "").trim();
+            const nombre = String(fila[4] || "").trim();
+            
+            let celdaCantidad = fila[5];
+            if (typeof celdaCantidad === 'string') {
+                celdaCantidad = celdaCantidad.replace(/\./g, '').replace(',', '.');
+            }
+            const cantidad = parseFloat(celdaCantidad) || 0;
+
+            const claveCompuesta = `${fechaKey}_${factura}_${codigo}`;
+
+            if (!agregador[claveCompuesta]) {
+                agregador[claveCompuesta] = {
+                    dateObj: d,
+                    factura: factura,
+                    codigo: codigo,
+                    nombre: nombre,
+                    cantidad: 0
+                };
+            }
+            agregador[claveCompuesta].cantidad += cantidad;
+        });
+
+        const filasConsolidadas = Object.values(agregador).filter(item => item.cantidad > 0);
+
+        const mapaInvoices = {};
+        const contadoresPorDia = {};
+
+        filasConsolidadas.forEach(fila => {
+            const factura = fila.factura || "SIN_FACTURA";
+            const d = fila.dateObj;
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const fechaKey = `${yyyy}${mm}${dd}`;
+            const llaveAgrupacion = `${fechaKey}_${factura}`;
+            
+            if (!mapaInvoices[llaveAgrupacion]) {
+                if (!contadoresPorDia[fechaKey]) {
+                    contadoresPorDia[fechaKey] = 1;
+                }
+                const nroCorrelativo = String(contadoresPorDia[fechaKey]).padStart(4, '0');
+                mapaInvoices[llaveAgrupacion] = `PED-${fechaKey}-${nroCorrelativo}`;
+                contadoresPorDia[fechaKey]++;
+            }
+            
+            fila.idPedidoGenerado = mapaInvoices[llaveAgrupacion];
+        });
+
+        const TAMANIO_BLOQUE = 2000;
+        const totalFilas = filasConsolidadas.length;
+        let baseRowGlobal = 0;
+
+        for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
+            const bloque = filasConsolidadas.slice(i, i + TAMANIO_BLOQUE);
+            
+            const bloqueLimpio = bloque.map(fila => {
+                const nuevaFila = Array(6).fill(""); 
+                
+                nuevaFila[0] = fila.idPedidoGenerado || "";
+                
+                if (fila.dateObj) {
+                    const dia = String(fila.dateObj.getDate()).padStart(2, '0');
+                    const mes = String(fila.dateObj.getMonth() + 1).padStart(2, '0');
+                    const anio = fila.dateObj.getFullYear();
+                    nuevaFila[1] = `${dia}/${mes}/${anio}`;
+                }
+                
+                nuevaFila[2] = fila.factura;
+                nuevaFila[3] = fila.codigo;
+                nuevaFila[4] = fila.nombre;
+                
+                const partes = String(fila.cantidad).split('.');
+                partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                nuevaFila[5] = partes.length > 1 ? partes.join(',') : partes[0];
+                
+                return nuevaFila;
+            });
+
+            const esPrimerBloque = (i === 0);
+            const esUltimoBloque = (i + TAMANIO_BLOQUE >= totalFilas);
+
+            const respuesta = await fetch(URL_GAS_GLOBAL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    action: 'procesarBloqueCompras',
+                    data: {
+                        valores: bloqueLimpio, 
+                        esPrimerBloque: esPrimerBloque,
+                        esUltimoBloque: esUltimoBloque,
+                        indiceInicio: i,
+                        baseRow: baseRowGlobal
+                    }
+                })
+            });
+
+            const resultado = await respuesta.json();
+            if (resultado.status !== 'success') throw new Error(resultado.message);
+            
+            let respuestaInterna = resultado.reply;
+            if (typeof respuestaInterna === 'string') {
+                try { respuestaInterna = JSON.parse(respuestaInterna); } catch(e) {}
+            }
+            
+            if (respuestaInterna && respuestaInterna.status === 'error') {
+                throw new Error(respuestaInterna.message);
+            }
+
+            if (esPrimerBloque && respuestaInterna) {
+                baseRowGlobal = respuestaInterna.baseRow !== undefined ? respuestaInterna.baseRow : 2;
+            }
+        }
+
+        if (overlayCarga) overlayCarga.style.display = 'none';
+        Swal.fire("Éxito", "Procesamiento completado. " + totalFilas + " registros consolidados e impactados.", "success");
+        window.cerrarModalCompras();
+
+    } catch (error) {
+        if (overlayCarga) overlayCarga.style.display = 'none';
+        Swal.fire("Error en la Operación", "El proceso falló: " + error.message, "error");
+    } finally {
+        btnProcesar.disabled = false;
+    }
 };
+
+async function actualizarFechaUltimaCarga() {
+    const elDisplay = document.getElementById('display-ultima-fecha');
+    window.fechaLimiteCargada = new Date(2000, 0, 1);
+
+    if (!elDisplay) return;
+
+    try {
+        elDisplay.innerText = "Consultando...";
+
+        const respuesta = await fetch(URL_GAS_GLOBAL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'obtenerUltimaFecha' })
+        });
+
+        const resultado = await respuesta.json();
+        const datos = (resultado.reply && resultado.reply.fecha) ? resultado.reply : resultado;
+
+        if (datos && datos.status === 'success' && datos.fecha) {
+            elDisplay.innerText = `Último registro en base: ${datos.fecha}`;
+            const partes = datos.fecha.split("/");
+            window.fechaLimiteCargada = new Date(partes[2], partes[1] - 1, partes[0]);
+        } else {
+            elDisplay.innerText = "Error al obtener fecha.";
+        }
+    } catch (err) {
+        console.error("Error real detectado:", err); // Esto te mostrará en la consola del navegador si pasa algo más
+        elDisplay.innerText = "Error de conexión.";
+    }
+}
 
 
 
@@ -2383,571 +2461,814 @@ window.abrirModalSemanal = async function() {
     }
 };
 
-/*--function renderizarVistaMes(response) {
-    const data = response?.reply?.filas ? response.reply : response;
-    const { filas, semanasRelativas } = data;
-    
+var cacheTableroDeposito = {
+    filas: [],
+    semanasRelativas: []
+};
+
+// Función receptora del trigger desde tu script de cliente
+function renderizarVistaMes(data) {
+    if (data) {
+        cacheTableroDeposito.filas = data.filas || [];
+        cacheTableroDeposito.semanasRelativas = data.semanasRelativas || [];
+    }
+    dibujarTableroCompleto();
+}
+
+// Reconstruye de forma íntegra el DOM de la vista interactiva
+function dibujarTableroCompleto() {
     const contenedor = document.getElementById('contenido-reporte-lex');
-    const titulo = document.getElementById('reportesTitulo');
-    
-    if (titulo) titulo.innerText = "REPORTE MENSUAL DE ENTREGAS";
+    if (!contenedor) return;
 
-    const semanaHoy = getWeekNumber(new Date());
-    const semanasHead = (semanasRelativas || []).filter(s => s !== "" && s !== null && s !== undefined);
+    const inputBuscador = document.getElementById('filtro-proveedor-lex');
+    const filtroTexto = inputBuscador ? inputBuscador.value.trim().toLowerCase() : "";
 
-    const semanasNumeros = semanasHead.map((s, i) => {
-        if (/^\d{1,2}$/.test(String(s).trim())) {
-            return parseInt(s);
-        } else {
-            const fechaSemana = new Date(s);
-            if (!isNaN(fechaSemana.getTime())) {
-                return getWeekNumber(fechaSemana);
-            } else {
-                const match = s.toString().match(/\d+/);
-                return match ? parseInt(match[0]) : (i + 1);
-            }
-        }
+    const semanas = cacheTableroDeposito.semanasRelativas;
+    const filas = cacheTableroDeposito.filas;
+
+    // 1. Filtrado predictivo de proveedores por su nombre real ("nombre")
+    const proveedoresFiltrados = filas.filter(p => {
+        const nombreProv = p.nombre ? String(p.nombre).trim().toLowerCase() : "";
+        return normalizarTexto(nombreProv).includes(normalizarTexto(filtroTexto));
     });
 
-    let html = `
-    <div class="lex-report-toolbar p-3 bg-slate-900/40 rounded-lg mb-4 flex gap-4 items-center border border-slate-800/40">
-        <button onclick="ejecutarSincronizacionRelampago()" class="lex-btn-nav lex-btn-nav-header px-3 py-1.5 bg-cyan-950/40 text-cyan-400 border border-cyan-800/50 rounded text-[10px] font-bold hover:bg-cyan-900/40 transition-all">
-            <i class="fas fa-sync-alt mr-1"></i> REFRESCAR HOJA
-        </button>
-        <span class="text-slate-500 font-mono text-[10px] tracking-widest uppercase">
-            Ecosistema: Semana Actual <b class="text-emerald-400 ml-1 font-bold">${semanaHoy}</b>
-        </span>
-    </div>
+    // 2. Calcular KPIs dinámicos basados en la data real filtrada
+    const kpiHtml = generarKpisDinamicos(proveedoresFiltrados, semanas.length);
 
-    <div class="overflow-x-auto custom-scroll border border-slate-800/60 rounded-lg">
-        <table class="lex-table-report w-full text-left border-collapse text-[11px]">
+    // 3. Generar Cabecera de la Tabla usando "semanasRelativas"
+    let tablaHtml = `
+    <div class="lex-table-container">
+        <table class="lex-table">
             <thead>
-                <tr class="bg-arena-dark text-xs font-black text-amber-950 uppercase tracking-widest border-b-2 border-amber-800/40">
-                    <th class="p-4 w-72 sticky left-0 z-10 shadow-[3px_0_6px_-2px_rgba(233, 180, 95, 0.15)] sticky-arena">Proveedor</th>
-                    ${semanasNumeros.map(numSemanaColumna => {
-                        const esActual = (numSemanaColumna === semanaHoy);
-                        const claseSemana = esActual ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-slate-950/40 text-slate-400 border-slate-800';
+                <tr class="lex-tr-head bg-arena-dark">
+                    <th class="lex-th sticky-arena">Proveedor</th>
+    `;
 
-                        return `
-                        <th class="p-4 text-center w-36"">
-                            <button onclick="verDetalleSemana(${numSemanaColumna})" 
-                                    class="w-full py-1.5 px-2 rounded border flex flex-col items-center justify-center transition-all hover:border-cyan-500/50 group ${claseSemana}">
-                                <span class="text-[7px] text-slate-500 uppercase tracking-tight group-hover:text-cyan-400 transition-colors"><i class="fi fi-br-referral-link-arrow"></i></span>
-                                <span class="text-[10px] font-mono font-bold mt-0.5">SEM ${numSemanaColumna}</span>
-                            </button>
-                        </th>`;
-                    }).join('')}
+    // Crear las columnas dinámicamente según las semanas de la respuesta
+    semanas.forEach((sem, idx) => {
+        const esActual = esSemanaActual(sem);
+        const thClass = esActual ? "lex-th text-center lex-th-highlight" : "lex-th text-center";
+        
+        // Parsear "SEM 1 06/07/2026" -> Extraer "Semana 1" y la fecha "06/07"
+        const partes = sem.split(" ");
+        const numeroSemana = partes[1] || (idx + 1);
+        const fechaCorta = partes[2] ? partes[2].substring(0, 5) : "";
+
+        tablaHtml += `
+            <th class="${thClass}">
+                Semana ${numeroSemana} ${esActual ? '<br><span class="text-[9px] text-blue-600 font-bold">(ACTUAL)</span>' : ''}
+                <br>
+                <span class="text-[10px] opacity-75 font-mono">${fechaCorta}</span>
+            </th>
+        `;
+    });
+
+    tablaHtml += `
                 </tr>
             </thead>
-            <tbody class="divide-y divide-amber-800/20 text-base">
-                ${filas.map(f => {
-                    const idprov = f?.idprov || f?.[0] || '';
-                    const nombre = f?.nombre || f?.[1] || 'SIN NOMBRE';
-                    if (!nombre || nombre === 'NOMBRE PROVEEDOR' || idprov === 'ID PROV') return '';
+            <tbody class="lex-tbody">
+    `;
 
-                    return `
-                    <tr class="hover:bg-arena-dark/40 hover:border-y-2 hover:border-amber-700 transition-all duration-150 group">
-                        <td class="p-4 bg-transparent sticky left-0 z-10 shadow-[3px_0_6px_-2px_rgba(233, 180, 95, 0.15)] sticky-arena group-hover:bg-transparent">
-                            <div class="block text-lg font-black text-amber-950 tracking-tight">ID: ${idprov}</div>
-                            <div class="block text-xs font-bold text-amber-800 mt-0.5">${nombre}</div>
-                        </td>
-                        ${semanasNumeros.map((numSemanaColumna, idx) => {
-                            const val = f[`s${idx + 1}`] !== undefined ? f[`s${idx + 1}`] : f[idx + 2];
-                            const esFuturo = numSemanaColumna > semanaHoy;
-                            return `<td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(val, esFuturo)}</td>`;
-                        }).join('')}
-                    </tr>`;
-                }).join('')}
+    // 4. Renderizar las filas de proveedores
+    if (proveedoresFiltrados.length === 0) {
+        tablaHtml += `
+            <tr class="lex-tr-row">
+                <td colspan="${semanas.length + 1}" class="text-center py-10 text-slate-400 font-mono text-xs uppercase tracking-wider">
+                    Sin proveedores coincidentes
+                </td>
+            </tr>
+        `;
+    } else {
+        proveedoresFiltrados.forEach(prov => {
+            const nombreLimpio = String(prov.nombre || '').trim();
+            const idProv = prov.idprov;
+
+            tablaHtml += `<tr class="lex-tr-row group">`;
+            
+            // Columna fija con el nombre corregido (prov.nombre)
+            tablaHtml += `
+                <td class="lex-td sticky-arena">
+                    <span class="lex-prov-name">${nombreLimpio}</span>
+                    <span class="lex-prov-id">ID_PROV: ${idProv}</span>
+                </td>
+            `;
+
+            // Celdas dinámicas para s1, s2, s3, s4, s5
+            for (let i = 1; i <= semanas.length; i++) {
+                const keySemana = `s${i}`;
+                const valorEstado = prov[keySemana] !== undefined ? String(prov[keySemana]).trim() : '';
+
+                // Determinar si es la semana actual para destacar la celda
+                const esCeldaActual = esSemanaActual(semanas[i - 1]);
+                const tdClass = esCeldaActual ? "lex-td lex-td-highlight" : "lex-td text-center";
+
+                tablaHtml += `<td class="${tdClass}">`;
+                tablaHtml += obtenerHtmlEstadoCompacto(valorEstado, idProv, nombreLimpio, i);
+                tablaHtml += `</td>`;
+            }
+
+            tablaHtml += `</tr>`;
+        });
+    }
+
+    tablaHtml += `
             </tbody>
         </table>
-    </div>`;
-
-    if (contenedor) contenedor.innerHTML = html;
-}
-
-async function verDetalleSemana(numSemana) {
-    if (!numSemana) return;
-    mostrarCargandoLex(true);
-    
-    try {
-        const res = await callGoogleScript('procesarFiltradoHoja', { 
-            param: parseInt(numSemana), 
-            tipo: "SEMANA" 
-        });
-        console.log("📦 Respuesta bruta recibida (Semana):", res);
-
-        let data = res?.reply?.reply || res?.reply || res?.filas || res;
-        if (!Array.isArray(data)) data = [];
-
-        renderizarVistaSemanal(data, numSemana); 
-        
-    } catch (e) {
-        console.error("❌ Error en verDetalleSemana:", e);
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-function renderizarVistaSemanal(data, numSemana) {
-    const contenedor = document.getElementById('contenido-reporte-lex');
-    const titulo = document.getElementById('reportesTitulo');
-    
-    if (titulo) titulo.innerText = `PLANIFICACIÓN SEMANAL: SEMANA ${numSemana}`;
-    
-    const dias = [
-        { corto: 'LUN', largo: 'LUNES' },
-        { corto: 'MAR', largo: 'MARTES' },
-        { corto: 'MIE', largo: 'MIERCOLES' },
-        { corto: 'JUE', largo: 'JUEVES' },
-        { corto: 'VIE', largo: 'VIERNES' },
-        { corto: 'SAB', largo: 'SABADO' }
-    ];
-    
-    let html = `
-    <div class="lex-report-toolbar mb-4 flex gap-2">
-        <button onclick="abrirModalSemanal()" class="px-3 py-1.5 text-[10px] font-bold bg-emerald-950/30 text-emerald-400 border border-emerald-800/40 rounded hover:bg-emerald-900/30 transition-all">← VOLVER AL MES</button>
-        <button onclick="ejecutarSincronizacionRelampago()" class="px-3 py-1.5 text-[10px] font-bold bg-cyan-950/30 text-cyan-400 border border-cyan-800/40 rounded hover:bg-cyan-900/30 transition-all">
-            <i class="fas fa-sync-alt mr-1"></i> REFRESCAR
-        </button>
     </div>
-    <div class="overflow-x-auto custom-scroll border border-slate-800/60 rounded-lg">
-        <table class="lex-table-report w-full text-left border-collapse text-[11px]">
-            <thead>
-                <tr class="bg-slate-900 border-b border-slate-800">
-                    <th class="p-2.5 text-amber-500 font-bold uppercase tracking-wider min-w-[200px]">Proveedor / Cuenta</th>
-                    ${dias.map(d => `
-                        <th class="p-1 text-center min-w-[80px]">
-                            <button onclick="verDetalleDia('${d.largo}', ${numSemana})" class="w-full py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded font-mono font-bold text-[10px] hover:border-amber-400 transition-colors">
-                                ${d.corto}
-                            </button>
-                        </th>
-                    `).join('')}
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-900/60 bg-slate-950/20">`;
-    
-    if (!data || data.length === 0) {
-        html += `<tr><td colspan="7" class="p-10 text-center text-slate-500 font-mono text-xs">No hay datos disponibles para esta semana.</td></tr>`;
-    } else {
-        const filasFiltradas = data.filter(f => {
-            const id = f?.idProveedor || f?.idprov || f?.[0] || '';
-            return id !== 'ID PROV' && id !== '';
-        });
+    `;
 
-        filasFiltradas.forEach(f => {
-            const idprov = f?.idProveedor || f?.idprov || f?.[0] || '';
-            const nombre = f?.nombreProveedor || f?.nombre || f?.[1] || 'SIN NOMBRE';
-            const s1 = f?.s1 !== undefined ? f.s1 : f?.[2] || 'NO';
-            const s2 = f?.s2 !== undefined ? f.s2 : f?.[3] || 'NO';
-            const s3 = f?.s3 !== undefined ? f.s3 : f?.[4] || 'NO';
-            const s4 = f?.s4 !== undefined ? f.s4 : f?.[5] || 'NO';
-            const s5 = f?.s5 !== undefined ? f.s5 : f?.[6] || 'NO';
-            const s6 = f?.s6 !== undefined ? f.s6 : f?.[7] || 'NO';
+    // Inyectar HTML en el cuerpo del modal
+    contenedor.innerHTML = kpiHtml + tablaHtml;
+
+    // Registrar el listener del buscador para que filtre en caliente sin recargar de la base de datos
+    registrarEventosBuscador();
+}
+
+// Genera un componente de tarjeta (card) estilizado según el estado textual del JSON
+function obtenerHtmlEstadoCompacto(estado, idProv, nombreProv, numSemana) {
+    if (!estado) {
+        // Celda vacía: Renderizar botón "+" original
+        return `
+            <button class="lex-btn-add" 
+                    onclick="abrirModalNuevoPedido('${idProv}', '${escaparTexto(nombreProv)}', 'Semana ${numSemana}')"
+                    aria-label="Agregar control para ${nombreProv}">
+                +
+            </button>
+        `;
+    }
+
+    // 1. Colores por defecto (Gris / Azul para estados desconocidos)
+    let bgColor = "#f1f5f9";      // Fondo gris muy claro
+    let borderColor = "#94a3b8";  // Borde izquierdo gris
+    let textColor = "#1e293b";    // Texto gris oscuro
+    let badgeBg = "#cbd5e1";      // Fondo etiqueta S1, S2...
+    let badgeText = "#334155";    // Texto etiqueta
+
+    const estadoLower = estado.toLowerCase();
+
+    // 2. Clasificación estricta por estados reales:
+
+    // VERDE: Únicamente si dice "OK" o tiene el emoji verde 🟢
+    if (estado.includes("🟢") || estadoLower.includes("ok")) {
+        bgColor = "#ecfdf5";      // Verde esmeralda pastel
+        borderColor = "#10b981";  // Borde esmeralda fuerte
+        textColor = "#064e3b";    // Texto verde oscuro
+        badgeBg = "#a7f3d0";      // Badge verde
+        badgeText = "#065f46";
+    } 
+    // ROJO: Si tiene el emoji rojo 🔴 o contiene la palabra "pendiente" o "pend"
+    else if (estado.includes("🔴") || estadoLower.includes("pend")) {
+        bgColor = "#fef2f2";      // Rojo pastel
+        borderColor = "#ef4444";  // Borde rojo fuerte
+        textColor = "#7f1d1d";    // Texto rojo oscuro
+        badgeBg = "#fecaca";      // Badge rojo
+        badgeText = "#991b1b";
+    } 
+    // AMARILLO / ÁMBAR: Si tiene advertencia ⚠️ o dice "Falta Realizar"
+    else if (estado.includes("⚠️") || estadoLower.includes("falta") || estadoLower.includes("pendiente")) {
+        bgColor = "#fffbeb";      // Amarillo/Ámbar pastel
+        borderColor = "#f59e0b";  // Borde ámbar fuerte
+        textColor = "#78350f";    // Texto marrón/ámbar oscuro
+        badgeBg = "#fef3c7";      // Badge amarillo
+        badgeText = "#92400e";
+    }
+
+    // Recortamos los últimos 4 dígitos del ID para mantenerlo limpio
+    //const idCorto = idProv.toString().slice(-4);
+
+    // Renderizado aplicando estilos inline directamente
+    return `
+        <div class="lex-card-pedido cursor-pointer" 
+             onclick="abrirDetalleEstatus('${idProv}', 's${numSemana}')" 
+             style="
+                background-color: ${bgColor} !important; 
+                border-left: 5px solid ${borderColor} !important; 
+                color: ${textColor} !important; 
+                padding: 6px 8px; 
+                border-radius: 6px; 
+                box-sizing: border-box;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
+                transition: transform 0.1s ease-in-out; 
+                text-align: left; 
+                margin-bottom: 4px; 
+                min-width: 115px; 
+                display: block; 
+                width: 100%;
+             "
+             onmouseover="this.style.transform='scale(1.02)'"
+             onmouseout="this.style.transform='scale(1)'">
             
-            html += `
-            <tr class="hover:bg-slate-900/30 transition-colors">
-                <td class="p-2.5 border-r border-slate-900/40">
-                    <div class="inline-block px-1.5 py-0.5 text-[8px] font-mono rounded bg-slate-900 text-slate-400 border border-slate-800 mb-1">ID: ${idprov}</div>
-                    <div class="lex-nombre-prov font-bold text-slate-300 uppercase tracking-wide">${nombre}</div>
-                </td>
-                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s1, false)}</td>
-                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s2, false)}</td>
-                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s3, false)}</td>
-                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s4, false)}</td>
-                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s5, false)}</td>
-                <td class="p-2 text-center align-middle border-r border-slate-900/20">${formatearEstado(s6, false)}</td>
-            </tr>`;
-        });
-    }
-    
-    html += `</tbody></table></div>`;
-    if (contenedor) contenedor.innerHTML = html;
-}
 
-async function verDetalleDia(nombreDia, numSemana) {
-    mostrarCargandoLex(true);
-    
-    if (typeof navegacionSemanal !== 'undefined') {
-        navegacionSemanal.diaActual = nombreDia;
-    }
-    
-    const contenedor = document.getElementById('contenido-reporte-lex');
-    const titulo = document.getElementById('reportesTitulo');
-
-    try {
-        const res = await callGoogleScript('procesarFiltradoHoja', { 
-            param: nombreDia, 
-            tipo: "DIA" 
-        });
-        
-        let data = res?.reply?.reply || res?.reply || res?.filas || res;
-        if (!Array.isArray(data)) data = [];
-
-        if (data.length > 0 && (data[0]?.idProveedor === 'ID PROV' || data[0]?.[0] === 'ID PROV')) {
-            data.shift();
-        }
-        
-        if (titulo) titulo.innerText = `DETALLE: ${nombreDia} - SEMANA ${numSemana}`;
-
-        let html = `
-        <div class="lex-report-toolbar mb-4 flex gap-2">
-            <button onclick="verDetalleSemana(${numSemana})" class="px-3 py-1.5 text-[10px] font-bold bg-emerald-950/30 text-emerald-400 border border-emerald-800/40 rounded hover:bg-emerald-900/30 transition-all">← VOLVER A SEMANA</button>
-            <button onclick="abrirModalSemanal()" class="px-3 py-1.5 text-[10px] font-bold bg-amber-950/30 text-amber-400 border border-amber-800/40 rounded hover:bg-amber-900/30 transition-all">INICIO MES</button>
+            
+            <p class="lex-card-body" style="font-size: 10px; font-weight: 700; margin: 0; line-height: 1.2; color: ${textColor};">
+                ${estado}
+            </p>
         </div>
-        <div class="overflow-x-auto custom-scroll border border-slate-800/60 rounded-lg">
-            <table class="lex-table-report w-full text-left border-collapse text-[11px]">
-                <thead>
-                    <tr class="bg-slate-900 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[9px]">
-                        <th class="p-2.5">PROVEEDOR</th>
-                        <th class="p-2.5 text-center">ESTADO</th>
-                        <th class="p-2.5 text-center">FECHA REGISTRO</th>
-                        <th class="p-2.5 text-center">ID PEDIDO</th>
-                        <th class="p-2.5">OBSERVACIONES</th>
-                        <th class="p-2.5 text-center">ACCIONES</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-900/60 bg-slate-950/20">`;
+    `;
+}
 
-        if (data.length === 0) {
-            html += `<tr><td colspan="6" class="p-10 text-center text-slate-500 font-mono text-xs">No hay pedidos registrados para este día.</td></tr>`;
-        } else {
-            data.forEach(item => {
-                const idProv = item?.idProveedor || item?.idprov || item?.[0] || '';
-                const nombre = item?.nombreProveedor || item?.nombre || item?.[1] || 'SIN NOMBRE';
-                const estado = item?.estado || item?.[2] || 'NO';
-                const fechaReg = item?.fechaRegistro || item?.fecha || item?.[3] || ''; 
-                const idPedido = item?.idPedido || item?.[4] || '';
-                const observaciones = item?.observaciones || item?.[5] || '';
-                const fechaReprog = item?.nuevaFechaReprog || item?.fechaReprog || item?.[6] || '';
+// Calcula los KPIs sumando los estados reales que aparecen en pantalla
+function generarKpisDinamicos(proveedores, cantSemanas) {
+    let totales = 0;
+    let listos = 0;
+    let pendientes = 0;
 
-                let infoFechaHtml = `<div class="font-mono text-slate-300">${fechaReg || '---'}</div>`;
-                if (fechaReprog && estado.toString().toUpperCase().includes("REPRO")) {
-                    infoFechaHtml += `<div class="text-[9px] text-amber-400 font-mono mt-0.5"><i class="fas fa-calendar-alt mr-1"></i>Reprog: ${fechaReprog}</div>`;
+    proveedores.forEach(p => {
+        for (let i = 1; i <= cantSemanas; i++) {
+            const estado = String(p[`s${i}`] || '').trim();
+            if (estado) {
+                totales++;
+                if (estado.includes("🟢") || estado.toLowerCase().includes("ok")) {
+                    listos++;
+                } else if (estado.includes("🔴") || estado.includes("⚠️") || estado.toLowerCase().includes("falta") || estado.toLowerCase().includes("pend")) {
+                    pendientes++;
                 }
-
-                html += `
-                <tr class="hover:bg-slate-900/30 transition-colors">
-                    <td class="p-2.5 align-middle">
-                        <div class="inline-block px-1.5 py-0.5 text-[8px] font-mono rounded bg-slate-900 text-slate-400 border border-slate-800 mb-1">ID: ${idProv}</div>
-                        <div class="font-bold text-slate-300 uppercase tracking-wide">${nombre}</div>
-                    </td>
-                    <td class="p-2 text-center align-middle">${formatearEstado(estado)}</td>
-                    <td class="p-2 text-center align-middle">${infoFechaHtml}</td>
-                    <td class="p-2 text-center align-middle text-slate-400 font-mono font-bold text-xs">#${idPedido}</td>
-                    <td class="p-2 align-middle max-width-[200px] text-slate-400 text-[10px] leading-relaxed white-space-normal break-words">
-                        ${observaciones || '<span class="text-slate-600 italic">Sin observaciones</span>'}
-                    </td>
-                    <td class="p-2 text-center align-middle">
-                        <button onclick="verPedidoDirecto('${idPedido}')" class="px-2 py-1 text-[10px] font-bold bg-purple-950/40 text-purple-400 border border-purple-800/50 rounded hover:bg-purple-900/40 transition-colors">
-                            <i class="fas fa-search mr-1"></i> Ver
-                        </button>
-                    </td>
-                </tr>`;
-            });
-        }
-
-        html += `</tbody></table></div>`;
-        if (contenedor) contenedor.innerHTML = html;
-
-    } catch (e) {
-        console.error("❌ Error en verDetalleDia:", e);
-        if (contenedor) contenedor.innerHTML = `<div class="text-red-400 font-mono text-xs p-5">Error al traer detalle diario: ${e.message}</div>`;
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-function getWeekNumber(d) {
-    const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    target.setUTCDate(target.getUTCDate() + 4 - (target.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
-    return Math.ceil((((target - yearStart) / 86400000) + 1) / 7);
-}
-
-function formatearEstado(e, esFuturo = false) {
-    const txt = e ? e.toString().toUpperCase().trim() : "";
-    const esNo = !txt || txt === "NO" || txt === "❌ NO";
-
-    if (esNo && esFuturo) return ""; 
-
-    const estiloBase = "display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: monospace; letter-spacing: 0.5px; border: 1px solid;";
-
-    if (esNo) {
-        return `<span style="${estiloBase} background: rgba(239, 68, 68, 0.1); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);">❌ NO</span>`;
-    }
-    if (txt.includes("SI") || txt.includes("✅") || txt.includes("OK")) {
-        return `<span style="${estiloBase} background: rgba(34, 197, 94, 0.1); color: #4ade80; border-color: rgba(34, 197, 94, 0.4); box-shadow: 0 0 8px rgba(34, 197, 94, 0.2);">✅ OK</span>`;
-    }
-    if (txt.includes("REPRO") || txt.includes("⚠️")) {
-        return `<span style="${estiloBase} background: rgba(234, 179, 8, 0.1); color: #facc15; border-color: rgba(234, 179, 8, 0.4); box-shadow: 0 0 8px rgba(234, 179, 8, 0.2);">⚠️ REPROG</span>`;
-    }
-
-    return `<span style="${estiloBase} background: #334155; color: #cbd5e1; border-color: #475569;">${txt}</span>`;
-}
-
-function mostrarCargandoLex(show) {
-    const contenedorPadre = document.getElementById('modal-reportes-lex') || document.getElementById('contenido-reporte-lex');
-    if (!contenedorPadre) return;
-    
-    if (show) {
-        if (document.getElementById('lex-loader-overlay')) return;
-
-        const loader = document.createElement('div');
-        loader.id = "lex-loader-overlay";
-        loader.className = "absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center z-50 rounded-lg animate-fade-in";
-        loader.innerHTML = `
-            <div class="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <span class="text-amber-500 font-mono text-[9px] tracking-[2px] uppercase animate-pulse">ACCEDIENDO AL ARCHIVO MAESTRO...</span>`;
-        contenedorPadre.appendChild(loader);
-    } else {
-        const loader = document.getElementById('lex-loader-overlay');
-        if (loader) loader.remove();
-    }
-}
-
-async function abrirArchivoPedido(idPedido) {
-    mostrarCargandoLex(true);
-    try {
-        const res = await callGoogleScript('obtenerArchivoPedido', { idPedido: idPedido });
-        const data = res?.reply || res;
-
-        if (!data) {
-            alert(`SISTEMA: No se encontró ningún documento asociado al pedido #${idPedido}`);
-            return;
-        }
-
-        const visor = document.getElementById('visor-pdf-lex');
-        const iframe = document.getElementById('pdf-frame-lex');
-        if (!visor || !iframe) return;
-        
-        iframe.style.display = 'none';
-        let visorCSV = document.getElementById('visor-csv-container');
-        if (!visorCSV) {
-            visorCSV = document.createElement('div');
-            visorCSV.id = 'visor-csv-container';
-            visor.appendChild(visorCSV);
-        }
-        visorCSV.innerHTML = '';
-        visorCSV.style.display = 'none';
-
-        if (data.tipo === 'pdf') {
-            const blob = base64ToBlob(data.contenido, 'application/pdf');
-            const url = URL.createObjectURL(blob);
-            iframe.src = url;
-            iframe.style.display = 'block';
-            visor.dataset.currentBlob = url;
-        } else if (data.tipo === 'csv') {
-            visorCSV.innerHTML = `
-                <div class="p-4 text-slate-300">
-                    <h3 class="text-amber-500 font-bold font-mono text-xs mb-3 uppercase tracking-wider">VISTA PREVIA CSV: ${data.nombre}</h3>
-                    <div class="lex-csv-wrapper overflow-auto border border-slate-800 rounded bg-slate-950 p-2">${data.contenido}</div>
-                </div>`;
-            visorCSV.style.display = 'block';
-        }
-
-        visor.style.display = 'flex';
-    } catch (e) {
-        console.error("❌ Fallo crítico en canal de visualización:", e);
-        alert("Error de comunicación con el archivo.");
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-function cerrarVisorLex() {
-    const visor = document.getElementById('visor-pdf-lex');
-    const iframe = document.getElementById('pdf-frame-lex');
-    if (!visor || !iframe) return;
-    
-    if (visor.dataset.currentBlob) {
-        URL.revokeObjectURL(visor.dataset.currentBlob);
-        delete visor.dataset.currentBlob;
-    }
-    iframe.src = "";
-    visor.style.display = 'none';
-}
-
-async function exportarVistaActualALex() {
-    const contenedor = document.getElementById('contenido-reporte-lex') || document.querySelector('.tab-pane.active') || document.body;
-    const tabla = contenedor?.querySelector('table');
-    
-    if (!tabla) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Sin datos',
-            text: 'No se detectó ninguna tabla activa en pantalla para exportar.',
-            background: '#1e293b', color: '#cbd5e1'
-        });
-        return;
-    }
-
-    mostrarCargandoLex(true);
-
-    try {
-        const filas = [];
-        const headers = [];
-        let colAccionesIdx = -1;
-        
-        tabla.querySelectorAll('thead th').forEach((th, index) => {
-            const textoHeader = th.innerText.trim();
-            if (['ACCIONES', 'ACCION'].includes(textoHeader.toUpperCase())) {
-                colAccionesIdx = index; 
-            } else {
-                headers.push(textoHeader);
             }
-        });
-        filas.push(headers);
-
-        tabla.querySelectorAll('tbody tr').forEach(tr => {
-            const fila = [];
-            tr.querySelectorAll('td').forEach((td, index) => {
-                if (index === colAccionesIdx) return;
-                const badge = td.querySelector('span');
-                let textoCelda = badge ? badge.innerText.trim() : td.innerText.trim();
-                fila.push(textoCelda.replace(/\n|\r/g, " "));
-            });
-            if (fila.length > 0) filas.push(fila);
-        });
-
-        const elTitulo = document.getElementById('titulo-reporte-lex') || document.querySelector('.active h2') || document.querySelector('.active h3');
-        let nombreArchivo = elTitulo ? elTitulo.innerText.trim() : 'Reporte_Pedidos_Vista_Actual';
-        nombreArchivo = nombreArchivo.toLowerCase().replace(/[^a-z0-9áéíóúñ_-]/gi, '_');
-
-        const contenidoCSV = "\uFEFF" + filas.map(f => 
-            f.map(celda => `"${celda.replace(/"/g, '""')}"`).join(";")
-        ).join("\n");
-
-        const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
-        const urlDescarga = URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = urlDescarga;
-        link.download = `${nombreArchivo}_${new Date().toISOString().slice(0,10)}.csv`; 
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(urlDescarga);
-
-    } catch (e) {
-        console.error("❌ Falló el wrapper de exportación CSV:", e);
-        Swal.fire({
-            icon: 'error', title: 'Error de Exportación', text: 'Ocurrió un inconveniente al empaquetar los datos.', background: '#1e293b', color: '#cbd5e1'
-        });
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-function base64ToBlob(base64, type) {
-    const bin = atob(base64);
-    const len = bin.length;
-    const arr = new Uint8Array(len);
-    for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
-    return new Blob([arr], { type: type });
-}
-
-async function ejecutarSincronizacionRelampago() {
-    mostrarCargandoLex(true);
-    try {
-        const res = await callGoogleScript('verificarReporteSemanal');
-        if (res?.status === "success") {
-            await abrirModalSemanal();
         }
-    } catch (err) {
-        console.error("❌ Falla en Sync:", err);
-    } finally {
-        mostrarCargandoLex(false);
-    }
-}
-
-window.verPedidoDirecto = async function(idPedido) {
-    if (!idPedido || idPedido.trim() === "") {
-        Swal.fire({ icon: 'warning', title: 'Atención', text: 'ID de pedido no válido.', background: '#1e293b', color: '#cbd5e1' });
-        return;
-    }
-
-    Swal.fire({
-        title: 'Buscando registro...',
-        html: `Consultando orden <b style="color:#00f0ff">#${idPedido}</b> en el ecosistema...`,
-        background: '#1e293b', color: '#cbd5e1',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
     });
 
-    try {
-        const response = await callGoogleScript('obtenerDetallePedidoUnico', idPedido);
-        const laRespuestaReal = response?.reply || response;
+    return `
+    <div class="lex-kpi-container mb-5" style="display: flex; gap: 16px; margin-bottom: 20px;">
+        <div class="lex-kpi-card bg-arpillera" style="flex: 1; padding: 12px 16px; border-radius: 8px; border-left: 5px solid #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Tareas del Mes</div>
+            <div style="font-size: 24px; font-weight: 800; color: #1e293b; margin-top: 2px;">${totales}</div>
+        </div>
+        <div class="lex-kpi-card bg-arpillera" style="flex: 1; padding: 12px 16px; border-radius: 8px; border-left: 5px solid #10b981; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Listos / OK</div>
+            <div style="font-size: 24px; font-weight: 800; color: #10b981; margin-top: 2px;">${listos}</div>
+        </div>
+        <div class="lex-kpi-card bg-arpillera" style="flex: 1; padding: 12px 16px; border-radius: 8px; border-left: 5px solid #ef4444; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Pendientes / Faltantes</div>
+            <div style="font-size: 24px; font-weight: 800; color: #ef4444; margin-top: 2px;">${pendientes}</div>
+        </div>
+    </div>
+    `;
+}
 
-        if (!laRespuestaReal || laRespuestaReal.status === 'error') {
-            Swal.fire({
-                icon: 'info', title: 'Información del Sistema', text: laRespuestaReal?.message || 'No se localizó el pedido.', background: '#1e293b', color: '#cbd5e1', confirmButtonColor: '#475569'
-            });
-            return;
+// Determina matemáticamente si una semana de la lista coincide con la semana actual de nuestro calendario real
+function esSemanaActual(semanaStr) {
+    if (!semanaStr) return false;
+    // Formato esperado: "SEM 2 13/07/2026"
+    const partes = semanaStr.split(" ");
+    if (partes.length < 3) return false;
+    
+    const fechaStr = partes[2]; // "13/07/2026"
+    const [dia, mes, anio] = fechaStr.split("/").map(Number);
+    const lunesSemana = new Date(anio, mes - 1, dia);
+    lunesSemana.setHours(0,0,0,0);
+
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+
+    // Obtener el lunes de la semana actual
+    const diaHoy = hoy.getDay();
+    const diff = hoy.getDate() - diaHoy + (diaHoy === 0 ? -6 : 1);
+    const lunesHoy = new Date(hoy.setDate(diff));
+    lunesHoy.setHours(0,0,0,0);
+
+    return lunesSemana.getTime() === lunesHoy.getTime();
+}
+
+// Enlaza el buscador dinámico una sola vez para evitar múltiples bindings
+function registrarEventosBuscador() {
+    const inputBuscador = document.getElementById('filtro-proveedor-lex');
+    if (inputBuscador && !inputBuscador.dataset.listenerSet) {
+        inputBuscador.dataset.listenerSet = "true";
+        inputBuscador.addEventListener('input', () => dibujarTableroCompleto());
+    }
+}
+
+// Utilidades del procesador de strings
+function normalizarTexto(txt) {
+    return String(txt).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function escaparTexto(txt) {
+    return String(txt).replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+// Funciones de control de clicks
+function abrirModalNuevoPedido(idProv, nombreProv, semana) {
+    console.log(`🆕 Abrir modal de nuevo control para ${nombreProv} en la ${semana}`);
+    // Vinculá acá tu modal de carga existente
+}
+
+function abrirDetalleEstatus(idProv, claveSemana) {
+    console.log(`🔍 Detalle de estatus para el proveedor ID: ${idProv} en ${claveSemana}`);
+    // Vinculá acá la visualización detallada
+}
+
+
+
+
+
+
+
+
+
+/*---funciones pedidos manuales---*/
+window.abrirModalPedidosManual = async function() {
+    console.log("Cargando entorno de Pedidos Manuales...");
+    const modal = document.getElementById('modal-pedidos');
+    const contenido = document.getElementById('modal-contenido');
+    const titulo = document.getElementById('modal-titulo');
+    
+    if (!modal || !contenido || !titulo) return;
+    
+    contenido.innerHTML = "";
+    window.carritoPedidos = []; 
+    titulo.innerText = "SISTEMA DE PEDIDOS (MANUAL)";
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.style.display = 'flex';
+    
+    // Loader integrado HUD
+    contenido.innerHTML = `
+        <div class="p-12 text-center flex flex-col items-center justify-center">
+            <h3 class="mb-4 font-bold tracking-[3px] text-[11px] text-white" style="font-family: 'Share Tech Mono', monospace;">
+                ESTABLECIENDO ENLACE CON MATRIZ MAESTRA...
+            </h3>
+            <div class="w-9 h-9 border-2 rounded-full animate-spin" 
+                 style="border-color: rgba(0, 242, 254, 0.15); border-top-color: #00f2fe; box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);"></div>
+        </div>`;
+
+    try {
+        const res = await callGoogleScript('obtenerListaProveedoresUnicos', {});
+        console.log("📦 [Debug NICO] Respuesta completa de la API:", res);
+
+        let lista = null;
+        if (Array.isArray(res)) {
+            lista = res;
+        } else if (res && typeof res === 'object') {
+            lista = res.data || res.reply || res.proveedores || res.lista;
+            if (lista && typeof lista === 'object' && !Array.isArray(lista)) {
+                lista = lista.data || lista.proveedores || Object.values(lista);
+            }
         }
 
-        const resData = laRespuestaReal.data || laRespuestaReal;
-        const proveedor = resData.proveedor || '---';
-        const productos = resData.productos || '---';
-        const estado = resData.estado || '---';
-        const fechaRegistro = resData.fechaRegistro || '---';
-        const observaciones = resData.observaciones || 'Sin comentarios registrados.';
-        const nuevaFechaReprog = resData.nuevaFechaReprog || '';
-        const origenHoja = laRespuestaReal.origen || 'Ecosistema';
+        if (Array.isArray(lista)) {
+            let options = lista.map(p => {
+                const nombre = p ? String(p).trim() : "";
+                const nombreEscapado = nombre.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                return `<option value="${nombreEscapado}" style="background:#040b1c; color:#fff;">${nombreEscapado}</option>`;
+            }).join('');
 
-        let colorEstado = '#34d399'; 
-        if (estado.toUpperCase().includes('REPRO')) colorEstado = '#eab308';
-        if (estado.toUpperCase().includes('PEND')) colorEstado = '#38bdf8';
+            contenido.innerHTML = `
+                <div class="p-8 text-center max-w-xl mx-auto rounded border" 
+                     style="background: rgba(0,0,0,0.2); border-color: rgba(0,242,254,0.15); box-shadow: inset 0 0 20px rgba(0,242,254,0.05); margin-top: 10vh;">
+                    
+                    <div class="flex justify-center gap-3 mb-6" style="font-family: 'Orbitron', sans-serif;">
+                        <button id="btn-modo-prov" onclick="cambiarModoPedido('proveedor')" 
+                            class="px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-cyan-950/40 text-[#00f2fe] border-[#00f2fe]/40 shadow-[0_0_10px_rgba(0,242,254,0.1)]">
+                            POR PROVEEDOR
+                        </button>
+                        <button id="btn-modo-prod" onclick="cambiarModoPedido('producto')" 
+                            class="px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-slate-900/40 text-slate-400 border-slate-800 hover:border-slate-700">
+                            POR PRODUCTOS
+                        </button>
+                    </div>
 
-        Swal.fire({
-            title: `<span style="font-size:11px; color:#64748b; letter-spacing:1.5px; font-weight:bold;">DETALLE DE PEDIDO • ${origenHoja.toUpperCase()}</span><br>
-                    <span style="color:#00f0ff; font-family:monospace; font-size:22px;">#${idPedido}</span>`,
-            html: `
-                <div style="text-align: left; background: rgba(15, 23, 42, 0.7); padding: 16px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; margin-top:10px;">
-                    <div style="margin-bottom: 10px;">
-                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">PROVEEDOR:</span>
-                        <span style="color: #f8fafc; font-weight:600; text-transform:uppercase;">${proveedor}</span>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">PRODUCTOS / DETALLE:</span>
-                        <div style="background: rgba(15, 23, 42, 0.9); padding: 8px 12px; border-radius: 4px; color: #cbd5e1; border-left: 3px solid #00f0ff; font-size: 12.5px;">
-                            ${productos}
+                    <h3 id="pedido-seccion-titulo" class="mb-5 font-bold uppercase tracking-[4px] text-[11px]" 
+                        style="color: #00f2fe; font-family: 'Orbitron', sans-serif;">
+                        SELECCIONAR PROVEEDOR
+                    </h3>
+                    
+                    <div class="flex flex-col items-center gap-5">
+
+                        <nav id="nav-categorias-productos" class="hud-horizontal-nav hidden w-full justify-center">
+                            <div class="nav-horiz-item theme-cyan">
+                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                                    <span class="btn-text">INSUMOS</span>
+                                    <span class="btn-chevron">▼</span>
+                                </button>
+                                <div class="horiz-dropdown">
+                                    <ul id="lista-insumos-dinamica" class="horiz-submenu-list"></ul>
+                                </div>
+                            </div>
+
+                            <div class="nav-horiz-item theme-orange">
+                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                                    <span class="btn-text">HERRAMIENTAS</span>
+                                    <span class="btn-chevron">▼</span>
+                                </button>
+                                <div class="horiz-dropdown">
+                                    <ul class="horiz-submenu-list" id="sm-herramientas"></ul>
+                                </div>
+                            </div>
+
+                            <div class="nav-horiz-item theme-pink">
+                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                                    <span class="btn-text">TELAS</span>
+                                    <span class="btn-chevron">▼</span>
+                                </button>
+                                <div class="horiz-dropdown">
+                                    <ul class="horiz-submenu-list" id="sm-telas">
+                                        <li class="nested-horiz-item">
+                                            <button class="nested-horiz-btn" onclick="toggleNestedMenu(event, this)">
+                                                <span>▶ SIMIL CUERO</span>
+                                            </button>
+                                            <ul class="nested-submenu-list hidden" id="sm-simil-cuero"></ul>
+                                        </li>
+                                        <li class="dropdown-divider"></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="nav-horiz-item theme-purple">
+                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
+                                    <span class="btn-text">HERRAJES</span>
+                                    <span class="btn-chevron">▼</span>
+                                </button>
+                                <div class="horiz-dropdown">
+                                    <ul class="horiz-submenu-list" id="sm-herrajes"></ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div id="wrapper-proveedor" class="flex flex-col items-center gap-5 w-full">
+                            <select id="prov-seleccionado" class="text-white p-3 rounded w-72 outline-none text-xs tracking-wider transition-all"
+                                    style="background: #040b1c; border: 1px solid rgba(0, 242, 254, 0.4); font-family: 'Share Tech Mono', monospace; box-shadow: 0 0 10px rgba(0,242,254,0.05);">
+                                <option value="" style="background:#040b1c; color: rgba(255,255,255,0.3);">-- SELECCIONAR PROVEEDOR --</option>
+                                ${options}
+                            </select>
+                            <button onclick="cargarProductosPorProveedor()" class="h-10 px-8 text-slate-950 font-black text-[10px] tracking-widest rounded transition-all duration-200 active:scale-95"
+                                    style="background: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.3); font-family: 'Orbitron', sans-serif;">
+                                INICIALIZAR CATÁLOGO
+                            </button>
                         </div>
+
                     </div>
-                    <div style="margin-bottom: 10px;">
-                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">ESTADO:</span>
-                        <span style="background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius:4px; color:${colorEstado}; font-weight: bold; font-size: 11px; font-family:monospace;">
-                            ${estado}
-                        </span>
+                </div>`;
+        } else {
+            throw new Error("Formato de lista de proveedores no reconocido por la terminal.");
+        }
+    } catch (err) {
+        console.error("❌ Error al pedir proveedores:", err);
+        contenido.innerHTML = `
+            <div class="p-6 border border-red-900/40 bg-red-950/10 rounded max-w-md mx-auto text-center font-mono" style="margin-top: 10vh;">
+                <p class="text-red-400 text-[11px] tracking-widest font-bold">⚠️ CRITICAL_SYNC_FAILURE</p>
+                <span class="text-slate-400 text-[10px] block mt-2 normal-case font-sans">${err.message}</span>
+            </div>`;
+    }
+};
+
+// FUNCIÓN PARA INTERCAMBIAR ENTRE ENTORNOS DE TRABAJO (Añadir globalmente)
+window.cambiarModoPedido = function(modo) {
+    const btnProv = document.getElementById('btn-modo-prov');
+    const btnProd = document.getElementById('btn-modo-prod');
+    const navCategorias = document.getElementById('nav-categorias-productos');
+    const wrapperProveedor = document.getElementById('wrapper-proveedor');
+    const seccionTitulo = document.getElementById('pedido-seccion-titulo');
+
+    if (!btnProv || !btnProd || !navCategorias || !wrapperProveedor || !seccionTitulo) return;
+
+    if (modo === 'proveedor') {
+        seccionTitulo.innerText = "SELECCIONAR PROVEEDOR";
+        wrapperProveedor.classList.remove('hidden');
+        navCategorias.classList.add('hidden');
+        navCategorias.classList.remove('flex');
+
+        // Clases de Botón Activo para Proveedor
+        btnProv.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-cyan-950/40 text-[#00f2fe] border-[#00f2fe]/40 shadow-[0_0_10px_rgba(0,242,254,0.1)]";
+        // Clases de Botón Inactivo para Productos
+        btnProd.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-slate-900/40 text-slate-400 border-slate-800 hover:border-slate-700";
+    } else if (modo === 'producto') {
+        seccionTitulo.innerText = "SELECCIONAR POR CATEGORÍA DE PRODUCTO";
+        wrapperProveedor.classList.add('hidden');
+        navCategorias.classList.remove('hidden');
+        navCategorias.classList.add('flex');
+
+        // Clases de Botón Activo para Productos
+        btnProd.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-cyan-950/40 text-[#00f2fe] border-[#00f2fe]/40 shadow-[0_0_10px_rgba(0,242,254,0.1)]";
+        // Clases de Botón Inactivo para Proveedor
+        btnProv.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-slate-900/40 text-slate-400 border-slate-800 hover:border-slate-700";
+    }
+};
+
+async function cargarProductosPorProveedor() {
+    const selector = document.getElementById('prov-seleccionado');
+    const prov = selector ? selector.value.trim() : "";
+    const contenedor = document.getElementById('modal-contenido');
+    if (!contenedor) return;
+
+    if (!prov) {
+        if (window.Swal) {
+            Swal.fire({
+                title: 'AVISO DEL SISTEMA',
+                text: 'Por favor, selecciona un canal de proveedor válido.',
+                icon: 'info',
+                background: '#040b1c',
+                color: '#cbd5e1',
+                confirmButtonColor: 'rgba(0,242,254,0.2)'
+            });
+        } else {
+            alert("AVISO: Selecciona un proveedor");
+        }
+        return;
+    }
+
+    const overlay = document.getElementById('overlay-carga');
+    if (overlay) {
+        overlay.style.zIndex = "45000"; 
+        overlay.style.display = 'flex';
+    }
+
+    try {
+        const res = await callGoogleScript('obtenerTablaFiltrada', { 
+            nombreHoja: 'baseProductos', 
+            proveedorFiltro: prov 
+        });
+        
+        if (!res) throw new Error("La consulta central retornó un canal vacío.");
+        
+        const listaBruta = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
+        // Conservamos tu filtro de rotación real de salidas en los últimos 90 días
+        const lista = listaBruta.filter(prod => parseInt(prod.ventas90Dias || 0) > 0);
+        window.productosDelProveedorActual = lista; 
+
+        if (lista.length > 0) {
+            window.carritoPedidos = window.carritoPedidos || [];
+            const todosMarcados = lista.every(p => window.carritoPedidos.some(item => String(item.id).trim() === String(p.id).trim()));
+            
+            let tablaHtml = `
+                <div class="mb-4 p-3 border rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-20 backdrop-blur shadow-xl"
+                     style="background: rgba(4, 11, 28, 0.9); border-color: rgba(0, 242, 254, 0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                    <div id="contador-items" class="text-[11px] text-slate-400 font-mono tracking-wider">
+                        ITEMS INDEXADOS: <span class="text-[#00f2fe] font-bold bg-black/40 px-2 py-0.5 rounded border border-slate-800">${window.carritoPedidos.length}</span>
                     </div>
-                    <div style="margin-bottom: 10px;">
-                        <span style="color: #64748b; font-weight: bold; display:inline-block; width:120px;">REGISTRO:</span>
-                        <span style="color: #cbd5e1; font-family:monospace;">${fechaRegistro}</span>
+                    <div class="relative w-full sm:w-72">
+                        <input type="text" id="buscador-productos" onkeyup="filtrarProductosMain()" 
+                               placeholder="🔍 FILTRAR EN CONEXIÓN ACTIVA..." 
+                               class="w-full bg-black/40 border p-2 pl-3 text-[11px] text-white rounded font-mono focus:border-[#00f2fe] outline-none placeholder-slate-600 transition-colors"
+                               style="border-color: rgba(255,255,255,0.12);">
                     </div>
-                    ${nuevaFechaReprog && !["---", ""].includes(nuevaFechaReprog) ? `
-                    <div style="margin-bottom: 10px; border-left: 3px solid #eab308; padding-left: 8px; background: rgba(234, 179, 8, 0.05); padding-top: 4px; padding-bottom: 4px;">
-                        <span style="color: #eab308; font-weight: bold; display:inline-block; width:110px;">REPROGRAMADO:</span>
-                        <span style="color: #fef08a; font-weight: bold; font-family:monospace;">${nuevaFechaReprog}</span>
-                    </div>` : ''}
-                    <hr style="border:0; border-top: 1px dashed #334155; margin: 14px 0;">
-                    <div>
-                        <span style="color: #64748b; font-weight: bold; display:block; margin-bottom: 4px;">OBSERVACIONES:</span>
-                        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; color: #94a3b8; font-style: italic; min-height: 40px; word-break: break-word; border: 1px solid rgba(255,255,255,0.01);">
-                            ${observaciones}
-                        </div>
-                    </div>
-                </div>`,
-            background: '#1e293b', color: '#cbd5e1',
-            confirmButtonText: 'ENTENDIDO', confirmButtonColor: '#475569',
-            customClass: {
-                container: 'swal-pedido-container', // <- ¡Esto destruye el bug de capas!
-                popup: 'swal-pedido'
+                    <button onclick="revisarPedido()" 
+                            class="text-slate-950 hover:text-white text-[10px] font-black tracking-widest px-6 py-2 rounded transition-all uppercase duration-200 active:scale-95 w-full sm:w-auto"
+                            style="background: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); font-family: 'Orbitron', sans-serif;">
+                        REVISAR ORDEN →
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto border rounded-lg mb-2" style="border-color: rgba(255,255,255,0.08); background: rgba(0,0,0,0.15);">
+                    <table id="tabla-maestra-pedidos" class="w-full text-left border-collapse" style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #cbd5e1;">
+                        <thead>
+                            <tr style="background: rgba(0, 242, 254, 0.06); color: #fff; border-bottom: 2px solid #00f2fe;">
+                                <th class="p-3 text-center w-[50px]">
+                                    <input type="checkbox" id="master-check-productos" ${todosMarcados ? 'checked' : ''}
+                                           onclick="toggleTodosProductos(this)"
+                                           class="w-4 h-4 accent-[#00f2fe] cursor-pointer rounded bg-slate-900 border-slate-700">
+                                </th>
+                                <th class="p-3 w-[70px]">ID</th>
+                                <th class="p-3">DESCRIPCIÓN DEL MATERIAL</th>
+                                <th class="p-3 w-[110px]">SKU</th>
+                                <th class="p-3 w-[90px] text-right">STOCK</th>
+                                <th class="p-3 w-[100px] text-center" style="background: rgba(0,242,254,0.03); color: #00f2fe;">ROTACIÓN 90D</th>
+                                <th class="p-3 w-[110px] text-right">VALOR UNIT.</th>
+                                <th class="p-3 w-[90px] text-right">MÍNIMO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-pedidos" class="divide-y divide-slate-900/40">`;
+
+            lista.forEach(prod => {
+                const idStr = String(prod.id || "").trim();
+                const nombreLimpio = String(prod.nombre || "").replace(/'/g, "").replace(/"/g, "");
+                const skuLimpio = String(prod.sku || "").trim();
+                const precioNum = parseFloat(prod.precio || 0);
+                const stockNum = parseInt(prod.stock || 0);
+                const stockMinNum = parseInt(prod.stockMinimo || 0);
+                const ventas90Num = parseInt(prod.ventas90Dias || 0); 
+                const alertarStock = stockNum <= stockMinNum;
+                const yaSeleccionado = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
+                const checkedAttr = yaSeleccionado ? "checked" : "";
+                
+                // Mapeo dinámico de funciones de escape locales
+                const fnEscapar = typeof escapingForOption === "function" ? escapingForOption : (s) => s.replace(/'/g, "\\'");
+
+                tablaHtml += `
+                    <tr style="background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.05);" 
+                        class="transition-colors duration-150 ${yaSeleccionado ? 'hud-row-active' : ''}"
+                        onmouseover="this.style.background='rgba(0, 242, 254, 0.03)'" 
+                        onmouseout="this.style.background='${yaSeleccionado ? 'rgba(0, 242, 254, 0.05)' : 'rgba(0,0,0,0.15)'}'">
+                        <td class="p-3 text-center">
+                            <input type="checkbox" ${checkedAttr} data-id="${idStr}" class="row-checkbox w-4 h-4 accent-[#00f2fe] cursor-pointer" 
+                                   onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${fnEscapar(prov)}', '${stockMinNum}')">
+                        </td>
+                        <td class="p-3 text-slate-500 font-bold">${idStr}</td>
+                        <td class="p-3 text-white font-sans text-[12px] font-medium">${prod.nombre || "MATERIAL SIN IDENTIFICAR"}</td>
+                        <td class="p-3 text-[#00f2fe] font-bold">${skuLimpio || "---"}</td>
+                        <td class="p-3 text-right font-bold ${alertarStock ? 'text-[#ff007f]' : 'text-slate-300'}" style="${alertarStock ? 'text-shadow: 0 0 8px rgba(255,0,127,0.3);' : ''}">
+                            ${stockNum}
+                        </td>
+                        <td class="p-3 text-center font-bold text-emerald-400" style="background: rgba(16, 185, 129, 0.02);">
+                            ${ventas90Num} <span style="font-size: 9px; color: #52525b; font-weight: normal;">u.</span>
+                        </td>
+                        <td class="p-3 text-right font-bold text-emerald-400">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                        <td class="p-3 text-right text-slate-500">${stockMinNum}</td>
+                    </tr>`;
+            });
+            
+            tablaHtml += `</tbody></table></div>`;
+            contenedor.innerHTML = tablaHtml;
+
+            // Inyección de estilos CSS embebidos para el renglón activo en concordancia con Tailwind
+            if(!document.getElementById('hud-table-styles')) {
+                const style = document.createElement('style');
+                style.id = 'hud-table-styles';
+                style.innerHTML = `
+                    .hud-row-active { background: rgba(0, 242, 254, 0.06) !important; border-left: 2px solid #00f2fe; }
+                    .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: rgba(0, 242, 254, 0.15) !important; color:#00f2fe !important; border: 1px solid #00f2fe !important; font-family:'Share Tech Mono'; font-size:11px; }
+                    .dataTables_wrapper .dataTables_info { color: #71717a !important; font-family:'Share Tech Mono'; font-size:11px; padding-top: 10px; }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Inicializador de DataTables con acoplamiento HUD
+            if (window.jQuery && $.fn.DataTable) {
+                setTimeout(() => {
+                    if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
+                        $('#tabla-maestra-pedidos').DataTable().destroy();
+                    }
+                    $('#tabla-maestra-pedidos').DataTable({
+                        "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
+                        "pageLength": 12,
+                        "dom": 'rtip', 
+                        "order": [[5, "desc"]], 
+                        "autoWidth": false,
+                        "columnDefs": [
+                            { "targets": [0], "orderable": false }
+                        ]
+                    });
+                }, 40);
+            }
+
+        } else {
+            contenedor.innerHTML = `
+                <div class="p-12 text-center border rounded-lg max-w-2xl mx-auto" style="border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.02); margin-top: 5vh;">
+                    <p class="uppercase font-mono font-bold text-[11px] tracking-[3px]" style="color: #f59e0b;">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
+                    <p class="text-slate-400 text-[11px] mt-2 font-sans">No se detectaron artículos del canal "${prov}" con salidas registradas en la ventana de los últimos 90 días.</p>
+                </div>`;
+        }
+    } catch (err) {
+        console.error("❌ Error en compilación de catálogo dirigido:", err);
+        contenedor.innerHTML = `
+            <div class="p-8 text-center border rounded-lg max-w-xl mx-auto font-mono text-[11px]" style="border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.03); margin-top:5vh;">
+                <span class="text-red-400 font-bold block">CRITICAL_RENDER_ERROR</span>
+                <span class="text-slate-400 block mt-2 font-sans normal-case">${err.message}</span>
+            </div>`;
+    } finally {
+        if (overlay) overlay.style.display = 'none';
+    }
+}
+
+function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, stockMinimo) {
+    window.carritoPedidos = window.carritoPedidos || [];
+    const idFiltro = String(id).trim();
+    const trPadre = checkbox.closest('tr');
+
+    if (checkbox.checked) {
+        if (!window.carritoPedidos.some(p => String(p.id).trim() === idFiltro)) {
+            const stockAct = parseInt(stock || 0);
+            const stockMin = parseInt(stockMinimo || 0);
+            const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
+
+            window.carritoPedidos.push({ 
+                id: idFiltro, 
+                nombre: nombre, 
+                sku: sku, 
+                precio: parseFloat(precio || 0), 
+                stock: stockAct, 
+                stockMinimo: stockMin, 
+                proveedor: proveedor, 
+                cantidad: cantidadSugerida
+            });
+        }
+        if (trPadre) {
+            trPadre.style.background = 'rgba(0, 242, 254, 0.06)';
+            trPadre.classList.add('hud-row-active');
+        }
+    } else {
+        window.carritoPedidos = window.carritoPedidos.filter(p => String(p.id).trim() !== idFiltro);
+        if (trPadre) {
+            trPadre.style.background = 'rgba(0,0,0,0.15)';
+            trPadre.classList.remove('hud-row-active');
+        }
+    }
+    actualizarContadorVisual();
+}
+
+function toggleTodosProductos(masterCheck) {
+    if (!window.productosDelProveedorActual || window.productosDelProveedorActual.length === 0) return;
+    window.carritoPedidos = window.carritoPedidos || [];
+    
+    const selector = document.getElementById('prov-seleccionado');
+    const prov = selector ? selector.value.trim() : "";
+    const checkboxesVisibles = document.querySelectorAll('.row-checkbox');
+
+    if (masterCheck.checked) {
+        window.productosDelProveedorActual.forEach(prod => {
+            const idStr = String(prod.id || "").trim();
+            const yaExiste = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
+            
+            if (!yaExiste) {
+                const stockAct = parseInt(prod.stock || 0);
+                const stockMin = parseInt(prod.stockMinimo || 0);
+                const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
+
+                window.carritoPedidos.push({
+                    id: idStr,
+                    nombre: String(prod.nombre || "").replace(/'/g, "").replace(/"/g, ""),
+                    precio: parseFloat(prod.precio || 0),
+                    sku: String(prod.sku || "").trim(),
+                    stock: stockAct,
+                    proveedor: prov,
+                    stockMinimo: stockMin,
+                    amount: cantidadSugerida
+                });
             }
         });
-    } catch (error) {
-        console.error("❌ Error en renderizado frontend:", error);
-        Swal.fire({
-            icon: 'error', title: 'Error de Renderizado', text: 'No se pudo procesar adecuadamente la estructura del pedido.', background: '#1e293b', color: '#cbd5e1'
+
+        checkboxesVisibles.forEach(cb => {
+            cb.checked = true;
+            const tr = cb.closest('tr');
+            if (tr) {
+                tr.style.background = 'rgba(0, 242, 254, 0.06)';
+                tr.classList.add('hud-row-active');
+            }
+        });
+    } else {
+        window.productosDelProveedorActual.forEach(prod => {
+            const idStr = String(prod.id || "").trim();
+            window.carritoPedidos = window.carritoPedidos.filter(item => String(item.id).trim() !== idStr);
+        });
+
+        checkboxesVisibles.forEach(cb => {
+            cb.checked = false;
+            const tr = cb.closest('tr');
+            if (tr) {
+                tr.style.background = 'rgba(0,0,0,0.15)';
+                tr.classList.remove('hud-row-active');
+            }
         });
     }
-};--*/
+    actualizarContadorVisual();
+}
+
+function actualizarContadorVisual() {
+    const contador = document.getElementById('contador-items');
+    if (contador) {
+        const totalItems = window.carritoPedidos ? window.carritoPedidos.length : 0;
+        contador.innerHTML = `ITEMS INDEXADOS: <span style="color: #00f2fe; font-weight: bold; background: rgba(0,0,0,0.4); padding: 2px 8px; border: 1px solid rgba(0,242,254,0.25); border-radius: 3px;">${totalItems}</span>`;
+    }
+}
+
+function filtrarProductosMain() {
+    const input = document.getElementById("buscador-productos");
+    if (!input) return;
+    const filtroText = input.value;
+    
+    if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
+        $('#tabla-maestra-pedidos').DataTable().search(filtroText).draw();
+    } else {
+        const tabla = document.getElementById("tabla-maestra-pedidos");
+        if (!tabla) return;
+        const tbody = tabla.getElementsByTagName("tbody")[0];
+        if (!tbody) return;
+        
+        const filas = tbody.getElementsByTagName("tr");
+        const normalizado = filtroText.toUpperCase();
+
+        for (let i = 0; i < filas.length; i++) {
+            let visible = false;
+            const celdas = filas[i].getElementsByTagName("td");
+            // Empezamos la iteración desde el índice 1 para omitir la celda del checkbox
+            for (let j = 1; j < celdas.length; j++) {
+                const textValue = celdas[j].textContent || celdas[j].innerText;
+                if (textValue.toUpperCase().indexOf(normalizado) > -1) {
+                    visible = true;
+                    break;
+                }
+            }
+            filas[i].style.display = visible ? "" : "none";
+        }
+    }
+}
+
+function cerrarModal_Pedidos() {
+    const modal = document.getElementById('modal-pedidos');
+    const contenido = document.getElementById('modal-contenido');
+    const paginaDashboard = document.getElementById('page-dashboard') || document.getElementById('dashboard');
+    
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.style.display = 'none';
+    }
+    if (contenido) contenido.innerHTML = "";
+
+    if (typeof navegar === "function") {
+        navegar('dashboard'); 
+    } else if (paginaDashboard) {
+        paginaDashboard.style.display = 'flex';
+    }
+}
