@@ -357,7 +357,7 @@ function cerrarModalSincronizacion() {
 
     /*---Seccion Ventas--*/
 
-let nombreArchivoVentas = "";
+var nombreArchivoVentas = "";
 
 // 1. ABRIR PANEL MODAL
 window.abrirModalVenta = function() {
@@ -407,101 +407,172 @@ window.ejecutarProcesamientoVentas = function() {
     const overlayCarga = document.getElementById('overlay-carga');
     if (overlayCarga) overlayCarga.style.display = 'flex';
 
-    // Opcional: Si tenés un texto descriptivo dentro de tu overlay, podés inicializarlo acá
-    const textoOverlay = document.getElementById('texto-overlay-carga'); // Ajustá el ID si existe
-    if (textoOverlay) textoOverlay.innerText = "Subiendo bloques de datos crudos...";
+    const textoOverlay = document.getElementById('texto-overlay-carga'); 
+    if (textoOverlay) textoOverlay.innerText = "Verificando últimas actualizaciones...";
 
     const reader = new FileReader();
     reader.onload = async function(e) {
         try {
             const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
             const nombreHoja = workbook.SheetNames[0];
             const hoja = workbook.Sheets[nombreHoja];
-            
-            // Convertimos la hoja a una matriz de datos pura
             const rawFilas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
-            const filasProcesadas = rawFilas.slice(1)
-                .filter(fila => fila && fila[0] !== "" && fila[0] !== undefined)
-                .map(fila => [
-                    fila[0],                                 // Columna A: Fecha venta
-                    fila[3] !== undefined ? fila[3] : "",    // Columna B: SKU
-                    fila[4] !== undefined ? fila[4] : "",    // Columna C: Nombre
-                    Math.abs(parseFloat(fila[5]) || 0)       // Columna D: Cantidad (Absoluto)
-                ]);
+            
+            const filasCrudas = rawFilas.slice(1); 
+            const totalFilasExcel = filasCrudas.length;
 
-            const totalFilas = filasProcesadas.length;
-            const TAMANIO_BLOQUE = 5000;
+            const hoy = new Date();
+            const hace180Dias = new Date();
+            hace180Dias.setDate(hoy.getDate() - 180);
 
-            console.log(`[LexTech-Client] Total de filas útiles detectadas: ${totalFilas}. Iniciando envío...`);
+            const acumuladorMensual = {};
+            const acumuladorPromedios = {};
+            let maxFechaObj = null;
+            let maxFechaRaw = "";
 
-            // ── PASO 1: SUBIDA DE BLOQUES (DATOS CRUDOS) ──
-            for (let i = 0; i < totalFilas; i += TAMANIO_BLOQUE) {
-                const bloque = filasProcesadas.slice(i, i + TAMANIO_BLOQUE);
-                const esPrimerBloque = (i === 0);
-                
-                if (textoOverlay) {
-                    textoOverlay.innerText = `Subiendo filas: ${i} de ${totalFilas}...`;
+            // 1. Clasificación y Agrupación en el Cliente
+            for (let i = 0; i < totalFilasExcel; i++) {
+                const fila = filasCrudas[i];
+                if (!fila || fila[0] === "" || fila[0] === undefined) continue;
+
+                const fechaObj = parsearFechaCliente(fila[0]);
+                if (!fechaObj) continue;
+                if (fechaObj < hace180Dias || fechaObj > hoy) continue; 
+
+                if (!maxFechaObj || fechaObj > maxFechaObj) {
+                    maxFechaObj = fechaObj;
+                    maxFechaRaw = fila[0];
                 }
 
-                const respuesta = await fetch(URL_GAS_GLOBAL, {
+                const sku = fila[3] !== undefined ? String(fila[3]).trim() : "";
+                if (!sku) continue; 
+
+                const nombre = fila[4] !== undefined ? String(fila[4]).trim() : "";
+                const cantidad = Math.abs(parseFloat(fila[5]) || 0);
+
+                // Agrupación Mensual (FECHA | SKU | NOMBRE PROD | CANTIDAD)
+                const anio = fechaObj.getFullYear();
+                const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+                const fechaMesString = `01/${mes}/${anio}`;
+                const keyMensual = `${anio}-${mes}_${sku}`;
+
+                if (!acumuladorMensual[keyMensual]) {
+                    acumuladorMensual[keyMensual] = {
+                        fecha: fechaMesString,
+                        sku: sku,
+                        nombre: nombre,
+                        cantidad: 0
+                    };
+                }
+                acumuladorMensual[keyMensual].cantidad += cantidad;
+
+                // Agrupación para Promedios (SKU | NOMBRE PROD)
+                if (!acumuladorPromedios[sku]) {
+                    acumuladorPromedios[sku] = {
+                        nombre: nombre,
+                        totalCantidad: 0
+                    };
+                }
+                acumuladorPromedios[sku].totalCantidad += cantidad;
+            }
+
+            if (!maxFechaObj) {
+                throw new Error("No se encontraron registros de ventas en el rango de los últimos 180 días.");
+            }
+
+            // Formatear fecha máxima del Excel
+            let ultimaActualizacionString = "";
+            if (maxFechaRaw instanceof Date) {
+                const pad = (num) => String(num).padStart(2, '0');
+                ultimaActualizacionString = `${pad(maxFechaRaw.getDate())}/${pad(maxFechaRaw.getMonth() + 1)}/${maxFechaRaw.getFullYear()} ${pad(maxFechaRaw.getHours())}:${pad(maxFechaRaw.getMinutes())}`;
+            } else {
+                ultimaActualizacionString = String(maxFechaRaw).trim();
+            }
+
+            // 2. Control de duplicados (Comparar con última fecha del servidor)
+            let ultimaFechaServidor = "";
+            try {
+                const resFecha = await fetch(URL_GAS_GLOBAL, {
                     method: 'POST',
                     mode: 'cors',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8'
-                    },
-                    body: JSON.stringify({
-                        action: 'procesarBloqueVentas',
-                        data: {
-                            valores: bloque,
-                            esPrimerBloque: esPrimerBloque,
-                            indiceInicio: i
-                        }
-                    })
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'obtenerUltimaFecha' })
                 });
+                if (resFecha.ok) {
+                    const textRes = await resFecha.text();
+                    try {
+                        const jsonRes = JSON.parse(textRes);
+                        ultimaFechaServidor = jsonRes.data || jsonRes.result || textRes;
+                    } catch {
+                        ultimaFechaServidor = textRes;
+                    }
+                }
+            } catch (e) {
+                console.warn("⚠️ No se pudo verificar la última actualización previa:", e);
+            }
 
-                if (!respuesta.ok) {
-                    throw new Error(`Error en el servidor en el bloque que inicia en la fila ${i}`);
+            if (ultimaFechaServidor) {
+                const ultimaFechaServidorObj = parsearFechaCliente(ultimaFechaServidor);
+                if (ultimaFechaServidorObj && maxFechaObj && maxFechaObj <= ultimaFechaServidorObj) {
+                    if (overlayCarga) overlayCarga.style.display = 'none';
+                    Swal.fire({
+                        title: '📅 DATOS AL DÍA',
+                        text: `El reporte no contiene ventas nuevas. La última actualización ya registrada es del ${ultimaActualizacionString}.`,
+                        icon: 'info',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#c2902e'
+                    });
+                    if (btnProcesar) btnProcesar.disabled = false;
+                    return;
                 }
             }
 
-            // ── PASO 2: DISPARO EXCLUSIVO DEL CÁLCULO DE PROMEDIOS ──
-            console.log("[LexTech-Client] Todos los bloques fueron subidos. Iniciando consolidación de promedios...");
-            if (textoOverlay) {
-                textoOverlay.innerText = "Calculando promedios de los últimos 90 días... (No cierres la página)";
+            // 3. Estructurar matrices finales
+            const filasMensuales = Object.values(acumuladorMensual).map(item => [
+                item.fecha,
+                item.sku,
+                item.nombre,
+                Number(item.cantidad.toFixed(2))
+            ]);
+
+            const filasPromedios = [];
+            for (const sku in acumuladorPromedios) {
+                const item = acumuladorPromedios[sku];
+                const promedioCalculado = item.totalCantidad / 180;
+                const promedioDiario = (promedioCalculado >= 0.6 ? 1 : 0).toFixed(2);
+                filasPromedios.push([
+                    sku,
+                    item.nombre,
+                    Number(promedioDiario)
+                ]);
             }
 
-            const respuestaConsolidacion = await fetch(URL_GAS_GLOBAL, {
+            if (textoOverlay) textoOverlay.innerText = "Subiendo datos finales a Google Sheets...";
+
+            // 4. Enviar un único Payload con toda la información
+            const respuesta = await fetch(URL_GAS_GLOBAL, {
                 method: 'POST',
                 mode: 'cors',
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8'
-                },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
-                    action: 'generarResumenPromedios90Dias' // Ejecuta la función del Paso 2 directamente
+                    action: 'procesarBloqueVentas',
+                    data: {
+                        valoresMensuales: filasMensuales,
+                        valoresPromedios: filasPromedios,
+                        ultimaActualizacion: ultimaActualizacionString
+                    }
                 })
             });
 
-            if (!respuestaConsolidacion.ok) {
-                throw new Error("El historial se subió, pero falló el cálculo estadístico de los 90 días.");
-            }
+            if (!respuesta.ok) throw new Error("Error en la conexión con el servidor GAS.");
 
-            // Intentamos leer la respuesta del servidor para ver cuántos SKUs procesó
-            let mensajeServidor = `Se cargaron con éxito las ${totalFilas} filas filtradas.`;
-            try {
-                const textoRespuesta = await respuestaConsolidacion.text();
-                if (textoRespuesta) mensajeServidor += `\n\n${textoRespuesta}`;
-            } catch (e) {
-                console.warn("No se pudo leer el texto de respuesta del servidor", e);
-            }
-
-            // Apagamos el overlay de carga ya que todo terminó
             if (overlayCarga) overlayCarga.style.display = 'none';
 
-            // Alerta de Éxito Absoluto
             Swal.fire({
                 title: '🚀 PROCESAMIENTO COMPLETADO',
-                text: mensajeServidor,
+                text: `Se cargaron ${filasMensuales.length} registros mensuales y se actualizaron los promedios de los últimos 180 días para ${filasPromedios.length} SKUs.`,
                 icon: 'success',
                 background: '#0f172a',
                 color: '#fff',
@@ -511,17 +582,15 @@ window.ejecutarProcesamientoVentas = function() {
             window.cerrarModalVenta();
 
         } catch (err) {
-            console.error("🚨 Error procesando bloques:", err);
+            console.error("🚨 Error:", err);
             if (overlayCarga) overlayCarga.style.display = 'none';
-            
             Swal.fire({
                 title: '❌ ERROR DE PROCESAMIENTO',
-                text: err.message || 'Ocurrió un problema al fragmentar los datos.',
+                text: err.message || 'Ocurrió un problema.',
                 icon: 'error',
                 background: '#0f172a',
                 color: '#fff'
             });
-            
             if (btnProcesar) btnProcesar.disabled = false;
         } finally {
             if (inputArchivo) inputArchivo.value = "";
@@ -529,4 +598,60 @@ window.ejecutarProcesamientoVentas = function() {
     };
     reader.readAsArrayBuffer(archivoBlob);
 };
+
+function parsearFechaCliente(valor) {
+    if (!valor) return null;
+    if (valor instanceof Date) return valor;
+    
+    if (typeof valor === 'number') {
+        return new Date((valor - 25569) * 86400 * 1000);
+    }
+
+    const texto = String(valor).trim();
+    const partes = texto.split(" ");
+    const fechaParte = partes[0];
+    const horaParte = partes[1] || "00:00:00";
+    
+    const hms = horaParte.split(":");
+    const horas = parseInt(hms[0], 10) || 0;
+    const minutos = parseInt(hms[1], 10) || 0;
+    const segundos = parseInt(hms[2], 10) || 0;
+
+    const dmy = fechaParte.split("/");
+    if (dmy.length === 3) {
+        const dia = parseInt(dmy[0], 10);
+        const mes = parseInt(dmy[1], 10) - 1;
+        const anio = parseInt(dmy[2], 10);
+        return new Date(anio, mes, dia, horas, minutos, segundos);
+    }
+
+    const dmyHyphen = fechaParte.split("-");
+    if (dmyHyphen.length === 3) {
+        if (dmyHyphen[0].length === 4) { // yyyy-mm-dd
+            const anio = parseInt(dmyHyphen[0], 10);
+            const mes = parseInt(dmyHyphen[1], 10) - 1;
+            const dia = parseInt(dmyHyphen[2], 10);
+            return new Date(anio, mes, dia, horas, minutos, segundos);
+        } else { // dd-mm-yyyy
+            const dia = parseInt(dmyHyphen[0], 10);
+            const mes = parseInt(dmyHyphen[1], 10) - 1;
+            const anio = parseInt(dmyHyphen[2], 10);
+            return new Date(anio, mes, dia, horas, minutos, segundos);
+        }
+    }
+
+    const d = new Date(texto);
+    return isNaN(d.getTime()) ? null : d;
+}
+
+function formatearFechaAString(date) {
+    const pad = (num) => String(num).padStart(2, '0');
+    const d = pad(date.getDate());
+    const m = pad(date.getMonth() + 1);
+    const y = date.getFullYear();
+    const h = pad(date.getHours());
+    const min = pad(date.getMinutes());
+    const s = pad(date.getSeconds());
+    return `${d}/${m}/${y} ${h}:${min}:${s}`;
+}
 
