@@ -26,8 +26,8 @@ async function ejecutarOperativo() {
     
     // Arrays de ejemplo para probar que el puente funcione de punta a punta
     const stockCrudoDummy = [
-      ["SKU-001", "Producto A", "10", "5", "15", "", "", "", "", "", "OK"],
-      ["SKU-002", "Producto B", "20", "10", "30", "", "", "", "", "", "OK"]
+      ["SKU-001", "Producto A", "10", "5", "15", "", "", "", "", "", "", "OK"],
+      ["SKU-002", "Producto B", "20", "10", "30", "", "", "", "", "", "", "OK"]
     ];
     
     const reporteMovimientosDummy = [
