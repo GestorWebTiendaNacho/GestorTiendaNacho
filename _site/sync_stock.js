@@ -195,4 +195,4 @@ async function ejecutarOperativo() {
   }
 }
 
-ejecutarOperativo();
+ejecutarOperativo(); /*cacho!*/
