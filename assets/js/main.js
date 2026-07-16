@@ -5,8 +5,8 @@
     }
     window.mainJsCargado = true;
 
-    window.URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbxwBRK41eHJId5-HMTG-Xk9KzOFQxV0vqNZFK4gUlhJ1uYd0gnT7Na7-v1UDlBYDSo/exec";
-    /*https://script.google.com/macros/s/AKfycbxwBRK41eHJId5-HMTG-Xk9KzOFQxV0vqNZFK4gUlhJ1uYd0gnT7Na7-v1UDlBYDSo/exec*/
+    window.URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbxqd4c9kLV56cMaVd3hzTxCv2EVGnSgnfdaqXxgDKYIv0B4-hG0We2os2IBK0BLs2k/execc";
+    /*https://script.google.com/macros/s/AKfycbxqd4c9kLV56cMaVd3hzTxCv2EVGnSgnfdaqXxgDKYIv0B4-hG0We2os2IBK0BLs2k/exec*/
     /**
      * Función global para comunicarse con Google Apps Script
      * @param {string} accion - El nombre de la acción a ejecutar (sync_stock, get_progress, etc)
