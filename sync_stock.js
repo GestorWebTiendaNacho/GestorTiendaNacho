@@ -3,7 +3,6 @@ const axios = require('axios');
 
 const GAS_URL = process.env.GAS_WEBAPP_URL; 
 
-// Función auxiliar para pausar la ejecución (en milisegundos)
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 async function ejecutarOperativo() {
@@ -14,7 +13,6 @@ async function ejecutarOperativo() {
       throw new Error("La URL de la Web App de Google (GAS_WEBAPP_URL) no está definida en las variables de entorno de GitHub.");
     }
 
-    // FASE 1: Descargar el token oficial y la "foto actual" de la hoja desde GAS
     console.log("📡 Conectando con Google Sheets para fase inicial...");
     
     const resToken = await axios.post(GAS_URL, { action: "obtenerTokenParaCliente" });
@@ -45,7 +43,6 @@ async function ejecutarOperativo() {
       }
     });
 
-    // FASE 2: Descarga Completa Multi-Depósito desde Contabilium con Manejo de Rate Limit
     const listaDepositos = [
       { id: "118831", tag: "cb" }, 
       { id: "119039", tag: "tn" },
@@ -131,7 +128,6 @@ async function ejecutarOperativo() {
       await delay(2000);
     }
 
-    // FASE 3: Análisis de Balanceo Directo en el Cliente (sin usar la Sheet)
     const skusDescargados = Object.keys(inventarioMapeado);
     const stockCrudoAntesBalanceo = [];  
     const valoresActualizadosPost = [];   
@@ -151,11 +147,10 @@ async function ejecutarOperativo() {
         const diff = dispCB - dispTN;
 
         let instruccion = "";
-        let estadoFila = "PROCESADO ✅"; // Por defecto, si no requiere movimientos
+        let estadoFila = "PROCESADO ✅"; 
         let nuevoStockCB = dispCB;
         let nuevoStockTN = dispTN;
 
-        // Si la diferencia es mayor a 1, calculamos el movimiento equilibrante
         if (diff > 1) {
           const cantidad = Math.floor(diff / 2);
           if (cantidad > 0) {
@@ -166,10 +161,10 @@ async function ejecutarOperativo() {
 
             colaMovimientos.push({
               sku: p.sku,
-              origen: "118831", // ID Depósito CB
-              destino: "119039", // ID Depósito TN
+              origen: "118831", 
+              destino: "119039", 
               cantidad: cantidad,
-              indexFila: stockCrudoAntesBalanceo.length // Para actualizar el estado post-ejecución
+              indexFila: stockCrudoAntesBalanceo.length 
             });
           }
         } else if (diff < -1) {
@@ -182,25 +177,23 @@ async function ejecutarOperativo() {
 
             colaMovimientos.push({
               sku: p.sku,
-              origen: "119039", // ID Depósito TN
-              destino: "118831", // ID Depósito CB
+              origen: "119039", 
+              destino: "118831", 
               cantidad: cantidad,
               indexFila: stockCrudoAntesBalanceo.length
             });
           }
         }
 
-        // Construcción de la matriz con 13 elementos (Columnas A a M)
         stockCrudoAntesBalanceo.push([
           p.id, p.sku, 
           p.cb.f, p.cb.r, p.cb.d, 
           p.tn.f, p.tn.r, p.tn.d, 
           p.ml.f, p.ml.r, p.ml.d,
-          estadoFila,  // Columna L: ESTADO
-          instruccion  // Columna M: MOVIMIENTO
+          estadoFila,  
+          instruccion  
         ]);
 
-        // Reporte de stocks proyectados post-balanceo (Columnas N, O, P)
         valoresActualizadosPost.push([
           p.sku,
           nuevoStockCB.toString(), 
@@ -212,7 +205,6 @@ async function ejecutarOperativo() {
     console.log(`📉 Items filtrados detectados: ${stockCrudoAntesBalanceo.length}`);
     console.log(`📦 Movimientos de balanceo pendientes de ejecución: ${colaMovimientos.length}`);
 
-    // FASE 3.5: Ejecución Directa de los Movimientos de Stock en Contabilium
     if (colaMovimientos.length > 0) {
       console.log("🚀 Iniciando posting de movimientos de equilibrio en la API de Contabilium...");
       
@@ -250,7 +242,6 @@ async function ejecutarOperativo() {
           }
         }
 
-        // Actualizamos el estado del balanceo en la fila de memoria
         if (resMov && (resMov.status === 200 || resMov.status === 201)) {
           console.log(`✅ Éxito: ${mov.sku} (${mov.cantidad} unidades balanceadas)`);
           stockCrudoAntesBalanceo[mov.indexFila][11] = "PROCESADO ✅";
@@ -259,18 +250,16 @@ async function ejecutarOperativo() {
           stockCrudoAntesBalanceo[mov.indexFila][11] = "ERROR API ❌";
         }
 
-        // Respiro preventivo de 1.2 segundos entre solicitudes de movimiento
         await delay(1200);
       }
     }
 
-    // FASE 4: Envío consolidado a Google Sheets (escribe de un solo tirón stock, estados, movimientos y proyectados)
     console.log("📤 Enviando resultados consolidados a Google Sheets...");
     const resFinal = await axios.post(GAS_URL, {
       action: "guardarResultadosFinales",
       data: {
         stockCrudo: stockCrudoAntesBalanceo,       
-        reporteMovimientos: valoresActualizadosPost 
+        estadosActualizados: valoresActualizadosPost 
       }
     });
 
