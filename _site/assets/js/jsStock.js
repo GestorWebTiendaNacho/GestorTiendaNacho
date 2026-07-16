@@ -452,10 +452,12 @@ window.ejecutarProcesamientoVentas = function() {
                 const cantidad = Math.abs(parseFloat(fila[5]) || 0);
 
                 // Agrupación Mensual (FECHA | SKU | NOMBRE PROD | CANTIDAD)
+                const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
                 const anio = fechaObj.getFullYear();
-                const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
-                const fechaMesString = `01/${mes}/${anio}`;
-                const keyMensual = `${anio}-${mes}_${sku}`;
+                const nombreMes = meses[fechaObj.getMonth()];
+
+                const fechaMesString = `${nombreMes}-${anio}`;
+                const keyMensual = `${nombreMes}-${anio}_${sku}`;
 
                 if (!acumuladorMensual[keyMensual]) {
                     acumuladorMensual[keyMensual] = {

@@ -1,0 +1,28 @@
+name: Operativo Maestro de Sincronizacion
+
+on:
+  repository_dispatch:
+    types: [iniciar_operativo_equilibrio]
+
+jobs:
+  procesar_stock:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Copiar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: |
+          npm install axios
+
+      - name: Ejecutar Script Sincronizador
+        env:
+          GAS_WEBAPP_URL: ${{ secrets.GAS_WEBAPP_URL }}
+        run: |
+          node sync_stock.js
