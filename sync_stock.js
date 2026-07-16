@@ -1,3 +1,4 @@
+
 const axios = require('axios'); 
 
 const GAS_URL = process.env.GAS_WEBAPP_URL; 
@@ -66,7 +67,6 @@ async function ejecutarOperativo() {
         let intentos = 0;
         const maxIntentos = 4;
 
-        // Bucle de tolerancia a fallos por bloqueo de Cloudflare (429)
         while (intentos < maxIntentos) {
           try {
             resCB = await axios.get(url, {
@@ -80,21 +80,19 @@ async function ejecutarOperativo() {
                 pageSize: PAGE_SIZE 
               }
             });
-            break; // Si la petición fue exitosa, rompemos este bucle de intentos
+            break; 
           } catch (err) {
             if (err.response && err.response.status === 429) {
               intentos++;
-              // Extraemos el tiempo sugerido por Cloudflare o calculamos un retroceso
               const segundosEspera = (err.response.data?.retry_after || 30) + (intentos * 5);
-              console.warn(`⚠️ [429 Rate Limited] Cloudflare detectó tráfico denso de GitHub. Intento ${intentos}/${maxIntentos}. Esperando ${segundosEspera} segundos para reintentar...`);
+              console.warn(`⚠️ [429 Rate Limited] Cloudflare detectó tráfico denso de GitHub. Intento ${intentos}/${maxIntentos}. Esperando ${segundosEspera} segundos...`);
               await delay(segundosEspera * 1000);
             } else {
-              throw err; // Si es un error diferente (500, 404, etc.), rompemos directo al catch principal
+              throw err; 
             }
           }
         }
 
-        // Si salimos del bucle sin respuesta exitosa, arrojamos error fatal
         if (!resCB) {
           throw new Error(`Imposible evadir el Rate Limiting (429) en el depósito ${depo.tag} (Pág. ${pagina}) tras ${maxIntentos} intentos.`);
         }
@@ -124,23 +122,22 @@ async function ejecutarOperativo() {
             hayMas = false;
           } else {
             pagina++;
-            // Respiro intencional de 1.5 segundos entre páginas normales para evitar el 429 proactivamente
             await delay(1500); 
           }
         } else {
           hayMas = false;
         }
       }
-      // Pausa estratégica entre depósitos distintos
       await delay(2000);
     }
 
-    // FASE 3: Filtrado por movimiento y división de Matrices
+    // FASE 3: Análisis de Balanceo Directo en el Cliente (sin usar la Sheet)
     const skusDescargados = Object.keys(inventarioMapeado);
     const stockCrudoAntesBalanceo = [];  
     const valoresActualizadosPost = [];   
+    const colaMovimientos = [];
 
-    console.log("🧠 Filtrando productos con movimiento...");
+    console.log("🧠 Analizando equilibrio y productos con movimiento...");
 
     skusDescargados.forEach(sku => {
       const p = inventarioMapeado[sku];
@@ -149,16 +146,61 @@ async function ejecutarOperativo() {
       const huboMovimiento = !viejo || (p.cb.d !== viejo.cb_d || p.tn.d !== viejo.tn_d);
 
       if (huboMovimiento) {
+        const dispCB = p.cb.d;
+        const dispTN = p.tn.d;
+        const diff = dispCB - dispTN;
+
+        let instruccion = "";
+        let estadoFila = "PROCESADO ✅"; // Por defecto, si no requiere movimientos
+        let nuevoStockCB = dispCB;
+        let nuevoStockTN = dispTN;
+
+        // Si la diferencia es mayor a 1, calculamos el movimiento equilibrante
+        if (diff > 1) {
+          const cantidad = Math.floor(diff / 2);
+          if (cantidad > 0) {
+            instruccion = `MOVER ${cantidad} CB A TN`;
+            estadoFila = "PENDIENTE ⏳";
+            nuevoStockCB = dispCB - cantidad;
+            nuevoStockTN = dispTN + cantidad;
+
+            colaMovimientos.push({
+              sku: p.sku,
+              origen: "118831", // ID Depósito CB
+              destino: "119039", // ID Depósito TN
+              cantidad: cantidad,
+              indexFila: stockCrudoAntesBalanceo.length // Para actualizar el estado post-ejecución
+            });
+          }
+        } else if (diff < -1) {
+          const cantidad = Math.floor(Math.abs(diff) / 2);
+          if (cantidad > 0) {
+            instruccion = `MOVER ${cantidad} TN A CB`;
+            estadoFila = "PENDIENTE ⏳";
+            nuevoStockCB = dispCB + cantidad;
+            nuevoStockTN = dispTN - cantidad;
+
+            colaMovimientos.push({
+              sku: p.sku,
+              origen: "119039", // ID Depósito TN
+              destino: "118831", // ID Depósito CB
+              cantidad: cantidad,
+              indexFila: stockCrudoAntesBalanceo.length
+            });
+          }
+        }
+
+        // Construcción de la matriz con 13 elementos (Columnas A a M)
         stockCrudoAntesBalanceo.push([
           p.id, p.sku, 
           p.cb.f, p.cb.r, p.cb.d, 
           p.tn.f, p.tn.r, p.tn.d, 
-          p.ml.f, p.ml.r, p.ml.d
+          p.ml.f, p.ml.r, p.ml.d,
+          estadoFila,  // Columna L: ESTADO
+          instruccion  // Columna M: MOVIMIENTO
         ]);
 
-        let nuevoStockCB = p.cb.d; 
-        let nuevoStockTN = p.tn.d; 
-        
+        // Reporte de stocks proyectados post-balanceo (Columnas N, O, P)
         valoresActualizadosPost.push([
           p.sku,
           nuevoStockCB.toString(), 
@@ -167,10 +209,63 @@ async function ejecutarOperativo() {
       }
     });
 
-    console.log(`📉 Items filtrados listos para impactar: ${stockCrudoAntesBalanceo.length}`);
+    console.log(`📉 Items filtrados detectados: ${stockCrudoAntesBalanceo.length}`);
+    console.log(`📦 Movimientos de balanceo pendientes de ejecución: ${colaMovimientos.length}`);
 
-    // FASE 4: Envío consolidado a Google Sheets
-    console.log("📤 Enviando datos definitivos a Google Sheets...");
+    // FASE 3.5: Ejecución Directa de los Movimientos de Stock en Contabilium
+    if (colaMovimientos.length > 0) {
+      console.log("🚀 Iniciando posting de movimientos de equilibrio en la API de Contabilium...");
+      
+      for (const mov of colaMovimientos) {
+        const url = `https://rest.contabilium.com/api/inventarios/movimientoInterno`;
+        let resMov = null;
+        let intentos = 0;
+        const maxIntentos = 4;
+
+        while (intentos < maxIntentos) {
+          try {
+            resMov = await axios.post(url, null, {
+              headers: { 
+                "Authorization": `Bearer ${tokenContabilium}`, 
+                "Accept": "application/json" 
+              },
+              params: { 
+                idDepositoOrigen: mov.origen, 
+                idDepositoDestino: mov.destino, 
+                codigo: mov.sku,
+                cantidad: mov.cantidad
+              }
+            });
+            break; 
+          } catch (err) {
+            if (err.response && err.response.status === 429) {
+              intentos++;
+              const segundosEspera = (err.response.data?.retry_after || 15) + (intentos * 5);
+              console.warn(`⚠️ [429 API Balanceo] Límite de tasa en movimiento para SKU ${mov.sku}. Esperando ${segundosEspera}s para reintentar...`);
+              await delay(segundosEspera * 1000);
+            } else {
+              console.error(`❌ Error en llamada API de balanceo para SKU ${mov.sku}:`, err.message);
+              break; 
+            }
+          }
+        }
+
+        // Actualizamos el estado del balanceo en la fila de memoria
+        if (resMov && (resMov.status === 200 || resMov.status === 201)) {
+          console.log(`✅ Éxito: ${mov.sku} (${mov.cantidad} unidades balanceadas)`);
+          stockCrudoAntesBalanceo[mov.indexFila][11] = "PROCESADO ✅";
+        } else {
+          console.error(`❌ Falló definitivamente el balanceo del SKU ${mov.sku}`);
+          stockCrudoAntesBalanceo[mov.indexFila][11] = "ERROR API ❌";
+        }
+
+        // Respiro preventivo de 1.2 segundos entre solicitudes de movimiento
+        await delay(1200);
+      }
+    }
+
+    // FASE 4: Envío consolidado a Google Sheets (escribe de un solo tirón stock, estados, movimientos y proyectados)
+    console.log("📤 Enviando resultados consolidados a Google Sheets...");
     const resFinal = await axios.post(GAS_URL, {
       action: "guardarResultadosFinales",
       data: {
@@ -188,11 +283,9 @@ async function ejecutarOperativo() {
     if (error.response) {
       console.error("📄 Código de Estado HTTP recibido:", error.response.status);
       console.error("📄 Contenido exacto devuelto por el servidor:", JSON.stringify(error.response.data));
-    } else if (error.request) {
-      console.error("📡 No se recibió respuesta del servidor. Comprobá que la URL de tu Web App no esté caída.");
     }
     process.exit(1);
   }
 }
 
-ejecutarOperativo(); /*cacho!*/
+ejecutarOperativo();
