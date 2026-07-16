@@ -1,6 +1,5 @@
-const axios = require('axios'); // Sintaxis CommonJS universalmente compatible
+const axios = require('axios'); 
 
-// Pescamos la variable con el nombre EXACTO que definimos en el archivo YAML
 const GAS_URL = process.env.GAS_WEBAPP_URL; 
 
 async function ejecutarOperativo() {
@@ -8,29 +7,37 @@ async function ejecutarOperativo() {
     console.log("🚀 Iniciando Operativo Maestro (Filtrado 6hs + Balanceo)...");
 
     if (!GAS_URL) {
-      throw new Error("La URL de la Web App de Google (GAS_WEBAPP_URL) no está definida en el entorno.");
+      throw new Error("La URL de la Web App de Google (GAS_WEBAPP_URL) no está definida en las variables de entorno de GitHub.");
     }
 
     // FASE 1: Descargar el token oficial y la "foto actual" de la hoja
-    console.log("📡 Conectando con Google Sheets...");
+    console.log("📡 Conectando con Google Sheets para fase inicial...");
+    
     const resToken = await axios.post(GAS_URL, { action: "obtenerTokenParaCliente" });
     const resStockViejo = await axios.post(GAS_URL, { action: "obtenerStockActual" });
 
-    if (resToken.data.status !== "success" || resStockViejo.data.status !== "success") {
-      throw new Error("Fallo en la comunicación inicial con GAS. Revisa los logs de la Web App.");
+    // Verificación estructural minuciosa de las respuestas de GAS
+    if (!resToken.data || resToken.data.status !== "success") {
+      console.error("🚨 Respuesta inesperada de Token GAS:", resToken.data);
+      throw new Error("Fallo al obtener el token desde Google Apps Script.");
+    }
+    if (!resStockViejo.data || resStockViejo.data.status !== "success") {
+      console.error("🚨 Respuesta inesperada de Stock Viejo GAS:", resStockViejo.data);
+      throw new Error("Fallo al obtener el stock actual desde Google Apps Script.");
     }
 
     const tokenContabilium = resToken.data.reply;
-    const stockViejoMatriz = resStockViejo.data.reply; 
+    const stockViejoMatriz = resStockViejo.data.reply || []; 
     
-    // Mapeamos el stock viejo en un diccionario por SKU
+    console.log(`✅ Token recibido. Se recuperaron ${stockViejoMatriz.length} filas históricas de la hoja.`);
+
     const mapaStockViejo = {};
     stockViejoMatriz.forEach(fila => {
-      const sku = fila[1]; // Columna B
+      const sku = fila[1]; 
       if (sku) {
         mapaStockViejo[sku] = {
-          cb_d: parseFloat(fila[4]) || 0, // Col E: cb disponible anterior
-          tn_d: parseFloat(fila[7]) || 0  // Col H: tn disponible anterior
+          cb_d: parseFloat(fila[4]) || 0, 
+          tn_d: parseFloat(fila[7]) || 0  
         };
       }
     });
@@ -85,12 +92,12 @@ async function ejecutarOperativo() {
       }
     }
 
-    // FASE 3: Filtrado por movimiento y división de Matrices (Pre-Balanceo vs Actualizados)
+    // FASE 3: Filtrado por movimiento y división de Matrices
     const skusDescargados = Object.keys(inventarioMapeado);
     const stockCrudoAntesBalanceo = [];  
     const valoresActualizadosPost = [];   
 
-    console.log("🧠 Filtrando productos con movimiento y aplicando balanceo...");
+    console.log("🧠 Filtrando productos con movimiento...");
 
     skusDescargados.forEach(sku => {
       const p = inventarioMapeado[sku];
@@ -99,7 +106,6 @@ async function ejecutarOperativo() {
       const huboMovimiento = !viejo || (p.cb.d !== viejo.cb_d || p.tn.d !== viejo.tn_d);
 
       if (huboMovimiento) {
-        // 1. Matriz ANTES del Balanceo (11 columnas exactas para A:K)
         stockCrudoAntesBalanceo.push([
           p.id, p.sku, 
           p.cb.f, p.cb.r, p.cb.d, 
@@ -107,8 +113,6 @@ async function ejecutarOperativo() {
           p.ml.f, p.ml.r, p.ml.d
         ]);
 
-        // 2. Valores Actualizados Post-Balanceo (3 columnas para M:O)
-        // (Por ahora dejamos los valores crudos devueltos, luego agregamos la ecuación matemática)
         let nuevoStockCB = p.cb.d; 
         let nuevoStockTN = p.tn.d; 
         
@@ -132,10 +136,19 @@ async function ejecutarOperativo() {
       }
     });
 
-    console.log("🎉 Proceso completado exitosamente:", resFinal.data.message);
+    console.log("🎉 Proceso completado exitosamente en Google Sheets:", resFinal.data.reply || resFinal.data);
 
   } catch (error) {
-    console.error("❌ ERROR EN EL OPERATIVO:", error.message);
+    console.error("❌ ERROR CRÍTICO DETECTADO EN EL OPERATIVO:");
+    console.error("👉 Mensaje del error:", error.message);
+    
+    // Si la falla proviene de la respuesta de un servidor remoto (GAS o Contabilium)
+    if (error.response) {
+      console.error("📄 Código de Estado HTTP recibido:", error.response.status);
+      console.error("📄 Contenido exacto devuelto por el servidor:", JSON.stringify(error.response.data));
+    } else if (error.request) {
+      console.error("📡 No se recibió respuesta del servidor. Comprobá que la URL de tu Web App no esté caída.");
+    }
     process.exit(1);
   }
 }
