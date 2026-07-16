@@ -2,6 +2,9 @@ const axios = require('axios');
 
 const GAS_URL = process.env.GAS_WEBAPP_URL; 
 
+// Función auxiliar para pausar la ejecución (en milisegundos)
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
 async function ejecutarOperativo() {
   try {
     console.log("🚀 Iniciando Operativo Maestro (Filtrado 6hs + Balanceo)...");
@@ -16,7 +19,6 @@ async function ejecutarOperativo() {
     const resToken = await axios.post(GAS_URL, { action: "obtenerTokenParaCliente" });
     const resStockViejo = await axios.post(GAS_URL, { action: "obtenerStockActual" });
 
-    // Verificación de las respuestas de GAS
     if (!resToken.data || resToken.data.status !== "success") {
       console.error("🚨 Respuesta inesperada de Token GAS:", resToken.data);
       throw new Error("Fallo al obtener el token desde Google Apps Script.");
@@ -42,7 +44,7 @@ async function ejecutarOperativo() {
       }
     });
 
-    // FASE 2: Descarga Completa Multi-Depósito desde Contabilium (API REST)
+    // FASE 2: Descarga Completa Multi-Depósito desde Contabilium con Manejo de Rate Limit
     const listaDepositos = [
       { id: "118831", tag: "cb" }, 
       { id: "119039", tag: "tn" },
@@ -50,28 +52,52 @@ async function ejecutarOperativo() {
     ];
 
     let inventarioMapeado = {};
-    const PAGE_SIZE = 45; // Alineado con tu configuración exitosa
+    const PAGE_SIZE = 45; 
 
     for (const depo of listaDepositos) {
-      let pagina = 1; // La API REST de Contabilium pagina a partir de 1
+      let pagina = 1; 
       let hayMas = true;
       console.log(`📡 Descargando depósito: ${depo.tag.toUpperCase()} de Contabilium...`);
 
       while (hayMas) {
-        // Usamos el dominio 'rest' y el endpoint 'inventarios' que comprobaste en GAS
         const url = `https://rest.contabilium.com/api/inventarios/getStockByDeposito`;
         
-        const resCB = await axios.get(url, {
-          headers: { 
-            "Authorization": `Bearer ${tokenContabilium}`, 
-            "Accept": "application/json" 
-          },
-          params: { 
-            id: depo.id, 
-            page: pagina, 
-            pageSize: PAGE_SIZE 
+        let resCB = null;
+        let intentos = 0;
+        const maxIntentos = 4;
+
+        // Bucle de tolerancia a fallos por bloqueo de Cloudflare (429)
+        while (intentos < maxIntentos) {
+          try {
+            resCB = await axios.get(url, {
+              headers: { 
+                "Authorization": `Bearer ${tokenContabilium}`, 
+                "Accept": "application/json" 
+              },
+              params: { 
+                id: depo.id, 
+                page: pagina, 
+                pageSize: PAGE_SIZE 
+              }
+            });
+            break; // Si la petición fue exitosa, rompemos este bucle de intentos
+          } catch (err) {
+            if (err.response && err.response.status === 429) {
+              intentos++;
+              // Extraemos el tiempo sugerido por Cloudflare o calculamos un retroceso
+              const segundosEspera = (err.response.data?.retry_after || 30) + (intentos * 5);
+              console.warn(`⚠️ [429 Rate Limited] Cloudflare detectó tráfico denso de GitHub. Intento ${intentos}/${maxIntentos}. Esperando ${segundosEspera} segundos para reintentar...`);
+              await delay(segundosEspera * 1000);
+            } else {
+              throw err; // Si es un error diferente (500, 404, etc.), rompemos directo al catch principal
+            }
           }
-        });
+        }
+
+        // Si salimos del bucle sin respuesta exitosa, arrojamos error fatal
+        if (!resCB) {
+          throw new Error(`Imposible evadir el Rate Limiting (429) en el depósito ${depo.tag} (Pág. ${pagina}) tras ${maxIntentos} intentos.`);
+        }
 
         const items = resCB.data.Items || [];
 
@@ -98,11 +124,15 @@ async function ejecutarOperativo() {
             hayMas = false;
           } else {
             pagina++;
+            // Respiro intencional de 1.5 segundos entre páginas normales para evitar el 429 proactivamente
+            await delay(1500); 
           }
         } else {
           hayMas = false;
         }
       }
+      // Pausa estratégica entre depósitos distintos
+      await delay(2000);
     }
 
     // FASE 3: Filtrado por movimiento y división de Matrices
