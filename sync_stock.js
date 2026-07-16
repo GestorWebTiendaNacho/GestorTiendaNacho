@@ -10,13 +10,13 @@ async function ejecutarOperativo() {
       throw new Error("La URL de la Web App de Google (GAS_WEBAPP_URL) no está definida en las variables de entorno de GitHub.");
     }
 
-    // FASE 1: Descargar el token oficial y la "foto actual" de la hoja
+    // FASE 1: Descargar el token oficial y la "foto actual" de la hoja desde GAS
     console.log("📡 Conectando con Google Sheets para fase inicial...");
     
     const resToken = await axios.post(GAS_URL, { action: "obtenerTokenParaCliente" });
     const resStockViejo = await axios.post(GAS_URL, { action: "obtenerStockActual" });
 
-    // Verificación estructural minuciosa de las respuestas de GAS
+    // Verificación de las respuestas de GAS
     if (!resToken.data || resToken.data.status !== "success") {
       console.error("🚨 Respuesta inesperada de Token GAS:", resToken.data);
       throw new Error("Fallo al obtener el token desde Google Apps Script.");
@@ -42,7 +42,7 @@ async function ejecutarOperativo() {
       }
     });
 
-    // FASE 2: Descarga Completa Multi-Depósito desde Contabilium
+    // FASE 2: Descarga Completa Multi-Depósito desde Contabilium (API REST)
     const listaDepositos = [
       { id: "118831", tag: "cb" }, 
       { id: "119039", tag: "tn" },
@@ -50,18 +50,27 @@ async function ejecutarOperativo() {
     ];
 
     let inventarioMapeado = {};
-    const PAGE_SIZE = 50;
+    const PAGE_SIZE = 45; // Alineado con tu configuración exitosa
 
     for (const depo of listaDepositos) {
-      let pagina = 0;
+      let pagina = 1; // La API REST de Contabilium pagina a partir de 1
       let hayMas = true;
       console.log(`📡 Descargando depósito: ${depo.tag.toUpperCase()} de Contabilium...`);
 
       while (hayMas) {
-        const url = `https://api.contabilium.com/v1/inventarios/getStockByDeposito`;
+        // Usamos el dominio 'rest' y el endpoint 'inventarios' que comprobaste en GAS
+        const url = `https://rest.contabilium.com/api/inventarios/getStockByDeposito`;
+        
         const resCB = await axios.get(url, {
-          headers: { "Authorization": `Bearer ${tokenContabilium}`, "Accept": "application/json" },
-          params: { id: depo.id, page: pagina, pageSize: PAGE_SIZE }
+          headers: { 
+            "Authorization": `Bearer ${tokenContabilium}`, 
+            "Accept": "application/json" 
+          },
+          params: { 
+            id: depo.id, 
+            page: pagina, 
+            pageSize: PAGE_SIZE 
+          }
         });
 
         const items = resCB.data.Items || [];
@@ -85,7 +94,11 @@ async function ejecutarOperativo() {
             };
           });
 
-          if (items.length < PAGE_SIZE) hayMas = false; else pagina++;
+          if (items.length < PAGE_SIZE) {
+            hayMas = false;
+          } else {
+            pagina++;
+          }
         } else {
           hayMas = false;
         }
@@ -142,7 +155,6 @@ async function ejecutarOperativo() {
     console.error("❌ ERROR CRÍTICO DETECTADO EN EL OPERATIVO:");
     console.error("👉 Mensaje del error:", error.message);
     
-    // Si la falla proviene de la respuesta de un servidor remoto (GAS o Contabilium)
     if (error.response) {
       console.error("📄 Código de Estado HTTP recibido:", error.response.status);
       console.error("📄 Contenido exacto devuelto por el servidor:", JSON.stringify(error.response.data));
