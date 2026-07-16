@@ -129,8 +129,11 @@ async function ejecutarOperativo() {
     }
 
     const skusDescargados = Object.keys(inventarioMapeado);
-    const stockCrudoAntesBalanceo = [];  
-    const valoresActualizadosPost = [];   
+    
+    // Inicializamos las estructuras de datos con el tamaño exacto que espera GAS
+    const stockCrudoAntesBalanceo = [];  // Matriz de 11 columnas (A:K)
+    const estadosProceso = [];           // Matriz de 1 columna (L)
+    const valoresActualizadosPost = [];   // Matriz de 3 columnas (N:P)
     const colaMovimientos = [];
 
     console.log("🧠 Analizando equilibrio y productos con movimiento...");
@@ -185,15 +188,20 @@ async function ejecutarOperativo() {
           }
         }
 
+        // 1. Cargamos el Stock Crudo: Estrictamente 11 columnas (A a K)
         stockCrudoAntesBalanceo.push([
           p.id, p.sku, 
           p.cb.f, p.cb.r, p.cb.d, 
           p.tn.f, p.tn.r, p.tn.d, 
-          p.ml.f, p.ml.r, p.ml.d,
-          estadoFila,  
-          instruccion  
+          p.ml.f, p.ml.r, p.ml.d
         ]);
 
+        // 2. Cargamos el Estado Inicial de la Fila: Estrictamente 1 columna (L)
+        estadosProceso.push([
+          estadoFila
+        ]);
+
+        // 3. Cargamos la proyección Post-Balanceo: Estrictamente 3 columnas (N a P)
         valoresActualizadosPost.push([
           p.sku,
           nuevoStockCB.toString(), 
@@ -242,12 +250,13 @@ async function ejecutarOperativo() {
           }
         }
 
+        // Actualizamos dinámicamente el estado en la columna de Estados (L) utilizando el index trackeado
         if (resMov && (resMov.status === 200 || resMov.status === 201)) {
           console.log(`✅ Éxito: ${mov.sku} (${mov.cantidad} unidades balanceadas)`);
-          stockCrudoAntesBalanceo[mov.indexFila][11] = "PROCESADO ✅";
+          estadosProceso[mov.indexFila][0] = "PROCESADO ✅";
         } else {
           console.error(`❌ Falló definitivamente el balanceo del SKU ${mov.sku}`);
-          stockCrudoAntesBalanceo[mov.indexFila][11] = "ERROR API ❌";
+          estadosProceso[mov.indexFila][0] = "ERROR API ❌";
         }
 
         await delay(1200);
@@ -258,8 +267,9 @@ async function ejecutarOperativo() {
     const resFinal = await axios.post(GAS_URL, {
       action: "guardarResultadosFinales",
       data: {
-        stockCrudo: stockCrudoAntesBalanceo,       
-        estadosActualizados: valoresActualizadosPost 
+        stockCrudo: stockCrudoAntesBalanceo,         // 11 columnas -> va a A:K
+        estadosActualizados: estadosProceso,         // 1 columna  -> va a L:L
+        reporteMovimientos: valoresActualizadosPost  // 3 columnas -> va a N:P
       }
     });
 
