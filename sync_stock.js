@@ -5,16 +5,18 @@ const GAS_URL = process.env.GAS_WEBAPP_URL;
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-async function ejecutarOperativo() {
+async function ejecutarOperativoCompleto() {
   try {
-    console.log("🚀 Iniciando Operativo Maestro de Alineación Total (Sin filtro de 6 horas)...");
+    console.log("🚀 Iniciando Operativo Maestro de Alineación Total (Sin filtro de 6 horas - Barrido Completo)...");
 
     if (!GAS_URL) {
       throw new Error("La URL de la Web App de Google (GAS_WEBAPP_URL) no está definida.");
     }
 
+    // 1. OBTENCIÓN DE CONFIGURACIÓN Y TOKEN DE GAS
+    console.log("📥 Solicitando token de acceso a GAS...");
     const resToken = await axios.post(GAS_URL, { action: "obtenerTokenParaCliente" });
-    
+
     if (!resToken.data || resToken.data.status !== "success") {
       throw new Error("Fallo al conectar con GAS para obtener el Token de Contabilium.");
     }
@@ -22,19 +24,19 @@ async function ejecutarOperativo() {
     const tokenContabilium = resToken.data.reply;
 
     const listaDepositos = [
-      { id: "118831", tag: "cb" }, // Depósito Principal (Contabilium)
-      { id: "119039", tag: "tn" }, // Depósito Tiendanube
-      { id: "119040", tag: "ml" }  // Depósito MercadoLibre
+      { id: "118831", tag: "cb" }, 
+      { id: "119039", tag: "tn" },
+      { id: "119040", tag: "ml" }
     ];
 
     let inventarioMapeado = {};
     const PAGE_SIZE = 45; 
 
-    // 1. DESCARGA COMPLETA DE TODOS LOS DEPOSITOS
+    // 2. DESCARGA COMPLETA DE TODOS LOS DEPÓSITOS (SIN EXCEPCIÓN)
     for (const depo of listaDepositos) {
+      console.log(`📥 Descargando stock completo del depósito: ${depo.tag.toUpperCase()}...`);
       let pagina = 1; 
       let hayMas = true;
-      console.log(`📥 Descargando stock completo del depósito: ${depo.tag.toUpperCase()}...`);
 
       while (hayMas) {
         const url = `https://rest.contabilium.com/api/inventarios/getStockByDeposito`;
@@ -56,7 +58,7 @@ async function ejecutarOperativo() {
             if (err.response && err.response.status === 429) {
               intentos++;
               const segundosEspera = (err.response.data?.retry_after || 30) + (intentos * 5);
-              console.log(`⏳ Rate limit (429) detectado. Esperando ${segundosEspera} segundos...`);
+              console.log(`⏳ Límite de tasa alcanzado. Esperando ${segundosEspera} segundos...`);
               await delay(segundosEspera * 1000);
             } else {
               throw err; 
@@ -79,7 +81,7 @@ async function ejecutarOperativo() {
               };
             }
             
-            // Forzamos un entero absoluto usando Math.floor por si viene algún decimal fantasma de la API
+            // Sanitizado matemático estricto: eliminamos los decimales conflictivos de raíz
             inventarioMapeado[sku][depo.tag] = {
               f: Math.floor(parseFloat(item.StockActual) || 0),
               r: Math.floor(parseFloat(item.StockReservado) || 0),
@@ -91,7 +93,7 @@ async function ejecutarOperativo() {
             hayMas = false;
           } else {
             pagina++;
-            await delay(1500); 
+            await delay(1200); 
           }
         } else {
           hayMas = false;
@@ -102,33 +104,34 @@ async function ejecutarOperativo() {
 
     const skusDescargados = Object.keys(inventarioMapeado);
     console.log(`📊 Total de SKUs únicos detectados en Contabilium: ${skusDescargados.length}`);
-    
-    const stockCrudoAntesBalanceo = [];   // Columnas A:K (11 col)
-    const estadosProceso = [];            // Columna L (1 col)
-    const instruccionesMovimiento = [];   // Columna M (1 col)
-    const valoresActualizadosPost = [];    // Columnas N:P (3 col)
+
+    const stockCrudoAntesBalanceo = [];
+    const estadosProceso = [];
+    const instruccionesMovimiento = [];
+    const valoresActualizadosPost = [];
     const colaMovimientos = [];
 
-    // 2. PROCESO DE EVALUACIÓN Y BALANCEO SIN FILTRO DE TIEMPO
+    // 3. ANÁLISIS Y BALANCEO DE TODOS LOS PRODUCTOS
     skusDescargados.forEach(sku => {
       const p = inventarioMapeado[sku];
-      
       const dispCB = p.cb.d;
       const dispTN = p.tn.d;
 
-      // VERIFICACIÓN CRÍTICA: Se saltea si ambos depósitos están en cero o negativo (evitamos romper stock)
-      if (dispCB <= 1 || dispTN <= 1) return;
-      
+      // SUMA TOTAL: Calculamos la disponibilidad real combinada
       const totalStock = dispCB + dispTN;
-      if (totalStock <= 1) return; 
 
-      // DISTRIBUCIÓN MATEMÁTICA IDEAL
-      const targetTN = Math.ceil(totalStock / 2);  // Impar: el mayor va a TN
-      const targetCB = Math.floor(totalStock / 2); // Impar: el menor va a CB
+      // FILTRO DE SEGURIDAD ESTRICTO:
+      // Solo se saltea el producto si la suma de ambos depósitos es menor o igual a 1.
+      // Si uno está en 0 y el otro en 1000, pasa perfectamente.
+      if (totalStock <= 1) return;
+
+      // DISTRIBUCIÓN MATEMÁTICA IDEAL (ENTEROS)
+      const targetTN = Math.ceil(totalStock / 2);  // Si es impar, TN se lleva el entero superior
+      const targetCB = Math.floor(totalStock / 2); // Si es impar, CB se lleva el entero inferior
       
       const cantidadAMover = targetTN - dispTN;
 
-      // Si ya están balanceados de forma óptima, no tocamos nada
+      // Si el stock actual en cada depósito ya coincide con el ideal, no se genera movimiento
       if (cantidadAMover === 0) return;
 
       let instruccion = "";
@@ -137,20 +140,18 @@ async function ejecutarOperativo() {
       let nuevoStockTN = dispTN;
 
       if (cantidadAMover > 0) {
-        // Falta stock en TN: Mover de CB a TN
         instruccion = `MOVER ${cantidadAMover} CB A TN`;
         nuevoStockCB = dispCB - cantidadAMover;
         nuevoStockTN = dispTN + cantidadAMover;
 
         colaMovimientos.push({
           sku: p.sku,
-          origen: "118831", 
-          destino: "119039", 
+          origen: "118831", // CB
+          destino: "119039", // TN
           cantidad: cantidadAMover,
           indexFila: stockCrudoAntesBalanceo.length 
         });
       } else if (cantidadAMover < 0) {
-        // Sobra stock en TN: Mover de TN a CB
         const cantReal = Math.abs(cantidadAMover);
         instruccion = `MOVER ${cantReal} TN A CB`;
         nuevoStockCB = dispCB + cantReal;
@@ -158,14 +159,14 @@ async function ejecutarOperativo() {
 
         colaMovimientos.push({
           sku: p.sku,
-          origen: "119039", 
-          destino: "118831", 
+          origen: "119039", // TN
+          destino: "118831", // CB
           cantidad: cantReal,
           indexFila: stockCrudoAntesBalanceo.length
         });
       }
 
-      // Estructuramos datos para enviar a Google Sheets
+      // Estructuramos la fila de stock actual (antes de impactar el cambio)
       stockCrudoAntesBalanceo.push([
         p.id, p.sku, 
         p.cb.f, p.cb.r, dispCB, 
@@ -175,6 +176,8 @@ async function ejecutarOperativo() {
 
       estadosProceso.push([estadoFila]);
       instruccionesMovimiento.push([instruccion]);
+      
+      // Estructuramos lo que se guardará en la solapa "Reporte de Movimientos" (Valores Enteros)
       valoresActualizadosPost.push([
         p.sku,
         nuevoStockCB.toString(), 
@@ -183,7 +186,8 @@ async function ejecutarOperativo() {
     });
 
     if (stockCrudoAntesBalanceo.length === 0) {
-      console.log("☀️ ¡Espectacular! Todo el universo de productos está perfectamente equilibrado.");
+      console.log("☀️ ¡Espectacular! Todo el universo de productos está perfectamente equilibrado en partes iguales. Nada que mover.");
+      // Limpiamos los estados anteriores de la Sheet enviando arreglos vacíos
       await axios.post(GAS_URL, {
         action: "guardarResultadosFinales",
         data: { stockCrudo: [], estadosActualizados: [], instrucciones: [], reporteMovimientos: [] }
@@ -191,9 +195,9 @@ async function ejecutarOperativo() {
       return;
     }
 
-    console.log(`📦 Procesando de manera efectiva ${colaMovimientos.length} movimientos de balanceo requeridos...`);
+    console.log(`📦 Se detectaron ${colaMovimientos.length} desbalanceos. Procesando movimientos en la API...`);
     
-    // 3. EJECUCIÓN DE MOVIMIENTOS INTERNOS
+    // 4. EJECUCIÓN DE MOVIMIENTOS EN CONTABILIUM
     for (const mov of colaMovimientos) {
       const url = `https://rest.contabilium.com/api/inventarios/movimientoInterno`;
       let resMov = null;
@@ -219,10 +223,10 @@ async function ejecutarOperativo() {
           if (err.response && err.response.status === 429) {
             intentos++;
             const segundosEspera = (err.response.data?.retry_after || 15) + (intentos * 5);
-            console.log(`⏳ Rate limit en movimiento para SKU ${mov.sku}. Reintentando en ${segundosEspera}s...`);
+            console.log(`⏳ Esperando ${segundosEspera}s por límite en movimiento de ${mov.sku}...`);
             await delay(segundosEspera * 1000);
           } else {
-            console.error(`❌ Error al mover SKU ${mov.sku}:`, err.message);
+            console.error(`❌ Error de API en movimiento para SKU ${mov.sku}:`, err.message);
             break; 
           }
         }
@@ -234,11 +238,12 @@ async function ejecutarOperativo() {
         estadosProceso[mov.indexFila][0] = "ERROR API ❌";
       }
 
+      // Un breve delay para no agotar los límites de tasa de Contabilium al escribir de forma continua
       await delay(1200); 
     }
 
-    console.log("📤 Enviando datos resumidos y consolidados a Google Sheets...");
-    
+    // 5. ENVÍO DE DATOS FINALES A GOOGLE SHEETS
+    console.log("📤 Guardando reportes y estados actualizados en Google Sheets...");
     await axios.post(GAS_URL, {
       action: "guardarResultadosFinales",
       data: {
@@ -249,12 +254,12 @@ async function ejecutarOperativo() {
       }
     });
 
-    console.log("🎉 ¡Operativo de Alineación General finalizado con éxito!");
+    console.log("🎉 ¡Operativo de alineación total finalizado exitosamente!");
 
   } catch (error) {
-    console.error("❌ ERROR CRÍTICO EN EL OPERATIVO:", error.message);
+    console.error("❌ ERROR CRÍTICO EN OPERATIVO COMPLETO:", error.message);
     process.exit(1);
   }
 }
 
-ejecutarOperativo();
+ejecutarOperativoCompleto();
