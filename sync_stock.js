@@ -7,31 +7,23 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 
 async function ejecutarOperativo() {
   try {
-    console.log("🚀 Iniciando Operativo Maestro (Filtrado 6hs + Balanceo)...");
+    console.log("🚀 Iniciando Operativo Maestro Ultra-Optimizado (Silencioso)...");
 
     if (!GAS_URL) {
-      throw new Error("La URL de la Web App de Google (GAS_WEBAPP_URL) no está definida en las variables de entorno de GitHub.");
+      throw new Error("La URL de la Web App de Google (GAS_WEBAPP_URL) no está definida.");
     }
 
-    console.log("📡 Conectando con Google Sheets para fase inicial...");
-    
     const resToken = await axios.post(GAS_URL, { action: "obtenerTokenParaCliente" });
     const resStockViejo = await axios.post(GAS_URL, { action: "obtenerStockActual" });
 
-    if (!resToken.data || resToken.data.status !== "success") {
-      console.error("🚨 Respuesta inesperada de Token GAS:", resToken.data);
-      throw new Error("Fallo al obtener el token desde Google Apps Script.");
-    }
-    if (!resStockViejo.data || resStockViejo.data.status !== "success") {
-      console.error("🚨 Respuesta inesperada de Stock Viejo GAS:", resStockViejo.data);
-      throw new Error("Fallo al obtener el stock actual desde Google Apps Script.");
+    if (!resToken.data || resToken.data.status !== "success" || !resStockViejo.data || resStockViejo.data.status !== "success") {
+      throw new Error("Fallo al conectar con GAS para obtener Token o Stock Inicial.");
     }
 
     const tokenContabilium = resToken.data.reply;
     const stockViejoMatriz = resStockViejo.data.reply || []; 
-    
-    console.log(`✅ Token recibido. Se recuperaron ${stockViejoMatriz.length} filas históricas de la hoja.`);
 
+    // Mapeamos el stock anterior guardado en la hoja (hace 6 horas)
     const mapaStockViejo = {};
     stockViejoMatriz.forEach(fila => {
       const sku = fila[1]; 
@@ -55,11 +47,9 @@ async function ejecutarOperativo() {
     for (const depo of listaDepositos) {
       let pagina = 1; 
       let hayMas = true;
-      console.log(`📡 Descargando depósito: ${depo.tag.toUpperCase()} de Contabilium...`);
 
       while (hayMas) {
         const url = `https://rest.contabilium.com/api/inventarios/getStockByDeposito`;
-        
         let resCB = null;
         let intentos = 0;
         const maxIntentos = 4;
@@ -71,27 +61,18 @@ async function ejecutarOperativo() {
                 "Authorization": `Bearer ${tokenContabilium}`, 
                 "Accept": "application/json" 
               },
-              params: { 
-                id: depo.id, 
-                page: pagina, 
-                pageSize: PAGE_SIZE 
-              }
+              params: { id: depo.id, page: pagina, pageSize: PAGE_SIZE }
             });
             break; 
           } catch (err) {
             if (err.response && err.response.status === 429) {
               intentos++;
               const segundosEspera = (err.response.data?.retry_after || 30) + (intentos * 5);
-              console.warn(`⚠️ [429 Rate Limited] Cloudflare detectó tráfico denso de GitHub. Intento ${intentos}/${maxIntentos}. Esperando ${segundosEspera} segundos...`);
               await delay(segundosEspera * 1000);
             } else {
               throw err; 
             }
           }
-        }
-
-        if (!resCB) {
-          throw new Error(`Imposible evadir el Rate Limiting (429) en el depósito ${depo.tag} (Pág. ${pagina}) tras ${maxIntentos} intentos.`);
         }
 
         const items = resCB.data.Items || [];
@@ -130,159 +111,164 @@ async function ejecutarOperativo() {
 
     const skusDescargados = Object.keys(inventarioMapeado);
     
-    // Inicializamos las estructuras de datos con el tamaño exacto que espera GAS
-    const stockCrudoAntesBalanceo = [];  // Matriz de 11 columnas (A:K)
-    const estadosProceso = [];           // Matriz de 1 columna (L)
-    const valoresActualizadosPost = [];   // Matriz de 3 columnas (N:P)
+    // Arrays destinados a impactar en la planilla
+    const stockCrudoAntesBalanceo = [];   // Columnas A:K (11 col)
+    const estadosProceso = [];            // Columna L (1 col)
+    const instruccionesMovimiento = [];   // Columna M (1 col) <-- NUEVO!
+    const valoresActualizadosPost = [];    // Columnas N:P (3 col)
     const colaMovimientos = [];
-
-    console.log("🧠 Analizando equilibrio y productos con movimiento...");
 
     skusDescargados.forEach(sku => {
       const p = inventarioMapeado[sku];
+      const dispCB = p.cb.d;
+      const dispTN = p.tn.d;
+
+      // 1. VERIFICACIÓN: ¿Tuvo movimiento en las últimas 6 horas? (Compara vs histórico de la hoja)
       const viejo = mapaStockViejo[sku];
+      const huboMovimiento = !viejo || (dispCB !== viejo.cb_d || dispTN !== viejo.tn_d);
+      if (!huboMovimiento) return; // Si no se movió en 6hs, lo salteamos completamente
 
-      const huboMovimiento = !viejo || (p.cb.d !== viejo.cb_d || p.tn.d !== viejo.tn_d);
+      // 2. VERIFICACIÓN: Si el stock disponible en ambos depósitos es <= 1, lo salteamos
+      if (dispCB <= 1 && dispTN <= 1) return;
+      
+      const totalStock = dispCB + dispTN;
+      if (totalStock <= 1) return; // Filtro de seguridad extra
 
-      if (huboMovimiento) {
-        const dispCB = p.cb.d;
-        const dispTN = p.tn.d;
-        const diff = dispCB - dispTN;
+      // 3. PRIORIDAD TN: Distribución matemática ideal
+      const targetTN = Math.ceil(totalStock / 2);  // Prioridad: se queda con el entero mayor
+      const targetCB = Math.floor(totalStock / 2); // Se queda con el entero menor
+      
+      const cantidadAMover = targetTN - dispTN; 
 
-        let instruccion = "";
-        let estadoFila = "PROCESADO ✅"; 
-        let nuevoStockCB = dispCB;
-        let nuevoStockTN = dispTN;
+      // Si ya están perfectamente balanceados con prioridad para TN, no hacemos nada
+      if (cantidadAMover === 0) return;
 
-        if (diff > 1) {
-          const cantidad = Math.floor(diff / 2);
-          if (cantidad > 0) {
-            instruccion = `MOVER ${cantidad} CB A TN`;
-            estadoFila = "PENDIENTE ⏳";
-            nuevoStockCB = dispCB - cantidad;
-            nuevoStockTN = dispTN + cantidad;
+      let instruccion = "";
+      let estadoFila = "PENDIENTE ⏳";
+      let nuevoStockCB = dispCB;
+      let nuevoStockTN = dispTN;
 
-            colaMovimientos.push({
-              sku: p.sku,
-              origen: "118831", 
-              destino: "119039", 
-              cantidad: cantidad,
-              indexFila: stockCrudoAntesBalanceo.length 
-            });
-          }
-        } else if (diff < -1) {
-          const cantidad = Math.floor(Math.abs(diff) / 2);
-          if (cantidad > 0) {
-            instruccion = `MOVER ${cantidad} TN A CB`;
-            estadoFila = "PENDIENTE ⏳";
-            nuevoStockCB = dispCB + cantidad;
-            nuevoStockTN = dispTN - cantidad;
+      if (cantidadAMover > 0) {
+        // Falta stock en TN: Mover de CB a TN
+        instruccion = `MOVER ${cantidadAMover} CB A TN`;
+        nuevoStockCB = dispCB - cantidadAMover;
+        nuevoStockTN = dispTN + cantidadAMover;
 
-            colaMovimientos.push({
-              sku: p.sku,
-              origen: "119039", 
-              destino: "118831", 
-              cantidad: cantidad,
-              indexFila: stockCrudoAntesBalanceo.length
-            });
-          }
-        }
+        colaMovimientos.push({
+          sku: p.sku,
+          origen: "118831", 
+          destino: "119039", 
+          cantidad: cantidadAMover,
+          indexFila: stockCrudoAntesBalanceo.length 
+        });
+      } else if (cantidadAMover < 0) {
+        // Sobra stock en TN (y falta en CB): Mover de TN a CB
+        const cantReal = Math.abs(cantidadAMover);
+        instruccion = `MOVER ${cantReal} TN A CB`;
+        nuevoStockCB = dispCB + cantReal;
+        nuevoStockTN = dispTN - cantReal;
 
-        // 1. Cargamos el Stock Crudo: Estrictamente 11 columnas (A a K)
-        stockCrudoAntesBalanceo.push([
-          p.id, p.sku, 
-          p.cb.f, p.cb.r, p.cb.d, 
-          p.tn.f, p.tn.r, p.tn.d, 
-          p.ml.f, p.ml.r, p.ml.d
-        ]);
-
-        // 2. Cargamos el Estado Inicial de la Fila: Estrictamente 1 columna (L)
-        estadosProceso.push([
-          estadoFila
-        ]);
-
-        // 3. Cargamos la proyección Post-Balanceo: Estrictamente 3 columnas (N a P)
-        valoresActualizadosPost.push([
-          p.sku,
-          nuevoStockCB.toString(), 
-          nuevoStockTN.toString()  
-        ]);
+        colaMovimientos.push({
+          sku: p.sku,
+          origen: "119039", 
+          destino: "118831", 
+          cantidad: cantReal,
+          indexFila: stockCrudoAntesBalanceo.length
+        });
       }
+
+      // Estructuramos los datos para guardarlos en las variables
+      stockCrudoAntesBalanceo.push([
+        p.id, p.sku, 
+        p.cb.f, p.cb.r, p.cb.d, 
+        p.tn.f, p.tn.r, p.tn.d, 
+        p.ml.f, p.ml.r, p.ml.d
+      ]);
+
+      estadosProceso.push([
+        estadoFila
+      ]);
+
+      instruccionesMovimiento.push([
+        instruccion
+      ]);
+
+      valoresActualizadosPost.push([
+        p.sku,
+        nuevoStockCB.toString(), 
+        nuevoStockTN.toString()  
+      ]);
     });
 
-    console.log(`📉 Items filtrados detectados: ${stockCrudoAntesBalanceo.length}`);
-    console.log(`📦 Movimientos de balanceo pendientes de ejecución: ${colaMovimientos.length}`);
-
-    if (colaMovimientos.length > 0) {
-      console.log("🚀 Iniciando posting de movimientos de equilibrio en la API de Contabilium...");
-      
-      for (const mov of colaMovimientos) {
-        const url = `https://rest.contabilium.com/api/inventarios/movimientoInterno`;
-        let resMov = null;
-        let intentos = 0;
-        const maxIntentos = 4;
-
-        while (intentos < maxIntentos) {
-          try {
-            resMov = await axios.post(url, null, {
-              headers: { 
-                "Authorization": `Bearer ${tokenContabilium}`, 
-                "Accept": "application/json" 
-              },
-              params: { 
-                idDepositoOrigen: mov.origen, 
-                idDepositoDestino: mov.destino, 
-                codigo: mov.sku,
-                cantidad: mov.cantidad
-              }
-            });
-            break; 
-          } catch (err) {
-            if (err.response && err.response.status === 429) {
-              intentos++;
-              const segundosEspera = (err.response.data?.retry_after || 15) + (intentos * 5);
-              console.warn(`⚠️ [429 API Balanceo] Límite de tasa en movimiento para SKU ${mov.sku}. Esperando ${segundosEspera}s para reintentar...`);
-              await delay(segundosEspera * 1000);
-            } else {
-              console.error(`❌ Error en llamada API de balanceo para SKU ${mov.sku}:`, err.message);
-              break; 
-            }
-          }
-        }
-
-        // Actualizamos dinámicamente el estado en la columna de Estados (L) utilizando el index trackeado
-        if (resMov && (resMov.status === 200 || resMov.status === 201)) {
-          console.log(`✅ Éxito: ${mov.sku} (${mov.cantidad} unidades balanceadas)`);
-          estadosProceso[mov.indexFila][0] = "PROCESADO ✅";
-        } else {
-          console.error(`❌ Falló definitivamente el balanceo del SKU ${mov.sku}`);
-          estadosProceso[mov.indexFila][0] = "ERROR API ❌";
-        }
-
-        await delay(1200);
-      }
+    if (stockCrudoAntesBalanceo.length === 0) {
+      console.log("☀️ Todo equilibrado o sin movimientos recientes. Nada que balancear.");
+      await axios.post(GAS_URL, {
+        action: "guardarResultadosFinales",
+        data: { stockCrudo: [], estadosActualizados: [], instrucciones: [], reporteMovimientos: [] }
+      });
+      return;
     }
 
-    console.log("📤 Enviando resultados consolidados a Google Sheets...");
+    console.log(`📦 Procesando ${colaMovimientos.length} movimientos de balanceo en la API de Contabilium...`);
+    
+    // Proceso de movimientos silencioso (No imprime logs individuales de éxito)
+    for (const mov of colaMovimientos) {
+      const url = `https://rest.contabilium.com/api/inventarios/movimientoInterno`;
+      let resMov = null;
+      let intentos = 0;
+      const maxIntentos = 3;
+
+      while (intentos < maxIntentos) {
+        try {
+          resMov = await axios.post(url, null, {
+            headers: { 
+              "Authorization": `Bearer ${tokenContabilium}`, 
+              "Accept": "application/json" 
+            },
+            params: { 
+              idDepositoOrigen: mov.origen, 
+              idDepositoDestino: mov.destino, 
+              codigo: mov.sku,
+              cantidad: mov.cantidad
+            }
+          });
+          break; 
+        } catch (err) {
+          if (err.response && err.response.status === 429) {
+            intentos++;
+            const segundosEspera = (err.response.data?.retry_after || 15) + (intentos * 5);
+            await delay(segundosEspera * 1000);
+          } else {
+            break; 
+          }
+        }
+      }
+
+      if (resMov && (resMov.status === 200 || resMov.status === 201)) {
+        estadosProceso[mov.indexFila][0] = "PROCESADO ✅";
+      } else {
+        estadosProceso[mov.indexFila][0] = "ERROR API ❌";
+      }
+
+      await delay(1200); // Delay preventivo anti-bloqueos
+    }
+
+    console.log("📤 Enviando datos resumidos y consolidados a Google Sheets...");
+    
     const resFinal = await axios.post(GAS_URL, {
       action: "guardarResultadosFinales",
       data: {
-        stockCrudo: stockCrudoAntesBalanceo,         // 11 columnas -> va a A:K
-        estadosActualizados: estadosProceso,         // 1 columna  -> va a L:L
-        reporteMovimientos: valoresActualizadosPost  // 3 columnas -> va a N:P
+        stockCrudo: stockCrudoAntesBalanceo,
+        estadosActualizados: estadosProceso,
+        instrucciones: instruccionesMovimiento, // Columna M
+        reporteMovimientos: valoresActualizadosPost
       }
     });
 
-    console.log("🎉 Proceso completado exitosamente en Google Sheets:", resFinal.data.reply || resFinal.data);
+    console.log("🎉 ¡Operativo finalizado de forma ultra-rápida y limpia!");
 
   } catch (error) {
-    console.error("❌ ERROR CRÍTICO DETECTADO EN EL OPERATIVO:");
-    console.error("👉 Mensaje del error:", error.message);
-    
-    if (error.response) {
-      console.error("📄 Código de Estado HTTP recibido:", error.response.status);
-      console.error("📄 Contenido exacto devuelto por el servidor:", JSON.stringify(error.response.data));
-    }
+    console.error("❌ ERROR CRÍTICO:", error.message);
     process.exit(1);
   }
 }
