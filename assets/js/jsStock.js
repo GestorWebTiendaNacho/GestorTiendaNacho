@@ -101,43 +101,34 @@
 
     /* MONITOR DE PROGRESO */
     function activarMonitorDeProgreso() {
-        let simulacionCB = 0;
-        let simulacionTN = 0;
-
-        // Limpiamos cualquier intervalo previo para no duplicar procesos
         if(intervalMonitor) clearInterval(intervalMonitor);
 
         intervalMonitor = setInterval(async () => {
             try {
                 const data = await callGoogleScript('get_progress');
-                const progreso = data.reply; 
+                const p = data.reply; // {procesados, faltantes, tiempo, porcentaje, terminado, fase}
                 
-                if(!progreso) return;
+                if(!p) return;
                 
-                if (progreso.terminado) {
+                // Actualizar relojes
+                window.actualizarReloj('cvs_descarga', p.fase === "DESCARGA" ? 50 : 100, p.fase);
+                window.actualizarReloj('cvs_impacto', p.porcentaje, p.porcentaje + '%');
+
+                // Actualizar stats (IDs de tu HTML)
+                document.getElementById('txt-procesados').textContent = p.procesados;
+                document.getElementById('txt-faltantes').textContent = p.faltantes;
+                document.getElementById('txt-time-real').textContent = p.tiempo;
+                
+                // Si terminó, detenemos el polling
+                if (p.terminado) {
                     clearInterval(intervalMonitor);
                     window.actualizarReloj('cvs_impacto', 100, 'DONE');
-                    setTimeout(() => finalizarVisualmente(progreso), 1000);
-                    return;
+                    setTimeout(() => finalizarVisualmente(p), 1000);
                 }
-
-                if (progreso.fase === "DESCARGA") {
-                    if (simulacionCB < 95) simulacionCB += 5;
-                    window.actualizarReloj('cvs_descarga', simulacionCB, 'DESCARGANDO...');
-                } else {
-                    window.actualizarReloj('cvs_descarga', 100, 'DESCARGA OK');
-                    if (simulacionTN < progreso.porcentaje) simulacionTN += 1;
-                    window.actualizarReloj('cvs_impacto', simulacionTN, simulacionTN + '%');
-                }
-
-                document.getElementById('txt-procesados').textContent = progreso.procesados;
-                document.getElementById('txt-faltantes').textContent = progreso.faltantes;
-                document.getElementById('txt-time-real').textContent = progreso.tiempo;
-                
             } catch (err) {
-                console.warn("Sincronizando...");
+                console.warn("Esperando respuesta del servidor...");
             }
-        }, 3000);
+        }, 4000); // Poll cada 4 segundos para no saturar la API de GAS
     }
 
     /*------- FUNCIÓN DE REPORTE FINAL -------*/
@@ -201,15 +192,20 @@
         
         log("🚀 INICIANDO SINCRONIZACIÓN GLOBAL...", "warn");
         
-        $('.logo-placeholder').fadeOut(400, function() {
-            $('#cvs_descarga').fadeIn(400);
+        // Limpieza visual inicial
+        $('.logo-placeholder').fadeOut(400, () => {
+            $('#cvs_descarga, #cvs_impacto').fadeIn(400);
             window.actualizarReloj('cvs_descarga', 0, 'CONECTANDO...');
         });
 
         try {
-            await callGoogleScript('sync_stock');
-            log("📡 ENLACE ESTABLECIDO CON GOOGLE CLOUD", "success");
+            // 1. Disparamos el proceso en el servidor (GAS -> GitHub)
+            const res = await callGoogleScript('sync_stock');
+            log("📡 " + res.reply.msj, "success");
+            
+            // 2. Iniciamos el monitoreo constante de la hoja
             activarMonitorDeProgreso();
+            
         } catch (err) {
             log("❌ ERROR CRÍTICO: " + err, "error");
             if(btn) btn.disabled = false;
