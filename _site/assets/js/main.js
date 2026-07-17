@@ -5,7 +5,7 @@
     }
     window.mainJsCargado = true;
 
-    window.URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbxqd4c9kLV56cMaVd3hzTxCv2EVGnSgnfdaqXxgDKYIv0B4-hG0We2os2IBK0BLs2k/execc";
+    window.URL_GAS_GLOBAL = "https://script.google.com/macros/s/AKfycbxqd4c9kLV56cMaVd3hzTxCv2EVGnSgnfdaqXxgDKYIv0B4-hG0We2os2IBK0BLs2k/exec";
     /*https://script.google.com/macros/s/AKfycbxqd4c9kLV56cMaVd3hzTxCv2EVGnSgnfdaqXxgDKYIv0B4-hG0We2os2IBK0BLs2k/exec*/
     /**
      * Función global para comunicarse con Google Apps Script
