@@ -76,6 +76,11 @@ async function balancearInventario(inventarioMapeado, token) {
     const fisicoCB = p.cb.f;
     const fisicoTN = p.tn.f;
 
+    // LOG FORENSE: Ver qué números está procesando realmente
+    if (Math.abs(fisicoCB - fisicoTN) > 0) {
+       console.log(`[DEBUG] SKU: ${sku} | CB: ${fisicoCB} | TN: ${fisicoTN} | DIF: ${fisicoCB - fisicoTN}`);
+    }
+
     if ((fisicoCB + fisicoTN) <= 1) return;
 
     const diferencia = fisicoCB - fisicoTN;
@@ -91,15 +96,18 @@ async function balancearInventario(inventarioMapeado, token) {
     }
   });
 
-  // Ejecución de movimientos
+  if (colaMovimientos.length === 0) {
+    console.log("⚠️ No se encontraron discrepancias de stock físico (CB vs TN).");
+  }
+
   for (const mov of colaMovimientos) {
     try {
+      console.log(`🚀 Ejecutando: Mover ${mov.cantidad} de ${mov.sku} (Orig: ${mov.origen} -> Dest: ${mov.destino})`);
       await axios.post(`https://rest.contabilium.com/api/inventarios/movimientoInterno`, null, {
         headers: { "Authorization": `Bearer ${token}` },
         params: { idDepositoOrigen: mov.origen, idDepositoDestino: mov.destino, codigo: mov.sku, cantidad: mov.cantidad }
       });
-      console.log(`✅ Movido ${mov.cantidad} de ${mov.sku}`);
-    } catch (e) { console.error(`❌ Error en ${mov.sku}: ${e.message}`); }
+    } catch (e) { console.error(`❌ Error en ${mov.sku}: ${e.response?.data || e.message}`); }
     await delay(1200);
   }
 }
