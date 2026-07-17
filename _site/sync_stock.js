@@ -71,34 +71,34 @@ async function balancearInventario(inventarioMapeado, token) {
     const diff = p.cb.f - p.tn.f;
     const cant = Math.floor(Math.abs(diff) / 2);
 
-    // Guardamos siempre la fila en el reporte
     resultadosFinales.stockCrudo.push([p.id, p.sku, p.cb.f, 0, p.cb.f, p.tn.f, 0, p.tn.f, p.ml.f, 0, p.ml.f]);
 
     if (cant > 0 && (p.cb.f + p.tn.f) > 1) {
       colaMovimientos.push({ sku, origen: diff > 0 ? "118831" : "119039", destino: diff > 0 ? "119039" : "118831", cantidad: cant, index: colaMovimientos.length });
-      resultadosFinales.estadosActualizados.push(["PENDIENTE ⏳"]);
-      resultadosFinales.instrucciones.push([`MOVER ${cant} ${diff > 0 ? "CB->TN" : "TN->CB"}`]);
+      resultadosFinales.estadosActualizados.push(["MODIFICADO"]);
+      resultadosFinales.instrucciones.push([`Mover ${cant} de ${diff > 0 ? "CB a TN" : "TN a CB"}`]);
+      
+      const nuevoCB = diff > 0 ? (p.cb.f - cant) : (p.cb.f + cant);
+      const nuevoTN = diff > 0 ? (p.tn.f + cant) : (p.tn.f - cant);
+      resultadosFinales.reporteMovimientos.push([p.sku, nuevoCB, nuevoTN]);
     } else {
-      resultadosFinales.estadosActualizados.push(["OK ✅"]);
-      resultadosFinales.instrucciones.push(["SIN CAMBIOS"]);
+      resultadosFinales.estadosActualizados.push(["OK"]);
+      resultadosFinales.instrucciones.push([""]);
+      resultadosFinales.reporteMovimientos.push([p.sku, p.cb.f, p.tn.f]);
     }
   });
 
-  // Ejecución
   for (const mov of colaMovimientos) {
     try {
       await axios.post(`https://rest.contabilium.com/api/inventarios/movimientoInterno`, null, {
         headers: { "Authorization": `Bearer ${token}` },
         params: { idDepositoOrigen: mov.origen, idDepositoDestino: mov.destino, codigo: mov.sku, cantidad: mov.cantidad }
       });
-      resultadosFinales.estadosActualizados[mov.index] = ["PROCESADO ✅"];
-    } catch (e) { resultadosFinales.estadosActualizados[mov.index] = ["ERROR ❌"]; }
+    } catch (e) { resultadosFinales.estadosActualizados[mov.index] = ["ERROR"]; }
     await delay(1200);
   }
 
-  // ENVÍO DEL REPORTE FINAL AL GAS
   await axios.post(GAS_URL, { action: "guardarResultadosFinales", data: resultadosFinales });
-  console.log("✅ Reporte enviado a Google Sheets.");
 }
 
 ejecutarOperativoCompleto();
