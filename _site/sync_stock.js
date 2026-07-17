@@ -22,16 +22,9 @@ async function ejecutarOperativoCompleto() {
   }
 }
 
-ejecutarOperativoCompleto();
 
 async function descargarInventario(token) {
-  console.log("📥 Iniciando descarga masiva de inventario...");
-  const listaDepositos = [
-    { id: "118831", tag: "cb" }, 
-    { id: "119039", tag: "tn" },
-    { id: "119040", tag: "ml" }
-  ];
-
+  const listaDepositos = [{ id: "118831", tag: "cb" }, { id: "119039", tag: "tn" }, { id: "119040", tag: "ml" }];
   let inventarioMapeado = {};
 
   for (const depo of listaDepositos) {
@@ -42,78 +35,70 @@ async function descargarInventario(token) {
           headers: { "Authorization": `Bearer ${token}` },
           params: { id: depo.id, page: pagina, pageSize: 50 }
         });
-        
         const items = res.data.Items || [];
         items.forEach(item => {
           const sku = item.Codigo || "SIN-SKU";
-          if (!inventarioMapeado[sku]) {
-            inventarioMapeado[sku] = { id: item.IdConcepto || item.Id, sku, cb: { f: 0 }, tn: { f: 0 }, ml: { f: 0 } };
-          }
+          if (!inventarioMapeado[sku]) inventarioMapeado[sku] = { id: item.IdConcepto || item.Id, sku, cb: { f: 0 }, tn: { f: 0 }, ml: { f: 0 } };
           inventarioMapeado[sku][depo.tag].f = Math.floor(parseFloat(item.StockActual) || 0);
         });
-
         if (items.length < 50) hayMas = false; else pagina++;
-        
-        // PAUSA DE SEGURIDAD ENTRE PÁGINAS
-        await delay(1500); 
-
-      } catch (err) {
-        if (err.response && err.response.status === 429) {
-          const segundosEspera = (err.response.data?.retry_after || 30);
-          console.warn(`⚠️ Límite excedido (429). Esperando ${segundosEspera} segundos...`);
-          await delay(segundosEspera * 1000);
-          // Reintentamos esta misma página sin avanzar
-          continue; 
-        } else {
-          console.error(`❌ Error fatal en depo ${depo.id}:`, err.message);
-          hayMas = false;
-        }
-      }
+        await delay(1000);
+      } catch (err) { /* Manejo de 429 simplificado */ await delay(5000); }
     }
   }
+
+  // Preparamos para 'stockCrudo' (11 columnas)
+  const dataParaSheet = Object.values(inventarioMapeado).map(p => [
+    p.id, p.sku, p.cb.f, 0, p.cb.f, p.tn.f, 0, p.tn.f, p.ml.f, 0, p.ml.f
+  ]);
+
+  // Enviamos al GAS para que la hoja tenga los datos actuales
+  await axios.post(GAS_URL, { 
+    action: "guardarResultadosFinales", 
+    data: { stockCrudo: dataParaSheet, estadosActualizados: [], instrucciones: [], reporteMovimientos: [] } 
+  });
+  
   return inventarioMapeado;
 }
+
+// 2. BALANCEO Y REPORTE FINAL
 async function balancearInventario(inventarioMapeado, token) {
-  console.log("⚖️ Iniciando balanceo sobre Stock Físico...");
   const colaMovimientos = [];
+  const resultadosFinales = { stockCrudo: [], estadosActualizados: [], instrucciones: [], reporteMovimientos: [] };
 
   Object.keys(inventarioMapeado).forEach(sku => {
     const p = inventarioMapeado[sku];
-    const fisicoCB = p.cb.f;
-    const fisicoTN = p.tn.f;
+    const diff = p.cb.f - p.tn.f;
+    const cant = Math.floor(Math.abs(diff) / 2);
 
-    // LOG FORENSE: Ver qué números está procesando realmente
-    if (Math.abs(fisicoCB - fisicoTN) > 0) {
-       console.log(`[DEBUG] SKU: ${sku} | CB: ${fisicoCB} | TN: ${fisicoTN} | DIF: ${fisicoCB - fisicoTN}`);
-    }
+    // Guardamos siempre la fila en el reporte
+    resultadosFinales.stockCrudo.push([p.id, p.sku, p.cb.f, 0, p.cb.f, p.tn.f, 0, p.tn.f, p.ml.f, 0, p.ml.f]);
 
-    if ((fisicoCB + fisicoTN) <= 1) return;
-
-    const diferencia = fisicoCB - fisicoTN;
-    const cantidadAMover = Math.floor(Math.abs(diferencia) / 2);
-
-    if (cantidadAMover > 0) {
-      colaMovimientos.push({
-        sku,
-        origen: (diferencia > 0) ? "118831" : "119039",
-        destino: (diferencia > 0) ? "119039" : "118831",
-        cantidad: cantidadAMover
-      });
+    if (cant > 0 && (p.cb.f + p.tn.f) > 1) {
+      colaMovimientos.push({ sku, origen: diff > 0 ? "118831" : "119039", destino: diff > 0 ? "119039" : "118831", cantidad: cant, index: colaMovimientos.length });
+      resultadosFinales.estadosActualizados.push(["PENDIENTE ⏳"]);
+      resultadosFinales.instrucciones.push([`MOVER ${cant} ${diff > 0 ? "CB->TN" : "TN->CB"}`]);
+    } else {
+      resultadosFinales.estadosActualizados.push(["OK ✅"]);
+      resultadosFinales.instrucciones.push(["SIN CAMBIOS"]);
     }
   });
 
-  if (colaMovimientos.length === 0) {
-    console.log("⚠️ No se encontraron discrepancias de stock físico (CB vs TN).");
-  }
-
+  // Ejecución
   for (const mov of colaMovimientos) {
     try {
-      console.log(`🚀 Ejecutando: Mover ${mov.cantidad} de ${mov.sku} (Orig: ${mov.origen} -> Dest: ${mov.destino})`);
       await axios.post(`https://rest.contabilium.com/api/inventarios/movimientoInterno`, null, {
         headers: { "Authorization": `Bearer ${token}` },
         params: { idDepositoOrigen: mov.origen, idDepositoDestino: mov.destino, codigo: mov.sku, cantidad: mov.cantidad }
       });
-    } catch (e) { console.error(`❌ Error en ${mov.sku}: ${e.response?.data || e.message}`); }
+      resultadosFinales.estadosActualizados[mov.index] = ["PROCESADO ✅"];
+    } catch (e) { resultadosFinales.estadosActualizados[mov.index] = ["ERROR ❌"]; }
     await delay(1200);
   }
+
+  // ENVÍO DEL REPORTE FINAL AL GAS
+  await axios.post(GAS_URL, { action: "guardarResultadosFinales", data: resultadosFinales });
+  console.log("✅ Reporte enviado a Google Sheets.");
 }
+
+ejecutarOperativoCompleto();
