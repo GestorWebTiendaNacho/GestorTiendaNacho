@@ -37,6 +37,7 @@
 
 /* --- BOTONES PREMIUM --- */
 .btn-lex-minimal {
+    margin-top: 20px !important;
     padding: 12px 24px; 
     min-width: 260px; 
     display: inline-flex;
