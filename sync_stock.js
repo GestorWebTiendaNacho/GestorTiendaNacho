@@ -25,7 +25,7 @@ async function ejecutarOperativoCompleto() {
 ejecutarOperativoCompleto();
 
 async function descargarInventario(token) {
-  console.log("📥 Iniciando descarga de inventario...");
+  console.log("📥 Iniciando descarga masiva de inventario...");
   const listaDepositos = [
     { id: "118831", tag: "cb" }, 
     { id: "119039", tag: "tn" },
@@ -37,35 +37,41 @@ async function descargarInventario(token) {
   for (const depo of listaDepositos) {
     let pagina = 1, hayMas = true;
     while (hayMas) {
-      const res = await axios.get(`https://rest.contabilium.com/api/inventarios/getStockByDeposito`, {
-        headers: { "Authorization": `Bearer ${token}` },
-        params: { id: depo.id, page: pagina, pageSize: 50 }
-      });
-      const items = res.data.Items || [];
-      items.forEach(item => {
-        const sku = item.Codigo || "SIN-SKU";
-        if (!inventarioMapeado[sku]) {
-          inventarioMapeado[sku] = { id: item.IdConcepto || item.Id, sku, cb: { f: 0, r: 0, d: 0 }, tn: { f: 0, r: 0, d: 0 }, ml: { f: 0, r: 0, d: 0 } };
+      try {
+        const res = await axios.get(`https://rest.contabilium.com/api/inventarios/getStockByDeposito`, {
+          headers: { "Authorization": `Bearer ${token}` },
+          params: { id: depo.id, page: pagina, pageSize: 50 }
+        });
+        
+        const items = res.data.Items || [];
+        items.forEach(item => {
+          const sku = item.Codigo || "SIN-SKU";
+          if (!inventarioMapeado[sku]) {
+            inventarioMapeado[sku] = { id: item.IdConcepto || item.Id, sku, cb: { f: 0 }, tn: { f: 0 }, ml: { f: 0 } };
+          }
+          inventarioMapeado[sku][depo.tag].f = Math.floor(parseFloat(item.StockActual) || 0);
+        });
+
+        if (items.length < 50) hayMas = false; else pagina++;
+        
+        // PAUSA DE SEGURIDAD ENTRE PÁGINAS
+        await delay(1500); 
+
+      } catch (err) {
+        if (err.response && err.response.status === 429) {
+          const segundosEspera = (err.response.data?.retry_after || 30);
+          console.warn(`⚠️ Límite excedido (429). Esperando ${segundosEspera} segundos...`);
+          await delay(segundosEspera * 1000);
+          // Reintentamos esta misma página sin avanzar
+          continue; 
+        } else {
+          console.error(`❌ Error fatal en depo ${depo.id}:`, err.message);
+          hayMas = false;
         }
-        // Asignamos según el tag
-        inventarioMapeado[sku][depo.tag] = {
-          f: Math.floor(parseFloat(item.StockActual) || 0),
-          r: Math.floor(parseFloat(item.StockReservado) || 0),
-          d: Math.floor(parseFloat(item.StockConReservas) || 0)
-        };
-      });
-      if (items.length < 50) hayMas = false; else pagina++;
+      }
     }
   }
-
-  // Preparar para Sheet: ID, SKU, Fisico CB, Res CB, Disp CB, Fisico TN, Res TN, Disp TN, Fisico ML, Res ML, Disp ML
-  const dataParaSheet = Object.values(inventarioMapeado).map(p => [
-    p.id, p.sku, p.cb.f, p.cb.r, p.cb.d, p.tn.f, p.tn.r, p.tn.d, p.ml.f, p.ml.r, p.ml.d
-  ]);
-
-  await axios.post(GAS_URL, { action: "guardarInventarioCompleto", data: dataParaSheet });
-  console.log("✅ Inventario descargado y enviado a la Sheet.");
-  return inventarioMapeado; // Retornamos para usar en la siguiente función
+  return inventarioMapeado;
 }
 async function balancearInventario(inventarioMapeado, token) {
   console.log("⚖️ Iniciando balanceo sobre Stock Físico...");
