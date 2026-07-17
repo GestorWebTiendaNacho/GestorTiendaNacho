@@ -64,7 +64,13 @@ async function descargarInventario(token) {
 // 2. BALANCEO Y REPORTE FINAL
 async function balancearInventario(inventarioMapeado, token) {
   const colaMovimientos = [];
-  const resultadosFinales = { stockCrudo: [], estadosActualizados: [], instrucciones: [], reporteMovimientos: [] };
+  const resultadosFinales = { stockCrudo: [], 
+    estadosActualizados: [], 
+    instrucciones: [], 
+    reporteMovimientos: [], 
+    countProcesados: 0, 
+    countFaltantes: 0  
+  };
 
   Object.keys(inventarioMapeado).forEach(sku => {
     const p = inventarioMapeado[sku];
@@ -85,6 +91,7 @@ async function balancearInventario(inventarioMapeado, token) {
       resultadosFinales.estadosActualizados.push(["OK"]);
       resultadosFinales.instrucciones.push([""]);
       resultadosFinales.reporteMovimientos.push([p.sku, p.cb.f, p.tn.f]);
+      resultadosFinales.countProcesados++;
     }
   });
 
@@ -98,7 +105,7 @@ async function balancearInventario(inventarioMapeado, token) {
     await delay(1200);
   }
 
-  await axios.post(GAS_URL, { action: "guardarResultadosFinales", data: resultadosFinales });
+    await axios.post(GAS_URL, { action: "guardarResultadosFinales", data: resultadosFinales });
 }
 
 ejecutarOperativoCompleto();
