@@ -7,118 +7,99 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 
 async function ejecutarOperativoCompleto() {
   try {
-    console.log("🚀 Iniciando Operativo Maestro (BARRIDO TOTAL - Balanceo por Diferencia)...");
-
-    if (!GAS_URL) throw new Error("GAS_WEBAPP_URL no definido.");
-
     const resToken = await axios.post(GAS_URL, { action: "obtenerTokenParaCliente" });
-    if (!resToken.data || resToken.data.status !== "success") throw new Error("Fallo al obtener Token.");
-    const tokenContabilium = resToken.data.reply;
+    const token = resToken.data.reply;
 
-    const listaDepositos = [
-      { id: "118831", tag: "cb" }, 
-      { id: "119039", tag: "tn" },
-      { id: "119040", tag: "ml" }
-    ];
+    // 1. Descargar y actualizar la hoja
+    const inventario = await descargarInventario(token);
+    
+    // 2. Balancear usando los datos recién obtenidos
+    await balancearInventario(inventario, token);
 
-    let inventarioMapeado = {};
-    const PAGE_SIZE = 45; 
-
-    // DESCARGA TOTAL
-    for (const depo of listaDepositos) {
-      let pagina = 1; 
-      let hayMas = true;
-      console.log(`📥 Descargando: ${depo.tag.toUpperCase()}...`);
-
-      while (hayMas) {
-        const resCB = await axios.get(`https://rest.contabilium.com/api/inventarios/getStockByDeposito`, {
-          headers: { "Authorization": `Bearer ${tokenContabilium}`, "Accept": "application/json" },
-          params: { id: depo.id, page: pagina, pageSize: PAGE_SIZE }
-        });
-
-        const items = resCB.data.Items || [];
-        items.forEach(item => {
-          const sku = item.Codigo || "SIN-SKU";
-          if (!inventarioMapeado[sku]) {
-            inventarioMapeado[sku] = { id: item.IdConcepto || item.Id, sku: sku, cb: { d: 0 }, tn: { d: 0 }, ml: { d: 0 } };
-          }
-          // Sanitizado absoluto a entero
-          inventarioMapeado[sku][depo.tag].d = Math.floor(parseFloat(item.StockConReservas) || 0);
-        });
-
-        if (items.length < PAGE_SIZE) hayMas = false;
-        else { pagina++; await delay(1000); }
-      }
-      await delay(1500);
-    }
-
-    const stockCrudoAntesBalanceo = [];
-    const estadosProceso = [];
-    const instruccionesMovimiento = [];
-    const reporteMovimientos = [];
-    const colaMovimientos = [];
-
-    // PROCESAMIENTO
-    Object.keys(inventarioMapeado).forEach(sku => {
-      const p = inventarioMapeado[sku];
-      const dispCB = p.cb.d;
-      const dispTN = p.tn.d;
-      const totalStock = dispCB + dispTN;
-
-      // SOLO SALTEAMOS SI EL TOTAL ES MENOR O IGUAL A 1
-      if (totalStock <= 1) return;
-
-      const diferencia = dispCB - dispTN;
-      const cantidadAMover = Math.floor(Math.abs(diferencia) / 2);
-
-      if (cantidadAMover === 0) return;
-
-      let instruccion = "";
-      let origen = "";
-      let destino = "";
-
-      if (diferencia > 0) {
-        instruccion = `MOVER ${cantidadAMover} CB A TN`;
-        origen = "118831"; destino = "119039";
-      } else {
-        instruccion = `MOVER ${cantidadAMover} TN A CB`;
-        origen = "119039"; destino = "118831";
-      }
-
-      colaMovimientos.push({ sku, origen, destino, cantidad: cantidadAMover, indexFila: stockCrudoAntesBalanceo.length });
-      stockCrudoAntesBalanceo.push([p.id, p.sku, 0, 0, dispCB, 0, 0, dispTN, 0, 0, p.ml.d]);
-      estadosProceso.push(["PENDIENTE ⏳"]);
-      instruccionesMovimiento.push([instruccion]);
-      reporteMovimientos.push([sku, "Procesando..."]);
-    });
-
-    // EJECUCIÓN
-    console.log(`📦 Procesando ${colaMovimientos.length} movimientos...`);
-    for (const mov of colaMovimientos) {
-      try {
-        await axios.post(`https://rest.contabilium.com/api/inventarios/movimientoInterno`, null, {
-          headers: { "Authorization": `Bearer ${tokenContabilium}` },
-          params: { idDepositoOrigen: mov.origen, idDepositoDestino: mov.destino, codigo: mov.sku, cantidad: mov.cantidad }
-        });
-        estadosProceso[mov.indexFila][0] = "PROCESADO ✅";
-      } catch (e) {
-        estadosProceso[mov.indexFila][0] = "ERROR ❌";
-      }
-      await delay(1200);
-    }
-
-    // ENVÍO FINAL
-    await axios.post(GAS_URL, {
-      action: "guardarResultadosFinales",
-      data: { stockCrudo: stockCrudoAntesBalanceo, estadosActualizados: estadosProceso, instrucciones: instruccionesMovimiento, reporteMovimientos }
-    });
-
-    console.log("🎉 ¡Finalizado!");
-
-  } catch (error) {
-    console.error("CRÍTICO:", error.message);
-    process.exit(1);
+    console.log("🎉 Operativo completo finalizado.");
+  } catch (err) {
+    console.error("CRÍTICO:", err.message);
   }
 }
 
 ejecutarOperativoCompleto();
+
+async function descargarInventario(token) {
+  console.log("📥 Iniciando descarga de inventario...");
+  const listaDepositos = [
+    { id: "118831", tag: "cb" }, 
+    { id: "119039", tag: "tn" },
+    { id: "119040", tag: "ml" }
+  ];
+
+  let inventarioMapeado = {};
+
+  for (const depo of listaDepositos) {
+    let pagina = 1, hayMas = true;
+    while (hayMas) {
+      const res = await axios.get(`https://rest.contabilium.com/api/inventarios/getStockByDeposito`, {
+        headers: { "Authorization": `Bearer ${token}` },
+        params: { id: depo.id, page: pagina, pageSize: 50 }
+      });
+      const items = res.data.Items || [];
+      items.forEach(item => {
+        const sku = item.Codigo || "SIN-SKU";
+        if (!inventarioMapeado[sku]) {
+          inventarioMapeado[sku] = { id: item.IdConcepto || item.Id, sku, cb: { f: 0, r: 0, d: 0 }, tn: { f: 0, r: 0, d: 0 }, ml: { f: 0, r: 0, d: 0 } };
+        }
+        // Asignamos según el tag
+        inventarioMapeado[sku][depo.tag] = {
+          f: Math.floor(parseFloat(item.StockActual) || 0),
+          r: Math.floor(parseFloat(item.StockReservado) || 0),
+          d: Math.floor(parseFloat(item.StockConReservas) || 0)
+        };
+      });
+      if (items.length < 50) hayMas = false; else pagina++;
+    }
+  }
+
+  // Preparar para Sheet: ID, SKU, Fisico CB, Res CB, Disp CB, Fisico TN, Res TN, Disp TN, Fisico ML, Res ML, Disp ML
+  const dataParaSheet = Object.values(inventarioMapeado).map(p => [
+    p.id, p.sku, p.cb.f, p.cb.r, p.cb.d, p.tn.f, p.tn.r, p.tn.d, p.ml.f, p.ml.r, p.ml.d
+  ]);
+
+  await axios.post(GAS_URL, { action: "guardarInventarioCompleto", data: dataParaSheet });
+  console.log("✅ Inventario descargado y enviado a la Sheet.");
+  return inventarioMapeado; // Retornamos para usar en la siguiente función
+}
+async function balancearInventario(inventarioMapeado, token) {
+  console.log("⚖️ Iniciando balanceo sobre Stock Físico...");
+  const colaMovimientos = [];
+
+  Object.keys(inventarioMapeado).forEach(sku => {
+    const p = inventarioMapeado[sku];
+    const fisicoCB = p.cb.f;
+    const fisicoTN = p.tn.f;
+
+    if ((fisicoCB + fisicoTN) <= 1) return;
+
+    const diferencia = fisicoCB - fisicoTN;
+    const cantidadAMover = Math.floor(Math.abs(diferencia) / 2);
+
+    if (cantidadAMover > 0) {
+      colaMovimientos.push({
+        sku,
+        origen: (diferencia > 0) ? "118831" : "119039",
+        destino: (diferencia > 0) ? "119039" : "118831",
+        cantidad: cantidadAMover
+      });
+    }
+  });
+
+  // Ejecución de movimientos
+  for (const mov of colaMovimientos) {
+    try {
+      await axios.post(`https://rest.contabilium.com/api/inventarios/movimientoInterno`, null, {
+        headers: { "Authorization": `Bearer ${token}` },
+        params: { idDepositoOrigen: mov.origen, idDepositoDestino: mov.destino, codigo: mov.sku, cantidad: mov.cantidad }
+      });
+      console.log(`✅ Movido ${mov.cantidad} de ${mov.sku}`);
+    } catch (e) { console.error(`❌ Error en ${mov.sku}: ${e.message}`); }
+    await delay(1200);
+  }
+}
