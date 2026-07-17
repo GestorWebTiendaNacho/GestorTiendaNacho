@@ -29,8 +29,8 @@ async function ejecutarOperativo() {
       const sku = fila[1]; 
       if (sku) {
         mapaStockViejo[sku] = {
-          cb_d: parseFloat(fila[4]) || 0, 
-          tn_d: parseFloat(fila[7]) || 0  
+          cb_d: parseInt(fila[4], 10) || 0, // Forzado a entero
+          tn_d: parseInt(fila[7], 10) || 0  // Forzado a entero
         };
       }
     });
@@ -89,10 +89,11 @@ async function ejecutarOperativo() {
                 ml: { f: 0, r: 0, d: 0 }
               };
             }
+            // Forzamos la entrada de datos a enteros puros
             inventarioMapeado[sku][depo.tag] = {
-              f: item.StockActual || 0,
-              r: item.StockReservado || 0,
-              d: item.StockConReservas || 0 
+              f: parseInt(item.StockActual, 10) || 0,
+              r: parseInt(item.StockReservado, 10) || 0,
+              d: parseInt(item.StockConReservas, 10) || 0 
             };
           });
 
@@ -114,31 +115,35 @@ async function ejecutarOperativo() {
     // Arrays destinados a impactar en la planilla
     const stockCrudoAntesBalanceo = [];   // Columnas A:K (11 col)
     const estadosProceso = [];            // Columna L (1 col)
-    const instruccionesMovimiento = [];   // Columna M (1 col) <-- NUEVO!
+    const instruccionesMovimiento = [];   // Columna M (1 col)
     const valoresActualizadosPost = [];    // Columnas N:P (3 col)
     const colaMovimientos = [];
 
     skusDescargados.forEach(sku => {
       const p = inventarioMapeado[sku];
-      const dispCB = p.cb.d;
-      const dispTN = p.tn.d;
+      
+      // Sanitizado inicial: nos aseguramos de usar enteros puros redondeados hacia abajo
+      const dispCB = Math.floor(p.cb.d);
+      const dispTN = Math.floor(p.tn.d);
 
-      // 1. VERIFICACIÓN: ¿Tuvo movimiento en las últimas 6 horas? (Compara vs histórico de la hoja)
+      // 1. VERIFICACIÓN: ¿Tuvo movimiento en las últimas 6 horas?
       const viejo = mapaStockViejo[sku];
       const huboMovimiento = !viejo || (dispCB !== viejo.cb_d || dispTN !== viejo.tn_d);
-      if (!huboMovimiento) return; // Si no se movió en 6hs, lo salteamos completamente
+      if (!huboMovimiento) return; 
 
-      // 2. VERIFICACIÓN: Si el stock disponible en ambos depósitos es <= 1, lo salteamos
-      if (dispCB <= 1 && dispTN <= 1) return;
+      // 2. VERIFICACIÓN CRÍTICA: Si cualquiera de los dos depósitos tiene stock <= 1, se saltea
+      if (dispCB <= 1 || dispTN <= 1) return;
       
       const totalStock = dispCB + dispTN;
-      if (totalStock <= 1) return; // Filtro de seguridad extra
+      if (totalStock <= 1) return; 
 
-      // 3. PRIORIDAD TN: Distribución matemática ideal
-      const targetTN = Math.ceil(totalStock / 2);  // Prioridad: se queda con el entero mayor
-      const targetCB = Math.floor(totalStock / 2); // Se queda con el entero menor
+      // 3. PRIORIDAD TN: Distribución matemática ideal usando enteros
+      const targetTN = Math.ceil(totalStock / 2);  // Si es impar, el entero mayor va a TN
+      const targetCB = Math.floor(totalStock / 2); // El entero menor va a CB
       
-      const cantidadAMover = targetTN - dispTN; 
+      // Calculamos la diferencia y forzamos a entero puro
+      const cantidadAMoverRaw = targetTN - dispTN; 
+      const cantidadAMover = Math.round(cantidadAMoverRaw);
 
       // Si ya están perfectamente balanceados con prioridad para TN, no hacemos nada
       if (cantidadAMover === 0) return;
@@ -149,7 +154,7 @@ async function ejecutarOperativo() {
       let nuevoStockTN = dispTN;
 
       if (cantidadAMover > 0) {
-        // Falta stock en TN: Mover de CB a TN
+        // Falta stock en TN: Mover de CB a TN (cantidad es un entero positivo)
         instruccion = `MOVER ${cantidadAMover} CB A TN`;
         nuevoStockCB = dispCB - cantidadAMover;
         nuevoStockTN = dispTN + cantidadAMover;
@@ -162,7 +167,7 @@ async function ejecutarOperativo() {
           indexFila: stockCrudoAntesBalanceo.length 
         });
       } else if (cantidadAMover < 0) {
-        // Sobra stock en TN (y falta en CB): Mover de TN a CB
+        // Sobra stock en TN: Mover de TN a CB (cantReal es un entero positivo)
         const cantReal = Math.abs(cantidadAMover);
         instruccion = `MOVER ${cantReal} TN A CB`;
         nuevoStockCB = dispCB + cantReal;
@@ -177,11 +182,11 @@ async function ejecutarOperativo() {
         });
       }
 
-      // Estructuramos los datos para guardarlos en las variables
+      // Estructuramos los datos limpios para guardarlos en las variables
       stockCrudoAntesBalanceo.push([
         p.id, p.sku, 
-        p.cb.f, p.cb.r, p.cb.d, 
-        p.tn.f, p.tn.r, p.tn.d, 
+        p.cb.f, p.cb.r, dispCB, 
+        p.tn.f, p.tn.r, dispTN, 
         p.ml.f, p.ml.r, p.ml.d
       ]);
 
@@ -211,7 +216,7 @@ async function ejecutarOperativo() {
 
     console.log(`📦 Procesando ${colaMovimientos.length} movimientos de balanceo en la API de Contabilium...`);
     
-    // Proceso de movimientos silencioso (No imprime logs individuales de éxito)
+    // Proceso de movimientos silencioso
     for (const mov of colaMovimientos) {
       const url = `https://rest.contabilium.com/api/inventarios/movimientoInterno`;
       let resMov = null;
@@ -229,7 +234,7 @@ async function ejecutarOperativo() {
               idDepositoOrigen: mov.origen, 
               idDepositoDestino: mov.destino, 
               codigo: mov.sku,
-              cantidad: mov.cantidad
+              cantidad: mov.cantidad // Se envía un entero verificado
             }
           });
           break; 
@@ -250,7 +255,7 @@ async function ejecutarOperativo() {
         estadosProceso[mov.indexFila][0] = "ERROR API ❌";
       }
 
-      await delay(1200); // Delay preventivo anti-bloqueos
+      await delay(1200); 
     }
 
     console.log("📤 Enviando datos resumidos y consolidados a Google Sheets...");
@@ -260,7 +265,7 @@ async function ejecutarOperativo() {
       data: {
         stockCrudo: stockCrudoAntesBalanceo,
         estadosActualizados: estadosProceso,
-        instrucciones: instruccionesMovimiento, // Columna M
+        instrucciones: instruccionesMovimiento, 
         reporteMovimientos: valoresActualizadosPost
       }
     });
