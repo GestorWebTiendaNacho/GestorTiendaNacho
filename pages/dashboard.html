@@ -362,7 +362,7 @@
                             <span class="nav-btn__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M2 2h2l2.5 12h11l2-8H6"/></svg>
                             </span>
-                            <span class="nav-btn__label">Pedidos</span>
+                            <span class="nav-btn__label">Realizar<br>Pedidos</span>
                             <span class="nav-btn__chevron" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                             </span>
@@ -400,120 +400,103 @@
                     </div>
                 </li>
 
-                <li class="nav-item theme-teal">    
+                <li class="nav-item theme-teal"> <!-- Botón Recepción de Pedidos -->   
                     <div class="nav-btn__wrap">
                         <a href="#" class="nav-btn" data-nav="recepcion" onclick="verEstadoPedidos()">
                             <span class="nav-btn__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                             </span>
-                            <span class="nav-btn__label">Recepción</span>
+                            <span class="nav-btn__label">Recibir<br>Pedidos
+                            </span>
                         </a>
                         <span class="nav-btn__glow-line"></span>
                     </div>
                 </li>
 
-                <li class="nav-item theme-pink">
+                <li class="nav-item theme-pink"> <!-- Botón Cargar Compras -->
                     <div class="nav-btn__wrap">
                         <a href="#" class="nav-btn" data-nav="compras" onclick="abrirModalCompras()">
                             <span class="nav-btn__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
                             </span>
-                            <span class="nav-btn__label">Compras</span>
+                            <span class="nav-btn__label">Cargar<br>Compras</span>
                         </a>
                         <span class="nav-btn__glow-line"></span>
                     </div>
                 </li>      
 
-                <li class="nav-item theme-yellow" data-accordion>  <!---semanal--->
+                <li class="nav-item theme-lime"> <!-- Botón Cargar Ventas -->
                     <div class="nav-btn__wrap">
-                            <button type="button" class="nav-btn" data-toggle="semanal" aria-expanded="false" aria-controls="submenu-semanal">
-                                <span class="nav-btn__icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
-                                </span>
-                                <span class="nav-btn__label">Semanal</span>
-                                <span class="nav-btn__chevron" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                                </span>
-                            </button>
+                        <a href="#" class="nav-btn" data-nav="ventas" onclick="abrirModalVenta()">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Cargar<br>Ventas</span>
+                        </a>
+                        <span class="nav-btn__glow-line"></span>
+                    </div>
+                </li>
+
+                <li class="nav-item theme-yellow"> <!-- Botón Ver Críticos (Abre Modal de Críticos) -->
+                    <div class="nav-btn__wrap">
+                        <button type="button" class="nav-btn" onclick="abrirModalReportes()" aria-expanded="false">
+                            <span class="nav-btn__icon" aria-hidden="true">
+                              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                            </span>
+                            <span class="nav-btn__label">Ver<br>Críticos</span>
+                        </button>
                             <span class="nav-btn__glow-line"></span>
-                        </div>
-                        
-                        <div class="submenu" id="submenu-semanal" role="region" aria-label="Submenú Semanal">
-                            <div class="submenu__inner">
-                                <svg class="submenu__lines" id="lines-semanal" aria-hidden="true"></svg>
-                                <ul class="submenu__list">
-                                    
-                                    <li>
-                                        <div class="nav-btn__wrap nav-btn__wrap--sub">
-                                            <a href="#" class="nav-btn nav-btn--sub" data-nav="ver-estado" onclick="abrirModalSemanal()">
-                                                <span class="nav-btn__icon" aria-hidden="true">
-                                                    <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                                </span>
-                                                <span class="nav-btn__label">Ver Estado</span>
-                                            </a>
-                                            <span class="nav-btn__glow-line"></span>
-                                        </div>
-                                    </li>
-                                    
-                                    <li>
-                                        <div class="nav-btn__wrap nav-btn__wrap--sub">
-                                            <a href="#" class="nav-btn nav-btn--sub" data-nav="historial" onclick="abrirModalHistorial()">
-                                                <span class="nav-btn__icon" aria-hidden="true">
-                                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                                </span>
-                                                <span class="nav-btn__label">Historial</span>
-                                            </a>
-                                            <span class="nav-btn__glow-line"></span>
-                                        </div>
-                                    </li>
-                                    
-                                </ul>
-                            </div>
-                        </div>
+                    </div>
                 </li>
             </div>   
 
 
             <!---SECCION DE LA TABLA---->
-        <div class="table-effect-wrapper">
-            <div class="hud-card main-panel table-panel blue-glow" data-connect="table">
-                <div class="panel-corner tl"></div>
-                <div class="panel-corner tr"></div>
-                <div class="panel-corner bl"></div>
-                <div class="panel-corner br"></div>
-                <div class="card-inner">
+            <div class="table-effect-wrapper">
+                <div class="hud-card main-panel table-panel blue-glow" data-connect="table">
+                    <div class="panel-corner tl"></div>
+                    <div class="panel-corner tr"></div>
+                    <div class="panel-corner bl"></div>
+                    <div class="panel-corner br"></div>
+                    <div class="card-inner">
                     <div class="panel-header-row">
-                        <span class="panel-header-title">PRODUCTOS CRÍTICOS</span>
+                        <span class="panel-header-title">CONTROL SEMANAL DE PROVEEDORES</span>
                         <div class="panel-header-line"></div>
                     </div>
 
-                    <div class="table-wrapper" style="max-height: 480px; overflow-y: auto; scrollbar-width: thin;">
-                        <table class="hud-table">
-                            <thead style="position: sticky; top: 0; background: #040b1c; z-index: 10;">
-                                <tr>
-                                    <th>SKU</th>
-                                    <th>PRODUCTO</th>
-                                    <th class="text-center">STOCK</th>
-                                    <th class="text-center">MÍNIMO</th>
-                                    <th>PROVEEDOR</th>
-                                    <th>CATEGORÍA</th>
-                                    <th>PROMEDIO</th>
-                                    <th class="text-center">ACCIÓN</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                    <!-- Barra de herramientas integrada en el grid principal -->
+                    <div id="toolbar-reportes" class="lex-toolbar bg-arpillera" style="background: transparent; border: none; padding: 10px 0;">
+                        <div class="lex-filter-group">
+                            <select id="filtro-mes-lex" class="lex-select">
+                                <option value="7" selected>Julio 2026</option>
+                                <option value="8">Agosto 2026</option>
+                            </select>
+                            <select id="filtro-semana-lex" class="lex-select">
+                                <option value="1">Semana 1</option>
+                                <option value="2">Semana 2</option>
+                                <option value="3" selected>Semana 3 (Actual)</option>
+                                <option value="4">Semana 4</option>
+                                <option value="5">Semana 5</option>
+                            </select>
+                            <input type="text" id="filtro-proveedor-lex" class="lex-select" placeholder="🔍 Filtrar proveedor..." style="margin-left: 12px; max-width: 200px;">
+                        </div>
+
+                        <div class="lex-actions-group">
+                            <button onclick="ejecutarSincronizacionRelampago()" class="sem-btn-nav sem-neon-blue">
+                                <i class="fas fa-sync-alt"></i> SYNC
+                            </button>
+                            <button onclick="exportarVistaActualALex()" id="btn-descarga-reporte" class="sem-btn-nav sem-neon-green">
+                                <i class="fas fa-file-excel"></i> EXPORTAR
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="panel-footer-hud" style="justify-content: flex-start;">
-                        <div class="total-products-badge">
-                            TOTAL PRODUCTOS: <span class="badge-value">0</span>
-                        </div>
+                    <!-- Contenedor del Reporte Semanal Interactivo -->
+                    <div id="contenido-reporte-lex" class="modal-lex-body bg-arena" style="max-height: 480px; overflow-y: auto; scrollbar-width: thin; background: transparent;">
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
 
         </section>
 
@@ -719,14 +702,14 @@
   <div class="lex-modal-content max-w-4xl"> <div class="lex-modal-header">
       <div class="lex-header-group">
         <h3>HISTORIAL DE COMPRAS</h3>
-        <span class="text-slate-500 text-[10px] uppercase tracking-wider font-mono">Archivo Central de Órdenes</span>
+        <span class="text-slate-500 text-[10px] uppercase tracking-wider font-mono">Registro de Pedidos Compras cargadas</span>
       </div>
       <button onclick="cerrarModalHistorialGeneral()" class="lex-btn-close">&times;</button>
     </div>
     
     <div class="lex-modal-body custom-scroll">
       <div class="mb-4 flex justify-between items-center bg-slate-950/30 p-3 border border-slate-800/80 rounded-lg">
-        <p class="text-slate-400 text-[11px]">Seleccioná un expediente de la lista para auditar su desglose e inversión líquida.</p>
+        <p class="text-slate-400 text-[11px]">Seleccioná un pedido de la lista para verificar su estado.</p>
       </div>
 
       <div id="contenedorListaGeneralHistorial" class="lex-container-items">
@@ -792,17 +775,17 @@
 </div>
 
 
+<!--MODAL TABLA CRITICOS-->
 
-
-<div id="modal-reportes-lex" class="modal-lex-overlay bg-arpillera" role="dialog" aria-modal="true" aria-labelledby="reportesTitulo">
-    <div class="lex-modal-reportes-content bg-arpillera">
+<div id="modal-reportes-lex" class="modal-lex-overlay" role="dialog" aria-modal="true" aria-labelledby="reportesTitulo">
+    <div class="lex-modal-reportes-content">
         
-        <div class="lex-modal-reportes-header bg-arpillera">
-            <div class="lex-header-group bg-arpillera">
-                <h3 id="reportesTitulo" class="sem-title bg-arpillera">
-                    CONTROL SEMANAL DE PROVEEDORES
+        <div class="lex-modal-reportes-header">
+            <div class="lex-header-group">
+                <h3 id="reportesTitulo" class="sem-title">
+                    PRODUCTOS CRÍTICOS
                 </h3>
-                <p class="sem-subtitle">Gestión de estados y logística de depósito</p>
+                <p class="sem-subtitle">Monitoreo de stock bajo mínimo y reposición</p>
             </div>
             <button onclick="cerrarModalReportes()" class="lex-btn-close" aria-label="Cerrar tablero">
                 <svg viewBox="0 0 24 24">
@@ -811,40 +794,33 @@
             </button>
         </div> 
 
-        <div id="toolbar-reportes" class="lex-toolbar bg-arpillera">
-            <div class="lex-filter-group">
-                <select id="filtro-mes-lex" class="lex-select">
-                    <option value="7" selected>Julio 2026</option>
-                    <option value="8">Agosto 2026</option>
-                </select>
-                <select id="filtro-semana-lex" class="lex-select">
-                    <option value="1">Semana 1</option>
-                    <option value="2">Semana 2</option>
-                    <option value="3" selected>Semana 3 (Actual)</option>
-                    <option value="4">Semana 4</option>
-                    <option value="5">Semana 5</option>
-                </select>
-                <input type="text" id="filtro-proveedor-lex" class="lex-select" placeholder="🔍 Filtrar proveedor..." style="margin-left: 12px; max-width: 200px;">
-            </div>
-
-            <div class="lex-actions-group">
-                <button onclick="ejecutarSincronizacionRelampago()" class="sem-btn-nav sem-neon-blue">
-                    <i class="fas fa-sync-alt"></i> SYNC
-                </button>
-                <button onclick="exportarVistaActualALex()" id="btn-descarga-reporte" class="sem-btn-nav sem-neon-green">
-                    <i class="fas fa-file-excel"></i> EXPORTAR
-                </button>
+        <!-- Cuerpo del Modal que aloja la Tabla de Críticos -->
+        <div class="modal-lex-body" style="padding: 15px;">
+            <div class="table-wrapper" style="max-height: 480px; overflow-y: auto; scrollbar-width: thin;">
+                <table class="hud-table">
+                    <thead style="position: sticky; top: 0; background: #040b1c; z-index: 10;">
+                        <tr>
+                            <th>SKU</th>
+                            <th>PRODUCTO</th>
+                            <th class="text-center">STOCK</th>
+                            <th class="text-center">MÍNIMO</th>
+                            <th>PROVEEDOR</th>
+                            <th>CATEGORÍA</th>
+                            <th>PROMEDIO</th>
+                            <th class="text-center">ACCIÓN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Contenido dinámico de críticos -->
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div id="contenido-reporte-lex" class="modal-lex-body bg-arena">
+        <div class="lex-modal-reportes-footer" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="total-products-badge">
+                TOTAL PRODUCTOS: <span class="badge-value">0</span>
             </div>
-
-        <div class="lex-modal-reportes-footer bg-arena">
-            <span class="status-indicator">
-                <span class="lex-status-dot"></span>
-                TABLERO INTERACTIVO DE DEPÓSITO
-            </span>
             <button type="button" onclick="cerrarModalReportes()" class="lex-btn-footer">
                 Finalizar Consulta
             </button>
@@ -852,7 +828,88 @@
     </div>
 </div>
 
+<!---MODAL VENTAS-- -->
+<div id="modal-ventas" class="fixed inset-0 hidden items-center justify-center z-[10000] bg-slate-950/85 backdrop-blur-xl overflow-y-auto px-4 py-6">
+    <div class="p-6 md:p-8 max-w-5xl w-full border border-gold/20 rounded-[32px] shadow-[0_0_60px_rgba(0,0,0,0.7)] text-white" style="background-color: var(--mv-bg-main);">
+        
+        <div class="mb-6 text-center border-b border-slate-800/60 pb-4">
+            <h2 class="text-2xl font-black tracking-wider bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent uppercase">
+                Sistema de Actualización de Ventas
+            </h2>
+            <p class="text-xs text-slate-400 mt-1 font-mono tracking-tight">Módulo de sincronización masiva mediante pasarela externa GitHub/GAS</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+            
+            <div class="md:col-span-7 flex flex-col justify-between space-y-3 p-5 rounded-2xl border border-slate-800/60 leading-relaxed text-left" style="background-color: var(--mv-bg-card);">
+                
+                <div class="text-xs space-y-4">
+                    <div>
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">1.- PREPARATIVOS:</span> 
+                        Contar con el archivo histórico de ventas descargado localmente desde la suite de <span class="text-slate-100 font-semibold">Contabilium</span>. Puedes ingresar directamente desde este enlace: 
+                        <a href="https://app.contabilium.com/modulos/reportes/historicoStock.aspx" target="_blank" class="text-blue-400 font-mono underline hover:text-blue-300 transition-colors break-all block mt-1">
+                            https://app.contabilium.com/modulos/reportes/historicoStock.aspx
+                        </a> 
+                    </div>
+                    
+                    <div class="border-t border-slate-800/40 pt-2">
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">2.- SELECCIÓN DE ARCHIVO:</span> 
+                        Haz clic en el botón de la derecha <span class="text-slate-300 italic">"Seleccionar Documento"</span> y asocia tu planilla Excel. El sistema comprobará la codificación binaria de inmediato.
+                    </div>
+                    
+                    <div class="border-t border-slate-800/40 pt-2">
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">3.- PROCESAMIENTO:</span> 
+                        Al habilitarse el botón verde, presiónalo para iniciar la desestructuración de filas y la inserción remota. <span class="text-amber-400 font-medium">No cierres la pestaña durante este proceso</span>.
+                    </div>
+                    
+                    <div class="border-t border-slate-800/40 pt-2">
+                        <span class="text-gold font-black tracking-wider block mb-1 text-sm">4.- FINALIZACIÓN:</span> 
+                        La terminal LexTech te confirmará el éxito de la operación indicando el número exacto de registros impactados en tu base histórica.
+                    </div>
+                </div>
 
+            </div>
+
+            <div class="md:col-span-5 flex flex-col justify-center space-y-6 p-5 rounded-2xl border border-slate-800/40 bg-slate-950/40">
+                
+                <div class="flex flex-col items-center justify-center w-full">
+                    <input type="file" id="input-archivo-ventas" accept=".xlsx, .xls" class="hidden" onchange="window.manejarSeleccionArchivoVentas(this)">
+                    
+                    <button onclick="document.getElementById('input-archivo-ventas').click()" class="px-4 py-6 border-2 border-dashed border-slate-700/80 hover:border-gold/40 rounded-xl bg-slate-900/60 flex flex-col items-center gap-3 transition-all cursor-pointer group w-full justify-center min-h-[140px]">
+                        <i class="bi bi-file-earmark-spreadsheet text-3xl text-slate-500 group-hover:text-gold transition-colors duration-300"></i>
+                        <span id="label-archivo-ventas" class="text-slate-400 group-hover:text-slate-200 text-xs font-semibold tracking-wide text-center max-w-[200px] break-words transition-colors">
+                            Seleccionar Documento (.xlsx)
+                        </span>
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-3 w-full">
+                    
+                    <button id="btn-procesar-ventas" onclick="window.ejecutarProcesamientoVentas()" disabled class="btn-neon-process w-full py-4 rounded-xl font-black text-xs tracking-widest active:scale-[0.98] duration-150 cursor-pointer text-center uppercase">
+                        <i class="bi bi-cloud-arrow-up-fill mr-2 text-sm"></i>Procesar Archivo
+                    </button>
+                    
+                    <button onclick="window.cerrarModalVenta()" class="btn-neon-close w-full py-3 rounded-xl font-bold text-xs tracking-widest active:scale-[0.98] duration-150 cursor-pointer text-center uppercase">
+                        Cerrar Ventana
+                    </button>
+                    
+                </div>
+
+            </div>
+            
+        </div>
+        
+    </div>
+  
+</div>
+<div id="overlay-carga" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.9); z-index: 10000; justify-content: center; align-items: center;">
+  <div class="loader">
+    <div class="intern"></div>
+    <div class="external-shadow">
+      <div class="central"></div>
+    </div>
+  </div>
+</div>
 
 
 

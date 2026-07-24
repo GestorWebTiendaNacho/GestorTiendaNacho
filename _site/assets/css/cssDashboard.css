@@ -2219,9 +2219,10 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     display: block;
 }
 
-/*seccion tablero semanal*/
+/*--SECCION TABLA SEMANAL--*/
+
 .bg-arpillera {
-background-color: rgba(238, 223, 166, 0.85) !important;
+    background-color: rgba(238, 223, 166, 0.85) !important;
 }
 
 .sticky-arena {
@@ -2231,6 +2232,10 @@ background-color: rgba(238, 223, 166, 0.85) !important;
     background-color: rgba(238, 223, 166, 0.85) !important;
     backdrop-filter: blur(2px);
     box-shadow: 3px 0 6px -2px rgba(233, 180, 95, 0.15);
+    width: 180px;     
+    min-width: 180px; 
+    max-width: 180px; 
+    box-sizing: border-box;
 }
 
 .bg-arena {
@@ -2241,6 +2246,209 @@ background-color: rgba(238, 223, 166, 0.85) !important;
     background-color: #E2D0A4;
 }
 
+.lex-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(146, 64, 14, 0.2);
+}
+
+.lex-filter-group, .lex-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Tamaños compactos para toolbar */
+.lex-select {
+    border-radius: 0.375rem;
+    border: 1px solid rgba(194, 120, 3, 0.4);
+    background-color: rgba(255, 251, 235, 0.9);
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #451a03;
+    outline: none;
+}
+
+.lex-select:focus {
+    border-color: #78350f;
+    box-shadow: 0 0 0 1px #78350f;
+}
+
+.sem-btn-nav {
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    color: #f7b58e;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    justify-content: center;
+    gap: 6px;
+    border-bottom: 3px solid transparent !important;
+}
+
+.sem-btn-nav.sem-neon-blue:hover {
+    border-bottom: 3px solid #00f0ff !important;
+    color: #00f0ff !important;
+    background: rgba(0, 240, 255, 0.12) !important;
+}
+
+.sem-btn-nav.sem-neon-green:hover {
+    border-bottom: 3px solid #00ff66 !important;
+    color: #00ff66 !important;
+    background: rgba(0, 255, 102, 0.1) !important;
+}
+
+.modal-lex-body {
+    padding: 0.5rem 0;
+    overflow-x: auto;
+}
+
+.lex-table-container {
+    width: 100%;
+    border: 1px solid rgba(146, 64, 14, 0.4);
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.lex-table {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+    background: transparent;
+}
+
+.lex-tr-head {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #451a03;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid rgba(146, 64, 14, 0.4);
+}
+
+.lex-th {
+    padding: 0.5rem 0.75rem;
+}
+
+.lex-th-highlight {
+    background-color: rgba(120, 53, 4, 0.1);
+    color: #451a03;
+    font-weight: 700;
+    border-left: 1px solid rgba(146, 64, 14, 0.3);
+    border-right: 1px solid rgba(146, 64, 14, 0.3);
+}
+
+.lex-tbody {
+    background: transparent;
+}
+
+.lex-tr-row {
+    transition: all 0.15s;
+    border-bottom: 1px solid rgba(146, 64, 14, 0.2);
+}
+
+.lex-tr-row:hover {
+    background-color: rgba(226, 208, 164, 0.4);
+}
+
+.lex-td {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.625rem;
+    width: auto !important;
+}
+
+.lex-prov-name {
+    display: block;
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: #451a03;
+    letter-spacing: -0.025em;
+    word-break: break-word;
+    overflow: hidden;
+}
+
+.lex-prov-id {
+    display: block;
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: #92400e;
+}
+
+.lex-btn-add {
+    width: 95px !important;
+    min-width: 95px !important;
+    max-width: 95px !important;
+    height: 45px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 2px dashed rgba(146, 64, 14, 0.4);
+    border-radius: 6px;
+    color: #78350f;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+.lex-btn-add:hover {
+    border-color: #b45309;
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+.lex-td-highlight {
+    padding: 0.3rem;
+    background-color: rgba(120, 53, 4, 0.05);
+    border-left: 1px solid rgba(146, 64, 14, 0.2);
+    border-right: 1px solid rgba(146, 64, 14, 0.2);
+}
+
+.lex-td:not(.sticky-arena) {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+.lex-card-pedido {
+    width: 95px !important;
+    min-width: 95px !important;
+    max-width: 95px !important;
+    box-sizing: border-box;
+    border-radius: 0.375rem;
+    padding: 4px 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    cursor: pointer;
+    margin: 0 auto !important;
+    display: block;
+    text-align: center;
+}
+
+.lex-card-body {
+    font-size: 0.55rem;
+    font-weight: 600;
+    margin: 0;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.1;
+    text-align: center !important;
+}
+
+
+/* ========= MODAL DE REPORTES / CRÍTICOS---*/
 .modal-lex-overlay {
     background: rgba(146, 64, 14, 0.3) !important;
     position: fixed;
@@ -2299,17 +2507,11 @@ background-color: rgba(238, 223, 166, 0.85) !important;
     border: none;
     cursor: pointer;
     transition: all 0.2s;
-    outline: none;
 }
 
 .lex-btn-close:hover {
     background-color: rgba(120, 53, 4, 0.15);
     color: #451a03;
-}
-
-.lex-btn-close:focus {
-    position: relative;
-    box-shadow: 0 0 0 2px rgba(146, 64, 14, 0.5);
 }
 
 .lex-btn-close svg {
@@ -2318,237 +2520,6 @@ background-color: rgba(238, 223, 166, 0.85) !important;
     stroke: currentColor;
     stroke-width: 2.5;
     fill: none;
-}
-
-.lex-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem;
-    border-bottom: 1px solid rgba(146, 64, 14, 0.2);
-    background-color: rgba(255, 251, 235, 0.9);
-}
-
-.lex-filter-group, .lex-actions-group {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.lex-select {
-    border-radius: 0.5rem;
-    border: 1px solid rgba(194, 120, 3, 0.4);
-    background-color: rgba(255, 251, 235, 0.9);
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    font-weight: 900;
-    color: #451a03;
-    outline: none;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.lex-select:focus {
-    border-color: #78350f;
-    box-shadow: 0 0 0 1px #78350f;
-}
-
-.sem-btn-nav {
-    display: flex;
-    align-items: center;
-    font-size: 0.875rem;
-    font-weight: 900;
-    color: #f7b58e;
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    width: auto;                        
-    flex-direction: row;             
-    padding: 8px 18px;                  
-    border-radius: 6px;                 
-    font-size: 12px;
-    letter-spacing: 0.5px;
-    justify-content: center;
-    gap: 8px;                                  
-    border-bottom: 3px solid transparent !important; 
-}
-
-/* Colores Neón */
-.sem-btn-nav.sem-neon-blue:hover {
-    border-bottom: 3px solid #00f0ff !important;
-    color: #00f0ff !important;
-    background: rgba(0, 240, 255, 0.12) !important;
-    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4);
-}
-
-.sem-btn-nav.sem-neon-green:hover {
-    border-bottom: 3px solid #00ff66 !important;
-    color: #00ff66 !important;
-    background: rgba(0, 255, 102, 0.1) !important;
-    box-shadow: 0 4px 20px rgba(0, 255, 102, 0.4);
-}
-
-.sem-btn-nav.sem-neon-purple:hover {
-    border-bottom: 3px solid #cc00ff !important;
-    color: #cc00ff !important;
-    background: rgba(204, 0, 255, 0.12) !important;
-    box-shadow: 0 4px 20px rgba(204, 0, 255, 0.4);
-}
-
-.sem-btn-nav.sem-neon-orange:hover {
-    border-bottom: 3px solid #ff7700 !important;
-    color: #ff7700 !important;
-    background: rgba(255, 119, 0, 0.12) !important;
-    box-shadow: 0 4px 20px rgba(255, 119, 0, 0.4);
-}
-
-.modal-lex-body {
-    padding: 1.5rem;
-    overflow-x: auto;
-}
-
-.lex-table-container {
-    min-width: 900px;
-    border: 2px solid rgba(146, 64, 14, 0.4);
-    border-radius: 0.75rem;
-    overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.lex-table {
-    width: 100%;
-    text-align: left;
-    border-collapse: collapse;
-    background: transparent;
-}
-
-.lex-tr-head {
-    font-size: 0.75rem;
-    font-weight: 900;
-    color: #451a03;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    border-bottom: 2px solid rgba(146, 64, 14, 0.4);
-}
-
-.lex-th {
-    padding: 1rem;
-}
-
-.lex-th-highlight {
-    width: 10rem;
-    background-color: rgba(120, 53, 4, 0.1);
-    color: #451a03;
-    font-weight: 900;
-    border-left: 1px solid rgba(146, 64, 14, 0.3);
-    border-right: 1px solid rgba(146, 64, 14, 0.3);
-}
-
-.lex-tbody {
-    background: transparent;
-}
-
-.lex-tr-row {
-    transition: all 0.15s;
-    border-bottom: 1px solid rgba(146, 64, 14, 0.2);
-}
-
-.lex-tr-row:hover {
-    background-color: rgba(226, 208, 164, 0.4);
-    outline: 2px solid #b45309;
-}
-
-.lex-td {
-    padding: 1rem;
-    font-size: 1rem;
-}
-
-.lex-prov-name {
-    display: block;
-    font-size: 1.125rem;
-    font-weight: 900;
-    color: #451a03;
-    letter-spacing: -0.025em;
-}
-
-.lex-prov-id {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #92400e;
-    margin-top: 0.125rem;
-}
-
-.lex-btn-add {
-    width: 100%;
-    text-align: center;
-    padding: 1rem 0;
-    border: 2px dashed rgba(146, 64, 14, 0.3);
-    border-radius: 0.75rem;
-    color: #78350f;
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: 900;
-    font-size: 1.25rem;
-}
-
-.lex-btn-add:hover {
-    border-color: #b45309;
-    color: #451a03;
-    background-color: rgba(255, 255, 255, 0.4);
-}
-
-.lex-td-highlight {
-    padding: 0.5rem;
-    background-color: rgba(120, 53, 4, 0.05);
-    border-left: 1px solid rgba(146, 64, 14, 0.2);
-    border-right: 1px solid rgba(146, 64, 14, 0.2);
-}
-
-.lex-card-pedido {
-    background-color: #065f46;
-    border: 2px solid #064e3b;
-    border-radius: 0.75rem;
-    padding: 0.625rem;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    text-align: left;
-    cursor: pointer;
-    transition: transform 0.15s;
-}
-
-.lex-card-pedido:hover {
-    transform: scale(1.03);
-}
-
-.lex-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    font-weight: 900;
-    color: #d1fae5;
-    letter-spacing: 0.05em;
-}
-
-.lex-badge {
-    font-size: 0.5625rem;
-    background-color: #ffffff;
-    color: #022c22;
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.375rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.lex-card-body {
-    font-size: 0.875rem;
-    color: #ecfdf5;
-    margin-top: 0.375rem;
-    font-weight: 700;
-    margin-bottom: 0;
 }
 
 .lex-modal-reportes-footer {
@@ -2566,7 +2537,6 @@ background-color: rgba(238, 223, 166, 0.85) !important;
     align-items: center;
     gap: 0.5rem;
     color: #b42e2e !important;
-    letter-spacing: 0.025em;
 }
 
 .lex-status-dot {
@@ -2585,11 +2555,8 @@ background-color: rgba(238, 223, 166, 0.85) !important;
     border-radius: 0.75rem;
     border: none;
     cursor: pointer;
-    transition: background-color 0.15s;
     font-size: 0.875rem;
-    letter-spacing: 0.05em;
     text-transform: uppercase;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
 .lex-btn-footer:hover {
@@ -2604,4 +2571,3 @@ background-color: rgba(238, 223, 166, 0.85) !important;
     0%, 100% { opacity: 1; }
     50% { opacity: .5; }
 }
-

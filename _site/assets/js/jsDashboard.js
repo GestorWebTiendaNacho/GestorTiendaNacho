@@ -12,60 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("🔍 [DIAGNÓSTICO 3] ¿Existe #sidebarNav?:", sb ? "SÍ ✅" : "NO ❌");
 });
 
-/*document.addEventListener('DOMContentLoaded', () => {
-
-    const sidebarNav = document.getElementById('sidebarNav');
-    
-    if (sidebarNav) {
-        sidebarNav.addEventListener('click', (e) => {
-            const toggleBtn = e.target.closest('.nav-item[data-accordion] .nav-btn');
-            
-            console.log("🎯 Clic detectado en Sidebar. Elemento real:", e.target);
-            
-            if (!toggleBtn) return;
-            e.preventDefault();
-
-            const item = toggleBtn.closest('.nav-item[data-accordion]');
-            if (!item) return;
-
-            const isOpen = item.classList.contains('is-open');
-            const accordionItems = document.querySelectorAll('.nav-item[data-accordion]');
-
-            accordionItems.forEach(otherItem => {
-                if (otherItem !== item) {
-                    otherItem.classList.remove('is-open');
-                    const otherBtn = otherItem.querySelector('.nav-btn');
-                    if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
-                }
-            });
-
-            if (isOpen) {
-                item.classList.remove('is-open');
-                toggleBtn.setAttribute('aria-expanded', 'false');
-            } else {
-                item.classList.add('is-open');
-                toggleBtn.setAttribute('aria-expanded', 'true');
-                
-                setTimeout(() => {
-                    if (typeof drawSubmenuLines === 'function') {
-                        drawSubmenuLines(item);
-                    }
-                }, 250);
-            }
-        }, true); // Fase de captura para máxima prioridad
-        
-        console.log("✅ [HUD] Escuchador del Sidebar registrado con éxito.");
-    } else {
-        console.error("❌ [HUD Error] No se encontró el contenedor #sidebarNav en el DOM.");
-    }
-    try { initCircuitConnections(); } catch (err) { console.error("Fallo en initCircuitConnections:", err); }
-    try { initParticles(); } catch (err) { console.error("Fallo en initParticles:", err); }
-    try { initSparklines(); } catch (err) { console.error("Fallo en initSparklines:", err); }
-    try { initMainBarChart(); } catch (err) { console.error("Fallo en initMainBarChart:", err); }
-    try { initNavigation(); } catch (err) { console.error("Fallo en initNavigation:", err); }
-    try { initHudClock(); } catch (err) { console.error("Fallo en initHudClock:", err); }
-    try { initPagination(); } catch (err) { console.error("Fallo en initPagination:", err); }
-});*/
 
 function initSidebarAccordion() {
     const sidebarNav = document.getElementById('sidebarNav');
@@ -456,22 +402,12 @@ function drawSubmenuLines(accordionItem) {
     const subList = accordionItem.querySelector('.submenu__list');
 
     if (!svg || !innerContainer || !subItems.length || !subList) return;
-
-    // Corregido: Obtenemos el alto real del listado interno estático, evitando el contenedor animado
     const totalHeight = subList.scrollHeight;
     if (totalHeight === 0) return;
-
-    // Sincronizamos dimensiones con tu CSS (22px de ancho asignado)
     svg.setAttribute('viewBox', `0 0 22 ${totalHeight}`);
-
-    // Extraemos el color dinámico del tema asignado en el CSS (.theme-cyan, .theme-orange, etc.)
     const themeColor = window.getComputedStyle(accordionItem).color || '#00f0ff';
-    
-    // Generamos un ID único para que el filtro de brillo no colisione con otros submenús
     const randomId = Math.random().toString(36).substr(2, 9);
     const filterId = `hudGlow-${randomId}`;
-
-    // Mapeo exacto de los centros de los subbotones
     const centers = Array.from(subItems).map(li => {
         return li.offsetTop + (li.offsetHeight / 2);
     });
@@ -503,6 +439,7 @@ function drawSubmenuLines(accordionItem) {
 
     svg.innerHTML = svgContent;
 }
+
 /* Live HUD clock in top bar */
 function initHudClock() {
     const el = document.getElementById('hudClock');
@@ -518,8 +455,8 @@ function initHudClock() {
         });
     }
 
-    tick(); // Primera carga instantánea
-    setInterval(tick, 1000); // Actualización cada 1 segundo
+    tick();
+    setInterval(tick, 1000);
 }
 
 if (document.readyState === 'loading') {
@@ -1360,7 +1297,30 @@ function ejecutarDescargaLocalExcelMes(matriz) {
 }
 
 
-// SECCION TABLA CENTRAL //
+// SECCION TABLA CRÍTICOS AHORA EN MODAL APARTE //
+function abrirModalReportes() {
+    const modal = document.getElementById('modal-reportes-lex');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        
+        // Al abrir el modal, cargamos automáticamente la tabla de críticos
+        cargarTablaProductosCriticos();
+    }
+}
+
+function cerrarModalReportes() {
+    const modal = document.getElementById('modal-reportes-lex');
+    if (modal) {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
 var listaProductosCriticos = [];
 
 async function cargarTablaProductosCriticos() {
@@ -1376,17 +1336,16 @@ async function cargarTablaProductosCriticos() {
 
     if (resultado.status === "success") {
       listaProductosCriticos = resultado.reply;
-      // Renderiza directamente todo el set de datos sin intermediarios
-      renderizarPaginaTabla();
+      renderizarPaginaTablaCriticos();
     }
   } catch (error) {
-    console.error("❌ Error de enlace en panel de tabla central:", error);
+    console.error("❌ Error de enlace en panel de críticos:", error);
   }
 }
 
-function renderizarPaginaTabla() {
-  const tbody = document.querySelector('.table-panel .hud-table tbody');
-  const badgeTotal = document.querySelector('.total-products-badge .badge-value');
+function renderizarPaginaTablaCriticos() {
+  const tbody = document.querySelector('#modal-reportes-lex .hud-table tbody');
+  const badgeTotal = document.querySelector('#modal-reportes-lex .total-products-badge .badge-value');
   if (!tbody) return;
 
   tbody.innerHTML = "";
@@ -1398,7 +1357,6 @@ function renderizarPaginaTabla() {
     return;
   }
 
-  // Recorremos la totalidad del array sin usar .slice()
   listaProductosCriticos.forEach(item => {
     let claseStock = '';
     if (item.stock < item.minimo) {
@@ -1429,12 +1387,11 @@ function renderizarPaginaTabla() {
 }
 
 function asignarEventosAccionTabla() {
-  document.querySelectorAll('.btn-table-action').forEach(btn => {
-    // Evitamos duplicidad quitando listeners previos si los hubiera
+  document.querySelectorAll('#modal-reportes-lex .btn-table-action').forEach(btn => {
     btn.replaceWith(btn.cloneNode(true));
   });
 
-  document.querySelectorAll('.btn-table-action').forEach(btn => {
+  document.querySelectorAll('#modal-reportes-lex .btn-table-action').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const skuSeleccionado = e.currentTarget.getAttribute('data-sku');
       ejecutarAccionFilaProducto(skuSeleccionado);
@@ -2341,9 +2298,6 @@ function mostrarModalProductos(categoria, subcategoria, registros) {
     });
 }
 
-
-
-
 function initHeadbarAccordion() {
     const headbarNav = document.getElementById('headbarNav');
     if (!headbarNav) {
@@ -2393,46 +2347,53 @@ if (document.readyState === 'loading') {
 
 
 /*-------------------SECCION DATOS SEMANALES------------------------------*/
+
 var navegacionSemanal = {
     semanaActual: null,
     diaActual: null
 };
 
-function abrirModalReportes() {
-    const modal = document.getElementById('modal-reportes-lex');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-}
+var cacheTableroDeposito = {
+    filas: [],
+    semanasRelativas: []
+};
 
-function cerrarModalReportes() {
-    const modal = document.getElementById('modal-reportes-lex');
-    if (modal) {
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-        
-        const contenido = document.getElementById('contenido-reporte-lex');
-        if (contenido) contenido.innerHTML = ''; 
+const observadorInyeccion = new MutationObserver((mutations, observer) => {
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    // Verificamos que exista el contenedor y que no haya sido inicializado todavía
+    if (contenedor && !contenedor.dataset.inicializado) {
+        contenedor.dataset.inicializado = "true";
+        console.log("⚡ Contenedor inyectado detectado: Inicializando tablero semanal...");
+        inicializarTableroSemanalDashboard();
+        registrarEventosFiltrosGlobales();
     }
-}
+});
 
-window.abrirModalSemanal = async function() {
-    console.log("🚩 INICIO: abrirModalSemanal");
-    if (typeof abrirModalReportes === "function") abrirModalReportes(); 
+observadorInyeccion.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const contenedor = document.getElementById('contenido-reporte-lex');
+    if (contenedor && !contenedor.dataset.inicializado) {
+        contenedor.dataset.inicializado = "true";
+        inicializarTableroSemanalDashboard();
+        registrarEventosFiltrosGlobales();
+    }
+});
+
+async function inicializarTableroSemanalDashboard() {
+    console.log("🚩 INICIO: inicializarTableroSemanalDashboard");
     if (typeof mostrarCargandoLex === "function") mostrarCargandoLex(true);
 
     try {
+        const mesSeleccionado = document.getElementById('filtro-mes-lex')?.value || '7';
+        // const res = await callGoogleScript('obtenerDatosReporteSemanal', { mes: mesSeleccionado });
         const res = await callGoogleScript('obtenerDatosReporteSemanal');
-        console.log("📦 Respuesta bruta recibida (Mes):", res);
+        console.log("📦 Respuesta bruta recibida (Semanal):", res);
         
         let data = res?.reply?.reply || res?.reply || res;
-        console.log("🔍 Data real extraída (Mes):", data);
-
         let filasRaw = data?.filas || (Array.isArray(data) ? data : []);
         let semanasRelativas = data?.semanasRelativas || [];
 
@@ -2440,12 +2401,10 @@ window.abrirModalSemanal = async function() {
             filasRaw.shift();
         }
 
-        console.log("📊 Filas listas para renderizar (Mes):", filasRaw.length);
-
         const contenedor = document.getElementById('contenido-reporte-lex');
         if (filasRaw.length === 0) {
             if (contenedor) {
-                contenedor.innerHTML = `<div class="text-slate-400 text-center py-10 font-mono text-xs uppercase tracking-wider">No hay datos disponibles para el reporte mensual.</div>`;
+                contenedor.innerHTML = `<div class="text-slate-400 text-center py-10 font-mono text-xs uppercase tracking-wider">No hay datos disponibles para el reporte semanal.</div>`;
             }
             return;
         }
@@ -2455,18 +2414,16 @@ window.abrirModalSemanal = async function() {
         }
 
     } catch (err) {
-        console.error("❌ ERROR CRÍTICO en abrirModalSemanal:", err);
+        console.error("❌ ERROR CRÍTICO en inicializarTableroSemanalDashboard:", err);
+        const contenedor = document.getElementById('contenido-reporte-lex');
+        if (contenedor) {
+            contenedor.innerHTML = `<div class="text-red-400 text-center py-10 font-mono text-xs uppercase tracking-wider">Error de conexión al cargar datos semanales.</div>`;
+        }
     } finally {
         if (typeof mostrarCargandoLex === "function") mostrarCargandoLex(false);
     }
-};
+}
 
-var cacheTableroDeposito = {
-    filas: [],
-    semanasRelativas: []
-};
-
-// Función receptora del trigger desde tu script de cliente
 function renderizarVistaMes(data) {
     if (data) {
         cacheTableroDeposito.filas = data.filas || [];
@@ -2475,7 +2432,6 @@ function renderizarVistaMes(data) {
     dibujarTableroCompleto();
 }
 
-// Reconstruye de forma íntegra el DOM de la vista interactiva
 function dibujarTableroCompleto() {
     const contenedor = document.getElementById('contenido-reporte-lex');
     if (!contenedor) return;
@@ -2486,16 +2442,13 @@ function dibujarTableroCompleto() {
     const semanas = cacheTableroDeposito.semanasRelativas;
     const filas = cacheTableroDeposito.filas;
 
-    // 1. Filtrado predictivo de proveedores por su nombre real ("nombre")
     const proveedoresFiltrados = filas.filter(p => {
         const nombreProv = p.nombre ? String(p.nombre).trim().toLowerCase() : "";
         return normalizarTexto(nombreProv).includes(normalizarTexto(filtroTexto));
     });
 
-    // 2. Calcular KPIs dinámicos basados en la data real filtrada
     const kpiHtml = generarKpisDinamicos(proveedoresFiltrados, semanas.length);
 
-    // 3. Generar Cabecera de la Tabla usando "semanasRelativas"
     let tablaHtml = `
     <div class="lex-table-container">
         <table class="lex-table">
@@ -2504,12 +2457,10 @@ function dibujarTableroCompleto() {
                     <th class="lex-th sticky-arena">Proveedor</th>
     `;
 
-    // Crear las columnas dinámicamente según las semanas de la respuesta
     semanas.forEach((sem, idx) => {
         const esActual = esSemanaActual(sem);
         const thClass = esActual ? "lex-th text-center lex-th-highlight" : "lex-th text-center";
         
-        // Parsear "SEM 1 06/07/2026" -> Extraer "Semana 1" y la fecha "06/07"
         const partes = sem.split(" ");
         const numeroSemana = partes[1] || (idx + 1);
         const fechaCorta = partes[2] ? partes[2].substring(0, 5) : "";
@@ -2529,7 +2480,6 @@ function dibujarTableroCompleto() {
             <tbody class="lex-tbody">
     `;
 
-    // 4. Renderizar las filas de proveedores
     if (proveedoresFiltrados.length === 0) {
         tablaHtml += `
             <tr class="lex-tr-row">
@@ -2545,7 +2495,6 @@ function dibujarTableroCompleto() {
 
             tablaHtml += `<tr class="lex-tr-row group">`;
             
-            // Columna fija con el nombre corregido (prov.nombre)
             tablaHtml += `
                 <td class="lex-td sticky-arena">
                     <span class="lex-prov-name">${nombreLimpio}</span>
@@ -2553,12 +2502,10 @@ function dibujarTableroCompleto() {
                 </td>
             `;
 
-            // Celdas dinámicas para s1, s2, s3, s4, s5
             for (let i = 1; i <= semanas.length; i++) {
                 const keySemana = `s${i}`;
                 const valorEstado = prov[keySemana] !== undefined ? String(prov[keySemana]).trim() : '';
 
-                // Determinar si es la semana actual para destacar la celda
                 const esCeldaActual = esSemanaActual(semanas[i - 1]);
                 const tdClass = esCeldaActual ? "lex-td lex-td-highlight" : "lex-td text-center";
 
@@ -2577,17 +2524,12 @@ function dibujarTableroCompleto() {
     </div>
     `;
 
-    // Inyectar HTML en el cuerpo del modal
     contenedor.innerHTML = kpiHtml + tablaHtml;
-
-    // Registrar el listener del buscador para que filtre en caliente sin recargar de la base de datos
     registrarEventosBuscador();
 }
 
-// Genera un componente de tarjeta (card) estilizado según el estado textual del JSON
 function obtenerHtmlEstadoCompacto(estado, idProv, nombreProv, numSemana) {
     if (!estado) {
-        // Celda vacía: Renderizar botón "+" original
         return `
             <button class="lex-btn-add" 
                     onclick="abrirModalNuevoPedido('${idProv}', '${escaparTexto(nombreProv)}', 'Semana ${numSemana}')"
@@ -2597,77 +2539,53 @@ function obtenerHtmlEstadoCompacto(estado, idProv, nombreProv, numSemana) {
         `;
     }
 
-    // 1. Colores por defecto (Gris / Azul para estados desconocidos)
-    let bgColor = "#f1f5f9";      // Fondo gris muy claro
-    let borderColor = "#94a3b8";  // Borde izquierdo gris
-    let textColor = "#1e293b";    // Texto gris oscuro
-    let badgeBg = "#cbd5e1";      // Fondo etiqueta S1, S2...
-    let badgeText = "#334155";    // Texto etiqueta
+    let bgColor = "#f1f5f9";      
+    let borderColor = "#94a3b8";  
+    let textColor = "#1e293b";    
 
     const estadoLower = estado.toLowerCase();
 
-    // 2. Clasificación estricta por estados reales:
-
-    // VERDE: Únicamente si dice "OK" o tiene el emoji verde 🟢
     if (estado.includes("🟢") || estadoLower.includes("ok")) {
-        bgColor = "#ecfdf5";      // Verde esmeralda pastel
-        borderColor = "#10b981";  // Borde esmeralda fuerte
-        textColor = "#064e3b";    // Texto verde oscuro
-        badgeBg = "#a7f3d0";      // Badge verde
-        badgeText = "#065f46";
-    } 
-    // ROJO: Si tiene el emoji rojo 🔴 o contiene la palabra "pendiente" o "pend"
-    else if (estado.includes("🔴") || estadoLower.includes("pend")) {
-        bgColor = "#fef2f2";      // Rojo pastel
-        borderColor = "#ef4444";  // Borde rojo fuerte
-        textColor = "#7f1d1d";    // Texto rojo oscuro
-        badgeBg = "#fecaca";      // Badge rojo
-        badgeText = "#991b1b";
-    } 
-    // AMARILLO / ÁMBAR: Si tiene advertencia ⚠️ o dice "Falta Realizar"
-    else if (estado.includes("⚠️") || estadoLower.includes("falta") || estadoLower.includes("pendiente")) {
-        bgColor = "#fffbeb";      // Amarillo/Ámbar pastel
-        borderColor = "#f59e0b";  // Borde ámbar fuerte
-        textColor = "#78350f";    // Texto marrón/ámbar oscuro
-        badgeBg = "#fef3c7";      // Badge amarillo
-        badgeText = "#92400e";
+        bgColor = "#ecfdf5";      
+        borderColor = "#10b981";  
+        textColor = "#064e3b";    
+    } else if (estado.includes("🔴") || estadoLower.includes("pend")) {
+        bgColor = "#fef2f2";      
+        borderColor = "#ef4444";  
+        textColor = "#7f1d1d";    
+    } else if (estado.includes("⚠️") || estadoLower.includes("falta") || estadoLower.includes("pendiente")) {
+        bgColor = "#fffbeb";      
+        borderColor = "#f59e0b";  
+        textColor = "#78350f";    
     }
 
-    // Recortamos los últimos 4 dígitos del ID para mantenerlo limpio
-    //const idCorto = idProv.toString().slice(-4);
-
-    // Renderizado aplicando estilos inline directamente
     return `
         <div class="lex-card-pedido cursor-pointer" 
              onclick="abrirDetalleEstatus('${idProv}', 's${numSemana}')" 
              style="
                 background-color: ${bgColor} !important; 
-                border-left: 5px solid ${borderColor} !important; 
+                border-left: 4px solid ${borderColor} !important; 
                 color: ${textColor} !important; 
-                padding: 6px 8px; 
-                border-radius: 6px; 
+                padding: 4px 6px; 
+                border-radius: 4px; 
                 box-sizing: border-box;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
+                box-shadow: 0 1px 2px rgba(0,0,0,0.08); 
                 transition: transform 0.1s ease-in-out; 
-                text-align: left; 
-                margin-bottom: 4px; 
-                min-width: 115px; 
-                display: block; 
-                width: 100%;
+                text-align: center; 
+                margin: 0 auto 2px auto; 
+                min-width: 70px; 
+                max-width: 95px;
+                display: block;
              "
              onmouseover="this.style.transform='scale(1.02)'"
              onmouseout="this.style.transform='scale(1)'">
-            
-
-            
-            <p class="lex-card-body" style="font-size: 10px; font-weight: 700; margin: 0; line-height: 1.2; color: ${textColor};">
+            <p class="lex-card-body" style="font-size: 9px; font-weight: 700; margin: 0; line-height: 1.15; color: ${textColor}; white-space: normal; word-break: break-word; text-align: center;">
                 ${estado}
             </p>
         </div>
     `;
 }
 
-// Calcula los KPIs sumando los estados reales que aparecen en pantalla
 function generarKpisDinamicos(proveedores, cantSemanas) {
     let totales = 0;
     let listos = 0;
@@ -2690,7 +2608,7 @@ function generarKpisDinamicos(proveedores, cantSemanas) {
     return `
     <div class="lex-kpi-container mb-5" style="display: flex; gap: 16px; margin-bottom: 20px;">
         <div class="lex-kpi-card bg-arpillera" style="flex: 1; padding: 12px 16px; border-radius: 8px; border-left: 5px solid #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Tareas del Mes</div>
+            <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Total Proveedores</div>
             <div style="font-size: 24px; font-weight: 800; color: #1e293b; margin-top: 2px;">${totales}</div>
         </div>
         <div class="lex-kpi-card bg-arpillera" style="flex: 1; padding: 12px 16px; border-radius: 8px; border-left: 5px solid #10b981; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
@@ -2705,14 +2623,12 @@ function generarKpisDinamicos(proveedores, cantSemanas) {
     `;
 }
 
-// Determina matemáticamente si una semana de la lista coincide con la semana actual de nuestro calendario real
 function esSemanaActual(semanaStr) {
     if (!semanaStr) return false;
-    // Formato esperado: "SEM 2 13/07/2026"
     const partes = semanaStr.split(" ");
     if (partes.length < 3) return false;
     
-    const fechaStr = partes[2]; // "13/07/2026"
+    const fechaStr = partes[2]; 
     const [dia, mes, anio] = fechaStr.split("/").map(Number);
     const lunesSemana = new Date(anio, mes - 1, dia);
     lunesSemana.setHours(0,0,0,0);
@@ -2720,7 +2636,6 @@ function esSemanaActual(semanaStr) {
     const hoy = new Date();
     hoy.setHours(0,0,0,0);
 
-    // Obtener el lunes de la semana actual
     const diaHoy = hoy.getDay();
     const diff = hoy.getDate() - diaHoy + (diaHoy === 0 ? -6 : 1);
     const lunesHoy = new Date(hoy.setDate(diff));
@@ -2729,7 +2644,6 @@ function esSemanaActual(semanaStr) {
     return lunesSemana.getTime() === lunesHoy.getTime();
 }
 
-// Enlaza el buscador dinámico una sola vez para evitar múltiples bindings
 function registrarEventosBuscador() {
     const inputBuscador = document.getElementById('filtro-proveedor-lex');
     if (inputBuscador && !inputBuscador.dataset.listenerSet) {
@@ -2738,7 +2652,17 @@ function registrarEventosBuscador() {
     }
 }
 
-// Utilidades del procesador de strings
+function registrarEventosFiltrosGlobales() {
+    const selectMes = document.getElementById('filtro-mes-lex');
+    if (selectMes && !selectMes.dataset.listenerSet) {
+        selectMes.dataset.listenerSet = "true";
+        selectMes.addEventListener('change', () => {
+            console.log("Cambió el mes del filtro, recargando tablero...");
+            inicializarTableroSemanalDashboard();
+        });
+    }
+}
+
 function normalizarTexto(txt) {
     return String(txt).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
@@ -2747,7 +2671,8 @@ function escaparTexto(txt) {
     return String(txt).replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
-// Funciones de control de clicks
+
+// Funciones de APERTURA DE PEDIDOS y DETALLES DE ESTATUS
 function abrirModalNuevoPedido(idProv, nombreProv, semana) {
     console.log(`🆕 Abrir modal de nuevo control para ${nombreProv} en la ${semana}`);
     // Vinculá acá tu modal de carga existente
@@ -3271,4 +3196,306 @@ function cerrarModal_Pedidos() {
     } else if (paginaDashboard) {
         paginaDashboard.style.display = 'flex';
     }
+}
+
+    /*---Seccion Ventas--*/
+
+var nombreArchivoVentas = "";
+
+// 1. ABRIR PANEL MODAL
+window.abrirModalVenta = function() {
+    const modal = document.getElementById('modal-ventas');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+// CERRAR PANEL MODAL Y REINICIAR ESTADOS DE SEGURIDAD
+window.cerrarModalVenta = function() {
+    const modal = document.getElementById('modal-ventas');
+    if (modal) {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+    // Hard Reset para evitar fugas de memoria o reprocesos accidentales
+    archivoVentasBase64 = null;
+    nombreArchivoVentas = "";
+    document.getElementById('input-archivo-ventas').value = "";
+    document.getElementById('label-archivo-ventas').innerText = "Seleccionar Documento (.xlsx)";
+    document.getElementById('btn-procesar-ventas').disabled = true;
+};
+
+// CAPTURA Y CONVERSIÓN DEL ARCHIVO LOCAL A BASE64
+window.manejarSeleccionArchivoVentas = function(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.getElementById('label-archivo-ventas').innerText = `📄 Carga lista: ${file.name}`;
+        document.getElementById('btn-procesar-ventas').disabled = false;
+    }
+};
+
+window.ejecutarProcesamientoVentas = function() {
+    const inputArchivo = document.getElementById('input-archivo-ventas'); 
+    const archivoBlob = inputArchivo && inputArchivo.files[0] ? inputArchivo.files[0] : null;
+
+    if (!archivoBlob) {
+        console.error("🚨 No se encontró el archivo físico.");
+        return;
+    }
+    
+    const btnProcesar = document.getElementById('btn-procesar-ventas');
+    if (btnProcesar) btnProcesar.disabled = true; 
+
+    const overlayCarga = document.getElementById('overlay-carga');
+    if (overlayCarga) overlayCarga.style.display = 'flex';
+
+    const textoOverlay = document.getElementById('texto-overlay-carga'); 
+    if (textoOverlay) textoOverlay.innerText = "Verificando últimas actualizaciones...";
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const nombreHoja = workbook.SheetNames[0];
+            const hoja = workbook.Sheets[nombreHoja];
+            const rawFilas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
+            
+            const filasCrudas = rawFilas.slice(1); 
+            const totalFilasExcel = filasCrudas.length;
+
+            const hoy = new Date();
+            const hace180Dias = new Date();
+            hace180Dias.setDate(hoy.getDate() - 180);
+
+            const acumuladorMensual = {};
+            const acumuladorPromedios = {};
+            let maxFechaObj = null;
+            let maxFechaRaw = "";
+
+            // 1. Clasificación y Agrupación en el Cliente
+            for (let i = 0; i < totalFilasExcel; i++) {
+                const fila = filasCrudas[i];
+                if (!fila || fila[0] === "" || fila[0] === undefined) continue;
+
+                const fechaObj = parsearFechaCliente(fila[0]);
+                if (!fechaObj) continue;
+                if (fechaObj < hace180Dias || fechaObj > hoy) continue; 
+
+                if (!maxFechaObj || fechaObj > maxFechaObj) {
+                    maxFechaObj = fechaObj;
+                    maxFechaRaw = fila[0];
+                }
+
+                const sku = fila[3] !== undefined ? String(fila[3]).trim() : "";
+                if (!sku) continue; 
+
+                const nombre = fila[4] !== undefined ? String(fila[4]).trim() : "";
+                const cantidad = Math.abs(parseFloat(fila[5]) || 0);
+
+                // Agrupación Mensual (FECHA | SKU | NOMBRE PROD | CANTIDAD)
+                const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+                const anio = fechaObj.getFullYear();
+                const nombreMes = meses[fechaObj.getMonth()];
+
+                const fechaMesString = `${nombreMes}-${anio}`;
+                const keyMensual = `${nombreMes}-${anio}_${sku}`;
+
+                if (!acumuladorMensual[keyMensual]) {
+                    acumuladorMensual[keyMensual] = {
+                        fecha: fechaMesString,
+                        sku: sku,
+                        nombre: nombre,
+                        cantidad: 0
+                    };
+                }
+                acumuladorMensual[keyMensual].cantidad += cantidad;
+
+                // Agrupación para Promedios (SKU | NOMBRE PROD)
+                if (!acumuladorPromedios[sku]) {
+                    acumuladorPromedios[sku] = {
+                        nombre: nombre,
+                        totalCantidad: 0
+                    };
+                }
+                acumuladorPromedios[sku].totalCantidad += cantidad;
+            }
+
+            if (!maxFechaObj) {
+                throw new Error("No se encontraron registros de ventas en el rango de los últimos 180 días.");
+            }
+
+            // Formatear fecha máxima del Excel
+            let ultimaActualizacionString = "";
+            if (maxFechaRaw instanceof Date) {
+                const pad = (num) => String(num).padStart(2, '0');
+                ultimaActualizacionString = `${pad(maxFechaRaw.getDate())}/${pad(maxFechaRaw.getMonth() + 1)}/${maxFechaRaw.getFullYear()} ${pad(maxFechaRaw.getHours())}:${pad(maxFechaRaw.getMinutes())}`;
+            } else {
+                ultimaActualizacionString = String(maxFechaRaw).trim();
+            }
+
+            // 2. Control de duplicados (Comparar con última fecha del servidor)
+            let ultimaFechaServidor = "";
+            try {
+                const resFecha = await fetch(URL_GAS_GLOBAL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'obtenerUltimaFecha' })
+                });
+                if (resFecha.ok) {
+                    const textRes = await resFecha.text();
+                    try {
+                        const jsonRes = JSON.parse(textRes);
+                        ultimaFechaServidor = jsonRes.data || jsonRes.result || textRes;
+                    } catch {
+                        ultimaFechaServidor = textRes;
+                    }
+                }
+            } catch (e) {
+                console.warn("⚠️ No se pudo verificar la última actualización previa:", e);
+            }
+
+            if (ultimaFechaServidor) {
+                const ultimaFechaServidorObj = parsearFechaCliente(ultimaFechaServidor);
+                if (ultimaFechaServidorObj && maxFechaObj && maxFechaObj <= ultimaFechaServidorObj) {
+                    if (overlayCarga) overlayCarga.style.display = 'none';
+                    Swal.fire({
+                        title: '📅 DATOS AL DÍA',
+                        text: `El reporte no contiene ventas nuevas. La última actualización ya registrada es del ${ultimaActualizacionString}.`,
+                        icon: 'info',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#c2902e'
+                    });
+                    if (btnProcesar) btnProcesar.disabled = false;
+                    return;
+                }
+            }
+
+            // 3. Estructurar matrices finales
+            const filasMensuales = Object.values(acumuladorMensual).map(item => [
+                item.fecha,
+                item.sku,
+                item.nombre,
+                Number(item.cantidad.toFixed(2))
+            ]);
+
+            const filasPromedios = [];
+            for (const sku in acumuladorPromedios) {
+                const item = acumuladorPromedios[sku];
+                const promedioCalculado = item.totalCantidad / 180;
+                const promedioDiario = (promedioCalculado >= 0.6 ? 1 : 0).toFixed(2);
+                filasPromedios.push([
+                    sku,
+                    item.nombre,
+                    Number(promedioDiario)
+                ]);
+            }
+
+            if (textoOverlay) textoOverlay.innerText = "Subiendo datos finales a Google Sheets...";
+
+            // 4. Enviar un único Payload con toda la información
+            const respuesta = await fetch(URL_GAS_GLOBAL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    action: 'procesarBloqueVentas',
+                    data: {
+                        valoresMensuales: filasMensuales,
+                        valoresPromedios: filasPromedios,
+                        ultimaActualizacion: ultimaActualizacionString
+                    }
+                })
+            });
+
+            if (!respuesta.ok) throw new Error("Error en la conexión con el servidor GAS.");
+
+            if (overlayCarga) overlayCarga.style.display = 'none';
+
+            Swal.fire({
+                title: '🚀 PROCESAMIENTO COMPLETADO',
+                text: `Se cargaron ${filasMensuales.length} registros mensuales y se actualizaron los promedios de los últimos 180 días para ${filasPromedios.length} SKUs.`,
+                icon: 'success',
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#c2902e'
+            });
+
+            window.cerrarModalVenta();
+
+        } catch (err) {
+            console.error("🚨 Error:", err);
+            if (overlayCarga) overlayCarga.style.display = 'none';
+            Swal.fire({
+                title: '❌ ERROR DE PROCESAMIENTO',
+                text: err.message || 'Ocurrió un problema.',
+                icon: 'error',
+                background: '#0f172a',
+                color: '#fff'
+            });
+            if (btnProcesar) btnProcesar.disabled = false;
+        } finally {
+            if (inputArchivo) inputArchivo.value = "";
+        }
+    };
+    reader.readAsArrayBuffer(archivoBlob);
+};
+
+function parsearFechaCliente(valor) {
+    if (!valor) return null;
+    if (valor instanceof Date) return valor;
+    
+    if (typeof valor === 'number') {
+        return new Date((valor - 25569) * 86400 * 1000);
+    }
+
+    const texto = String(valor).trim();
+    const partes = texto.split(" ");
+    const fechaParte = partes[0];
+    const horaParte = partes[1] || "00:00:00";
+    
+    const hms = horaParte.split(":");
+    const horas = parseInt(hms[0], 10) || 0;
+    const minutos = parseInt(hms[1], 10) || 0;
+    const segundos = parseInt(hms[2], 10) || 0;
+
+    const dmy = fechaParte.split("/");
+    if (dmy.length === 3) {
+        const dia = parseInt(dmy[0], 10);
+        const mes = parseInt(dmy[1], 10) - 1;
+        const anio = parseInt(dmy[2], 10);
+        return new Date(anio, mes, dia, horas, minutos, segundos);
+    }
+
+    const dmyHyphen = fechaParte.split("-");
+    if (dmyHyphen.length === 3) {
+        if (dmyHyphen[0].length === 4) { // yyyy-mm-dd
+            const anio = parseInt(dmyHyphen[0], 10);
+            const mes = parseInt(dmyHyphen[1], 10) - 1;
+            const dia = parseInt(dmyHyphen[2], 10);
+            return new Date(anio, mes, dia, horas, minutos, segundos);
+        } else { // dd-mm-yyyy
+            const dia = parseInt(dmyHyphen[0], 10);
+            const mes = parseInt(dmyHyphen[1], 10) - 1;
+            const anio = parseInt(dmyHyphen[2], 10);
+            return new Date(anio, mes, dia, horas, minutos, segundos);
+        }
+    }
+
+    const d = new Date(texto);
+    return isNaN(d.getTime()) ? null : d;
+}
+
+function formatearFechaAString(date) {
+    const pad = (num) => String(num).padStart(2, '0');
+    const d = pad(date.getDate());
+    const m = pad(date.getMonth() + 1);
+    const y = date.getFullYear();
+    const h = pad(date.getHours());
+    const min = pad(date.getMinutes());
+    const s = pad(date.getSeconds());
+    return `${d}/${m}/${y} ${h}:${min}:${s}`;
 }
