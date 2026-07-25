@@ -2571,3 +2571,116 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     0%, 100% { opacity: 1; }
     50% { opacity: .5; }
 }
+
+/*---SECCION PEDIDOS MANUALES---*/
+.swal2-container.swal-pedido-container {
+  z-index: 400000 !important; /* Valor drásticamente superior a 30001 */
+  backdrop-filter: blur(6px) !important;
+  background-color: rgba(2, 6, 23, 0.75) !important; 
+}
+
+/* Estilos base de la tarjeta del modal */
+#modal-pedidos {
+    z-index: 9999999;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(4, 11, 28, 0.75);
+}
+
+#contenedor-estilo-malevich {
+    height: 95vh !important;
+    max-height: 95vh !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    background: #040b1c;
+    border: 1px solid #00f2fe;
+    box-shadow: 0 0 35px rgba(0, 242, 254, 0.2);
+    border-radius: 6px;
+}
+
+#modal-contenido {
+    max-height: calc(95vh - 75px);
+    background: rgba(4, 11, 28, 0.3);
+}
+
+
+.custom-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+    background: #020617;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: #00f2fe;
+}
+
+
+.hud-row-active {
+    background: rgba(0, 242, 254, 0.06) !important;
+    border-left: 2px solid #00f2fe;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: rgba(0, 242, 254, 0.15) !important;
+    color: #00f2fe !important;
+    border: 1px solid #00f2fe !important;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+}
+
+.dataTables_wrapper .dataTables_info {
+    color: #71717a !important;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding-top: 10px;
+}
+
+
+.swal-pedido {
+    background: #0f172a !important; 
+    border: 1px solid #1e293b !important; 
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 240, 255, 0.2) !important;
+    border-radius: 8px !important;
+    padding: 1.25rem !important;
+    z-index: 400001 !important;
+}
+
+.swal-pedido .swal2-title {
+    color: #f8fafc !important; 
+    padding-top: 0.5rem !important;
+    font-family: 'Orbitron', sans-serif !important;
+    letter-spacing: 2px;
+}
+
+.swal-pedido .swal2-html-container {
+    color: #cbd5e1 !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+.swal-pedido .swal2-confirm {
+    font-family: 'Share Tech Mono', monospace !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.05em !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    padding: 0.6rem 1.5rem !important;
+    border-radius: 4px !important;
+    background-color: #00f2fe !important;
+    color: #040b1c !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.swal-pedido .swal2-confirm:hover {
+    background-color: #334155 !important; 
+    color: #00f0ff !important; 
+}
+
+.swal-pedido .swal2-loader {
+    border-color: #00f0ff transparent #00f0ff transparent !important;
+}

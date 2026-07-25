@@ -2532,7 +2532,7 @@ function obtenerHtmlEstadoCompacto(estado, idProv, nombreProv, numSemana) {
     if (!estado) {
         return `
             <button class="lex-btn-add" 
-                    onclick="abrirModalNuevoPedido('${idProv}', '${escaparTexto(nombreProv)}', 'Semana ${numSemana}')"
+                    onclick="abrirModalPedidosManual('${idProv}', '${escaparTexto(nombreProv)}', 'Semana ${numSemana}')"
                     aria-label="Agregar control para ${nombreProv}">
                 +
             </button>
@@ -2544,6 +2544,12 @@ function obtenerHtmlEstadoCompacto(estado, idProv, nombreProv, numSemana) {
     let textColor = "#1e293b";    
 
     const estadoLower = estado.toLowerCase();
+    const esFaltaRealizar = estadoLower.includes("falta realizar") || estadoLower.includes("falta") || estadoLower.includes("⚠️");
+
+    // Determinar si debe abrir el modal de pedidos manuales o el detalle de estatus habitual
+    const accionClick = esFaltaRealizar 
+        ? `abrirModalPedidosManual('${idProv}', '${escaparTexto(nombreProv)}', 'Semana ${numSemana}')`
+        : `abrirDetalleEstatus('${idProv}', 's${numSemana}')`;
 
     if (estado.includes("🟢") || estadoLower.includes("ok")) {
         bgColor = "#ecfdf5";      
@@ -2553,7 +2559,7 @@ function obtenerHtmlEstadoCompacto(estado, idProv, nombreProv, numSemana) {
         bgColor = "#fef2f2";      
         borderColor = "#ef4444";  
         textColor = "#7f1d1d";    
-    } else if (estado.includes("⚠️") || estadoLower.includes("falta") || estadoLower.includes("pendiente")) {
+    } else if (esFaltaRealizar) {
         bgColor = "#fffbeb";      
         borderColor = "#f59e0b";  
         textColor = "#78350f";    
@@ -2561,7 +2567,7 @@ function obtenerHtmlEstadoCompacto(estado, idProv, nombreProv, numSemana) {
 
     return `
         <div class="lex-card-pedido cursor-pointer" 
-             onclick="abrirDetalleEstatus('${idProv}', 's${numSemana}')" 
+             onclick="${accionClick}" 
              style="
                 background-color: ${bgColor} !important; 
                 border-left: 4px solid ${borderColor} !important; 
@@ -2686,189 +2692,241 @@ function abrirDetalleEstatus(idProv, claveSemana) {
 
 
 
-
-
-
-
-
 /*---funciones pedidos manuales---*/
-window.abrirModalPedidosManual = async function() {
-    console.log("Cargando entorno de Pedidos Manuales...");
+window.abrirModalPedidosManual = async function(idProv, nombreProv, semanaStr) {
     const modal = document.getElementById('modal-pedidos');
-    const contenido = document.getElementById('modal-contenido');
-    const titulo = document.getElementById('modal-titulo');
-    
-    if (!modal || !contenido || !titulo) return;
-    
-    contenido.innerHTML = "";
-    window.carritoPedidos = []; 
-    titulo.innerText = "SISTEMA DE PEDIDOS (MANUAL)";
-    
+    const modalTitulo = document.getElementById('modal-titulo');
+    const contenedor = document.getElementById('modal-contenido');
+
+    if (!modal) {
+        console.error("❌ No se encontró el elemento #modal-pedidos en el DOM.");
+        return;
+    }
+
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.style.display = 'flex';
-    
-    // Loader integrado HUD
-    contenido.innerHTML = `
-        <div class="p-12 text-center flex flex-col items-center justify-center">
-            <h3 class="mb-4 font-bold tracking-[3px] text-[11px] text-white" style="font-family: 'Share Tech Mono', monospace;">
-                ESTABLECIENDO ENLACE CON MATRIZ MAESTRA...
-            </h3>
-            <div class="w-9 h-9 border-2 rounded-full animate-spin" 
-                 style="border-color: rgba(0, 242, 254, 0.15); border-top-color: #00f2fe; box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);"></div>
-        </div>`;
+
+    if (modalTitulo) {
+        modalTitulo.innerHTML = `TERMINAL DE PEDIDOS &bull; PROV: <span class="text-[#8a6d12] font-bold">${nombreProv}</span> [${semanaStr}]`;
+    }
+
+    if (contenedor) {
+        contenedor.innerHTML = `
+            <div class="p-12 text-center bg-arena rounded-lg">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-600 border-t-transparent mb-3"></div>
+                <p class="font-mono text-xs text-amber-900 tracking-wider">CONECTANDO CON CANAL DE PROVEEDOR...</p>
+            </div>
+        `;
+    }
+
+    window.carritoPedidos = window.carritoPedidos || [];
 
     try {
-        const res = await callGoogleScript('obtenerListaProveedoresUnicos', {});
-        console.log("📦 [Debug NICO] Respuesta completa de la API:", res);
+        const res = await callGoogleScript('obtenerTablaFiltrada', { 
+            nombreHoja: 'baseProductos', 
+            proveedorFiltro: idProv 
+        });
+        
+        if (!res) throw new Error("El canal central no devolvió respuesta.");
+        
+        const listaBruta = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
+        const lista = listaBruta.filter(prod => parseInt(prod.ventas90Dias || 0) > 0);
+        window.productosDelProveedorActual = lista; 
 
-        let lista = null;
-        if (Array.isArray(res)) {
-            lista = res;
-        } else if (res && typeof res === 'object') {
-            lista = res.data || res.reply || res.proveedores || res.lista;
-            if (lista && typeof lista === 'object' && !Array.isArray(lista)) {
-                lista = lista.data || lista.proveedores || Object.values(lista);
-            }
-        }
-
-        if (Array.isArray(lista)) {
-            let options = lista.map(p => {
-                const nombre = p ? String(p).trim() : "";
-                const nombreEscapado = nombre.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                return `<option value="${nombreEscapado}" style="background:#040b1c; color:#fff;">${nombreEscapado}</option>`;
-            }).join('');
-
-            contenido.innerHTML = `
-                <div class="p-8 text-center max-w-xl mx-auto rounded border" 
-                     style="background: rgba(0,0,0,0.2); border-color: rgba(0,242,254,0.15); box-shadow: inset 0 0 20px rgba(0,242,254,0.05); margin-top: 10vh;">
-                    
-                    <div class="flex justify-center gap-3 mb-6" style="font-family: 'Orbitron', sans-serif;">
-                        <button id="btn-modo-prov" onclick="cambiarModoPedido('proveedor')" 
-                            class="px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-cyan-950/40 text-[#00f2fe] border-[#00f2fe]/40 shadow-[0_0_10px_rgba(0,242,254,0.1)]">
-                            POR PROVEEDOR
-                        </button>
-                        <button id="btn-modo-prod" onclick="cambiarModoPedido('producto')" 
-                            class="px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-slate-900/40 text-slate-400 border-slate-800 hover:border-slate-700">
-                            POR PRODUCTOS
-                        </button>
-                    </div>
-
-                    <h3 id="pedido-seccion-titulo" class="mb-5 font-bold uppercase tracking-[4px] text-[11px]" 
-                        style="color: #00f2fe; font-family: 'Orbitron', sans-serif;">
-                        SELECCIONAR PROVEEDOR
-                    </h3>
-                    
-                    <div class="flex flex-col items-center gap-5">
-
-                        <nav id="nav-categorias-productos" class="hud-horizontal-nav hidden w-full justify-center">
-                            <div class="nav-horiz-item theme-cyan">
-                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
-                                    <span class="btn-text">INSUMOS</span>
-                                    <span class="btn-chevron">▼</span>
-                                </button>
-                                <div class="horiz-dropdown">
-                                    <ul id="lista-insumos-dinamica" class="horiz-submenu-list"></ul>
-                                </div>
-                            </div>
-
-                            <div class="nav-horiz-item theme-orange">
-                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
-                                    <span class="btn-text">HERRAMIENTAS</span>
-                                    <span class="btn-chevron">▼</span>
-                                </button>
-                                <div class="horiz-dropdown">
-                                    <ul class="horiz-submenu-list" id="sm-herramientas"></ul>
-                                </div>
-                            </div>
-
-                            <div class="nav-horiz-item theme-pink">
-                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
-                                    <span class="btn-text">TELAS</span>
-                                    <span class="btn-chevron">▼</span>
-                                </button>
-                                <div class="horiz-dropdown">
-                                    <ul class="horiz-submenu-list" id="sm-telas">
-                                        <li class="nested-horiz-item">
-                                            <button class="nested-horiz-btn" onclick="toggleNestedMenu(event, this)">
-                                                <span>▶ SIMIL CUERO</span>
-                                            </button>
-                                            <ul class="nested-submenu-list hidden" id="sm-simil-cuero"></ul>
-                                        </li>
-                                        <li class="dropdown-divider"></li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div class="nav-horiz-item theme-purple">
-                                <button class="nav-horiz-btn" onclick="toggleHorizMenu(this)">
-                                    <span class="btn-text">HERRAJES</span>
-                                    <span class="btn-chevron">▼</span>
-                                </button>
-                                <div class="horiz-dropdown">
-                                    <ul class="horiz-submenu-list" id="sm-herrajes"></ul>
-                                </div>
-                            </div>
-                        </nav>
-
-                        <div id="wrapper-proveedor" class="flex flex-col items-center gap-5 w-full">
-                            <select id="prov-seleccionado" class="text-white p-3 rounded w-72 outline-none text-xs tracking-wider transition-all"
-                                    style="background: #040b1c; border: 1px solid rgba(0, 242, 254, 0.4); font-family: 'Share Tech Mono', monospace; box-shadow: 0 0 10px rgba(0,242,254,0.05);">
-                                <option value="" style="background:#040b1c; color: rgba(255,255,255,0.3);">-- SELECCIONAR PROVEEDOR --</option>
-                                ${options}
-                            </select>
-                            <button onclick="cargarProductosPorProveedor()" class="h-10 px-8 text-slate-950 font-black text-[10px] tracking-widest rounded transition-all duration-200 active:scale-95"
-                                    style="background: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.3); font-family: 'Orbitron', sans-serif;">
-                                INICIALIZAR CATÁLOGO
-                            </button>
-                        </div>
-
-                    </div>
-                </div>`;
+        if (lista.length > 0) {
+            renderizarInterfazPedidos(lista, nombreProv, contenedor);
         } else {
-            throw new Error("Formato de lista de proveedores no reconocido por la terminal.");
+            contenedor.innerHTML = `
+                <div class="p-8 text-center bg-arena border border-amber-300 rounded-lg max-w-2xl mx-auto mt-6">
+                    <p class="uppercase font-mono font-bold text-xs tracking-widest text-amber-900">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
+                    <p class="text-amber-800 text-xs mt-2 font-sans">No se detectaron artículos para el proveedor "${nombreProv}" con salidas registradas en los últimos 90 días.</p>
+                </div>`;
         }
     } catch (err) {
-        console.error("❌ Error al pedir proveedores:", err);
-        contenido.innerHTML = `
-            <div class="p-6 border border-red-900/40 bg-red-950/10 rounded max-w-md mx-auto text-center font-mono" style="margin-top: 10vh;">
-                <p class="text-red-400 text-[11px] tracking-widest font-bold">⚠️ CRITICAL_SYNC_FAILURE</p>
-                <span class="text-slate-400 text-[10px] block mt-2 normal-case font-sans">${err.message}</span>
+        console.error("❌ Error al compilar catálogo en modal manual:", err);
+        contenedor.innerHTML = `
+            <div class="p-8 text-center bg-red-50 border border-red-200 rounded-lg max-w-xl mx-auto mt-6 font-mono text-xs">
+                <span class="text-red-600 font-bold block">CRITICAL_RENDER_ERROR</span>
+                <span class="text-slate-700 block mt-2 font-sans normal-case">${err.message}</span>
             </div>`;
     }
 };
 
-// FUNCIÓN PARA INTERCAMBIAR ENTRE ENTORNOS DE TRABAJO (Añadir globalmente)
-window.cambiarModoPedido = function(modo) {
-    const btnProv = document.getElementById('btn-modo-prov');
-    const btnProd = document.getElementById('btn-modo-prod');
-    const navCategorias = document.getElementById('nav-categorias-productos');
-    const wrapperProveedor = document.getElementById('wrapper-proveedor');
-    const seccionTitulo = document.getElementById('pedido-seccion-titulo');
+function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
+    window.carritoPedidos = window.carritoPedidos || [];
+    const todosMarcados = lista.every(p => window.carritoPedidos.some(item => String(item.id).trim() === String(p.id).trim()));
 
-    if (!btnProv || !btnProd || !navCategorias || !wrapperProveedor || !seccionTitulo) return;
+    // Extraer categorías y subcategorías únicas para los desplegables
+    const categoriasUnicas = [...new Set(lista.map(p => String(p.categoria || p.cat || "GENERAL").trim().toUpperCase()))].sort();
+    
+    let htmlCategoriasOptions = `<option value="">TODAS LAS CATEGORÍAS</option>`;
+    categoriasUnicas.forEach(cat => {
+        htmlCategoriasOptions += `<option value="${cat}">${cat}</option>`;
+    });
 
-    if (modo === 'proveedor') {
-        seccionTitulo.innerText = "SELECCIONAR PROVEEDOR";
-        wrapperProveedor.classList.remove('hidden');
-        navCategorias.classList.add('hidden');
-        navCategorias.classList.remove('flex');
+    let tablaHtml = `
+        <!-- Barra de herramientas superior con estilo bg-arpillera -->
+        <div class="mb-4 p-4 rounded-lg flex flex-col lg:flex-row justify-between items-center gap-4 bg-arena border border-amber-300/60 shadow-md">
+            
+            <!-- Selectores de Categoría y Subcategoría -->
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                <select id="filtro-categoria-modal" onchange="actualizarSubcategoriasYFiltrar()" 
+                    class="bg-arena border border-amber-400 text-amber-950 text-xs font-mono p-2 rounded focus:outline-none focus:ring-1 focus:ring-amber-600">
+                    ${htmlCategoriasOptions}
+                </select>
 
-        // Clases de Botón Activo para Proveedor
-        btnProv.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-cyan-950/40 text-[#00f2fe] border-[#00f2fe]/40 shadow-[0_0_10px_rgba(0,242,254,0.1)]";
-        // Clases de Botón Inactivo para Productos
-        btnProd.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-slate-900/40 text-slate-400 border-slate-800 hover:border-slate-700";
-    } else if (modo === 'producto') {
-        seccionTitulo.innerText = "SELECCIONAR POR CATEGORÍA DE PRODUCTO";
-        wrapperProveedor.classList.add('hidden');
-        navCategorias.classList.remove('hidden');
-        navCategorias.classList.add('flex');
+                <select id="filtro-subcategoria-modal" onchange="filtrarProductosPorFiltrosModal()" 
+                    class="bg-arena border border-amber-400 text-amber-950 text-xs font-mono p-2 rounded focus:outline-none focus:ring-1 focus:ring-amber-600">
+                    <option value="">TODAS LAS SUBCATEGORÍAS</option>
+                </select>
+            </div>
 
-        // Clases de Botón Activo para Productos
-        btnProd.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-cyan-950/40 text-[#00f2fe] border-[#00f2fe]/40 shadow-[0_0_10px_rgba(0,242,254,0.1)]";
-        // Clases de Botón Inactivo para Proveedor
-        btnProv.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-slate-900/40 text-slate-400 border-slate-800 hover:border-slate-700";
+            <!-- Contador e Input de Búsqueda -->
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
+                <div id="contador-items" class="text-xs text-amber-950 font-mono tracking-wider">
+                    ITEMS INDEXADOS: <span class="text-amber-900 font-bold bg-arena px-2 py-0.5 rounded border border-amber-400">${window.carritoPedidos.length}</span>
+                </div>
+                
+                <div class="relative w-full sm:w-64">
+                    <input type="text" id="buscador-productos" onkeyup="filtrarProductosMain()" 
+                           placeholder="🔍 FILTRAR EN CONEXIÓN..." 
+                           class="w-full bg-arena border border-amber-400 p-2 pl-3 text-xs text-amber-950 rounded font-mono focus:border-amber-600 outline-none placeholder-amber-800/60">
+                </div>
+
+                <button onclick="revisarPedido()" class="text-amber-950 text-xs font-black tracking-widest px-5 py-2 rounded transition-all duration-200 active:scale-95 bg-amber-500 hover:bg-amber-400 border border-amber-600 shadow-sm font-mono">
+                    REVISAR ORDEN →
+                </button>
+            </div>
+        </div>
+
+        <!-- Contenedor de la Tabla con Estilo de Contenedor Arena -->
+        <div class="overflow-x-auto border border-amber-300 rounded-lg mb-2 bg-arena">
+            <table id="tabla-maestra-pedidos" class="w-full text-left border-collapse font-mono text-xs text-amber-950">
+                <thead>
+                    <tr class="bg-alpillera text-amber-950 border-b-2 border-amber-500 font-bold">
+                        <th class="p-3 text-center w-[50px]">
+                            <input type="checkbox" id="master-check-productos" ${todosMarcados ? 'checked' : ''}
+                                   onclick="toggleTodosProductos(this)"
+                                   class="w-4 h-4 accent-amber-600 cursor-pointer rounded bg-arena border-amber-400">
+                        </th>
+                        <th class="p-3 w-[70px]">ID</th>
+                        <th class="p-3">DESCRIPCIÓN DEL MATERIAL</th>
+                        <th class="p-3 w-[110px]">SKU</th>
+                        <th class="p-3 w-[90px] text-right">STOCK</th>
+                        <th class="p-3 w-[100px] text-center bg-amber-200/50">ROTACIÓN 90D</th>
+                        <th class="p-3 w-[110px] text-right">VALOR UNIT.</th>
+                        <th class="p-3 w-[90px] text-right">MÍNIMO</th>
+                    </tr>
+                </thead>
+                <tbody id="body-pedidos" class="divide-y divide-amber-200/60">`;
+
+    lista.forEach(prod => {
+        const idStr = String(prod.id || "").trim();
+        const nombreLimpio = String(prod.nombre || "").replace(/'/g, "").replace(/"/g, "");
+        const skuLimpio = String(prod.sku || "").trim();
+        const precioNum = parseFloat(prod.precio || 0);
+        const stockNum = parseInt(prod.stock || 0);
+        const stockMinNum = parseInt(prod.stockMinimo || 0);
+        const ventas90Num = parseInt(prod.ventas90Dias || 0); 
+        const categoriaProd = String(prod.categoria || prod.cat || "GENERAL").trim().toUpperCase();
+        const subcategoriaProd = String(prod.subcategoria || prod.subcat || "").trim().toUpperCase();
+        
+        const alertarStock = stockNum <= stockMinNum;
+        const yaSeleccionado = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
+        const checkedAttr = yaSeleccionado ? "checked" : "";
+        
+        const fnEscapar = typeof escapingForOption === "function" ? escapingForOption : (s) => s.replace(/'/g, "\\'");
+
+        tablaHtml += `
+            <tr class="transition-colors duration-150 ${yaSeleccionado ? 'hud-row-active bg-alpillera-dark border-l-2 border-amber-600' : 'hover:bg-amber-100/50'}"
+                data-categoria="${categoriaProd}" data-subcategoria="${subcategoriaProd}">
+                <td class="p-3 text-center">
+                    <input type="checkbox" ${checkedAttr} data-id="${idStr}" class="row-checkbox w-4 h-4 accent-amber-600 cursor-pointer" 
+                           onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${fnEscapar(proveedorNombre)}', '${stockMinNum}')">
+                </td>
+                <td class="p-3 text-amber-800 font-bold">${idStr}</td>
+                <td class="p-3 text-amber-950 font-sans text-xs font-medium">${prod.nombre || "MATERIAL SIN IDENTIFICAR"}</td>
+                <td class="p-3 text-amber-900 font-bold">${skuLimpio || "---"}</td>
+                <td class="p-3 text-right font-bold ${alertarStock ? 'text-red-600 font-extrabold' : 'text-amber-900'}">
+                    ${stockNum}
+                </td>
+                <td class="p-3 text-center font-bold text-emerald-700 bg-amber-200/20">
+                    ${ventas90Num} <span class="text-[10px] text-amber-800 font-normal">u.</span>
+                </td>
+                <td class="p-3 text-right font-bold text-black">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                <td class="p-3 text-right text-amber-800">${stockMinNum}</td>
+            </tr>`;
+    });
+    
+    tablaHtml += `</tbody></table></div>`;
+    contenedor.innerHTML = tablaHtml;
+
+    // Inicializador de DataTables con estética Arena
+    if (window.jQuery && $.fn.DataTable) {
+        setTimeout(() => {
+            if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
+                $('#tabla-maestra-pedidos').DataTable().destroy();
+            }
+            $('#tabla-maestra-pedidos').DataTable({
+                "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
+                "pageLength": 12,
+                "dom": 'rtip', 
+                "order": [[5, "desc"]], 
+                "autoWidth": false,
+                "columnDefs": [{ "targets": [0], "orderable": false }]
+            });
+        }, 40);
     }
+}
+
+window.actualizarSubcategoriasYFiltrar = function() {
+    const selectCat = document.getElementById('filtro-categoria-modal');
+    const selectSubcat = document.getElementById('filtro-subcategoria-modal');
+    if (!selectCat || !selectSubcat) return;
+
+    const catSeleccionada = selectCat.value.trim().toUpperCase();
+    const lista = window.productosDelProveedorActual || [];
+
+    // Rellenar subcategorías correspondientes a la categoría seleccionada
+    let subcatsUnicas = [];
+    if (catSeleccionada === "") {
+        subcatsUnicas = [...new Set(lista.map(p => String(p.subcategoria || p.subcat || "").trim().toUpperCase()))].filter(Boolean).sort();
+    } else {
+        subcatsUnicas = [...new Set(
+            lista.filter(p => String(p.categoria || p.cat || "GENERAL").trim().toUpperCase() === catSeleccionada)
+                 .map(p => String(p.subcategoria || p.subcat || "").trim().toUpperCase())
+        )].filter(Boolean).sort();
+    }
+
+    let htmlSubOptions = `<option value="">TODAS LAS SUBCATEGORÍAS</option>`;
+    subcatsUnicas.forEach(sub => {
+        htmlSubOptions += `<option value="${sub}">${sub}</option>`;
+    });
+    selectSubcat.innerHTML = htmlSubOptions;
+    selectSubcat.value = ""; // Reset subcategoría al cambiar categoría
+
+    filtrarProductosPorFiltrosModal();
+};
+
+window.filtrarProductosPorFiltrosModal = function() {
+    const catVal = (document.getElementById('filtro-categoria-modal')?.value || "").trim().toUpperCase();
+    const subcatVal = (document.getElementById('filtro-subcategoria-modal')?.value || "").trim().toUpperCase();
+
+    const filas = document.querySelectorAll('#body-pedidos tr');
+    filas.forEach(fila => {
+        const catFila = fila.getAttribute('data-categoria') || "";
+        const subcatFila = fila.getAttribute('data-subcategoria') || "";
+
+        let cumpleCat = !catVal || catFila === catVal;
+        let cumpleSubcat = !subcatVal || subcatFila === subcatVal;
+
+        if (cumpleCat && cumpleSubcat) {
+            fila.style.display = "";
+        } else {
+            fila.style.display = "none";
+        }
+    });
 };
 
 async function cargarProductosPorProveedor() {
@@ -2883,9 +2941,9 @@ async function cargarProductosPorProveedor() {
                 title: 'AVISO DEL SISTEMA',
                 text: 'Por favor, selecciona un canal de proveedor válido.',
                 icon: 'info',
-                background: '#040b1c',
-                color: '#cbd5e1',
-                confirmButtonColor: 'rgba(0,242,254,0.2)'
+                background: '#FAF0C9',
+                color: '#5C4033',
+                confirmButtonColor: '#D4811C'
             });
         } else {
             alert("AVISO: Selecciona un proveedor");
@@ -2908,138 +2966,24 @@ async function cargarProductosPorProveedor() {
         if (!res) throw new Error("La consulta central retornó un canal vacío.");
         
         const listaBruta = (res.reply && res.reply.data) ? res.reply.data : (res.data || []);
-        // Conservamos tu filtro de rotación real de salidas en los últimos 90 días
         const lista = listaBruta.filter(prod => parseInt(prod.ventas90Dias || 0) > 0);
         window.productosDelProveedorActual = lista; 
 
         if (lista.length > 0) {
-            window.carritoPedidos = window.carritoPedidos || [];
-            const todosMarcados = lista.every(p => window.carritoPedidos.some(item => String(item.id).trim() === String(p.id).trim()));
-            
-            let tablaHtml = `
-                <div class="mb-4 p-3 border rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-20 backdrop-blur shadow-xl"
-                     style="background: rgba(4, 11, 28, 0.9); border-color: rgba(0, 242, 254, 0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-                    <div id="contador-items" class="text-[11px] text-slate-400 font-mono tracking-wider">
-                        ITEMS INDEXADOS: <span class="text-[#00f2fe] font-bold bg-black/40 px-2 py-0.5 rounded border border-slate-800">${window.carritoPedidos.length}</span>
-                    </div>
-                    <div class="relative w-full sm:w-72">
-                        <input type="text" id="buscador-productos" onkeyup="filtrarProductosMain()" 
-                               placeholder="🔍 FILTRAR EN CONEXIÓN ACTIVA..." 
-                               class="w-full bg-black/40 border p-2 pl-3 text-[11px] text-white rounded font-mono focus:border-[#00f2fe] outline-none placeholder-slate-600 transition-colors"
-                               style="border-color: rgba(255,255,255,0.12);">
-                    </div>
-                    <button onclick="revisarPedido()" 
-                            class="text-slate-950 hover:text-white text-[10px] font-black tracking-widest px-6 py-2 rounded transition-all uppercase duration-200 active:scale-95 w-full sm:w-auto"
-                            style="background: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); font-family: 'Orbitron', sans-serif;">
-                        REVISAR ORDEN →
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto border rounded-lg mb-2" style="border-color: rgba(255,255,255,0.08); background: rgba(0,0,0,0.15);">
-                    <table id="tabla-maestra-pedidos" class="w-full text-left border-collapse" style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #cbd5e1;">
-                        <thead>
-                            <tr style="background: rgba(0, 242, 254, 0.06); color: #fff; border-bottom: 2px solid #00f2fe;">
-                                <th class="p-3 text-center w-[50px]">
-                                    <input type="checkbox" id="master-check-productos" ${todosMarcados ? 'checked' : ''}
-                                           onclick="toggleTodosProductos(this)"
-                                           class="w-4 h-4 accent-[#00f2fe] cursor-pointer rounded bg-slate-900 border-slate-700">
-                                </th>
-                                <th class="p-3 w-[70px]">ID</th>
-                                <th class="p-3">DESCRIPCIÓN DEL MATERIAL</th>
-                                <th class="p-3 w-[110px]">SKU</th>
-                                <th class="p-3 w-[90px] text-right">STOCK</th>
-                                <th class="p-3 w-[100px] text-center" style="background: rgba(0,242,254,0.03); color: #00f2fe;">ROTACIÓN 90D</th>
-                                <th class="p-3 w-[110px] text-right">VALOR UNIT.</th>
-                                <th class="p-3 w-[90px] text-right">MÍNIMO</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-pedidos" class="divide-y divide-slate-900/40">`;
-
-            lista.forEach(prod => {
-                const idStr = String(prod.id || "").trim();
-                const nombreLimpio = String(prod.nombre || "").replace(/'/g, "").replace(/"/g, "");
-                const skuLimpio = String(prod.sku || "").trim();
-                const precioNum = parseFloat(prod.precio || 0);
-                const stockNum = parseInt(prod.stock || 0);
-                const stockMinNum = parseInt(prod.stockMinimo || 0);
-                const ventas90Num = parseInt(prod.ventas90Dias || 0); 
-                const alertarStock = stockNum <= stockMinNum;
-                const yaSeleccionado = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
-                const checkedAttr = yaSeleccionado ? "checked" : "";
-                
-                // Mapeo dinámico de funciones de escape locales
-                const fnEscapar = typeof escapingForOption === "function" ? escapingForOption : (s) => s.replace(/'/g, "\\'");
-
-                tablaHtml += `
-                    <tr style="background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.05);" 
-                        class="transition-colors duration-150 ${yaSeleccionado ? 'hud-row-active' : ''}"
-                        onmouseover="this.style.background='rgba(0, 242, 254, 0.03)'" 
-                        onmouseout="this.style.background='${yaSeleccionado ? 'rgba(0, 242, 254, 0.05)' : 'rgba(0,0,0,0.15)'}'">
-                        <td class="p-3 text-center">
-                            <input type="checkbox" ${checkedAttr} data-id="${idStr}" class="row-checkbox w-4 h-4 accent-[#00f2fe] cursor-pointer" 
-                                   onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${fnEscapar(prov)}', '${stockMinNum}')">
-                        </td>
-                        <td class="p-3 text-slate-500 font-bold">${idStr}</td>
-                        <td class="p-3 text-white font-sans text-[12px] font-medium">${prod.nombre || "MATERIAL SIN IDENTIFICAR"}</td>
-                        <td class="p-3 text-[#00f2fe] font-bold">${skuLimpio || "---"}</td>
-                        <td class="p-3 text-right font-bold ${alertarStock ? 'text-[#ff007f]' : 'text-slate-300'}" style="${alertarStock ? 'text-shadow: 0 0 8px rgba(255,0,127,0.3);' : ''}">
-                            ${stockNum}
-                        </td>
-                        <td class="p-3 text-center font-bold text-emerald-400" style="background: rgba(16, 185, 129, 0.02);">
-                            ${ventas90Num} <span style="font-size: 9px; color: #52525b; font-weight: normal;">u.</span>
-                        </td>
-                        <td class="p-3 text-right font-bold text-emerald-400">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
-                        <td class="p-3 text-right text-slate-500">${stockMinNum}</td>
-                    </tr>`;
-            });
-            
-            tablaHtml += `</tbody></table></div>`;
-            contenedor.innerHTML = tablaHtml;
-
-            // Inyección de estilos CSS embebidos para el renglón activo en concordancia con Tailwind
-            if(!document.getElementById('hud-table-styles')) {
-                const style = document.createElement('style');
-                style.id = 'hud-table-styles';
-                style.innerHTML = `
-                    .hud-row-active { background: rgba(0, 242, 254, 0.06) !important; border-left: 2px solid #00f2fe; }
-                    .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: rgba(0, 242, 254, 0.15) !important; color:#00f2fe !important; border: 1px solid #00f2fe !important; font-family:'Share Tech Mono'; font-size:11px; }
-                    .dataTables_wrapper .dataTables_info { color: #71717a !important; font-family:'Share Tech Mono'; font-size:11px; padding-top: 10px; }
-                `;
-                document.head.appendChild(style);
-            }
-
-            // Inicializador de DataTables con acoplamiento HUD
-            if (window.jQuery && $.fn.DataTable) {
-                setTimeout(() => {
-                    if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
-                        $('#tabla-maestra-pedidos').DataTable().destroy();
-                    }
-                    $('#tabla-maestra-pedidos').DataTable({
-                        "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
-                        "pageLength": 12,
-                        "dom": 'rtip', 
-                        "order": [[5, "desc"]], 
-                        "autoWidth": false,
-                        "columnDefs": [
-                            { "targets": [0], "orderable": false }
-                        ]
-                    });
-                }, 40);
-            }
-
+            renderizarInterfazPedidos(lista, prov, contenedor);
         } else {
             contenedor.innerHTML = `
-                <div class="p-12 text-center border rounded-lg max-w-2xl mx-auto" style="border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.02); margin-top: 5vh;">
-                    <p class="uppercase font-mono font-bold text-[11px] tracking-[3px]" style="color: #f59e0b;">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
-                    <p class="text-slate-400 text-[11px] mt-2 font-sans">No se detectaron artículos del canal "${prov}" con salidas registradas en la ventana de los últimos 90 días.</p>
+                <div class="p-12 text-center bg-arena border border-amber-300 rounded-lg max-w-2xl mx-auto mt-12">
+                    <p class="uppercase font-mono font-bold text-xs tracking-[3px] text-amber-900">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
+                    <p class="text-amber-800 text-xs mt-2 font-sans">No se detectaron artículos del canal "${prov}" con salidas registradas en la ventana de los últimos 90 días.</p>
                 </div>`;
         }
     } catch (err) {
         console.error("❌ Error en compilación de catálogo dirigido:", err);
         contenedor.innerHTML = `
-            <div class="p-8 text-center border rounded-lg max-w-xl mx-auto font-mono text-[11px]" style="border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.03); margin-top:5vh;">
-                <span class="text-red-400 font-bold block">CRITICAL_RENDER_ERROR</span>
-                <span class="text-slate-400 block mt-2 font-sans normal-case">${err.message}</span>
+            <div class="p-8 text-center bg-red-50 border border-red-200 rounded-lg max-w-xl mx-auto font-mono text-xs mt-12">
+                <span class="text-red-600 font-bold block">CRITICAL_RENDER_ERROR</span>
+                <span class="text-slate-700 block mt-2 font-sans normal-case">${err.message}</span>
             </div>`;
     } finally {
         if (overlay) overlay.style.display = 'none';
@@ -3069,14 +3013,16 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
             });
         }
         if (trPadre) {
-            trPadre.style.background = 'rgba(0, 242, 254, 0.06)';
+            trPadre.className = trPadre.className.replace('hover:bg-amber-100/50', '');
+            trPadre.style.background = 'rgba(252, 211, 77, 0.25)';
             trPadre.classList.add('hud-row-active');
         }
     } else {
         window.carritoPedidos = window.carritoPedidos.filter(p => String(p.id).trim() !== idFiltro);
         if (trPadre) {
-            trPadre.style.background = 'rgba(0,0,0,0.15)';
+            trPadre.style.background = '';
             trPadre.classList.remove('hud-row-active');
+            trPadre.classList.add('hover:bg-amber-100/50');
         }
     }
     actualizarContadorVisual();
@@ -3086,8 +3032,6 @@ function toggleTodosProductos(masterCheck) {
     if (!window.productosDelProveedorActual || window.productosDelProveedorActual.length === 0) return;
     window.carritoPedidos = window.carritoPedidos || [];
     
-    const selector = document.getElementById('prov-seleccionado');
-    const prov = selector ? selector.value.trim() : "";
     const checkboxesVisibles = document.querySelectorAll('.row-checkbox');
 
     if (masterCheck.checked) {
@@ -3106,9 +3050,9 @@ function toggleTodosProductos(masterCheck) {
                     precio: parseFloat(prod.precio || 0),
                     sku: String(prod.sku || "").trim(),
                     stock: stockAct,
-                    proveedor: prov,
+                    proveedor: prod.proveedor || "",
                     stockMinimo: stockMin,
-                    amount: cantidadSugerida
+                    cantidad: cantidadSugerida
                 });
             }
         });
@@ -3117,7 +3061,7 @@ function toggleTodosProductos(masterCheck) {
             cb.checked = true;
             const tr = cb.closest('tr');
             if (tr) {
-                tr.style.background = 'rgba(0, 242, 254, 0.06)';
+                tr.style.background = 'rgba(252, 211, 77, 0.25)';
                 tr.classList.add('hud-row-active');
             }
         });
@@ -3131,8 +3075,8 @@ function toggleTodosProductos(masterCheck) {
             cb.checked = false;
             const tr = cb.closest('tr');
             if (tr) {
-                tr.style.background = 'rgba(0,0,0,0.15)';
-                tr.classList.remove('hud-row-active');
+                tr.style.background = '';
+                trPadre_remove = tr.classList.remove('hud-row-active');
             }
         });
     }
@@ -3143,7 +3087,7 @@ function actualizarContadorVisual() {
     const contador = document.getElementById('contador-items');
     if (contador) {
         const totalItems = window.carritoPedidos ? window.carritoPedidos.length : 0;
-        contador.innerHTML = `ITEMS INDEXADOS: <span style="color: #00f2fe; font-weight: bold; background: rgba(0,0,0,0.4); padding: 2px 8px; border: 1px solid rgba(0,242,254,0.25); border-radius: 3px;">${totalItems}</span>`;
+        contador.innerHTML = `ITEMS INDEXADOS: <span class="text-amber-900 font-bold bg-arena px-2 py-0.5 rounded border border-amber-400">${totalItems}</span>`;
     }
 }
 
@@ -3154,28 +3098,6 @@ function filtrarProductosMain() {
     
     if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
         $('#tabla-maestra-pedidos').DataTable().search(filtroText).draw();
-    } else {
-        const tabla = document.getElementById("tabla-maestra-pedidos");
-        if (!tabla) return;
-        const tbody = tabla.getElementsByTagName("tbody")[0];
-        if (!tbody) return;
-        
-        const filas = tbody.getElementsByTagName("tr");
-        const normalizado = filtroText.toUpperCase();
-
-        for (let i = 0; i < filas.length; i++) {
-            let visible = false;
-            const celdas = filas[i].getElementsByTagName("td");
-            // Empezamos la iteración desde el índice 1 para omitir la celda del checkbox
-            for (let j = 1; j < celdas.length; j++) {
-                const textValue = celdas[j].textContent || celdas[j].innerText;
-                if (textValue.toUpperCase().indexOf(normalizado) > -1) {
-                    visible = true;
-                    break;
-                }
-            }
-            filas[i].style.display = visible ? "" : "none";
-        }
     }
 }
 
@@ -3198,8 +3120,37 @@ function cerrarModal_Pedidos() {
     }
 }
 
-    /*---Seccion Ventas--*/
+window.cambiarModoPedido = function(modo) {
+    const btnProv = document.getElementById('btn-modo-prov');
+    const btnProd = document.getElementById('btn-modo-prod');
+    const navCategorias = document.getElementById('nav-categorias-productos');
+    const wrapperProveedor = document.getElementById('wrapper-proveedor');
+    const seccionTitulo = document.getElementById('pedido-seccion-titulo');
 
+    if (!btnProv || !btnProd || !navCategorias || !wrapperProveedor || !seccionTitulo) return;
+
+    if (modo === 'proveedor') {
+        seccionTitulo.innerText = "SELECCIONAR PROVEEDOR";
+        wrapperProveedor.classList.remove('hidden');
+        navCategorias.classList.add('hidden');
+        navCategorias.classList.remove('flex');
+
+        btnProv.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-amber-200/80 text-amber-950 border-amber-500 shadow-sm";
+        btnProd.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-arena text-amber-800 border-amber-300 hover:border-amber-400";
+    } else if (modo === 'producto') {
+        seccionTitulo.innerText = "SELECCIONAR POR CATEGORÍA DE PRODUCTO";
+        wrapperProveedor.classList.add('hidden');
+        navCategorias.classList.remove('hidden');
+        navCategorias.classList.add('flex');
+
+        btnProd.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-amber-200/80 text-amber-950 border-amber-500 shadow-sm";
+        btnProv.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-arena text-amber-800 border-amber-300 hover:border-amber-400";
+    }
+};
+
+
+
+/*------SECCION DE CARGA DE VENTAS----*/
 var nombreArchivoVentas = "";
 
 // 1. ABRIR PANEL MODAL
