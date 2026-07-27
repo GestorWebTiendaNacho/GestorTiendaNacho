@@ -2708,14 +2708,14 @@ window.abrirModalPedidosManual = async function(idProv, nombreProv, semanaStr) {
     modal.style.display = 'flex';
 
     if (modalTitulo) {
-        modalTitulo.innerHTML = `TERMINAL DE PEDIDOS &bull; PROV: <span class="text-[#8a6d12] font-bold">${nombreProv}</span> [${semanaStr}]`;
+        modalTitulo.innerHTML = `GESTOR DE PEDIDOS &bull; PROV: <span class="lex-title-prov">${nombreProv}</span> [${semanaStr}]`;
     }
 
     if (contenedor) {
         contenedor.innerHTML = `
-            <div class="p-12 text-center bg-arena rounded-lg">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-600 border-t-transparent mb-3"></div>
-                <p class="font-mono text-xs text-amber-900 tracking-wider">CONECTANDO CON CANAL DE PROVEEDOR...</p>
+            <div class="lex-loading-container bg-arena">
+                <div class="lex-spinner"></div>
+                <p class="lex-loading-text">CONECTANDO CON CANAL DE PROVEEDOR...</p>
             </div>
         `;
     }
@@ -2738,17 +2738,17 @@ window.abrirModalPedidosManual = async function(idProv, nombreProv, semanaStr) {
             renderizarInterfazPedidos(lista, nombreProv, contenedor);
         } else {
             contenedor.innerHTML = `
-                <div class="p-8 text-center bg-arena border border-amber-300 rounded-lg max-w-2xl mx-auto mt-6">
-                    <p class="uppercase font-mono font-bold text-xs tracking-widest text-amber-900">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
-                    <p class="text-amber-800 text-xs mt-2 font-sans">No se detectaron artículos para el proveedor "${nombreProv}" con salidas registradas en los últimos 90 días.</p>
+                <div class="lex-empty-container bg-arena">
+                    <p class="lex-empty-title">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
+                    <p class="lex-empty-text">No se detectaron artículos para el proveedor "${nombreProv}" con salidas registradas en los últimos 90 días.</p>
                 </div>`;
         }
     } catch (err) {
         console.error("❌ Error al compilar catálogo en modal manual:", err);
         contenedor.innerHTML = `
-            <div class="p-8 text-center bg-red-50 border border-red-200 rounded-lg max-w-xl mx-auto mt-6 font-mono text-xs">
-                <span class="text-red-600 font-bold block">CRITICAL_RENDER_ERROR</span>
-                <span class="text-slate-700 block mt-2 font-sans normal-case">${err.message}</span>
+            <div class="lex-error-container">
+                <span class="lex-error-title">CRITICAL_RENDER_ERROR</span>
+                <span class="lex-error-text">${err.message}</span>
             </div>`;
     }
 };
@@ -2757,7 +2757,6 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
     window.carritoPedidos = window.carritoPedidos || [];
     const todosMarcados = lista.every(p => window.carritoPedidos.some(item => String(item.id).trim() === String(p.id).trim()));
 
-    // Extraer categorías y subcategorías únicas para los desplegables
     const categoriasUnicas = [...new Set(lista.map(p => String(p.categoria || p.cat || "GENERAL").trim().toUpperCase()))].sort();
     
     let htmlCategoriasOptions = `<option value="">TODAS LAS CATEGORÍAS</option>`;
@@ -2766,60 +2765,55 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
     });
 
     let tablaHtml = `
-        <!-- Barra de herramientas superior con estilo bg-arpillera -->
-        <div class="mb-4 p-4 rounded-lg flex flex-col lg:flex-row justify-between items-center gap-4 bg-arena border border-amber-300/60 shadow-md">
-            
+        <div class="lex-toolbar bg-arpillera">
             <!-- Selectores de Categoría y Subcategoría -->
-            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-                <select id="filtro-categoria-modal" onchange="actualizarSubcategoriasYFiltrar()" 
-                    class="bg-arena border border-amber-400 text-amber-950 text-xs font-mono p-2 rounded focus:outline-none focus:ring-1 focus:ring-amber-600">
+            <div class="lex-filter-group">
+                <select id="filtro-categoria-modal" onchange="actualizarSubcategoriasYFiltrar()" class="lex-select">
                     ${htmlCategoriasOptions}
                 </select>
 
-                <select id="filtro-subcategoria-modal" onchange="filtrarProductosPorFiltrosModal()" 
-                    class="bg-arena border border-amber-400 text-amber-950 text-xs font-mono p-2 rounded focus:outline-none focus:ring-1 focus:ring-amber-600">
+                <select id="filtro-subcategoria-modal" onchange="filtrarProductosPorFiltrosModal()" class="lex-select">
                     <option value="">TODAS LAS SUBCATEGORÍAS</option>
                 </select>
             </div>
 
             <!-- Contador e Input de Búsqueda -->
-            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-                <div id="contador-items" class="text-xs text-amber-950 font-mono tracking-wider">
-                    ITEMS INDEXADOS: <span class="text-amber-900 font-bold bg-arena px-2 py-0.5 rounded border border-amber-400">${window.carritoPedidos.length}</span>
+            <div class="lex-actions-group">
+                <div id="contador-items" class="lex-counter">
+                    ITEMS SELECCIONADOS: <span class="lex-counter-badge">${window.carritoPedidos.length}</span>
                 </div>
                 
-                <div class="relative w-full sm:w-64">
+                <div class="lex-search-wrapper">
                     <input type="text" id="buscador-productos" onkeyup="filtrarProductosMain()" 
                            placeholder="🔍 FILTRAR EN CONEXIÓN..." 
-                           class="w-full bg-arena border border-amber-400 p-2 pl-3 text-xs text-amber-950 rounded font-mono focus:border-amber-600 outline-none placeholder-amber-800/60">
+                           class="lex-input-search">
                 </div>
 
-                <button onclick="revisarPedido()" class="text-amber-950 text-xs font-black tracking-widest px-5 py-2 rounded transition-all duration-200 active:scale-95 bg-amber-500 hover:bg-amber-400 border border-amber-600 shadow-sm font-mono">
+                <button onclick="revisarPedido()" class="lex-btn-primary">
                     REVISAR ORDEN →
                 </button>
             </div>
         </div>
 
-        <!-- Contenedor de la Tabla con Estilo de Contenedor Arena -->
-        <div class="overflow-x-auto border border-amber-300 rounded-lg mb-2 bg-arena">
-            <table id="tabla-maestra-pedidos" class="w-full text-left border-collapse font-mono text-xs text-amber-950">
+        <!-- Contenedor de la Tabla -->
+        <div class="lex-table-container bg-arena">
+            <table id="tabla-maestra-pedidos" class="lex-table">
                 <thead>
-                    <tr class="bg-alpillera text-amber-950 border-b-2 border-amber-500 font-bold">
-                        <th class="p-3 text-center w-[50px]">
+                    <tr class="lex-tr-head sticky-arena">
+                        <th class="lex-th lex-th-check">
                             <input type="checkbox" id="master-check-productos" ${todosMarcados ? 'checked' : ''}
-                                   onclick="toggleTodosProductos(this)"
-                                   class="w-4 h-4 accent-amber-600 cursor-pointer rounded bg-arena border-amber-400">
+                                   onclick="toggleTodosProductos(this)" class="lex-checkbox">
                         </th>
-                        <th class="p-3 w-[70px]">ID</th>
-                        <th class="p-3">DESCRIPCIÓN DEL MATERIAL</th>
-                        <th class="p-3 w-[110px]">SKU</th>
-                        <th class="p-3 w-[90px] text-right">STOCK</th>
-                        <th class="p-3 w-[100px] text-center bg-amber-200/50">ROTACIÓN 90D</th>
-                        <th class="p-3 w-[110px] text-right">VALOR UNIT.</th>
-                        <th class="p-3 w-[90px] text-right">MÍNIMO</th>
+                        <th class="lex-th lex-th-id">ID</th>
+                        <th class="lex-th">DESCRIPCIÓN DEL MATERIAL</th>
+                        <th class="lex-th lex-th-sku">SKU</th>
+                        <th class="lex-th lex-th-stock">STOCK</th>
+                        <th class="lex-th lex-th-rotacion lex-th-highlight">ROTACIÓN 90D</th>
+                        <th class="lex-th lex-th-price">VALOR UNIT.</th>
+                        <th class="lex-th lex-th-minimo">MÍNIMO</th>
                     </tr>
                 </thead>
-                <tbody id="body-pedidos" class="divide-y divide-amber-200/60">`;
+                <tbody id="body-pedidos" class="lex-tbody">`;
 
     lista.forEach(prod => {
         const idStr = String(prod.id || "").trim();
@@ -2839,30 +2833,27 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
         const fnEscapar = typeof escapingForOption === "function" ? escapingForOption : (s) => s.replace(/'/g, "\\'");
 
         tablaHtml += `
-            <tr class="transition-colors duration-150 ${yaSeleccionado ? 'hud-row-active bg-alpillera-dark border-l-2 border-amber-600' : 'hover:bg-amber-100/50'}"
+            <tr class="lex-tr-row ${yaSeleccionado ? 'hud-row-active' : ''}"
                 data-categoria="${categoriaProd}" data-subcategoria="${subcategoriaProd}">
-                <td class="p-3 text-center">
-                    <input type="checkbox" ${checkedAttr} data-id="${idStr}" class="row-checkbox w-4 h-4 accent-amber-600 cursor-pointer" 
+                <td class="lex-td lex-td-check">
+                    <input type="checkbox" ${checkedAttr} data-id="${idStr}" class="row-checkbox lex-checkbox" 
                            onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${fnEscapar(proveedorNombre)}', '${stockMinNum}')">
                 </td>
-                <td class="p-3 text-amber-800 font-bold">${idStr}</td>
-                <td class="p-3 text-amber-950 font-sans text-xs font-medium">${prod.nombre || "MATERIAL SIN IDENTIFICAR"}</td>
-                <td class="p-3 text-amber-900 font-bold">${skuLimpio || "---"}</td>
-                <td class="p-3 text-right font-bold ${alertarStock ? 'text-red-600 font-extrabold' : 'text-amber-900'}">
-                    ${stockNum}
+                <td class="lex-td lex-td-id">${idStr}</td>
+                <td class="lex-td lex-td-name">${prod.nombre || "MATERIAL SIN IDENTIFICAR"}</td>
+                <td class="lex-td lex-td-sku">${skuLimpio || "---"}</td>
+                <td class="lex-td lex-td-stock ${alertarStock ? 'lex-text-alert' : ''}">${stockNum}</td>
+                <td class="lex-td lex-td-rotacion lex-td-highlight">
+                    ${ventas90Num} <span class="lex-badge-unit">u.</span>
                 </td>
-                <td class="p-3 text-center font-bold text-emerald-700 bg-amber-200/20">
-                    ${ventas90Num} <span class="text-[10px] text-amber-800 font-normal">u.</span>
-                </td>
-                <td class="p-3 text-right font-bold text-black">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-right text-amber-800">${stockMinNum}</td>
+                <td class="lex-td lex-td-price">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                <td class="lex-td lex-td-minimo">${stockMinNum}</td>
             </tr>`;
     });
     
     tablaHtml += `</tbody></table></div>`;
     contenedor.innerHTML = tablaHtml;
 
-    // Inicializador de DataTables con estética Arena
     if (window.jQuery && $.fn.DataTable) {
         setTimeout(() => {
             if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
@@ -2888,7 +2879,6 @@ window.actualizarSubcategoriasYFiltrar = function() {
     const catSeleccionada = selectCat.value.trim().toUpperCase();
     const lista = window.productosDelProveedorActual || [];
 
-    // Rellenar subcategorías correspondientes a la categoría seleccionada
     let subcatsUnicas = [];
     if (catSeleccionada === "") {
         subcatsUnicas = [...new Set(lista.map(p => String(p.subcategoria || p.subcat || "").trim().toUpperCase()))].filter(Boolean).sort();
@@ -2904,7 +2894,7 @@ window.actualizarSubcategoriasYFiltrar = function() {
         htmlSubOptions += `<option value="${sub}">${sub}</option>`;
     });
     selectSubcat.innerHTML = htmlSubOptions;
-    selectSubcat.value = ""; // Reset subcategoría al cambiar categoría
+    selectSubcat.value = "";
 
     filtrarProductosPorFiltrosModal();
 };
@@ -2973,17 +2963,17 @@ async function cargarProductosPorProveedor() {
             renderizarInterfazPedidos(lista, prov, contenedor);
         } else {
             contenedor.innerHTML = `
-                <div class="p-12 text-center bg-arena border border-amber-300 rounded-lg max-w-2xl mx-auto mt-12">
-                    <p class="uppercase font-mono font-bold text-xs tracking-[3px] text-amber-900">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
-                    <p class="text-amber-800 text-xs mt-2 font-sans">No se detectaron artículos del canal "${prov}" con salidas registradas en la ventana de los últimos 90 días.</p>
+                <div class="lex-empty-container bg-arena">
+                    <p class="lex-empty-title">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
+                    <p class="lex-empty-text">No se detectaron artículos del canal "${prov}" con salidas registradas en la ventana de los últimos 90 días.</p>
                 </div>`;
         }
     } catch (err) {
         console.error("❌ Error en compilación de catálogo dirigido:", err);
         contenedor.innerHTML = `
-            <div class="p-8 text-center bg-red-50 border border-red-200 rounded-lg max-w-xl mx-auto font-mono text-xs mt-12">
-                <span class="text-red-600 font-bold block">CRITICAL_RENDER_ERROR</span>
-                <span class="text-slate-700 block mt-2 font-sans normal-case">${err.message}</span>
+            <div class="lex-error-container">
+                <span class="lex-error-title">CRITICAL_RENDER_ERROR</span>
+                <span class="lex-error-text">${err.message}</span>
             </div>`;
     } finally {
         if (overlay) overlay.style.display = 'none';
@@ -3013,16 +3003,12 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
             });
         }
         if (trPadre) {
-            trPadre.className = trPadre.className.replace('hover:bg-amber-100/50', '');
-            trPadre.style.background = 'rgba(252, 211, 77, 0.25)';
             trPadre.classList.add('hud-row-active');
         }
     } else {
         window.carritoPedidos = window.carritoPedidos.filter(p => String(p.id).trim() !== idFiltro);
         if (trPadre) {
-            trPadre.style.background = '';
             trPadre.classList.remove('hud-row-active');
-            trPadre.classList.add('hover:bg-amber-100/50');
         }
     }
     actualizarContadorVisual();
@@ -3061,7 +3047,6 @@ function toggleTodosProductos(masterCheck) {
             cb.checked = true;
             const tr = cb.closest('tr');
             if (tr) {
-                tr.style.background = 'rgba(252, 211, 77, 0.25)';
                 tr.classList.add('hud-row-active');
             }
         });
@@ -3075,8 +3060,7 @@ function toggleTodosProductos(masterCheck) {
             cb.checked = false;
             const tr = cb.closest('tr');
             if (tr) {
-                tr.style.background = '';
-                trPadre_remove = tr.classList.remove('hud-row-active');
+                tr.classList.remove('hud-row-active');
             }
         });
     }
@@ -3087,7 +3071,7 @@ function actualizarContadorVisual() {
     const contador = document.getElementById('contador-items');
     if (contador) {
         const totalItems = window.carritoPedidos ? window.carritoPedidos.length : 0;
-        contador.innerHTML = `ITEMS INDEXADOS: <span class="text-amber-900 font-bold bg-arena px-2 py-0.5 rounded border border-amber-400">${totalItems}</span>`;
+        contador.innerHTML = `ITEMS SELECCIONADOS: <span class="lex-counter-badge">${totalItems}</span>`;
     }
 }
 

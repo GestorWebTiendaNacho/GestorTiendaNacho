@@ -2246,9 +2246,15 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     background-color: #E2D0A4;
 }
 
+.lex-title-prov {
+    color: #451a03;
+    font-weight: 700;
+}
+
 .lex-toolbar {
     display: flex;
     flex-wrap: wrap;
+    flex-direction: column;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
