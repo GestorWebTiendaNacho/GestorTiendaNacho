@@ -2257,15 +2257,48 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(146, 64, 14, 0.2);
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid rgba(217, 119, 6, 0.6);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
 }
 
-.lex-filter-group, .lex-actions-group {
+.lex-actions-group {
     display: flex;
     align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    justify-content: space-between;
+}
+
+@media (min-width: 1024px) {
+    .lex-actions-group {
+        width: auto;
+        justify-content: flex-end;
+    }
+}
+
+.lex-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 0.5rem;
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    .lex-filter-group {
+        width: auto;
+    }
+}
+
+@media (min-width: 1024px) {
+    .lex-toolbar {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
 }
 
 /* Tamaños compactos para toolbar */
@@ -2276,6 +2309,7 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     padding: 0.35rem 0.6rem;
     font-size: 0.8125rem;
     font-weight: 500;
+    font-family: monospace;
     color: #451a03;
     outline: none;
 }
@@ -2284,6 +2318,56 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     border-color: #78350f;
     box-shadow: 0 0 0 1px #78350f;
 }
+
+.lex-search-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .lex-search-wrapper {
+        width: 16rem;
+    }
+}
+
+.lex-input-search {
+    width: 100%;
+    background-color: rgba(250, 240, 201, 0.85);
+    border: 1px solid #f59e0b;
+    padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    color: #451a03;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    outline: none;
+}
+
+.lex-input-search::placeholder {
+    color: rgba(146, 64, 14, 0.6);
+}
+
+.lex-input-search:focus {
+    border-color: #d97706;
+}
+
+/* Contadores y Botones */
+.lex-counter {
+    font-size: 0.75rem;
+    color: #451a03;
+    font-family: monospace;
+    letter-spacing: 0.05em;
+}
+
+.lex-counter-badge {
+    color: #78350f;
+    font-weight: 700;
+    background-color: rgba(250, 240, 201, 0.85);
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid #f59e0b;
+}
+
+
 
 .sem-btn-nav {
     display: flex;
@@ -2325,13 +2409,16 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     border-radius: 0.5rem;
     overflow-x: auto;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 0.5rem;
 }
 
 .lex-table {
     width: 100%;
     text-align: left;
     border-collapse: collapse;
-    background: transparent;
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #451a03;
 }
 
 .lex-tr-head {
@@ -2340,38 +2427,149 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     color: #451a03;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 2px solid rgba(146, 64, 14, 0.4);
+    border-bottom: 2px solid #d97706;
 }
 
 .lex-th {
-    padding: 0.5rem 0.75rem;
+    padding: 0.75rem;
 }
 
 .lex-th-highlight {
-    background-color: rgba(120, 53, 4, 0.1);
+    background-color: rgba(253, 230, 138, 0.5);
     color: #451a03;
     font-weight: 700;
-    border-left: 1px solid rgba(146, 64, 14, 0.3);
-    border-right: 1px solid rgba(146, 64, 14, 0.3);
 }
 
 .lex-tbody {
     background: transparent;
 }
 
-.lex-tr-row {
-    transition: all 0.15s;
-    border-bottom: 1px solid rgba(146, 64, 14, 0.2);
+.lex-tbody tr {
+    border-bottom: 1px solid rgba(253, 230, 138, 0.6);
 }
 
+.lex-tr-row {
+    transition: background-color 0.15s ease;
+}
+
+
 .lex-tr-row:hover {
-    background-color: rgba(226, 208, 164, 0.4);
+    background-color: rgba(254, 243, 199, 0.5);
 }
 
 .lex-td {
-    padding: 0.5rem 0.5rem;
-    font-size: 0.625rem;
-    width: auto !important;
+    padding: 0.75rem;
+}
+
+.hud-row-active {
+    background-color: rgba(252, 211, 77, 0.3) !important;
+    border-left: 3px solid #d97706 !important;
+}
+
+.lex-td-check { text-align: center; }
+.lex-td-id { color: #92400e; font-weight: 700; }
+.lex-td-name { font-family: sans-serif; font-weight: 500; font-size: 0.75rem; color: #451a03; }
+.lex-td-sku { color: #78350f; font-weight: 700; }
+.lex-td-stock { text-align: right; font-weight: 700; color: #78350f; }
+.lex-td-rotacion { text-align: center; font-weight: 700; color: #047857; background-color: rgba(253, 230, 138, 0.2); }
+.lex-td-price { text-align: right; font-weight: 700; color: #065f46; }
+.lex-td-minimo { text-align: right; color: #92400e; }
+
+.lex-text-alert {
+    color: #dc2626 !important;
+    font-weight: 800 !important;
+}
+.lex-badge-unit {
+    font-size: 10px;
+    color: #92400e;
+    font-weight: 400;
+}
+
+.lex-checkbox {
+    width: 1rem;
+    height: 1rem;
+    accent-color: #d97706;
+    cursor: pointer;
+    border-radius: 0.25rem;
+}
+
+/* Estados de Carga, Vacío y Error */
+.lex-loading-container {
+    padding: 3rem;
+    text-align: center;
+    border-radius: 0.5rem;
+}
+
+.lex-spinner {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 4px solid #d97706;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 0.75rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.lex-loading-text {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #78350f;
+    letter-spacing: 0.05em;
+}
+
+.lex-empty-container {
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid #fcd34d;
+    border-radius: 0.5rem;
+    max-width: 42rem;
+    margin: 1.5rem auto 0;
+}
+
+.lex-empty-title {
+    text-transform: uppercase;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: #78350f;
+}
+
+.lex-empty-text {
+    color: #92400e;
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    font-family: sans-serif;
+}
+
+.lex-error-container {
+    padding: 2rem;
+    text-align: center;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 0.5rem;
+    max-width: 36rem;
+    margin: 1.5rem auto 0;
+    font-family: monospace;
+    font-size: 0.75rem;
+}
+
+.lex-error-title {
+    color: #dc2626;
+    font-weight: 700;
+    display: block;
+}
+
+.lex-error-text {
+    color: #334155;
+    display: block;
+    margin-top: 0.5rem;
+    font-family: sans-serif;
 }
 
 .lex-prov-name {
@@ -2452,6 +2650,39 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     line-height: 1.1;
     text-align: center !important;
 }
+
+.lex-btn-primary {
+    color: #451a03;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+    background-color: #E2D0A4;
+    border: 1px solid #d97706;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    font-family: monospace;
+    cursor: pointer;
+}
+
+.lex-btn-primary:hover {
+    background-color: rgba(250, 240, 201, 0.85);
+}
+
+.lex-btn-primary:active {
+    transform: scale(0.95);
+}
+
+.lex-th-check { width: 50px; text-align: center; }
+.lex-th-id { width: 70px; }
+.lex-th-sku { width: 110px; }
+.lex-th-stock { width: 90px; text-align: right; }
+.lex-th-rotacion { width: 100px; text-align: center; }
+.lex-th-price { width: 110px; text-align: right; }
+.lex-th-minimo { width: 90px; text-align: right; }
+
+
 
 
 /* ========= MODAL DE REPORTES / CRÍTICOS---*/
@@ -2649,23 +2880,23 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
 
 
 .swal-pedido {
-    background: #0f172a !important; 
-    border: 1px solid #1e293b !important; 
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 240, 255, 0.2) !important;
+    background: rgba(250, 240, 201, 0.85) !important; 
+    border: 1px solid #e57132 !important; 
+    box-shadow: 0 25px 50px -12px rgba(227, 180, 154, 0.759), 0 0 20px rgba(0, 240, 255, 0.2) !important;
     border-radius: 8px !important;
     padding: 1.25rem !important;
     z-index: 400001 !important;
 }
 
 .swal-pedido .swal2-title {
-    color: #f8fafc !important; 
+    color: #a63c12 !important; 
     padding-top: 0.5rem !important;
     font-family: 'Orbitron', sans-serif !important;
     letter-spacing: 2px;
 }
 
 .swal-pedido .swal2-html-container {
-    color: #cbd5e1 !important;
+    color: #ae4434 !important;
     font-family: 'Share Tech Mono', monospace !important;
 }
 
@@ -2677,16 +2908,16 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
     text-transform: uppercase !important;
     padding: 0.6rem 1.5rem !important;
     border-radius: 4px !important;
-    background-color: #00f2fe !important;
-    color: #040b1c !important;
+    background-color: #ebdfd3 !important;
+    color: #6c0909 !important;
     transition: all 0.2s ease-in-out !important;
 }
 
 .swal-pedido .swal2-confirm:hover {
-    background-color: #334155 !important; 
-    color: #00f0ff !important; 
+    background-color: #e3976f !important; 
+    color: #8f2f0d !important; 
 }
 
 .swal-pedido .swal2-loader {
-    border-color: #00f0ff transparent #00f0ff transparent !important;
+    border-color: #b63f0c transparent #00f0ff transparent !important;
 }
