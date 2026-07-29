@@ -2805,7 +2805,7 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
                                    onclick="toggleTodosProductos(this)" class="lex-checkbox">
                         </th>
                         <th class="lex-th lex-th-id">ID</th>
-                        <th class="lex-th">DESCRIPCIÓN DEL MATERIAL</th>
+                        <th class="lex-th">NOMBRE PRODUCTO</th>
                         <th class="lex-th lex-th-sku">SKU</th>
                         <th class="lex-th lex-th-stock">STOCK</th>
                         <th class="lex-th lex-th-rotacion lex-th-highlight">ROTACIÓN 90D</th>
