@@ -2740,7 +2740,7 @@ window.abrirModalPedidosManual = async function(idProv, nombreProv, semanaStr) {
             contenedor.innerHTML = `
                 <div class="lex-empty-container bg-arena">
                     <p class="lex-empty-title">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
-                    <p class="lex-empty-text">No se detectaron artículos para el proveedor "${nombreProv}" con salidas registradas en los últimos 90 días.</p>
+                    <p class="lex-empty-text">No se detectaron artículos para el proveedor "${nombreProv}" con salidas registradas en los últimos periodos.</p>
                 </div>`;
         }
     } catch (err) {
@@ -2755,7 +2755,7 @@ window.abrirModalPedidosManual = async function(idProv, nombreProv, semanaStr) {
 
 function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
     window.carritoPedidos = window.carritoPedidos || [];
-    const todosMarcados = lista.every(p => window.carritoPedidos.some(item => String(item.id).trim() === String(p.id).trim()));
+    const todosMarcados = lista.every(p => window.carritoPedidos.some(item => String(item.sku || item.id).trim() === String(p.sku || p.id).trim()));
 
     const categoriasUnicas = [...new Set(lista.map(p => String(p.categoria || p.cat || "GENERAL").trim().toUpperCase()))].sort();
     
@@ -2804,22 +2804,18 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
                             <input type="checkbox" id="master-check-productos" ${todosMarcados ? 'checked' : ''}
                                    onclick="toggleTodosProductos(this)" class="lex-checkbox">
                         </th>
-                        <th class="lex-th lex-th-id">ID</th>
-                        <th class="lex-th">NOMBRE PRODUCTO</th>
                         <th class="lex-th lex-th-sku">SKU</th>
-                        <th class="lex-th lex-th-stock">STOCK</th>
-                        <th class="lex-th lex-th-rotacion lex-th-highlight">ROTACIÓN 90D</th>
-                        <th class="lex-th lex-th-price">VALOR UNIT.</th>
-                        <th class="lex-th lex-th-minimo">MÍNIMO</th>
+                        <th class="lex-th lex-th-name">NOMBRE PRODUCTO</th>
+                        <th class="lex-th lex-th-stock">STOCK ACTUAL</th>
+                        <th class="lex-th lex-th-rotacion lex-th-highlight">PROMEDIO 90D.</th>
+                        <th class="lex-th lex-th-minimo">STOCK MÍNIMO</th>
                     </tr>
                 </thead>
                 <tbody id="body-pedidos" class="lex-tbody">`;
 
     lista.forEach(prod => {
-        const idStr = String(prod.id || "").trim();
+        const skuStr = String(prod.sku || prod.id || "").trim();
         const nombreLimpio = String(prod.nombre || "").replace(/'/g, "").replace(/"/g, "");
-        const skuLimpio = String(prod.sku || "").trim();
-        const precioNum = parseFloat(prod.precio || 0);
         const stockNum = parseInt(prod.stock || 0);
         const stockMinNum = parseInt(prod.stockMinimo || 0);
         const ventas90Num = parseInt(prod.ventas90Dias || 0); 
@@ -2827,7 +2823,7 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
         const subcategoriaProd = String(prod.subcategoria || prod.subcat || "").trim().toUpperCase();
         
         const alertarStock = stockNum <= stockMinNum;
-        const yaSeleccionado = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
+        const yaSeleccionado = window.carritoPedidos.some(item => String(item.sku || item.id).trim() === skuStr);
         const checkedAttr = yaSeleccionado ? "checked" : "";
         
         const fnEscapar = typeof escapingForOption === "function" ? escapingForOption : (s) => s.replace(/'/g, "\\'");
@@ -2836,17 +2832,15 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
             <tr class="lex-tr-row ${yaSeleccionado ? 'hud-row-active' : ''}"
                 data-categoria="${categoriaProd}" data-subcategoria="${subcategoriaProd}">
                 <td class="lex-td lex-td-check">
-                    <input type="checkbox" ${checkedAttr} data-id="${idStr}" class="row-checkbox lex-checkbox" 
-                           onclick="toggleSeleccion(this, '${idStr}', '${nombreLimpio}', '${precioNum}', '${skuLimpio}', '${stockNum}', '${fnEscapar(proveedorNombre)}', '${stockMinNum}')">
+                    <input type="checkbox" ${checkedAttr} data-sku="${skuStr}" class="row-checkbox lex-checkbox" 
+                           onclick="toggleSeleccion(this, '${skuStr}', '${nombreLimpio}', '${skuStr}', '${stockNum}', '${fnEscapar(proveedorNombre)}', '${stockMinNum}')">
                 </td>
-                <td class="lex-td lex-td-id">${idStr}</td>
-                <td class="lex-td lex-td-name">${prod.nombre || "MATERIAL SIN IDENTIFICAR"}</td>
-                <td class="lex-td lex-td-sku">${skuLimpio || "---"}</td>
+                <td class="lex-td lex-td-sku">${skuStr || "---"}</td>
+                <td class="lex-td lex-td-name">${prod.nombre || "PRODUCTO SIN IDENTIFICAR"}</td>
                 <td class="lex-td lex-td-stock ${alertarStock ? 'lex-text-alert' : ''}">${stockNum}</td>
                 <td class="lex-td lex-td-rotacion lex-td-highlight">
                     ${ventas90Num} <span class="lex-badge-unit">u.</span>
                 </td>
-                <td class="lex-td lex-td-price">$ ${precioNum.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                 <td class="lex-td lex-td-minimo">${stockMinNum}</td>
             </tr>`;
     });
@@ -2859,14 +2853,16 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
             if ($.fn.DataTable.isDataTable('#tabla-maestra-pedidos')) {
                 $('#tabla-maestra-pedidos').DataTable().destroy();
             }
-            $('#tabla-maestra-pedidos').DataTable({
-                "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
-                "pageLength": 12,
-                "dom": 'rtip', 
-                "order": [[5, "desc"]], 
-                "autoWidth": false,
-                "columnDefs": [{ "targets": [0], "orderable": false }]
-            });
+                $('#tabla-maestra-pedidos').DataTable({
+                    "language": { "url": 'https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
+                    "paging": false,
+                    "scrollY": "400px",
+                    "scrollCollapse": true,
+                    "dom": 'rt',
+                    "order": [[4, "desc"]],
+                    "autoWidth": false,
+                    "columnDefs": [{ "targets": [0], "orderable": false }]
+                });
         }, 40);
     }
 }
@@ -2965,7 +2961,7 @@ async function cargarProductosPorProveedor() {
             contenedor.innerHTML = `
                 <div class="lex-empty-container bg-arena">
                     <p class="lex-empty-title">SITUACIÓN: SIN ALERTAS CRÍTICAS</p>
-                    <p class="lex-empty-text">No se detectaron artículos del canal "${prov}" con salidas registradas en la ventana de los últimos 90 días.</p>
+                    <p class="lex-empty-text">No se detectaron artículos del canal "${prov}" con salidas registradas en la ventana actual.</p>
                 </div>`;
         }
     } catch (err) {
@@ -2980,22 +2976,22 @@ async function cargarProductosPorProveedor() {
     }
 }
 
-function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, stockMinimo) {
+function toggleSeleccion(checkbox, sku, nombre, _unusedSku, stock, proveedor, stockMinimo) {
     window.carritoPedidos = window.carritoPedidos || [];
-    const idFiltro = String(id).trim();
+    const skuFiltro = String(sku).trim();
     const trPadre = checkbox.closest('tr');
 
     if (checkbox.checked) {
-        if (!window.carritoPedidos.some(p => String(p.id).trim() === idFiltro)) {
+        if (!window.carritoPedidos.some(p => String(p.sku || p.id).trim() === skuFiltro)) {
             const stockAct = parseInt(stock || 0);
             const stockMin = parseInt(stockMinimo || 0);
             const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
 
             window.carritoPedidos.push({ 
-                id: idFiltro, 
+                id: skuFiltro,
+                sku: skuFiltro, 
                 nombre: nombre, 
-                sku: sku, 
-                precio: parseFloat(precio || 0), 
+                precio: 0, 
                 stock: stockAct, 
                 stockMinimo: stockMin, 
                 proveedor: proveedor, 
@@ -3006,7 +3002,7 @@ function toggleSeleccion(checkbox, id, nombre, precio, sku, stock, proveedor, st
             trPadre.classList.add('hud-row-active');
         }
     } else {
-        window.carritoPedidos = window.carritoPedidos.filter(p => String(p.id).trim() !== idFiltro);
+        window.carritoPedidos = window.carritoPedidos.filter(p => String(p.sku || p.id).trim() !== skuFiltro);
         if (trPadre) {
             trPadre.classList.remove('hud-row-active');
         }
@@ -3022,8 +3018,8 @@ function toggleTodosProductos(masterCheck) {
 
     if (masterCheck.checked) {
         window.productosDelProveedorActual.forEach(prod => {
-            const idStr = String(prod.id || "").trim();
-            const yaExiste = window.carritoPedidos.some(item => String(item.id).trim() === idStr);
+            const skuStr = String(prod.sku || prod.id || "").trim();
+            const yaExiste = window.carritoPedidos.some(item => String(item.sku || item.id).trim() === skuStr);
             
             if (!yaExiste) {
                 const stockAct = parseInt(prod.stock || 0);
@@ -3031,10 +3027,10 @@ function toggleTodosProductos(masterCheck) {
                 const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
 
                 window.carritoPedidos.push({
-                    id: idStr,
+                    id: skuStr,
+                    sku: skuStr,
                     nombre: String(prod.nombre || "").replace(/'/g, "").replace(/"/g, ""),
-                    precio: parseFloat(prod.precio || 0),
-                    sku: String(prod.sku || "").trim(),
+                    precio: 0,
                     stock: stockAct,
                     proveedor: prod.proveedor || "",
                     stockMinimo: stockMin,
@@ -3052,8 +3048,8 @@ function toggleTodosProductos(masterCheck) {
         });
     } else {
         window.productosDelProveedorActual.forEach(prod => {
-            const idStr = String(prod.id || "").trim();
-            window.carritoPedidos = window.carritoPedidos.filter(item => String(item.id).trim() !== idStr);
+            const skuStr = String(prod.sku || prod.id || "").trim();
+            window.carritoPedidos = window.carritoPedidos.filter(item => String(item.sku || item.id).trim() !== skuStr);
         });
 
         checkboxesVisibles.forEach(cb => {
