@@ -2678,19 +2678,6 @@ function escaparTexto(txt) {
 }
 
 
-// Funciones de APERTURA DE PEDIDOS y DETALLES DE ESTATUS
-function abrirModalNuevoPedido(idProv, nombreProv, semana) {
-    console.log(`🆕 Abrir modal de nuevo control para ${nombreProv} en la ${semana}`);
-    // Vinculá acá tu modal de carga existente
-}
-
-function abrirDetalleEstatus(idProv, claveSemana) {
-    console.log(`🔍 Detalle de estatus para el proveedor ID: ${idProv} en ${claveSemana}`);
-    // Vinculá acá la visualización detallada
-}
-
-
-
 
 /*---funciones pedidos manuales---*/
 window.abrirModalPedidosManual = async function(idProv, nombreProv, semanaStr) {

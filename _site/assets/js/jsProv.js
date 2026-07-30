@@ -574,9 +574,9 @@ async function revisarPedido() {
                 title: 'CARRITO VACÍO', 
                 text: "Debes seleccionar al menos un producto para confeccionar una orden.", 
                 icon: 'info', 
-                background: '#0f172a', 
-                color: '#f1f5f9',
-                confirmButtonColor: '#0ea5e9'
+                background: 'rgba(238, 223, 166, 0.85)', 
+                color: '#d97706',
+                confirmButtonColor: '#E2D0A4'
             });
         } else {
             alert("CARRITO VACÍO: Selecciona productos primero.");
