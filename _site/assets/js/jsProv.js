@@ -575,7 +575,7 @@ async function revisarPedido() {
                 text: "Debes seleccionar al menos un producto para confeccionar una orden.", 
                 icon: 'info', 
                 background: 'rgba(238, 223, 166, 0.85)', 
-                color: '#d97706',
+                color: '#451a03',
                 confirmButtonColor: '#E2D0A4'
             });
         } else {
@@ -610,90 +610,86 @@ async function revisarPedido() {
                      ahora.getHours().toString().padStart(2, '0') + 
                      ahora.getMinutes().toString().padStart(2, '0');
 
-    titulo.innerHTML = `CONFECCIÓN DE PEDIDO: <span class="text-white font-mono">${idPedido}</span>`;
+    titulo.innerHTML = `CONFECCIÓN DE PEDIDO: <span class="lex-pedido-id-text">${idPedido}</span>`;
 
     let html = `
-        <div class="p-4 bg-slate-900/90 rounded-xl border border-slate-800 mb-4 w-full shadow-2xl mx-1">
-            <div class="grid grid-cols-1 md:grid-cols-6 gap-4 text-xs items-center">
+        <div class="lex-pedido-card">
+            <div class="lex-pedido-grid">
                 <div>
-                    <span class="text-slate-500 uppercase text-[9px] font-bold tracking-wider">ID OPERACIÓN:</span><br>
-                    <span class="text-cyan-400 font-mono font-bold tracking-tight">${idPedido}</span>
+                    <span class="lex-label-muted">ID OPERACIÓN:</span><br>
+                    <span class="lex-id-operacion">${idPedido}</span>
                 </div>
                 
-                <div class="col-span-2">
-                    <label class="text-cyan-500 block mb-1 uppercase text-[9px] font-black tracking-wider">Remitir Pedido a:</label>
-                    <select id="cambiar-proveedor-final" onchange="actualizarProveedorCarrito(this.value)"
-                            class="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-md p-2 font-mono text-[11px] font-bold focus:border-cyan-500 outline-none transition-all">
+                <div class="lex-col-span-2">
+                    <label class="lex-label-primary">Remitir Pedido a:</label>
+                    <select id="cambiar-proveedor-final" onchange="actualizarProveedorCarrito(this.value)" class="lex-select-custom">
                         ${proveedoresHTML || `<option value="${escapingForOption(window.carritoPedidos[0].proveedor)}">${window.carritoPedidos[0].proveedor}</option>`}
                     </select>
                 </div>
 
                 <div>
-                    <label class="text-cyan-500 block mb-1 uppercase text-[9px] font-black tracking-wider">Plazo Entrega:</label>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="tiempo-estimated" min="1" value="3" 
-                               class="w-16 bg-slate-950 border border-slate-800 text-cyan-400 rounded-md p-1.5 text-center font-mono font-bold outline-none focus:border-cyan-500">
-                        <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">DÍAS</span>
+                    <label class="lex-label-primary">Plazo Entrega:</label>
+                    <div class="lex-plazo-wrapper">
+                        <input type="number" id="tiempo-estimated" min="1" value="3" class="lex-input-number">
+                        <span class="lex-label-muted">DÍAS</span>
                     </div>
                 </div>
 
-                <div class="col-span-2 flex gap-3 justify-end mt-2 md:mt-0">
-                    <button onclick="volverAListaProductos()" 
-                            class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-md font-black text-[10px] uppercase tracking-widest transition-all border border-slate-700/60 active:scale-95">
+                <div class="lex-col-span-2 lex-actions-flex">
+                    <button onclick="volverAListaProductos()" class="lex-btn-secondary">
                         ← EDITAR LISTA
                     </button>
-                    <button onclick="prepararEnvioPedido('${idPedido}')" 
-                            class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 hover:text-white px-5 py-2 rounded-md font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-950/40 transition-all active:scale-95">
+                    <button onclick="prepararEnvioPedido('${idPedido}')" class="lex-btn-success">
                         CONFIRMAR Y ENVIAR
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="border border-slate-900 rounded-xl overflow-y-auto max-h-[380px] md:max-h-[45vh] mx-1 bg-slate-950/20 custom-scroll relative">
-            <table class="w-full text-left border-collapse table-fixed"> 
-                <thead class="sticky top-0 bg-slate-950 z-20 shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
-                    <tr class="text-cyan-500 border-b border-slate-800 text-[9px] font-black uppercase tracking-wider">
-                        <th class="p-3 w-1/4 bg-slate-950">Item / Detalle</th> 
-                        <th class="p-3 text-center w-[12%] bg-slate-950">Stock Act.</th> 
-                        <th class="p-3 text-center w-[12%] bg-slate-950">Stock Mín.</th> 
-                        <th class="p-3 text-center w-[16%] bg-slate-950">Cantidad</th> 
-                        <th class="p-3 text-right w-[15%] bg-slate-950">Costo Unit.</th> 
-                        <th class="p-3 text-right w-[15%] bg-slate-950">Subtotal</th> 
-                        <th class="p-3 text-center w-[6%] text-red-500 bg-slate-950"></th> 
+        <div class="lex-table-container lex-scroll-container">
+            <table class="lex-table lex-table-fixed">  
+                <thead class="lex-thead-sticky">
+                    <tr class="lex-tr-head">
+                        <th class="lex-th lex-w-25">Item / Detalle</th> 
+                        <th class="lex-th lex-text-center lex-w-12">Stock Act.</th> 
+                        <th class="lex-th lex-text-center lex-w-12">Stock Mín.</th> 
+                        <th class="lex-th lex-text-center lex-w-16">Cantidad</th> 
+                        <th class="lex-th lex-text-right lex-w-15">Costo Unit.</th> 
+                        <th class="lex-th lex-text-right lex-w-15">Subtotal</th> 
+                        <th class="lex-th lex-text-center lex-w-6"></th> 
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-900/50 font-mono text-[11px]">`;
+                <tbody class="lex-tbody">`;
 
     window.carritoPedidos.forEach((item, index) => {
         const subtotal = item.precio * item.cantidad;
         const alertaStock = parseInt(item.stock || 0) <= parseInt(item.stockMinimo || 0);
         
         html += `
-            <tr class="border-b border-slate-900 text-xs hover:bg-cyan-500/5 transition-colors duration-150">
-                <td class="p-3 font-sans">
-                    <div class="text-slate-200 font-bold truncate text-[11px]">${item.nombre}</div>
-                    <div class="text-[9px] text-cyan-700 font-mono tracking-tighter mt-0.5">${item.sku}</div>
+            <tr class="lex-tr-row">
+                <td class="lex-td">
+                    <div class="lex-item-nombre">${item.nombre}</div>
+                    <div class="lex-item-sku">${item.sku}</div>
                 </td>
-                <td class="p-3 text-center">
-                    <span class="${alertaStock ? 'text-red-400 font-black px-1.5 py-0.5 rounded bg-red-950/20 animate-pulse border border-red-900/30' : 'text-slate-400'}">${item.stock}</span>
+                <td class="lex-td lex-text-center">
+                    <span class="${alertaStock ? 'lex-stock-alerta' : 'lex-stock-normal'}">${item.stock}</span>
                 </td>
-                <td class="p-3 text-center text-slate-500">
+                <td class="lex-td lex-text-center lex-text-muted">
                     ${item.stockMinimo}
                 </td>
-                <td class="p-3 text-center flex justify-center items-center min-h-[50px]">
+                <td class="lex-td lex-text-center lex-flex-center">
                     <input type="number" min="1" value="${item.cantidad}" 
                            onchange="actualizarCantidadCarrito(${index}, this.value)"
-                           class="w-20 bg-slate-950 border border-slate-800 text-cyan-400 text-center rounded-md p-1 outline-none font-bold focus:border-cyan-500">
+                           class="lex-input-qty">
                 </td>
-                <td class="p-3 text-right text-slate-400">
+                <td class="lex-td lex-text-right lex-text-muted">
                     $${item.precio.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                 </td>
-                <td class="p-3 text-right text-slate-200 font-bold" id="subtotal-${index}">
+                <td class="lex-td lex-text-right lex-item-subtotal" id="subtotal-${index}">
                     $${subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                 </td>
-                <td class="p-3 text-center">
-                    <button onclick="eliminarDelPedido(${index})" class="text-slate-600 hover:text-red-400 transition-all transform hover:scale-110 p-1">
+                <td class="lex-td lex-text-center">
+                    <button onclick="eliminarDelPedido(${index})" class="lex-btn-delete">
                         <i class="fi fi-rr-trash"></i>
                     </button>
                 </td>
@@ -702,12 +698,12 @@ async function revisarPedido() {
 
     html += `</tbody></table></div>
         
-        <div class="mt-4 p-4 bg-slate-950 border border-slate-800 rounded-xl flex justify-between items-center w-full shadow-2xl mx-1">
+        <div class="lex-footer-card">
             <div>
-                <span class="text-slate-500 text-[9px] uppercase tracking-widest font-black block">Inversión Bruta Estimada</span>
-                <div id="total-pedido-confirmar" class="text-2xl text-cyan-400 font-black leading-none mt-1.5 tracking-tight">$ 0,00</div>
+                <span class="lex-label-muted block">Inversión Bruta Estimada</span>
+                <div id="total-pedido-confirmar" class="lex-total-display">$ 0,00</div>
             </div>
-            <div class="text-right text-[9px] text-slate-600 font-mono uppercase tracking-wider leading-relaxed hidden sm:block">
+            <div class="lex-footer-status">
                 Status: Awaiting Operator Signature<br>
                 N.I.C.O. V2.0 - COMPILER SECURE
             </div>
@@ -733,22 +729,23 @@ function eliminarDelPedido(index) {
         text: "Se eliminará este ítem de la lista de confección actual.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#1e293b',
+        confirmButtonColor: '#d97706',
+        cancelButtonColor: '#451a03',
         confirmButtonText: 'SÍ, RETIRAR',
         cancelButtonText: 'ABORTAR',
-        background: '#0f172a',
-        color: '#f1f5f9',
+        background: 'rgba(250, 240, 201, 0.95)',
+        color: '#451a03',
         customClass: {
-        container: 'swal-pedido-container',
-        popup: 'swal-pedido'
-}
+            container: 'swal-pedido-container',
+            popup: 'swal-pedido'
+        }
     }).then((result) => {
         if (result.isConfirmed) {
             ejecutarBajaItemCarrito(index);
         }
     });
 }
+
 function ejecutarBajaItemCarrito(index) {
     window.carritoPedidos.splice(index, 1);
     if (window.carritoPedidos.length === 0) {
@@ -768,7 +765,14 @@ function prepararEnvioPedido(idPedido) {
     
     if (isNaN(dias) || dias <= 0) {
         if (window.Swal) {
-            Swal.fire('ATENCIÓN LOGÍSTICA', 'Por favor, ingresa una estimación de días válida y mayor a cero.', 'warning');
+            Swal.fire({
+                title: 'ATENCIÓN LOGÍSTICA',
+                text: 'Por favor, ingresa una estimación de días válida y mayor a cero.',
+                icon: 'warning',
+                background: 'rgba(250, 240, 201, 0.95)',
+                color: '#451a03',
+                confirmButtonColor: '#d97706'
+            });
         } else {
             alert("ATENCIÓN: Ingresa una estimación de días válida.");
         }
@@ -818,10 +822,7 @@ function calcularTotalConfirmacion() {
 
 
 async function ejecutarGeneracionPedido(idPedido, dias) {
-    // 1. Localizamos el overlay nativo del sistema
     const overlayCarga = document.getElementById('overlay-carga');
-    
-    // 2. Encendemos el spinner global antes de iniciar cualquier petición
     if (overlayCarga) overlayCarga.style.display = 'flex';
 
     try {
@@ -836,39 +837,33 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
             fechaActualizacion: new Date().toLocaleString('es-AR')
         };
 
-        // Despacho asíncrono al servidor central
         const res = await callGoogleScript('procesarPedidoFinal', payload);
 
         if (res && res.status === "success") {
-            // 3. Apagamos el overlay inmediatamente al recibir respuesta positiva
             if (overlayCarga) overlayCarga.style.display = 'none';
 
-            // Desplegamos confirmación visual final
             if (window.Swal) {
                 Swal.fire({
                     icon: 'success',
                     title: '¡ORDEN CONFIRMADA!',
                     html: `
-                        <div class="text-slate-300 text-xs mb-4 font-sans">
-                            La operación de compra <b class="text-cyan-400 font-mono">${idPedido}</b> ha sido impactada con éxito.
+                        <div class="lex-swal-msg">
+                            La operación de compra <b class="lex-swal-pedido">${idPedido}</b> ha sido impactada con éxito.
                         </div>
                         ${res.url ? `
-                        <a href="${res.url}" target="_blank" 
-                           class="inline-block bg-cyan-600 text-slate-950 hover:text-white px-5 py-2.5 rounded-md font-black text-[10px] tracking-widest uppercase transition-all shadow-md shadow-cyan-950/50 hover:bg-cyan-500">
+                        <a href="${res.url}" target="_blank" class="lex-btn-pdf">
                             DESCARGAR PDF DE ORDEN
                         </a>` : ''}`,
-                    background: '#0f172a',
-                    color: '#f1f5f9',
-                    confirmButtonColor: '#0ea5e9',
+                    background: 'rgba(250, 240, 201, 0.95)',
+                    color: '#451a03',
+                    confirmButtonColor: '#d97706',
                     confirmButtonText: 'ENTENDIDO'
                 });
             }
 
-            // Purgado completo y restauración limpia de las vistas del sistema
             window.carritoPedidos = [];
             if (typeof actualizarContadorVisual === "function") actualizarContadorVisual();
             
-            // Resolución del modal y redirección controlada por interfaz nativa
             if (typeof cerrarModal_Pedidos === "function") {
                 cerrarModal_Pedidos();
             } else {
@@ -884,8 +879,6 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
 
     } catch (err) {
         console.error("❌ Fallo crítico en la persistencia del pedido:", err);
-        
-        // 4. Apagamos el overlay de carga de forma segura en caso de excepción de red
         if (overlayCarga) overlayCarga.style.display = 'none';
 
         if (window.Swal) {
@@ -893,9 +886,9 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
                 icon: 'error',
                 title: 'FALLA DE COMUNICACIÓN',
                 text: 'No se pudo guardar el registro en las celdas maestras: ' + err.message,
-                background: '#0f172a',
-                color: '#f1f5f9',
-                confirmButtonColor: '#ef4444'
+                background: 'rgba(250, 240, 201, 0.95)',
+                color: '#451a03',
+                confirmButtonColor: '#b91c1c'
             });
         } else {
             alert('❌ FALLA DE COMUNICACIÓN: ' + err.message);
@@ -931,7 +924,7 @@ function actualizarProveedorCarrito(nuevoProveedor) {
         const titulo = document.getElementById('modal-titulo');
         if (titulo) {
             const baseTitulo = titulo.innerText.split('|')[0].trim();
-            titulo.innerHTML = `${baseTitulo} | <span class="text-cyan-400 font-sans font-bold">DEST: ${nuevoProveedor}</span>`;
+            titulo.innerHTML = `${baseTitulo} | <span class="lex-titulo-dest">DEST: ${nuevoProveedor}</span>`;
         }
     }
 }

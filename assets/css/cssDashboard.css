@@ -2219,7 +2219,7 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
 /*--SECCION TABLA SEMANAL--*/
 
 .bg-arpillera {
-    background-color: rgba(238, 223, 166, 0.85) !important;
+    background-color: rgba(198, 189, 154, 0.85) !important;
 }
 
 .sticky-arena {
@@ -2969,4 +2969,370 @@ body .swal2-container .swal-estadomensual .hud-btn-cancel-purple:hover {
 
 .swal-pedido .swal2-loader {
     border-color: #b63f0c transparent #00f0ff transparent !important;
+}
+
+/* ── MÓDULO DE CONFECCIÓN DE PEDIDOS (ESTILO LEX) ── */
+
+.lex-pedido-id-text {
+    color: #ffffff;
+    font-family: monospace;
+}
+
+.lex-pedido-card {
+    background-color: rgba(250, 240, 201, 0.85);
+    border: 1px solid rgba(217, 119, 6, 0.6);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+.lex-pedido-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.75rem;
+}
+
+@media (min-width: 768px) {
+    .lex-pedido-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+.lex-col-span-2 {
+    grid-column: span 2;
+}
+
+.lex-label-muted {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #92400e;
+}
+
+.lex-label-primary {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #b45309;
+}
+
+.lex-id-operacion {
+    font-family: monospace;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #451a03;
+}
+
+.lex-select-custom {
+    width: 100%;
+    background-color: rgba(255, 251, 235, 0.9);
+    border: 1px solid rgba(217, 119, 6, 0.6);
+    color: #451a03;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    font-family: monospace;
+    font-size: 11px;
+    font-weight: 700;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.lex-select-custom:focus {
+    border-color: #78350f;
+    box-shadow: 0 0 0 1px #78350f;
+}
+
+.lex-plazo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lex-input-number {
+    width: 4rem;
+    background-color: rgba(255, 251, 235, 0.9);
+    border: 1px solid rgba(217, 119, 6, 0.6);
+    color: #b45309;
+    border-radius: 0.375rem;
+    padding: 0.375rem;
+    text-align: center;
+    font-family: monospace;
+    font-weight: 700;
+    outline: none;
+}
+
+.lex-input-number:focus {
+    border-color: #d97706;
+}
+
+.lex-actions-flex {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .lex-actions-flex {
+        margin-top: 0;
+    }
+}
+
+.lex-btn-secondary {
+    background-color: #E2D0A4;
+    border: 1px solid rgba(146, 64, 14, 0.4);
+    color: #451a03;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 900;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lex-btn-secondary:hover {
+    background-color: rgba(250, 240, 201, 1);
+    color: #78350f;
+}
+
+.lex-btn-secondary:active {
+    transform: scale(0.95);
+}
+
+.lex-btn-success {
+    background-color: #059669;
+    border: 1px solid #047857;
+    color: #ffffff;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.375rem;
+    font-weight: 900;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(6, 78, 59, 0.4);
+    transition: all 0.2s ease;
+}
+
+.lex-btn-success:hover {
+    background-color: #047857;
+}
+
+.lex-btn-success:active {
+    transform: scale(0.95);
+}
+
+/* ── TABLA DE PEDIDOS ── */
+
+.lex-scroll-container {
+    max-height: 380px;
+    overflow-y: auto;
+    background-color: rgba(250, 240, 201, 0.4);
+    border: 1px solid rgba(146, 64, 14, 0.4);
+    border-radius: 0.75rem;
+}
+
+@media (min-height: 800px) {
+    .lex-scroll-container {
+        max-height: 45vh;
+    }
+}
+
+.lex-table-fixed {
+    table-layout: fixed;
+}
+
+.lex-thead-sticky {
+    position: sticky;
+    top: 0;
+    background-color: #E2D0A4;
+    z-index: 20;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.lex-tr-head th {
+    color: #451a03 !important;
+    background-color: #E2D0A4 !important;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #d97706;
+}
+
+.lex-w-25 { width: 25%; }
+.lex-w-12 { width: 12%; }
+.lex-w-16 { width: 16%; }
+.lex-w-15 { width: 15%; }
+.lex-w-6  { width: 6%; }
+
+.lex-text-center { text-align: center !important; }
+.lex-text-right  { text-align: right !important; }
+.lex-text-muted  { color: #92400e; }
+
+.lex-flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50px;
+}
+
+.lex-item-nombre {
+    color: #451a03;
+    font-weight: 700;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: sans-serif;
+}
+
+.lex-item-sku {
+    font-size: 9px;
+    color: #b45309;
+    font-family: monospace;
+    letter-spacing: -0.05em;
+    margin-top: 0.125rem;
+}
+
+.lex-stock-normal {
+    color: #78350f;
+}
+
+.lex-stock-alerta {
+    color: #b91c1c;
+    font-weight: 900;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    background-color: rgba(254, 226, 226, 0.8);
+    border: 1px solid rgba(185, 28, 28, 0.3);
+    display: inline-block;
+}
+
+.lex-input-qty {
+    width: 5rem;
+    background-color: rgba(255, 251, 235, 0.9);
+    border: 1px solid rgba(217, 119, 6, 0.6);
+    color: #b45309;
+    text-align: center;
+    border-radius: 0.375rem;
+    padding: 0.25rem;
+    outline: none;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+.lex-input-qty:focus {
+    border-color: #d97706;
+}
+
+.lex-item-subtotal {
+    color: #451a03;
+    font-weight: 700;
+}
+
+.lex-btn-delete {
+    background: transparent;
+    border: none;
+    color: #92400e;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.lex-btn-delete:hover {
+    color: #b91c1c;
+    transform: scale(1.1);
+}
+
+/* ── FOOTER DE TOTALES ── */
+
+.lex-footer-card {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: rgba(250, 240, 201, 0.85);
+    border: 1px solid rgba(217, 119, 6, 0.6);
+    border-radius: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+.lex-total-display {
+    font-size: 1.5rem;
+    color: #b45309;
+    font-weight: 900;
+    line-height: 1;
+    margin-top: 0.375rem;
+    letter-spacing: -0.025em;
+    font-family: monospace;
+}
+
+.lex-footer-status {
+    text-align: right;
+    font-size: 9px;
+    color: #92400e;
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1.5;
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .lex-footer-status {
+        display: block;
+    }
+}
+
+.lex-titulo-dest {
+    color: #b45309;
+    font-family: sans-serif;
+    font-weight: 700;
+}
+
+.lex-swal-msg {
+    color: #451a03;
+    font-size: 0.75rem;
+    margin-bottom: 1rem;
+    font-family: sans-serif;
+}
+
+.lex-swal-pedido {
+    color: #b45309;
+    font-family: monospace;
+}
+
+.lex-btn-pdf {
+    display: inline-block;
+    background-color: #d97706;
+    color: #451a03;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.375rem;
+    font-weight: 900;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(217, 119, 6, 0.4);
+}
+
+.lex-btn-pdf:hover {
+    background-color: #b45309;
+    color: #ffffff;
 }

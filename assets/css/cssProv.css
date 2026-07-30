@@ -154,11 +154,11 @@ height: calc(100vh - 90px) !important;
     width: 10px !important;
 }
 .wrapper-tabla-final::-webkit-scrollbar-track {
-    background: #020617 !important;
+    background: rgba(250, 240, 201, 0.85) !important;
 }
 .wrapper-tabla-final::-webkit-scrollbar-thumb {
     background: #c2902e !important;
-    border: 2px solid #020617;
+    border: 2px solid #983a18;
     border-radius: 4px;
 }
 
@@ -180,7 +180,7 @@ table.dataTable,
 }
 
 .tabla-premium thead th {
-    background-color: var(--bg-dark) !important;
+    background-color: #E2D0A4 !important;
     color: var(--lex-gold) !important;
     border-bottom: 2px solid var(--lex-gold) !important;
     padding: 10px 8px !important;
@@ -213,8 +213,8 @@ table.dataTable,
 }
 
 .tabla-premium tbody tr td {
-    background-color: rgba(30, 41, 59, 0.4) !important;
-    color: #e2e8f0 !important;
+    background-color: rgba(250, 240, 201, 0.85) !important;
+    color: #451a03 !important;
     border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
     padding: 10px 8px !important;
@@ -229,7 +229,7 @@ table.dataTable,
     position: sticky !important;
     right: 0;
     z-index: 30;
-    background-color: rgba(30, 41, 59, 0.4) !important;
+    background-color: rgba(238, 223, 166, 0.85) !important;
     min-width: 100px;
 }
 
@@ -239,7 +239,7 @@ table.dataTable,
 }
 
 .tabla-premium tbody tr:hover td {
-    background-color: rgba(30, 41, 59, 0.8) !important; 
+    background-color: rgba(250, 240, 201, 0.85) !important; 
     color: #ffffff !important;
     border-bottom: 2px solid var(--lex-gold) !important;
 }
@@ -282,8 +282,8 @@ table.dataTable.no-footer {
 
 /* Estilo para los inputs de filtro dentro de la tabla*/
 .input-filtro-columna {
-    background: rgba(15, 23, 42, 0.9) !important;
-    color: #22d3ee !important;
+    background: rgba(250, 240, 201, 0.85) !important;
+    color: #f59e0b !important;
     border: 1px solid var(--lex-gold) !important;
     font-size: 0.75rem !important;
     padding: 6px !important;
