@@ -2805,7 +2805,10 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
         const nombreLimpio = String(prod.nombre || "").replace(/'/g, "").replace(/"/g, "");
         const stockNum = parseInt(prod.stock || 0);
         const stockMinNum = parseInt(prod.stockMinimo || 0);
-        const ventas90Num = parseInt(prod.ventas90Dias || 0); 
+        
+        // Captura robusta del promedio / ventas
+        const promedioVal = parseFloat(prod.promedio !== undefined && prod.promedio !== null ? prod.promedio : (prod.ventas90Dias || 0));
+        
         const categoriaProd = String(prod.categoria || prod.cat || "GENERAL").trim().toUpperCase();
         const subcategoriaProd = String(prod.subcategoria || prod.subcat || "").trim().toUpperCase();
         
@@ -2820,13 +2823,13 @@ function renderizarInterfazPedidos(lista, proveedorNombre, contenedor) {
                 data-categoria="${categoriaProd}" data-subcategoria="${subcategoriaProd}">
                 <td class="lex-td lex-td-check">
                     <input type="checkbox" ${checkedAttr} data-sku="${skuStr}" class="row-checkbox lex-checkbox" 
-                           onclick="toggleSeleccion(this, '${skuStr}', '${nombreLimpio}', '${skuStr}', '${stockNum}', '${fnEscapar(proveedorNombre)}', '${stockMinNum}')">
+                           onclick="toggleSeleccion(this, '${skuStr}', '${nombreLimpio}', '${skuStr}', '${stockNum}', '${fnEscapar(proveedorNombre)}', '${stockMinNum}', '${promedioVal}')">
                 </td>
                 <td class="lex-td lex-td-sku">${skuStr || "---"}</td>
                 <td class="lex-td lex-td-name">${prod.nombre || "PRODUCTO SIN IDENTIFICAR"}</td>
                 <td class="lex-td lex-td-stock ${alertarStock ? 'lex-text-alert' : ''}">${stockNum}</td>
                 <td class="lex-td lex-td-rotacion lex-td-highlight">
-                    ${ventas90Num} <span class="lex-badge-unit">u.</span>
+                    ${promedioVal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span class="lex-badge-unit">u.</span>
                 </td>
                 <td class="lex-td lex-td-minimo">${stockMinNum}</td>
             </tr>`;
@@ -2963,7 +2966,7 @@ async function cargarProductosPorProveedor() {
     }
 }
 
-function toggleSeleccion(checkbox, sku, nombre, _unusedSku, stock, proveedor, stockMinimo) {
+function toggleSeleccion(checkbox, sku, nombre, _unusedSku, stock, proveedor, stockMinimo, promedio) {
     window.carritoPedidos = window.carritoPedidos || [];
     const skuFiltro = String(sku).trim();
     const trPadre = checkbox.closest('tr');
@@ -2972,6 +2975,7 @@ function toggleSeleccion(checkbox, sku, nombre, _unusedSku, stock, proveedor, st
         if (!window.carritoPedidos.some(p => String(p.sku || p.id).trim() === skuFiltro)) {
             const stockAct = parseInt(stock || 0);
             const stockMin = parseInt(stockMinimo || 0);
+            const promedioVal = parseFloat(promedio || 0);
             const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
 
             window.carritoPedidos.push({ 
@@ -2982,7 +2986,8 @@ function toggleSeleccion(checkbox, sku, nombre, _unusedSku, stock, proveedor, st
                 stock: stockAct, 
                 stockMinimo: stockMin, 
                 proveedor: proveedor, 
-                cantidad: cantidadSugerida
+                cantidad: cantidadSugerida,
+                promedio: promedioVal
             });
         }
         if (trPadre) {
@@ -3011,6 +3016,7 @@ function toggleTodosProductos(masterCheck) {
             if (!yaExiste) {
                 const stockAct = parseInt(prod.stock || 0);
                 const stockMin = parseInt(prod.stockMinimo || 0);
+                const promedioVal = parseFloat(prod.promedio !== undefined && prod.promedio !== null ? prod.promedio : (prod.ventas90Dias || 0));
                 const cantidadSugerida = (stockMin - stockAct) > 0 ? (stockMin - stockAct) : 1;
 
                 window.carritoPedidos.push({
@@ -3021,7 +3027,8 @@ function toggleTodosProductos(masterCheck) {
                     stock: stockAct,
                     proveedor: prod.proveedor || "",
                     stockMinimo: stockMin,
-                    cantidad: cantidadSugerida
+                    cantidad: cantidadSugerida,
+                    promedio: promedioVal
                 });
             }
         });
@@ -3114,6 +3121,364 @@ window.cambiarModoPedido = function(modo) {
         btnProv.className = "px-4 py-2 text-[10px] font-bold tracking-widest rounded border transition-all duration-200 bg-arena text-amber-800 border-amber-300 hover:border-amber-400";
     }
 };
+
+
+/*------ ARMADO Y CONFIRMACION DEL PEDIDO ----*/
+
+async function revisarPedido() {
+    window.carritoPedidos = window.carritoPedidos || [];
+    
+    if (window.carritoPedidos.length === 0) {
+        if (window.Swal) {
+            Swal.fire({ 
+                title: 'CARRITO VACÍO', 
+                text: "Debes seleccionar al menos un producto para confeccionar una orden.", 
+                icon: 'info', 
+                background: 'rgba(238, 223, 166, 0.85)', 
+                color: '#451a03',
+                confirmButtonColor: '#E2D0A4'
+            });
+        } else {
+            alert("CARRITO VACÍO: Selecciona productos primero.");
+        }
+        return;
+    }
+
+    const contenido = document.getElementById('modal-contenido');
+    const titulo = document.getElementById('modal-titulo');
+    if (!contenido || !titulo) return;
+    
+    let proveedoresHTML = "";
+    try {
+        const listaProv = (typeof listaProveedoresCache !== 'undefined' && listaProveedoresCache.length > 0) 
+                        ? listaProveedoresCache 
+                        : await obtenerProveedoresParaSelector();
+        
+        const provOriginal = window.carritoPedidos[0].proveedor;
+        
+        proveedoresHTML = listaProv.map(p => 
+            `<option value="${escapingForOption(p)}" ${p === provOriginal ? 'selected' : ''}>${p}</option>`
+        ).join('');
+    } catch (e) { 
+        console.error("❌ N.I.C.O. Error al compilar selector final de proveedores:", e); 
+    }
+
+    const ahora = new Date();
+    const idPedido = "PED-" + ahora.getFullYear() + 
+                     (ahora.getMonth() + 1).toString().padStart(2, '0') + 
+                     ahora.getDate().toString().padStart(2, '0') + "-" + 
+                     ahora.getHours().toString().padStart(2, '0') + 
+                     ahora.getMinutes().toString().padStart(2, '0');
+
+    titulo.innerHTML = `CONFECCIÓN DE PEDIDO: <span class="lex-pedido-id-text">${idPedido}</span>`;
+
+    let html = `
+        <div class="lex-pedido-card">
+            <div class="lex-pedido-grid">
+                <div>
+                    <span class="lex-label-muted">ID OPERACIÓN:</span><br>
+                    <span class="lex-id-operacion">${idPedido}</span>
+                </div>
+                
+                <div class="lex-col-span-2">
+                    <label class="lex-label-primary">Remitir Pedido a:</label>
+                    <select id="cambiar-proveedor-final" onchange="actualizarProveedorCarrito(this.value)" class="lex-select-custom">
+                        ${proveedoresHTML || `<option value="${escapingForOption(window.carritoPedidos[0].proveedor)}">${window.carritoPedidos[0].proveedor}</option>`}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="lex-label-primary">Plazo Entrega:</label>
+                    <div class="lex-plazo-wrapper">
+                        <input type="number" id="tiempo-estimated" min="1" value="3" class="lex-input-number">
+                        <span class="lex-label-muted">DÍAS</span>
+                    </div>
+                </div>
+
+                <div class="lex-col-span-2 lex-actions-flex">
+                    <button onclick="volverAListaProductos()" class="lex-btn-secondary">
+                        ← EDITAR LISTA
+                    </button>
+                    <button onclick="prepararEnvioPedido('${idPedido}')" class="lex-btn-success">
+                        CONFIRMAR Y ENVIAR
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lex-table-container lex-scroll-container">
+            <table class="lex-table lex-table-fixed">  
+                <thead class="lex-thead-sticky">
+                    <tr class="lex-tr-head">
+                        <th class="lex-th lex-w-32">SKU / Nombre Producto</th> 
+                        <th class="lex-th lex-text-center lex-w-12">Stock Act.</th> 
+                        <th class="lex-th lex-text-center lex-w-12">Stock Mín.</th> 
+                        <th class="lex-th lex-text-center lex-w-16">Cantidad</th> 
+                        <th class="lex-th lex-text-center lex-w-22">Promedio 180d.</th> 
+                        <th class="lex-th lex-text-center lex-w-6">Acción</th> 
+                    </tr>
+                </thead>
+                <tbody class="lex-tbody">`;
+
+    window.carritoPedidos.forEach((item, index) => {
+        const alertaStock = parseInt(item.stock || 0) <= parseInt(item.stockMinimo || 0);
+        
+        html += `
+            <tr class="lex-tr-row">
+                <td class="lex-td">
+                    <div class="lex-item-sku">${item.sku}</div>
+                    <div class="lex-item-nombre">${item.nombre}</div>
+                </td>
+                <td class="lex-td lex-text-center">
+                    <span class="${alertaStock ? 'lex-stock-alerta' : 'lex-stock-normal'}">${item.stock}</span>
+                </td>
+                <td class="lex-td lex-text-center lex-text-muted">
+                    ${item.stockMinimo}
+                </td>
+                <td class="lex-td lex-text-center lex-flex-center">
+                    <input type="number" min="1" value="${item.cantidad}" 
+                           onchange="actualizarCantidadCarrito(${index}, this.value)"
+                           class="lex-input-qty">
+                </td>
+                <td class="lex-td lex-text-right lex-text-muted">
+                    ${(item.promedio !== undefined && item.promedio !== null) ? Number(item.promedio).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}
+                </td>
+                <td class="lex-td lex-text-center">
+                    <button onclick="eliminarDelPedido(${index})" class="lex-btn-delete">
+                        <i class="fi fi-rr-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+    });
+
+    html += `</tbody></table></div>
+        
+        <div class="lex-footer-card">
+            <div>
+                <span class="lex-label-muted block">Total Unidades a Solicitar</span>
+                <div id="total-pedido-confirmar" class="lex-total-display">0</div>
+            </div>
+            <div class="lex-footer-status">
+                Status: Awaiting Operator Signature<br>
+                N.I.C.O. V2.0 - COMPILER SECURE
+            </div>
+        </div>`;
+
+    contenido.innerHTML = html;
+    calcularTotalUnidades();
+}
+
+// --- FUNCIÓN DE ELIMINACIÓN ---
+/** @param {number} index */
+
+function eliminarDelPedido(index) {
+    if (!window.Swal) {
+        if (confirm("¿Quitar este producto del pedido?")) {
+            ejecutarBajaItemCarrito(index);
+        }
+        return;
+    }
+
+    Swal.fire({
+        title: '¿QUITAR PRODUCTO?',
+        text: "Se eliminará este ítem de la lista de confección actual.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d97706',
+        cancelButtonColor: '#451a03',
+        confirmButtonText: 'SÍ, RETIRAR',
+        cancelButtonText: 'ABORTAR',
+        background: 'rgba(250, 240, 201, 0.95)',
+        color: '#451a03',
+        customClass: {
+            container: 'swal-pedido-container',
+            popup: 'swal-pedido'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            ejecutarBajaItemCarrito(index);
+        }
+    });
+}
+
+function ejecutarBajaItemCarrito(index) {
+    window.carritoPedidos.splice(index, 1);
+    if (window.carritoPedidos.length === 0) {
+        volverAListaProductos();
+    } else {
+        revisarPedido();
+    }
+    if (typeof actualizarContadorVisual === "function") actualizarContadorVisual();
+}
+
+/** @param {string} idPedido  */
+
+function prepararEnvioPedido(idPedido) {
+    const inputDias = document.getElementById('tiempo-estimated');
+    const dias = inputDias ? parseInt(inputDias.value) : 0;
+    
+    if (isNaN(dias) || dias <= 0) {
+        if (window.Swal) {
+            Swal.fire({
+                title: 'ATENCIÓN LOGÍSTICA',
+                text: 'Por favor, ingresa una estimación de días válida y mayor a cero.',
+                icon: 'warning',
+                background: 'rgba(250, 240, 201, 0.95)',
+                color: '#451a03',
+                confirmButtonColor: '#d97706'
+            });
+        } else {
+            alert("ATENCIÓN: Ingresa una estimación de días válida.");
+        }
+        return;
+    }
+    
+    ejecutarGeneracionPedido(idPedido, dias);
+}
+
+async function obtenerProveedoresParaSelector() {
+    try {
+        const res = await callGoogleScript('get_datos_deposito', { nombreSheet: 'baseProveedores' });
+        if (res && res.status === "success" && res.reply && res.reply.data) {
+            const lista = res.reply.data.map(fila => fila[1]).filter(p => p && p.trim() !== "");
+            return [...new Set(lista)].sort();
+        }
+        throw new Error("Estructura de datos vacía");
+    } catch (e) {
+        console.warn("⚠️ Fallback activado para selector de proveedores:", e);
+        return window.carritoPedidos && window.carritoPedidos.length > 0 
+            ? [window.carritoPedidos[0].proveedor] 
+            : [];
+    }
+}
+
+function actualizarCantidadCarrito(index, valor) {
+    const cant = Math.max(1, parseInt(valor) || 1);
+    if (window.carritoPedidos && window.carritoPedidos[index]) {
+        window.carritoPedidos[index].cantidad = cant;
+        calcularTotalUnidades();
+    }
+}
+
+function calcularTotalUnidades() {
+    if (!window.carritoPedidos) return;
+    const totalUnidades = window.carritoPedidos.reduce((acc, item) => acc + (parseInt(item.cantidad) || 1), 0);
+    const display = document.getElementById('total-pedido-confirmar');
+    if (display) {
+        display.innerText = totalUnidades.toLocaleString('es-AR');
+    }
+}
+
+async function ejecutarGeneracionPedido(idPedido, dias) {
+    const overlayCarga = document.getElementById('overlay-carga');
+    if (overlayCarga) overlayCarga.style.display = 'flex';
+
+    try {
+        const proveedorFinalInput = document.getElementById('cambiar-proveedor-final');
+        const proveedorFinal = proveedorFinalInput ? proveedorFinalInput.value : window.carritoPedidos[0].proveedor;
+
+        const payload = {
+            idPedido: idPedido,
+            diasEntrega: dias,
+            items: window.carritoPedidos,
+            proveedorFinal: proveedorFinal,
+            fechaActualizacion: new Date().toLocaleString('es-AR')
+        };
+
+        const res = await callGoogleScript('procesarPedidoFinal', payload);
+
+        if (res && res.status === "success") {
+            if (overlayCarga) overlayCarga.style.display = 'none';
+
+            if (window.Swal) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡ORDEN CONFIRMADA!',
+                    html: `
+                        <div class="lex-swal-msg">
+                            La operación de compra <b class="lex-swal-pedido">${idPedido}</b> ha sido impactada con éxito.
+                        </div>
+                        ${res.url ? `
+                        <a href="${res.url}" target="_blank" class="lex-btn-pdf">
+                            DESCARGAR PDF DE ORDEN
+                        </a>` : ''}`,
+                    background: 'rgba(250, 240, 201, 0.95)',
+                    color: '#451a03',
+                    confirmButtonColor: '#d97706',
+                    confirmButtonText: 'ENTENDIDO'
+                });
+            }
+
+            window.carritoPedidos = [];
+            if (typeof actualizarContadorVisual === "function") actualizarContadorVisual();
+            
+            if (typeof cerrarModal_Pedidos === "function") {
+                cerrarModal_Pedidos();
+            } else {
+                const modal = document.getElementById('modal-pedidos');
+                if (modal) modal.classList.add('hidden');
+                const pagPrincipal = document.getElementById('page-principal-depos');
+                if (pagPrincipal) pagPrincipal.style.display = 'flex';
+            }
+            
+        } else {
+            throw new Error(res?.message || "La pasarela de Google Apps Script rechazó el paquete de datos.");
+        }
+
+    } catch (err) {
+        console.error("❌ Fallo crítico en la persistencia del pedido:", err);
+        if (overlayCarga) overlayCarga.style.display = 'none';
+
+        if (window.Swal) {
+            Swal.fire({
+                icon: 'error',
+                title: 'FALLA DE COMUNICACIÓN',
+                text: 'No se pudo guardar el registro en las celdas maestras: ' + err.message,
+                background: 'rgba(250, 240, 201, 0.95)',
+                color: '#451a03',
+                confirmButtonColor: '#b91c1c'
+            });
+        } else {
+            alert('❌ FALLA DE COMUNICACIÓN: ' + err.message);
+        }
+    }
+}
+
+function volverAListaProductos() {
+    if (!document.getElementById('prov-seleccionado') && window.carritoPedidos && window.carritoPedidos.length > 0) {
+        const provActivo = window.carritoPedidos[0].proveedor;
+        const fakeInput = document.createElement('input');
+        fakeInput.id = 'prov-seleccionado';
+        fakeInput.value = provActivo;
+        fakeInput.type = 'hidden';
+        document.body.appendChild(fakeInput);
+        
+        cargarProductosPorProveedor();
+        
+        fakeInput.remove();
+    } else {
+        abrirModal_Pedidos('PEDIDOS');
+    }
+}
+
+function actualizarProveedorCarrito(nuevoProveedor) {
+    if (window.carritoPedidos && window.carritoPedidos.length > 0) {
+        window.carritoPedidos.forEach(item => {
+            item.proveedor = nuevoProveedor;
+        });
+        
+        console.log(`%c 🛰️ N.I.C.O. Logística > Mutación de Destino: ${nuevoProveedor}`, "color: #9f4a25; font-weight: bold;");
+        
+        const titulo = document.getElementById('modal-titulo');
+        if (titulo) {
+            const baseTitulo = titulo.innerText.split('|')[0].trim();
+            titulo.innerHTML = `${baseTitulo} | <span class="lex-titulo-dest">DEST: ${nuevoProveedor}</span>`;
+        }
+    }
+}
+
+
+
 
 
 
