@@ -557,12 +557,6 @@ async function ejecutarGuardadoProveedor() {
 
 
 
-//---- FUNCIONES DEL MODAL DE PEDIDOS ----
-/** @param {string} tipo - */
-
-
-
-
 
 
 /*----------- FUNCIONES DEL PEDIDOS AUTO ASISTIDOS-----------*/

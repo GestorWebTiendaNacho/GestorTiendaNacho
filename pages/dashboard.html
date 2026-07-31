@@ -13,7 +13,7 @@
 <canvas id="particles"></canvas>
 
 <div class="dashboard-container">
-    <!-- ═══ LEFT SIDEBAR ═══ -->
+    <!-- ═══ LEFT SIDEBAR ═══ 
     <div class="app-layout">
         <aside class="sidebar" id="sidebarHud" role="navigation" aria-label="Menú principal">
 
@@ -235,7 +235,7 @@
                 </li>
             </ul>
         </aside>
-    </div>
+    </div>-->
 
     <!-- ═══ MAIN CONTENT ═══ -->
     <main class="main-hud">
@@ -256,106 +256,100 @@
 
         <!-- KPI Metric Cards -->
         <section class="kpi-row">
+            <!-- TOP PROVEEDORES -->
             <div class="hud-card-wrapper cyan-glow">
                 <div class="hud-card-edge">
                     <div class="card-inner-cyan">
-                        <span class="card-title-cyan">TOP PROVEEDORES</span>
-                        <div class="card-body">
+                        <div class="minicard-header">
+                            <span class="card-title-cyan">TOP PROVEEDORES</span>
                             <div class="card-icon-box-cyan">
                                 <i class="fa-solid fa-chart-bar"></i>
                             </div>
+                        </div>
+                        <div class="minicard-body">
                             <div class="card-value-container">
-                                <span class="card-value" style="color: #4df53e; font-size: 1.2em;">CONECTANDO...</span>
+                                <span class="card-value" style="color: #4df53e;">CONECTANDO...</span>
                             </div>
                         </div>
-                        <div class="card-footer">
-                            <div class="mini-sparkline">
-                                <canvas class="spark-canvas" data-color="#00f0ff"></canvas>
-                            </div>
-                            <button class="hud-btn-action">VER REPORTE COMPLETO</button>
+                        <div class="minicard-footer">
+                            <button class="hud-btn-action">VER REPORTE</button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- TOP PROD. VENDIDOS -->
             <div class="hud-card-wrapper orange-glow">
                 <div class="hud-card-edge">
                     <div class="card-inner-orange">
-                        <span class="card-title-orange">TOP PROD. VENDIDOS</span>
-                        <div class="card-body">
+                        <div class="minicard-header">
+                            <span class="card-title-orange">TOP PROD. VENDIDOS</span>
                             <div class="card-icon-box-orange">
                                 <i class="fa-solid fa-chart-line"></i>
                             </div>
+                        </div>
+                        <div class="minicard-body">
                             <div class="card-value-container">
-                                <span class="card-value" style="color: #4df53e; font-size: 1.2em;">CONECTANDO...</span>
+                                <span class="card-value" style="color: #4df53e;">CONECTANDO...</span>
                             </div>
                         </div>
-                        <div class="card-footer">
-                            <div class="mini-sparkline">
-                                <canvas class="spark-canvas" data-color="#ff9f00"></canvas>
-                            </div>
-                            <button class="hud-btn-action">VER REPORTE COMPLETO</button>
+                        <div class="minicard-footer">
+                            <button class="hud-btn-action">VER REPORTE</button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- TOP PROD. PEDIDOS -->
             <div class="hud-card-wrapper red-glow">
                 <div class="hud-card-edge">
                     <div class="card-inner-red">
-                        <span class="card-title-red">TOP PROD. PEDIDOS</span>
-                        <div class="card-body">
+                        <div class="minicard-header">
+                            <span class="card-title-red">TOP PROD. PEDIDOS</span>
                             <div class="card-icon-box-red">
                                 <i class="fa-solid fa-clipboard-list"></i>
                             </div>
+                        </div>
+                        <div class="minicard-body">
                             <div class="card-value-container">
-                                <span class="card-value" style="color: #4df53e; font-size: 1.2em;">CONECTANDO...</span>
+                                <span class="card-value" style="color: #4df53e;">CONECTANDO...</span>
                             </div>
                         </div>
-                        <div class="card-footer">
-                            <div class="mini-sparkline">
-                                <canvas class="spark-canvas" data-color="#ff3c3c"></canvas>
-                            </div>
-                            <button class="hud-btn-action">VER REPORTE COMPLETO</button>
+                        <div class="minicard-footer">
+                            <button class="hud-btn-action">VER REPORTE</button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- PEDIDOS DEL MES ACTUAL -->
             <div class="hud-card-wrapper purple-glow">
                 <div class="hud-card-edge">
                     <div class="card-inner-purple">
-                        <span class="card-title-purple">PEDIDOS DEL MES ACTUAL</span>
-                        <div class="card-body">
+                        <div class="minicard-header">
+                            <span class="card-title-purple">PEDIDOS DEL MES</span>
                             <div class="card-icon-box-purple">
                                 <i class="fa-solid fa-circle-info"></i>
                             </div>
+                        </div>
+                        <div class="minicard-body">
                             <div class="card-value-container">
-                                <span class="card-value" style="color: #4df53e; font-size: 1.2em;">CONECTANDO...</span>
+                                <span class="card-value" style="color: #4df53e;">CONECTANDO...</span>
                             </div>
                         </div>
-                        <div class="card-footer">
-                            <div class="mini-sparkline">
-                                <canvas class="spark-canvas" data-color="#a855f7"></canvas>
-                            </div>
-                            <button class="hud-btn-action">VER REPORTE COMPLETO</button>
+                        <div class="minicard-footer">
+                            <button class="hud-btn-action">VER REPORTE</button>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-
-        <!-- BOTONES DE CATEGORIAS -->
-
-        <section class="categorias">
-
-        </section>
-
 
         <!-- Main Grid: Table + Side Widgets -->
         <section class="dashboard-grid">
 
-            <div class="dashboard-grid__main" id="headbarNav">  
+            <div class="dashboard-grid__main" id="headbarNav">
+              <ul class="dashboard-nav" id="dashboardNav">    
                 <li class="nav-item theme-orange" data-accordion>   <!-- Botón Pedidos con submenú -->
                     <div class="nav-btn__wrap">
                         <button type="button" class="nav-btn" data-toggle="pedidos" aria-expanded="false" aria-controls="submenu-pedidos">
@@ -448,61 +442,64 @@
                             <span class="nav-btn__glow-line"></span>
                     </div>
                 </li>
+              </ul>
             </div>   
 
 
             <!---SECCION DE LA TABLA---->
             <div class="table-effect-wrapper">      <!--tabla SEMANAL-->
-                <div class="hud-card main-panel table-panel blue-glow" data-connect="table">
+               <div class="hud-card main-panel table-panel blue-glow" data-connect="table">
                     <div class="panel-corner tl"></div>
                     <div class="panel-corner tr"></div>
                     <div class="panel-corner bl"></div>
                     <div class="panel-corner br"></div>
                     <div class="card-inner">
-                    <div class="panel-header-row">
-                        <span class="panel-header-title">CONTROL SEMANAL DE PROVEEDORES</span>
-                        <div class="panel-header-line"></div>
-                    </div>
-
-                    <!-- Barra de herramientas integrada en el grid principal -->
-                    <div id="toolbar-reportes" class="lex-toolbar bg-arpillera" style="background: transparent; border: none; padding: 10px 0;">
-                        <div class="lex-filter-group">
-                            <select id="filtro-mes-lex" class="lex-select">
-                                <option value="7" selected>Julio 2026</option>
-                                <option value="8">Agosto 2026</option>
-                            </select>
-                            <select id="filtro-semana-lex" class="lex-select">
-                                <option value="1">Semana 1</option>
-                                <option value="2">Semana 2</option>
-                                <option value="3" selected>Semana 3 (Actual)</option>
-                                <option value="4">Semana 4</option>
-                                <option value="5">Semana 5</option>
-                            </select>
-                            <input type="text" id="filtro-proveedor-lex" class="lex-select" placeholder="🔍 Filtrar proveedor..." style="margin-left: 12px; max-width: 200px;">
+                        <div class="panel-header-row">
+                            <span class="panel-header-title">CONTROL SEMANAL DE PROVEEDORES</span>
+                            <div class="panel-header-line"></div>
                         </div>
 
-                        <div class="lex-actions-group">
-                            <button onclick="ejecutarSincronizacionRelampago()" class="sem-btn-nav sem-neon-blue">
-                                <i class="fas fa-sync-alt"></i> SYNC
-                            </button>
-                            <button onclick="exportarVistaActualALex()" id="btn-descarga-reporte" class="sem-btn-nav sem-neon-green">
-                                <i class="fas fa-file-excel"></i> EXPORTAR
-                            </button>
+                        <!-- Barra de herramientas integrada en el grid principal -->
+                        <div id="toolbar-reportes" class="lex-toolbar bg-arpillera" style="background: transparent; border: none; padding: 10px 0;">
+                            <div class="lex-filter-group">
+                                <select id="filtro-mes-lex" class="lex-select">
+                                    <option value="7" selected>Julio 2026</option>
+                                    <option value="8">Agosto 2026</option>
+                                </select>
+                                <select id="filtro-semana-lex" class="lex-select">
+                                    <option value="1">Semana 1</option>
+                                    <option value="2">Semana 2</option>
+                                    <option value="3" selected>Semana 3 (Actual)</option>
+                                    <option value="4">Semana 4</option>
+                                    <option value="5">Semana 5</option>
+                                </select>
+                                <input type="text" id="filtro-proveedor-lex" class="lex-select" placeholder="🔍 Filtrar proveedor..." style="margin-left: 12px; max-width: 200px;">
+                            </div>
+
+                            <div class="lex-actions-group">
+                                <button onclick="ejecutarSincronizacionRelampago()" class="sem-btn-nav sem-neon-blue">
+                                    <i class="fas fa-sync-alt"></i> SYNC
+                                </button>
+                                <button onclick="exportarVistaActualALex()" id="btn-descarga-reporte" class="sem-btn-nav sem-neon-green">
+                                    <i class="fas fa-file-excel"></i> EXPORTAR
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Contenedor del Reporte Semanal Interactivo -->
+                        <div id="contenido-reporte-lex" class="modal-lex-body bg-arena" style="max-height: 480px; overflow-y: auto; scrollbar-width: thin; background: transparent;">
                         </div>
                     </div>
 
-                    <!-- Contenedor del Reporte Semanal Interactivo -->
-                    <div id="contenido-reporte-lex" class="modal-lex-body bg-arena" style="max-height: 480px; overflow-y: auto; scrollbar-width: thin; background: transparent;">
-                    </div>
                 </div>
             </div>
-            </div>
-
         </section>
 
 
     </main>
 </div>
+
+
 <!-- MODAL PEDIDOS MANUAL-->
 <div id="modal-pedidos" class="fixed inset-0 hidden items-center justify-center p-2 lg:p-6 transition-all duration-300" 
      style="z-index: 9999999; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(149, 147, 138, 0.75);">

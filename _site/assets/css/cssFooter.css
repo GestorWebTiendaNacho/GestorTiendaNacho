@@ -9,6 +9,7 @@
     flex-direction: column;
     align-items: center;
     padding: 4rem 0 !important;
+    z-index: 25000 !important;
   }
 
   .nav-separator {
