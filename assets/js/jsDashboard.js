@@ -2360,7 +2360,6 @@ var cacheTableroDeposito = {
 
 const observadorInyeccion = new MutationObserver((mutations, observer) => {
     const contenedor = document.getElementById('contenido-reporte-lex');
-    // Verificamos que exista el contenedor y que no haya sido inicializado todavía
     if (contenedor && !contenedor.dataset.inicializado) {
         contenedor.dataset.inicializado = "true";
         console.log("⚡ Contenedor inyectado detectado: Inicializando tablero semanal...");
