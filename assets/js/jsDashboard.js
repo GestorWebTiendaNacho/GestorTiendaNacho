@@ -1701,10 +1701,9 @@ window.manejarSeleccionArchivoCompras = function(input) {
                             dateObj = new Date(valorFecha.getFullYear(), valorFecha.getMonth(), valorFecha.getDate(), 0, 0, 0, 0);
                         }
                     } 
-                    // CORRECCIÓN AQUÍ: Procesamos correctamente el número serial de Excel
+                    // Procesamos correctamente el número serial de Excel
                     else if (!isNaN(valorFecha) && String(valorFecha).trim() !== "") {
                         const num = Number(valorFecha);
-                        // Los días de Excel cuentan desde el 30/12/1899 debido a un bug histórico con el año bisiesto 1900
                         const fechaExcel = new Date((num - 25569) * 86400 * 1000);
                         dateObj = new Date(fechaExcel.getUTCFullYear(), fechaExcel.getUTCMonth(), fechaExcel.getUTCDate(), 0, 0, 0, 0);
                     } 
