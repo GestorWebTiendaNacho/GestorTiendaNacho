@@ -3373,7 +3373,7 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
 
     try {
         const proveedorFinalInput = document.getElementById('cambiar-proveedor-final');
-        const proveedorFinal = proveedorFinalInput ? proveedorFinalInput.value : window.carritoPedidos[0].proveedor;
+        const proveedorFinal = proveedorFinalInput && proveedorFinalInput.value.trim() !== "" ? proveedorFinalInput.value.trim() : (window.carritoPedidos[0] && window.carritoPedidos[0].proveedor ? window.carritoPedidos[0].proveedor : "GENERAL");
 
         const payload = {
             idPedido: idPedido,
@@ -3396,8 +3396,8 @@ async function ejecutarGeneracionPedido(idPedido, dias) {
                         <div class="lex-swal-msg">
                             La operación de compra <b class="lex-swal-pedido">${idPedido}</b> ha sido impactada con éxito.
                         </div>
-                        ${res.url ? `
-                        <a href="${res.url}" target="_blank" class="lex-btn-pdf">
+                        ${res.urlPdf ? `
+                        <a href="${res.urlPdf}" target="_blank" class="lex-btn-pdf">
                             DESCARGAR PDF DE ORDEN
                         </a>` : ''}`,
                     background: 'rgba(250, 240, 201, 0.95)',
